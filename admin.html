@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Accounts · Exam Ace Tutorials</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.head{padding-block:32px 6px}
+.head h1{font-size:clamp(1.8rem,4vw,2.6rem)}
+.grid{display:grid;grid-template-columns:400px minmax(0,1fr);gap:22px;padding-block:18px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.panel.pad{padding:20px;display:grid;gap:14px}
+.panel h2{font-size:1.2rem}
+textarea{min-height:150px;font-family:ui-monospace,Consolas,monospace!important;font-size:.9rem!important}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.checks label{display:flex;gap:8px;align-items:center;font-size:.92rem;font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);background:var(--raise);white-space:nowrap}
+td .chip{font-size:.66rem;padding:2px 8px;margin:0 4px 4px 0}
+.mono{font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tools input{max-width:260px}
+.rowbtns{display:flex;gap:6px;flex-wrap:wrap}
+.x-chip{background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 4px}
+.modes{display:inline-flex;padding:4px;border-radius:12px;background:var(--raise);border:1px solid var(--line);flex-wrap:wrap}
+.modes button{border:0;background:none;color:var(--muted);font:700 .88rem var(--f-body);padding:8px 12px;border-radius:9px;cursor:pointer}
+.modes button[aria-selected="true"]{background:var(--blue);color:var(--on-blue)}
+.drop{display:grid;justify-items:center;gap:6px;text-align:center;padding:24px 16px;border:2px dashed var(--field-line);border-radius:14px;background:var(--raise);cursor:pointer;color:var(--gold)}
+.drop b{color:var(--ink)}
+.drop.over,.drop:hover{border-color:var(--gold);background:var(--soft-gold)}
+.linkbtn{background:none;border:0;padding:0;color:var(--gold);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.ok-t{color:var(--ok);font-weight:700}.bad-t{color:var(--bad);font-weight:700}
+.gate{padding:40px 22px;text-align:center;display:grid;gap:12px;justify-items:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--surface);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> Accounts made here are saved in this browser only.</div></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="seal"><span>EA</span></span><span class="bname"><span id="brandName">Exam Ace Tutorials</span><small>E-learning Ecosystem</small></span></a>
+    <nav class="nav"><a href="dashboard.html">Dashboard</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head"><p class="eyebrow">Administrator</p><h1>Accounts and course access</h1></div>
+
+  <div id="denied" class="panel gate" hidden><h2>Administrators only</h2><p class="muted">Sign in with an administrator account to manage logins.</p><a class="btn go" href="index.html?signin=1">Sign in</a></div>
+
+  <div class="grid" id="adminApp" hidden>
+    <section class="panel pad" aria-labelledby="newh">
+      <h2 id="newh">Issue logins</h2>
+      <div class="modes" role="tablist" aria-label="How to add people">
+        <button type="button" role="tab" id="m-csv" aria-selected="true" data-mode="csv">Upload a class list (CSV)</button>
+        <button type="button" role="tab" id="m-type" aria-selected="false" data-mode="type">Type names</button>
+      </div>
+
+      <div id="pane-csv" style="display:grid;gap:12px">
+        <label class="drop" id="drop" for="csvFile">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b id="dropTitle">Choose a CSV file, or drop it here</b>
+          <span class="hint" id="dropHint">From Excel or Google Sheets: File → Save as / Download → CSV</span>
+          <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+        </label>
+        <p class="hint">Columns it understands: <b>Name</b> (or First name + Last name), <b>Email</b>, <b>Username</b>, <b>Courses</b>, <b>Type</b> (student or teacher), <b>Class</b>. Only a name is required: usernames are made from names, and rows with no courses get the courses ticked below. <button type="button" class="linkbtn" id="tplBtn">Download the template</button></p>
+        <div id="preview" hidden style="display:grid;gap:8px">
+          <div class="tools"><b id="pvCount" style="margin-right:auto"></b><button type="button" class="linkbtn" id="pvClear">Choose a different file</button></div>
+          <div class="tbl" style="max-height:320px;overflow:auto"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Courses</th><th>Type</th><th>Check</th></tr></thead><tbody id="pvBody"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="pane-type" hidden style="display:grid;gap:8px">
+        <p class="hint">One person per line: <b>Full name, username, email</b>. Username and email are optional.</p>
+        <div class="field"><label for="people">People</label><textarea id="people" placeholder="Aaliyah Richardson, a.richardson, aaliyah@email.com&#10;Marcus Brooks"></textarea></div>
+      </div>
+
+      <div class="two">
+        <div class="field"><label for="role">Account type</label><select id="role"><option value="student">Student</option><option value="teacher">Teacher</option><option value="admin">Administrator</option></select></div>
+        <div class="field"><label for="source">Access through</label><select id="source"><option value="school">School</option><option value="payhip">Payhip purchase</option><option value="manual">Manual / other</option></select></div>
+      </div>
+      <div class="field"><span style="font-weight:700;font-size:.92rem">Courses</span><div class="checks" id="courseChecks"></div></div>
+      <div class="field"><label for="edition">Edition</label><select id="edition"><option value="student">Student edition</option><option value="teacher">Teacher edition</option></select></div>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem"><input type="checkbox" id="books" checked style="width:18px;height:18px;accent-color:var(--gold)"> Include the flipbook textbook</label>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem"><input type="checkbox" id="invites" checked style="width:18px;height:18px;accent-color:var(--gold)"> Email each person their login (when the list has their email)</label>
+      <div class="msg bad" id="newErr" hidden></div>
+      <button class="btn go" type="button" id="createBtn">Create logins</button>
+      <div id="results" hidden style="display:grid;gap:10px">
+        <div class="msg ok" id="resMsg">Logins created. Copy them now: temporary passwords are shown only once.</div>
+        <div class="tbl selectable"><table><thead><tr><th>Name</th><th>Username</th><th>Temporary password</th><th>Invite</th></tr></thead><tbody id="resBody"></tbody></table></div>
+        <button class="btn ghost sm" type="button" id="copyRes">Copy all (paste into Excel or Google Sheets)</button>
+      </div>
+    </section>
+
+    <div style="display:grid;gap:22px;min-width:0">
+    <section class="panel pad" id="invoices" aria-labelledby="ivh"></section>
+
+    <section class="panel pad" aria-labelledby="idh">
+      <div class="tools"><h2 id="idh" style="margin-right:auto">Student ID checks</h2><select id="idSt" aria-label="Show" style="font:inherit;border-radius:10px;padding:7px 9px"><option value="submitted">Waiting to be checked</option><option value="verified">Verified</option><option value="rejected">Not verified</option><option value="none">No photo or ID yet</option></select></div>
+      <p class="hint">Each student's photo and ID document. Compare them, then mark the record verified. Teachers see the same photo in the exam room.</p>
+      <div class="tbl"><table><thead><tr><th>Student</th><th>Email</th><th>ID type</th><th>Status</th><th></th></tr></thead><tbody id="idBody"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel pad" aria-labelledby="atth">
+      <div class="tools"><h2 id="atth" style="margin-right:auto">Attendance register</h2><span class="chip" id="attOnline">— online now</span></div>
+      <p class="hint">Every sign-in: first name, last name, email, time in, time out and total time. A visit ends when the student signs out, or at their last activity if they just close the page.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <label class="hint">From<br><input type="date" id="attFrom" class="field" style="font:inherit;color:var(--ink);background:var(--raise);border:1.5px solid var(--line);border-radius:10px;padding:7px 9px"></label>
+        <label class="hint">To<br><input type="date" id="attTo" class="field" style="font:inherit;color:var(--ink);background:var(--raise);border:1.5px solid var(--line);border-radius:10px;padding:7px 9px"></label>
+        <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="attAll"> Include teachers</label>
+        <button class="btn ghost sm" type="button" id="attShow">Show</button>
+        <button class="btn go sm" type="button" id="attCsv">Download CSV</button>
+      </div>
+      <div class="tbl"><table><thead><tr><th>Name</th><th>Email</th><th>In</th><th>Out</th><th>Total</th></tr></thead><tbody id="attBody"><tr><td colspan="5" class="muted">Choose dates, then Show.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel pad" aria-labelledby="reqh">
+      <div class="tools"><h2 id="reqh" style="margin-right:auto">Subject requests</h2><span class="chip" id="reqCount">0 waiting</span></div>
+      <div class="tbl"><table><thead><tr><th>From</th><th>Subject</th><th>Note</th><th>Asked</th><th>Decision</th></tr></thead><tbody id="reqBody"><tr><td colspan="5" class="muted">Loading requests…</td></tr></tbody></table></div>
+      <p class="hint">Approving a course on the site adds it to that person straight away (teacher edition for teachers). Requests for new subjects are a record of what people want; approving one marks it as noted.</p>
+    </section>
+
+    <section class="panel pad" aria-labelledby="qth">
+      <div class="tools"><h2 id="qth" style="margin-right:auto">Quote requests</h2><span class="chip" id="qtCount">0 new</span></div>
+      <div class="tbl"><table><thead><tr><th>From</th><th>Wants</th><th>Size</th><th>Message</th><th>Status</th></tr></thead><tbody id="qtBody"><tr><td colspan="5" class="muted">Loading quote requests…</td></tr></tbody></table></div>
+      <p class="hint">Reply to the person by email with your price, then mark the request <b>Quoted</b>. Once they agree, issue their logins above.</p>
+    </section>
+
+    <section class="panel pad" aria-labelledby="ordh">
+      <div class="tools"><h2 id="ordh" style="margin-right:auto">Payhip orders</h2><span class="chip" id="ordCount">0 need attention</span></div>
+      <div class="tbl"><table><thead><tr><th>Order</th><th>Buyer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody id="ordBody"><tr><td colspan="5" class="muted">Loading orders…</td></tr></tbody></table></div>
+      <p class="hint"><b>Needs attention</b> means Payhip took a payment that didn't match a cart on this site (for example, the buyer used a different email). Find their account below and use <b>Add course</b>.</p>
+    </section>
+
+    <section class="panel pad" aria-labelledby="listh">
+      <div class="tools"><h2 id="listh" style="margin-right:auto">All accounts</h2><input id="search" type="search" placeholder="Search name or username" aria-label="Search accounts" class="field" style="font:inherit;color:var(--ink);background:var(--raise);border:1.5px solid var(--field-line);border-radius:10px;padding:8px 10px"></div>
+      <div class="tbl"><table><thead><tr><th>Name</th><th>Username</th><th>Type</th><th>Courses</th><th>Actions</th></tr></thead><tbody id="listBody"><tr><td colspan="5" class="muted">Loading accounts…</td></tr></tbody></table></div>
+      <div class="field" style="max-width:340px"><label for="grantCourse">Course to add with “Add course”</label><select id="grantCourse"></select></div>
+    </section>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<footer class="foot"><div class="wrap"><p>© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p></div></footer>
+<script>document.querySelectorAll("[data-yr]").forEach(e => e.textContent = new Date().getFullYear());</script>
+<style>dialog.modal#dlg-id{width:min(860px,calc(100vw - 24px))}</style>
+<dialog class="modal" id="dlg-id" aria-labelledby="idv-t"><div class="box"><div class="inner">
+  <button class="x" type="button" data-idclose aria-label="Close">×</button>
+  <div><p class="eyebrow">Student ID check</p><h2 id="idv-t"></h2><p class="hint" id="idv-s"></p></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"><figure style="margin:0"><figcaption class="hint">Photo</figcaption><div id="idv-p"></div></figure><figure style="margin:0"><figcaption class="hint" id="idv-dt">ID document</figcaption><div id="idv-d"></div></figure></div>
+  <div class="field"><label for="idv-n">Note (optional)</label><input id="idv-n" placeholder="e.g. Photo too dark, please send another"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn go" type="button" id="idv-ok">✓ Verified: it's the same person</button><button class="btn ghost" type="button" id="idv-no">✗ Not verified</button></div>
+</div></div></dialog>
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/invoice-core.js"></script>
+<script src="assets/invoices.js"></script>
+<script src="assets/presence.js"></script>
+<script>
+(function(){
+  const C = window.SITE_CONFIG, $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  $("#brandName").textContent = C.siteName; if (!Auth.live) $("#demoBar").hidden = false;
+  Auth.starfield($("#sky"));
+  let toastT; const toast = t => { const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,4200); };
+  const title = slug => slug==="all" ? "All courses" : ((C.courses.find(c=>c.slug===slug)||{}).title || slug);
+  $("#courseChecks").innerHTML = C.courses.map(c => `<label><input type="checkbox" value="${c.slug}"> ${esc(c.level)} ${esc(c.title)}</label>`).join("") + `<label><input type="checkbox" value="all"> All courses</label>`;
+  $("#grantCourse").innerHTML = C.courses.map(c => `<option value="${c.slug}">${esc(c.level)} ${esc(c.title)}</option>`).join("") + `<option value="all">All courses</option>`;
+  let users = [];
+
+  async function init(){
+    const me = await Auth.current();
+    if (!me || !me.profile || me.profile.role !== "admin") { $("#denied").hidden = false; return; }
+    $("#adminApp").hidden = false; await refresh();
+  }
+  let requests = [];
+  async function refresh(){ const r = await Auth.admin("list", {}); users = r.users || []; requests = r.requests || []; orders = r.orders || []; quotes = r.quotes || []; renderList(); renderRequests(); renderOrders(); renderQuotes(); }
+  let quotes = [];
+  function renderQuotes(){
+    $("#qtCount").textContent = quotes.filter(q => q.status === "new").length + " new";
+    $("#qtBody").innerHTML = quotes.length ? quotes.slice(0, 50).map(q => `<tr>
+      <td>${esc(q.full_name)}<br><span class="hint">${esc(q.who||"")}${q.organisation?" · "+esc(q.organisation):""}</span><br><span class="hint selectable">${esc(q.email)}${q.phone?" · "+esc(q.phone):""}</span><br><span class="hint">${esc(q.island||"")}</span></td>
+      <td>${(q.subjects||[]).map(s => `<span class="chip">${esc(title(s))}</span>`).join("")}${(q.extras||[]).length?`<br><span class="hint">${esc(q.extras.join(", "))}</span>`:""}</td>
+      <td>${esc(q.learners||"—")} learners<br><span class="hint">${esc(q.teachers||"—")} teacher logins<br>${esc(q.start||"")} · ${esc(q.billing||"")}</span></td>
+      <td class="selectable" style="max-width:240px">${esc(q.message||"—")}</td>
+      <td><span class="chip" style="${q.status==="new"?"color:var(--gold)":q.status==="quoted"?"color:var(--ok)":"color:var(--muted)"}">${q.status==="new"?"New":q.status==="quoted"?"Quoted":"Closed"}</span>
+        <div class="rowbtns" style="margin-top:6px">${q.status!=="quoted"?`<button class="btn ghost sm" type="button" data-qstatus="${q.id}" data-s="quoted">Mark quoted</button>`:""}${q.status!=="closed"?`<button class="btn ghost sm" type="button" data-qstatus="${q.id}" data-s="closed">Close</button>`:""}</div></td></tr>`).join("")
+      : `<tr><td colspan="5" class="muted">No quote requests yet. They appear here when someone sends the quote form.</td></tr>`;
+  }
+  let orders = [];
+  function renderOrders(){
+    const ST = { pending: ["Waiting for payment", ""], paid: ["Paid", "color:var(--ok)"], paid_unmatched: ["Needs attention", "color:var(--bad)"], refunded: ["Refunded", "color:var(--muted)"], cancelled: ["Cancelled", "color:var(--muted)"] };
+    const rows = orders.filter(o => !(o.lines||[]).every(l => l.kind === "receipt")).slice(0, 40);
+    $("#ordCount").textContent = orders.filter(o => o.status === "paid_unmatched").length + " need attention";
+    $("#ordBody").innerHTML = rows.length ? rows.map(o => { const s = ST[o.status] || [o.status, ""];
+      return `<tr><td class="mono">${esc(o.invoice_number||"")}<br><span class="hint">${new Date(o.created_at||o.paid_at).toLocaleDateString([], {day:"numeric",month:"short"})}</span></td>
+      <td>${esc(o.full_name||"")}<br><span class="hint selectable">${esc(o.buyer_email||"")}</span></td>
+      <td>${(o.lines||[]).map(l => esc(l.label) + (l.detail ? ` <span class="hint">(${esc(l.detail)})</span>` : "")).join("<br>")}</td>
+      <td class="mono">US$${Number(o.amount_usd||0).toFixed(2)}</td>
+      <td><span class="chip" style="${s[1]}">${s[0]}</span></td></tr>`; }).join("")
+      : `<tr><td colspan="5" class="muted">No orders yet. They appear here when someone checks out in the shop.</td></tr>`;
+  }
+  function renderRequests(){
+    const order = { pending: 0, approved: 1, declined: 2 };
+    const rows = [...requests].sort((a,b) => (order[a.status]-order[b.status]) || (new Date(b.created_at)-new Date(a.created_at))).slice(0, 60);
+    const waiting = requests.filter(r => r.status === "pending").length;
+    $("#reqCount").textContent = waiting + " waiting";
+    $("#reqBody").innerHTML = rows.length ? rows.map(r => `<tr>
+      <td>${esc(r.full_name||"—")}<br><span class="hint mono">${esc(r.username||"")}${r.role&&r.role!=="student"?" · "+esc(r.role):""}</span></td>
+      <td>${r.course_slug ? esc(title(r.course_slug)) : `<b>New subject:</b> ${esc(r.subject_text)}`}</td>
+      <td class="selectable">${esc(r.note||"")}</td>
+      <td class="mono" style="white-space:nowrap">${new Date(r.created_at).toLocaleDateString([], {day:"numeric",month:"short"})}</td>
+      <td>${r.status === "pending"
+        ? `<div class="rowbtns"><button class="btn go sm" type="button" data-decide="${r.id}" data-ok="1">${r.course_slug?"Approve":"Noted"}</button><button class="btn ghost sm" type="button" data-decide="${r.id}" data-ok="0">Decline</button></div>`
+        : `<span class="chip" style="${r.status==="approved"?"color:var(--ok)":"color:var(--bad)"}">${r.status==="approved"?"Approved":"Declined"}</span>`}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="muted">No requests yet. They appear here when someone asks for a subject from their dashboard.</td></tr>`;
+  }
+  function renderList(){
+    const q = $("#search").value.trim().toLowerCase();
+    const rows = users.filter(u => !q || (u.full_name+" "+u.username).toLowerCase().includes(q));
+    $("#listBody").innerHTML = rows.length ? rows.map(u => `<tr>
+      <td>${esc(u.full_name)}${u.must_change_password?'<br><span class="hint">Must set password</span>':""}</td>
+      <td class="mono selectable">${esc(u.username)}</td>
+      <td>${esc(u.role)}</td>
+      <td>${(u.courses||[]).map(e => `<span class="chip">${esc(title(e.course_slug))}${e.edition==="teacher"?" · T":""}<button class="x-chip" type="button" data-revoke="${u.id}" data-slug="${e.course_slug}" aria-label="Remove ${esc(title(e.course_slug))}">×</button></span>`).join("") || '<span class="hint">None</span>'}</td>
+      <td><div class="rowbtns"><button class="btn ghost sm" type="button" data-grant="${u.id}">Add course</button><button class="btn ghost sm" type="button" data-reset="${u.id}">Reset password</button>${u.email && !/@students\./.test(u.email) ? `<button class="btn ghost sm" type="button" data-invite="${u.id}">Send invite</button>` : ""}</div></td></tr>`).join("")
+      : `<tr><td colspan="5" class="muted">No accounts match.</td></tr>`;
+  }
+  $("#search").addEventListener("input", renderList);
+
+  /* ---------- issuing logins: CSV upload or typed list ---------- */
+  let mode = "csv", csvRows = [];
+  document.querySelectorAll(".modes button").forEach(bt => bt.onclick = () => {
+    mode = bt.dataset.mode; document.querySelectorAll(".modes button").forEach(x => x.setAttribute("aria-selected", String(x === bt)));
+    $("#pane-csv").hidden = mode !== "csv"; $("#pane-type").hidden = mode !== "type";
+  });
+
+  /* CSV reading: commas or semicolons, quoted fields, Excel's byte-order mark */
+  function parseCSV(text){
+    text = text.replace(/^﻿/, "");
+    const first = text.split(/\r?\n/)[0] || "", delim = (first.match(/;/g)||[]).length > (first.match(/,/g)||[]).length ? ";" : ",";
+    const rows = []; let row = [], cell = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === delim) { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i+1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+      else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.map(r => r.map(c => c.trim())).filter(r => r.some(Boolean));
+  }
+  const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const HEAD = { name: ["name","full name","student name","student","teacher name","learner"], first: ["first name","first","given name","firstname"],
+    last: ["last name","last","surname","family name","lastname"], email: ["email","e mail","email address","student email","mail"],
+    username: ["username","user name","user","login","user id"], courses: ["courses","course","subjects","subject"], role: ["type","role","account type"],
+    school: ["class","form","school","group"] };
+  /* course names as people type them */
+  const ALIAS = { "comm-studies": ["comm studies","communication studies","cape communication studies","communications","cs"],
+    "digital-media-1": ["digital media 1","digital media unit 1","dm1","dm u1","cape digital media unit 1","digital media u1"],
+    "digital-media-2": ["digital media 2","digital media unit 2","dm2","dm u2","cape digital media unit 2","digital media u2"],
+    "cape-it-1": ["cape it","cape it 1","cape it unit 1","information technology unit 1","it unit 1","cape information technology"],
+    "csec-it": ["csec it","it","information technology","csec information technology","ict"],
+    "edpm": ["edpm","csec edpm","electronic document preparation and management","electronic document preparation management"], "all": ["all","all courses","everything"] };
+  function matchCourse(t){
+    const n = norm(t); if (!n) return null;
+    for (const c of C.courses) if (n === norm(c.slug) || n === norm(c.title) || n === norm(c.level + " " + c.title)) return c.slug;
+    for (const [slug, list] of Object.entries(ALIAS)) if (list.includes(n)) return slug;
+    return null;
+  }
+  function makeUsername(name, taken){
+    const parts = norm(name).split(" ").filter(Boolean); if (!parts.length) return "";
+    let base = parts.length > 1 ? parts[0] + "." + parts[parts.length-1] : parts[0];
+    base = base.replace(/[^a-z0-9.]/g, "").slice(0, 30); let u = base, n = 2;
+    while (taken.has(u)) u = base + n++;
+    taken.add(u); return u;
+  }
+  function buildRows(raw){
+    const taken = new Set(users.map(u => String(u.username||"").toLowerCase()));
+    const fallback = [...document.querySelectorAll("#courseChecks input:checked")].map(i => i.value);
+    return raw.map(r => {
+      const out = { full_name: r.name || [r.first, r.last].filter(Boolean).join(" "), email: (r.email||"").toLowerCase(), problems: [], unknown: [] };
+      let u = (r.username||"").toLowerCase().trim();
+      if (u) { if (!/^[a-z0-9._-]+$/.test(u)) out.problems.push("username can only use letters, numbers, dots and dashes"); else if (taken.has(u)) out.problems.push("username already taken"); else taken.add(u); }
+      else u = makeUsername(out.full_name, taken);
+      out.username = u;
+      if (!out.full_name) out.problems.push("no name");
+      if (out.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(out.email)) out.problems.push("email doesn't look right");
+      const given = String(r.courses||"").split(/[;|\/,]+/).map(x => x.trim()).filter(Boolean);
+      const matched = given.map(g => { const m = matchCourse(g); if (!m) out.unknown.push(g); return m; }).filter(Boolean);
+      out.courses = matched.length ? [...new Set(matched)] : fallback;
+      if (!out.courses.length) out.problems.push("no courses: tick some below");
+      if (out.unknown.length) out.problems.push("unknown course: " + out.unknown.join(", "));
+      const role = norm(r.role); out.role = /teach/.test(role) ? "teacher" : /admin/.test(role) ? "admin" : (role ? "student" : $("#role").value);
+      out.school = r.school || "";
+      return out;
+    });
+  }
+  function readTable(rows){
+    if (rows.length < 2) throw new Error("The file needs a header row and at least one person.");
+    const head = rows[0].map(norm), col = {};
+    for (const [k, names] of Object.entries(HEAD)) { const i = head.findIndex(h => names.includes(h)); if (i >= 0) col[k] = i; }
+    if (col.name === undefined && col.first === undefined) throw new Error("Couldn't find a Name column. Name the column \"Name\" (or \"First name\" and \"Last name\").");
+    return rows.slice(1).map(r => Object.fromEntries(Object.entries(col).map(([k, i]) => [k, r[i] || ""])));
+  }
+  function paintPreview(){
+    if (!csvRows.length) { $("#preview").hidden = true; return; }
+    csvRows = buildRows(csvRows.map(r => r.__raw ? r.__raw : r)).map((r, i) => ({ ...r, __raw: csvRows[i].__raw || csvRows[i] }));
+    const okN = csvRows.filter(r => !r.problems.length).length, emailN = csvRows.filter(r => !r.problems.length && r.email).length;
+    $("#pvCount").textContent = `${csvRows.length} people · ${okN} ready · ${emailN} with email for an invite`;
+    $("#pvBody").innerHTML = csvRows.map(r => `<tr><td>${esc(r.full_name||"—")}${r.school?`<br><span class="hint">${esc(r.school)}</span>`:""}</td><td class="mono">${esc(r.username)}</td>
+      <td>${r.email?esc(r.email):'<span class="hint">none</span>'}</td><td>${r.courses.map(c => `<span class="chip">${esc(title(c))}</span>`).join("")}</td><td>${esc(r.role)}</td>
+      <td>${r.problems.length?`<span class="bad-t">${esc(r.problems.join("; "))}</span>`:'<span class="ok-t">Ready</span>'}</td></tr>`).join("");
+    $("#preview").hidden = false;
+  }
+  async function loadFile(f){
+    if (!f) return;
+    if (!/\.csv$/i.test(f.name) && f.type !== "text/csv") { toast("Choose a .csv file. In Excel or Google Sheets, save or download the sheet as CSV."); return; }
+    try {
+      const raw = readTable(parseCSV(await f.text()));
+      csvRows = raw.map(r => ({ __raw: r })); paintPreview();
+      $("#dropTitle").textContent = f.name; $("#dropHint").textContent = "Choose another file to replace it";
+    } catch (x) { toast(x.message); }
+  }
+  $("#csvFile").addEventListener("change", e => loadFile(e.target.files[0]));
+  const drop = $("#drop");
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+  $("#pvClear").onclick = () => { csvRows = []; $("#csvFile").value = ""; $("#preview").hidden = true; $("#dropTitle").textContent = "Choose a CSV file, or drop it here"; $("#dropHint").textContent = "From Excel or Google Sheets: File → Save as / Download → CSV"; };
+  document.querySelector("#courseChecks").addEventListener("change", () => { if (csvRows.length) paintPreview(); });
+  $("#role").addEventListener("change", () => { if (csvRows.length) paintPreview(); });
+  $("#tplBtn").onclick = () => {
+    const tpl = "Name,Email,Username,Courses,Type,Class\nAaliyah Richardson,aaliyah@example.com,,EDPM,Student,5A\nMarcus Brooks,,m.brooks,Comm Studies; Digital Media 1,Student,L6\nJanelle Arrindell,janelle@example.com,,All,Teacher,\n";
+    try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tpl], { type: "text/csv" })); a.download = "class-list-template.csv"; document.body.appendChild(a); a.click(); a.remove(); }
+    catch (e) {}
+    toast("Template downloaded as class-list-template.csv. If nothing downloaded, use the copy in the site folder: assets/class-list-template.csv.");
+  };
+
+  $("#createBtn").onclick = async () => {
+    const er = $("#newErr"); er.hidden = true;
+    let rows;
+    if (mode === "csv") {
+      if (!csvRows.length) { er.textContent = "Choose your class list file first."; er.hidden = false; return; }
+      paintPreview(); rows = csvRows.filter(r => !r.problems.length);
+      if (!rows.length) { er.textContent = "No rows are ready. Fix the ones marked in red, then upload the file again."; er.hidden = false; return; }
+    } else {
+      const lines = $("#people").value.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      if (!lines.length) { er.textContent = "Add at least one person."; er.hidden = false; return; }
+      const built = buildRows(lines.map(l => { const [name, username, email] = l.split(",").map(x => (x||"").trim()); return { name, username, email }; }));
+      const bad = built.map((r, i) => r.problems.length ? `line ${i+1}: ${r.problems.join("; ")}` : "").filter(Boolean);
+      if (bad.length) { er.textContent = "Check " + bad.join(" · "); er.hidden = false; return; }
+      rows = built;
+    }
+    const base = { source: $("#source").value, edition: $("#edition").value, books: $("#books").checked };
+    const accounts = rows.map(r => ({ full_name: r.full_name, username: r.username, email: r.email, role: r.role, school: r.school, courses: r.courses, ...base }));
+    const sendInvites = $("#invites").checked;
+    const b = $("#createBtn"); b.disabled = true;
+    const created = [];
+    try {
+      for (let i = 0; i < accounts.length; i += 10) {          // ten at a time keeps each request quick
+        b.textContent = `Creating ${Math.min(i + 10, accounts.length)} of ${accounts.length}…`;
+        const r = await Auth.admin("create", { accounts: accounts.slice(i, i + 10), sendInvites });
+        created.push(...r.created);
+      }
+      const inv = x => x.error ? "" : x.invited === "sent" ? '<span class="ok-t">Emailed</span>' : x.invited === "demo" ? '<span class="hint">Emailed when live</span>' : /^not sent/.test(x.invited||"") ? `<span class="bad-t">${esc(x.invited)}</span>` : '<span class="hint">Give it to them</span>';
+      $("#resBody").innerHTML = created.map(x => `<tr><td>${esc(x.full_name)}</td><td class="mono">${esc(x.username)}</td><td class="mono">${x.error ? '<span class="bad-t">'+esc(x.error)+'</span>' : esc(x.temp_password)}</td><td>${inv(x)}</td></tr>`).join("");
+      const sent = created.filter(x => x.invited === "sent").length, ok = created.filter(x => !x.error).length;
+      $("#resMsg").textContent = `${ok} login${ok===1?"":"s"} created` + (sendInvites ? `, ${sent} invite${sent===1?"":"s"} emailed` : "") + ". Copy the list now: temporary passwords are shown only once.";
+      $("#results").hidden = false;
+      $("#results").dataset.tsv = "Name\tUsername\tTemporary password\tEmail\tInvite\n" + created.filter(x=>!x.error).map(x => [x.full_name, x.username, x.temp_password, x.email||"", x.invited==="sent"?"Emailed":"Give it to them"].join("\t")).join("\n");
+      $("#people").value = ""; $("#pvClear").click(); await refresh();
+      $("#results").scrollIntoView({ block: "nearest" });
+    } catch (x) { er.textContent = x.message + (created.length ? ` (${created.length} were created before this stopped; they're listed below.)` : ""); er.hidden = false; }
+    finally { b.disabled = false; b.textContent = "Create logins"; }
+  };
+  $("#copyRes").onclick = async () => {
+    try { await navigator.clipboard.writeText($("#results").dataset.tsv); toast("Copied. Paste into a spreadsheet to print or share."); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents($("#resBody")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected. Press Ctrl+C (or Cmd+C) to copy."); }
+  };
+  document.addEventListener("click", async e => {
+    const g = e.target.closest("[data-grant]"), rs = e.target.closest("[data-reset]"), rv = e.target.closest("[data-revoke]"), dc = e.target.closest("[data-decide]"), iv = e.target.closest("[data-invite]");
+    const qs = e.target.closest("[data-qstatus]");
+    try {
+      if (qs) { qs.disabled = true; await Auth.admin("quote_status", { id: Number(qs.dataset.qstatus), status: qs.dataset.s }); toast(qs.dataset.s === "quoted" ? "Marked as quoted." : "Request closed."); await refresh(); return; }
+      if (iv) { const u = users.find(x => x.id === iv.dataset.invite); iv.disabled = true;
+        const r = await Auth.admin("invite", { user_id: u.id });
+        toast(r.demo ? "Demo mode: the invite would go to " + u.email + " with a new temporary password." : "Invite sent to " + r.sent + " with a new temporary password."); await refresh(); }
+      if (dc) { const ok = dc.dataset.ok === "1", req = requests.find(x => String(x.id) === dc.dataset.decide);
+        dc.disabled = true; await Auth.admin("decide", { id: req.id, approve: ok });
+        toast(ok ? (req.course_slug ? title(req.course_slug) + " added for " + (req.full_name||"them") + "." : "Request noted.") : "Request declined."); await refresh(); }
+      if (g) { const slug = $("#grantCourse").value; await Auth.admin("grant", { user_id: g.dataset.grant, courses: [slug], edition: $("#edition").value, books: $("#books").checked, source: "manual" }); toast(title(slug) + " added."); await refresh(); }
+      if (rs) { const u = users.find(x => x.id === rs.dataset.reset); const r = await Auth.admin("reset", { user_id: rs.dataset.reset });
+        $("#resBody").innerHTML = `<tr><td>${esc(u.full_name)}</td><td class="mono">${esc(u.username)}</td><td class="mono">${esc(r.temp_password)}</td></tr>`;
+        $("#results").hidden = false; $("#results").dataset.tsv = "Name\tUsername\tTemporary password\n" + [u.full_name,u.username,r.temp_password].join("\t"); $("#results").scrollIntoView({block:"nearest"});
+        toast("New temporary password issued for " + u.full_name + "."); await refresh(); }
+      if (rv) { await Auth.admin("revoke", { user_id: rv.dataset.revoke, course_slug: rv.dataset.slug }); toast(title(rv.dataset.slug) + " removed."); await refresh(); }
+    } catch (x) { toast(x.message); }
+  });
+  init().catch(x => toast(x.message));
+})();
+</script>
+<script>
+/* attendance register */
+(function(){
+  const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const today = new Date().toLocaleDateString("en-CA"); $("#attFrom").value = today; $("#attTo").value = today;
+  const t = x => x ? new Date(x).toLocaleString([], { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }) : "";
+  const dur = m => m >= 60 ? Math.floor(m / 60) + " h " + (m % 60) + " min" : m + " min";
+  let rows = [];
+  async function load(){
+    try { const r = await Presence.attendance({ from: $("#attFrom").value, to: $("#attTo").value, everyone: $("#attAll").checked }); rows = r.rows || [];
+      $("#attBody").innerHTML = rows.length ? rows.map(x => `<tr><td>${esc(x.first)} ${esc(x.last)}</td><td>${esc(x.email || "—")}</td><td>${esc(t(x.in))}</td><td>${x.still ? "<b>online now</b>" : esc(t(x.out))}</td><td>${esc(dur(x.minutes))}</td></tr>`).join("") : '<tr><td colspan="5" class="muted">No sign-ins in those dates.</td></tr>';
+    } catch (e) { $("#attBody").innerHTML = `<tr><td colspan="5" class="muted">${esc(e.message)}</td></tr>`; }
+    try { const s = await Presence.summary(); $("#attOnline").textContent = s.online + " online now"; } catch (e) {}
+  }
+  $("#attShow").onclick = load;
+  $("#attCsv").onclick = async () => { await load();
+    const q = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v;
+    const csv = [["First name","Last name","Email","Role","Logged in","Logged out","How it ended","Total minutes"]].concat(rows.map(x => [x.first, x.last, x.email, x.role, t(x.in), x.still ? "" : t(x.out), x.how, x.minutes])).map(r => r.map(q).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "Attendance " + $("#attFrom").value + (($("#attTo").value !== $("#attFrom").value) ? " to " + $("#attTo").value : "") + ".csv"; document.body.appendChild(a); a.click(); a.remove(); };
+  setTimeout(load, 800);
+})();
+</script>
+<script>
+/* invoices */
+(function(){ const t = m => { const el = document.querySelector("#toast"); if (el) { el.textContent = m; el.hidden = false; setTimeout(() => el.hidden = true, 5000); } else alert(m); };
+  window.addEventListener("ea-demo-mail", e => t("Demo: email sent to " + e.detail.to + " · " + e.detail.subject));
+  Invoices.adminSection(document.querySelector("#invoices"), { toast: t }); })();
+/* student ID checks */
+(function(){
+  const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const ST = { none: "No photo or ID", submitted: "Waiting", verified: "✓ Verified", rejected: "Not verified" };
+  let cur = null;
+  async function load(){
+    try { const r = await Identity.list($("#idSt").value);
+      $("#idBody").innerHTML = r.rows.length ? r.rows.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.email || "—")}</td><td>${esc(x.id_type || "—")}</td><td>${esc(ST[x.status] || x.status)}</td><td>${x.status !== "none" ? `<button class="btn ghost sm" type="button" data-idv="${esc(x.user)}">View</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="5" class="muted">No students here.</td></tr>';
+    } catch (e) { $("#idBody").innerHTML = `<tr><td colspan="5" class="muted">${esc(e.message)}</td></tr>`; }
+  }
+  const pic = (src, alt) => src ? `<img src="${esc(src)}" alt="${alt}" style="width:100%;max-height:340px;object-fit:contain;border-radius:12px;background:#060D26">` : '<p class="hint">Not sent yet.</p>';
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-idv]"); if (b) { try { const r = await Identity.view(b.dataset.idv); cur = r.user;
+      $("#idv-t").textContent = r.name; $("#idv-s").textContent = (r.email || "") + " · " + (ST[r.status] || r.status) + (r.checked_by ? " · checked by " + r.checked_by : "");
+      $("#idv-p").innerHTML = pic(r.photo, "Student photo"); $("#idv-d").innerHTML = pic(r.doc, "ID document"); $("#idv-dt").textContent = r.id_type || "ID document"; $("#idv-n").value = r.note || ""; $("#dlg-id").showModal(); } catch (x) { alert(x.message); } }
+    if (e.target.closest("[data-idclose]")) $("#dlg-id").close();
+  });
+  const decide = st => async () => { try { await Identity.verify(cur, st, $("#idv-n").value); $("#dlg-id").close(); load(); } catch (x) { alert(x.message); } };
+  $("#idv-ok").onclick = decide("verified"); $("#idv-no").onclick = decide("rejected");
+  $("#idSt").onchange = load; setTimeout(load, 700);
+})();
+</script>
+</body>
+</html>

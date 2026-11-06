@@ -1,0 +1,50 @@
+# Netlify settings. Netlify installs the email library (package.json) and publishes the folder.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+# Morning summary email: every day at 11:00 UTC = 7:00 a.m. in Sint Maarten
+[functions."daily-summary"]
+  schedule = "0 11 * * *"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+    Cache-Control = "no-store"
+
+# Keep set-up files private (they aren't pages)
+[[redirects]]
+  from = "/supabase/*"
+  to = "/404"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/SETUP-GUIDE.md"
+  to = "/404"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/package.json"
+  to = "/404"
+  status = 404
+  force = true
+
+# Old links to the game arcade keep working if you move it into /arcade/
+# [[redirects]]
+#   from = "/games/*"
+#   to = "/arcade/:splat"
+#   status = 301

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shop · Exam Ace Tutorials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Layout: shop shelves on the left, a cart that stays in view on the right */
+.head{padding-block:34px 8px;display:grid;gap:8px;max-width:64ch}
+.head h1{font-size:clamp(1.9rem,4.4vw,2.8rem)}
+.head p{color:var(--muted)}
+.shop{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;padding-block:18px 30px;align-items:start}
+@media (max-width:960px){.shop{grid-template-columns:1fr}}
+.shelf{padding:22px;display:grid;gap:16px}
+.shelf + .shelf{margin-top:20px}
+.shelf h2{font-size:1.35rem}
+.shelf .sub{color:var(--muted);font-size:.95rem;margin-top:-8px}
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.picks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.picks{grid-template-columns:1fr}}
+.pick{position:relative;display:grid;gap:4px;padding:12px 14px 12px 42px;border-radius:12px;border:1.5px solid var(--field-line);background:color-mix(in srgb,var(--surface) 70%,transparent);cursor:pointer;transition:border-color .15s,background .15s}
+.pick:hover{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pick input{position:absolute;left:14px;top:15px;width:18px;height:18px;accent-color:var(--gold)}
+.pick b{font-size:.96rem;line-height:1.25}
+.pick span{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pick:has(input:checked){border-color:color-mix(in srgb,var(--gold) 75%,transparent);background:color-mix(in srgb,var(--gold) 8%,var(--surface))}
+.pick:has(input:checked) b{color:var(--gold)}
+.opts{display:flex;gap:10px 22px;flex-wrap:wrap;align-items:center}
+.opts label{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.95rem;cursor:pointer}
+.opts input{accent-color:var(--gold);width:18px;height:18px}
+.result{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 18px;border-radius:14px;border:1.5px dashed var(--line);background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.result .what{display:grid;gap:2px;min-width:0}
+.result .what b{font-family:var(--f-display);font-size:1.15rem}
+.result .what span{color:var(--muted);font-size:.92rem}
+.result .amt{font-family:var(--f-display);font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.result .amt small{font:400 .85rem var(--f-body);color:var(--muted)}
+.tplans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:620px){.tplans{grid-template-columns:1fr}}
+.tplan{display:grid;gap:10px;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--raise)}
+.tplan .price{font-family:var(--f-display);font-weight:800;font-size:1.4rem}
+.tplan .price small{font:400 .85rem var(--f-body);color:var(--muted)}
+.tplan select{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--field-line);border-radius:10px;padding:8px}
+.books{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.books table{width:100%;border-collapse:collapse;font-size:.94rem;min-width:520px}
+.books th,.books td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.books th{font-family:var(--f-display);background:var(--raise)}
+.books td .btn{width:100%}
+.books .p{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem;display:block;margin-bottom:4px}
+
+/* cart */
+.cart{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);padding:20px;display:grid;gap:14px}
+.cart h2{font-size:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.lines{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.lines li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.lines b{font-size:.96rem}
+.lines span{font-size:.85rem;color:var(--muted);grid-column:1}
+.lines .pr{grid-column:2;grid-row:1;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lines .rm{grid-column:2;grid-row:2;background:none;border:0;color:var(--muted);font:700 .8rem var(--f-body);cursor:pointer;text-decoration:underline;justify-self:end;padding:0}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--f-display);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:.94rem}
+.secure{font-size:.82rem;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;display:none}
+@media (max-width:960px){.fab{display:inline-flex}.cart{position:static}}
+
+/* checkout */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:4px 12px;align-items:center;padding:12px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}
+.steps .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 .9rem var(--f-display);background:var(--soft-gold);color:var(--gold);grid-row:span 2}
+.steps li.done .n{background:var(--ok);color:#06210f}
+.steps .t{font-weight:700;font-size:.95rem}
+.steps .act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.steps .ok{color:var(--ok);font-weight:700;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--surface);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> Checkout simulates payment so you can test. Add your Payhip product keys in <b>assets/config.js</b> to take real payments.</div></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="seal"><span>EA</span></span><span class="bname"><span id="brandName">Exam Ace Tutorials</span><small>E-learning Ecosystem</small></span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="index.html#courses" class="hide-sm">Courses</a>
+      <a href="#cart" data-cartlink data-label="Cart"></a>
+      <span id="navAuth"><a class="btn ghost sm" href="index.html?signin=1&amp;next=%2Fshop.html">Sign in</a></span>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head">
+    <p class="eyebrow">Shop</p>
+    <h1>Order courses and books</h1>
+    <p>Build your package, add books, and pay securely through Payhip. Your courses unlock on your account as soon as payment is confirmed.</p>
+  </div>
+
+  <div class="shop">
+    <div>
+      <section class="panel shelf" id="build" aria-labelledby="build-h">
+        <h2 id="build-h">Build your student package</h2>
+        <p class="sub">Tick the subjects you're taking. The best-value plan is chosen for you.</p>
+        <div class="picks" id="picks"></div>
+        <div class="opts">
+          <label><input type="checkbox" id="withBooks" checked> Include the flipbook textbook and workbook</label>
+        </div>
+        <div class="opts" role="radiogroup" aria-label="How to pay">
+          <label><input type="radio" name="billing" value="month" checked> Pay monthly</label>
+          <label id="yearOpt"><input type="radio" name="billing" value="year"> Exam-year pass (September to June, paid once)</label>
+        </div>
+        <div class="result" aria-live="polite">
+          <div class="what"><b id="resName">Choose a subject</b><span id="resNote">Tick at least one subject above.</span></div>
+          <div class="amt" id="resAmt"></div>
+          <button class="btn go" type="button" id="addPkg" disabled>Add to cart</button>
+        </div>
+      </section>
+
+      <section class="panel shelf" id="teachers" aria-labelledby="teach-h">
+        <h2 id="teach-h">For teachers</h2>
+        <p class="sub">Teacher editions with answer keys, teacher packs and game packs.</p>
+        <div class="tplans" id="tplans"></div>
+      </section>
+
+      <section class="panel shelf" id="books" aria-labelledby="books-h">
+        <h2 id="books-h">Books</h2>
+        <p class="sub">One-off purchases. Payhip emails your download as soon as you pay.</p>
+        <div class="books"><table><thead id="bookHead"></thead><tbody id="bookBody"></tbody></table></div>
+      </section>
+    </div>
+
+    <aside class="panel cart" id="cart" aria-labelledby="cart-h">
+      <h2 id="cart-h">Your cart <span class="chip" id="cartCount">0 items</span></h2>
+      <ul class="lines" id="lines"></ul>
+      <p class="empty" id="empty">Your cart is empty. Build a package or add a book.</p>
+      <div class="total" id="totalRow" hidden><span>Due today</span><span id="total"></span></div>
+      <p class="hint" id="renewNote" hidden>Monthly plans renew each month until you cancel in Payhip.</p>
+      <button class="btn go" type="button" id="checkout" disabled>Checkout</button>
+      <p class="secure"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none;margin-top:2px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Payment is handled by Payhip. Card details never touch this website. Payhip emails your receipt.</span></p>
+    </aside>
+  </div>
+</main>
+<a class="btn go fab" href="#cart" data-cartlink data-label="Cart"></a>
+
+<dialog class="modal" id="dlg-checkout" aria-labelledby="co-title">
+  <div class="box"><div class="inner">
+    <button class="x" type="button" data-close aria-label="Close">×</button>
+    <div><p class="eyebrow" id="co-eyebrow">Checkout</p><h2 id="co-title">Pay with Payhip</h2></div>
+    <div id="co-body"></div>
+  </div></div>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<footer class="foot"><div class="wrap"><p>© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p></div></footer>
+<script>document.querySelectorAll("[data-yr]").forEach(e => e.textContent = new Date().getFullYear());</script>
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/presence.js"></script>
+<script src="assets/quote.js"></script>
+<script>
+(function(){
+  const C = window.SITE_CONFIG, $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const money = n => "US$" + (Math.round(n * 100) / 100).toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0 });
+  const plan = id => C.plans.find(p => p.id === id);
+  const course = slug => C.courses.find(c => c.slug === slug);
+  const months = C.examYearMonths || 8;
+  $("#brandName").textContent = C.siteName;
+  if (!Auth.live) $("#demoBar").hidden = false;
+  Auth.starfield($("#sky")); Auth.mountCartLinks();
+  let toastT; const toast = t => { const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,4200); };
+  let me = null;
+
+  /* the exam-year option shows when at least one plan has a Payhip key for it (always in demo) */
+  const yearReady = !Auth.live || C.plans.some(p => p.payhipYearKey);
+  $("#yearOpt").hidden = !yearReady;
+
+  /* ---------- package builder ---------- */
+  $("#picks").innerHTML = C.courses.map(c => `<label class="pick"><input type="checkbox" value="${c.slug}"><span>${esc(c.level)}</span><b>${esc(c.title)}</b></label>`).join("");
+  const chosen = () => [...document.querySelectorAll("#picks input:checked")].map(i => i.value);
+  const billing = () => (document.querySelector('input[name="billing"]:checked') || {}).value || "month";
+  function resolve(){
+    const s = chosen(), books = $("#withBooks").checked;
+    if (!s.length) return null;
+    let p, note;
+    if (s.length === 1) { p = plan(books ? "plus" : "single"); note = course(s[0]).title + (books ? " with flipbook textbook and workbook" : ", course only"); }
+    else if (s.length === 2) { p = plan("two"); note = s.map(x => course(x).title).join(" and ") + (books ? ", both textbooks included" : ". Both textbooks come included at this level"); }
+    else { p = plan("all"); note = s.length < 6 ? s.length + " subjects: All Access unlocks all six for less than buying them separately" : "Every course and every textbook"; }
+    const year = billing() === "year";
+    return { p, note, slugs: p.subjects >= 6 ? ["all"] : s, year, price: year ? p.price * months : p.price };
+  }
+  function paintResult(){
+    const r = resolve();
+    $("#addPkg").disabled = !r;
+    if (!r) { $("#resName").textContent = "Choose a subject"; $("#resNote").textContent = "Tick at least one subject above."; $("#resAmt").innerHTML = ""; return; }
+    $("#resName").textContent = r.p.name + (r.year ? " · exam-year pass" : "");
+    $("#resNote").textContent = r.note;
+    if (isQuote(r.p)) { $("#resAmt").innerHTML = `Custom<small> pricing</small>`; $("#addPkg").textContent = "Request a quote"; return; }
+    $("#addPkg").textContent = "Add to cart";
+    $("#resAmt").innerHTML = money(r.price) + `<small> ${r.year ? "once, to June" : "/ month"}</small>`;
+  }
+  document.querySelector("#build").addEventListener("change", paintResult);
+  $("#addPkg").onclick = () => {
+    const r = resolve(); if (!r) return;
+    if (isQuote(r.p)) { Quote.open({ plan: r.p.id, subject: r.slugs[0] }); return; }
+    const res = Auth.cart.add({ kind: "plan", planId: r.p.id, label: r.p.name + (r.year ? " (exam-year pass)" : ""), detail: r.note, slugs: r.slugs,
+      billing: r.year ? "year" : "month", price: r.price, books: !!r.p.books, teacher: false,
+      payhipKey: r.year ? r.p.payhipYearKey : r.p.payhipKey, payhipName: r.p.payhipName });
+    toast(res === "replaced" ? "Your package in the cart is now " + r.p.name + "." : r.p.name + " added to your cart.");
+  };
+
+  /* plans at or above quoteFrom are quote-only */
+  const isQuote = p => typeof C.quoteFrom === "number" && p.price >= C.quoteFrom;
+  document.addEventListener("click", e => { const q = e.target.closest("[data-quote]"); if (q) Quote.open({ plan: q.dataset.quote, subject: (document.querySelector("#picks input:checked") || {}).value }); });
+  /* ---------- teacher plans ---------- */
+  $("#tplans").innerHTML = C.plans.filter(p => p.group === "teacher").map(p => `<div class="tplan">
+    <b style="font-family:var(--f-display);font-size:1.08rem">${esc(p.name)}</b>
+    ${isQuote(p) ? `<div class="price">Custom<small> pricing</small></div>` : `<div class="price">${money(p.price)}<small> / month</small></div>`}
+    <span class="hint">${esc(p.includes.join(" · "))}</span>
+    ${p.subjects < 6 ? `<select id="tsub-${p.id}" aria-label="Subject for ${esc(p.name)}">${C.courses.map(c => `<option value="${c.slug}">${esc(c.level+" "+c.title)}</option>`).join("")}</select>` : ""}
+    ${isQuote(p) ? `<button class="btn go" type="button" data-quote="${p.id}">Request a quote</button>` : `<button class="btn ghost" type="button" data-tplan="${p.id}">Add to cart</button>`}</div>`).join("");
+  document.addEventListener("click", e => {
+    const t = e.target.closest("[data-tplan]"); if (!t) return;
+    const p = plan(t.dataset.tplan), sel = $("#tsub-" + p.id), slug = sel ? sel.value : null;
+    Auth.cart.add({ kind: "plan", planId: p.id, label: p.name, detail: slug ? course(slug).level + " " + course(slug).title + ", teacher edition" : "Every teacher edition",
+      slugs: slug ? [slug] : ["all"], billing: "month", price: p.price, books: !!p.books, teacher: true, payhipKey: p.payhipKey, payhipName: p.payhipName });
+    toast(p.name + " added to your cart.");
+  });
+
+  /* ---------- books ---------- */
+  $("#bookHead").innerHTML = `<tr><th>Subject</th>${C.books.map(b => `<th>${esc(b.name)}</th>`).join("")}</tr>`;
+  $("#bookBody").innerHTML = C.courses.map(c => `<tr><td><b>${esc(c.title)}</b><br><span class="hint">${esc(c.level)}</span></td>${C.books.map(b =>
+    `<td><span class="p">${money(b.price)}</span><button class="btn ghost sm" type="button" data-book="${b.format}" data-slug="${c.slug}">Add</button></td>`).join("")}</tr>`).join("");
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-book]"); if (!b) return;
+    const bk = C.books.find(x => x.format === b.dataset.book), c = course(b.dataset.slug);
+    const ok = Auth.cart.add({ kind: "book", format: bk.format, slug: c.slug, label: bk.name, detail: c.level + " " + c.title, price: bk.price, payhipKey: (bk.keys || {})[c.slug] || "", payhipName: bk.name });
+    toast(ok ? bk.name + " added to your cart." : "That book is already in your cart.");
+  });
+
+  /* ---------- cart ---------- */
+  function paintCart(){
+    const lines = Auth.cart.get(), n = lines.length;
+    $("#cartCount").textContent = n + (n === 1 ? " item" : " items");
+    $("#empty").hidden = !!n; $("#totalRow").hidden = !n; $("#checkout").disabled = !n;
+    $("#renewNote").hidden = !lines.some(l => l.billing === "month" && l.kind === "plan");
+    $("#lines").innerHTML = lines.map(l => `<li><b>${esc(l.label)}</b><span>${esc(l.detail)}</span>
+      <span class="pr">${money(l.price)}${l.kind==="plan"&&l.billing==="month"?"/mo":""}</span><button class="rm" type="button" data-rm="${l.key}">Remove</button></li>`).join("");
+    $("#total").textContent = money(Auth.cart.total());
+  }
+  window.addEventListener("cartchange", paintCart);
+  document.addEventListener("click", e => { const r = e.target.closest("[data-rm]"); if (r) Auth.cart.remove(r.dataset.rm); });
+
+  /* ---------- checkout: one Payhip payment per item ---------- */
+  const co = $("#dlg-checkout");
+  document.addEventListener("click", e => { if (e.target.closest("[data-close]")) co.close(); });
+  let order = null, payhipLoaded = false;
+  $("#checkout").onclick = async () => {
+    me = await Auth.current();
+    if (!me) {
+      $("#co-eyebrow").textContent = "Checkout"; $("#co-title").textContent = "Sign in to check out";
+      $("#co-body").innerHTML = `<div style="display:grid;gap:12px"><p class="hint">Your purchase is added to your account, so sign in or create one first. Your cart is saved.</p>
+        <a class="btn go" href="index.html?signin=1&next=%2Fshop.html%23cart">Sign in</a><a class="btn ghost" href="index.html?register=1&next=%2Fshop.html%23cart">Create an account</a></div>`;
+      co.showModal(); return;
+    }
+    const btn = $("#checkout"); btn.disabled = true;
+    try { order = await Auth.createOrder(Auth.cart.get()); renderSteps(); co.showModal(); }
+    catch (x) { toast(x.message); }
+    finally { btn.disabled = false; }
+  };
+  function renderSteps(){
+    const email = (me.profile && me.profile.contact_email) || me.user.email;
+    $("#co-eyebrow").textContent = "Order " + order.invoice_number;
+    $("#co-title").textContent = order.lines.every(l => l.paid) ? "All paid. Thank you!" : "Pay with Payhip";
+    const many = order.lines.length > 1;
+    $("#co-body").innerHTML = `<div style="display:grid;gap:14px">
+      <p class="hint">${many ? "Payhip takes one payment per item, so pay for each one below. " : ""}At Payhip, use <b class="selectable">${esc(email)}</b> so the payment is matched to your account.</p>
+      <ol class="steps">${order.lines.map((l, i) => `<li class="${l.paid?"done":""}"><span class="n">${l.paid?"✓":i+1}</span>
+        <span class="t">${esc(l.label)} · ${money(l.price)}</span>
+        <span class="act">${l.paid ? `<span class="ok">Paid</span>` : payButton(l, email)}</span></li>`).join("")}</ol>
+      ${order.lines.every(l => l.paid) ? `<a class="btn go" href="dashboard.html">Go to my courses</a>` :
+        `<p class="hint">After paying, your courses unlock automatically, usually within a minute. Books arrive by email from Payhip.</p><a class="btn ghost" href="dashboard.html">I've paid · go to my dashboard</a>`}
+    </div>`;
+    if (Auth.live && !payhipLoaded && order.lines.some(l => l.payhipKey)) { const s = document.createElement("script"); s.src = "https://payhip.com/payhip.js"; document.head.appendChild(s); payhipLoaded = true; }
+  }
+  function payButton(l, email){
+    if (!Auth.live) return `<button class="btn go sm" type="button" data-demopay="${l.key}">Simulate payment</button>`;
+    if (!l.payhipKey) return `<span class="hint">Checkout for this item isn't set up yet. Email ${esc(C.contactEmail)} with order ${esc(order.invoice_number)}.</span>`;
+    return `<a class="btn go sm payhip-buy-button" href="https://payhip.com/b/${encodeURIComponent(l.payhipKey)}" target="_blank" rel="noopener"
+      data-theme="none" data-product="${esc(l.payhipKey)}" data-message="Order ${esc(order.invoice_number)} for ${esc(email)}"
+      data-success-callback="ksPaid" data-metadata="${esc(order.invoice_number + "|" + l.key)}">Pay ${money(l.price)}</a>`;
+  }
+  /* Payhip calls this after a successful payment in its checkout window */
+  window.ksPaid = function(){
+    const next = order && order.lines.find(l => !l.paid);
+    if (next) next.paid = true;
+    if (order.lines.every(l => l.paid)) Auth.cart.clear();
+    Auth.log("payhip_checkout", { order: order.invoice_number });
+    renderSteps();
+  };
+  document.addEventListener("click", e => {
+    const d = e.target.closest("[data-demopay]"); if (!d) return;
+    Auth.demoPay(order.id, d.dataset.demopay);
+    const l = order.lines.find(x => x.key === d.dataset.demopay); l.paid = true;
+    if (order.lines.every(x => x.paid)) Auth.cart.clear();
+    renderSteps(); toast("Payment simulated. Your account has been updated.");
+  });
+
+  /* ---------- arriving with a plan or subject chosen ---------- */
+  const q = new URLSearchParams(location.search);
+  if (q.get("subject")) { const i = document.querySelector(`#picks input[value="${CSS.escape(q.get("subject"))}"]`); if (i) i.checked = true; }
+  if (q.get("plan")) {
+    const p = plan(q.get("plan"));
+    if (p && p.group === "teacher") $("#teachers").scrollIntoView();
+    else if (p) { $("#withBooks").checked = !!p.books || p.id !== "single"; if (p.id === "all") document.querySelectorAll("#picks input").forEach(i => i.checked = true); }
+  }
+  paintResult(); paintCart();
+  Auth.current().then(u => { me = u; if (u) { const f = ((u.profile && u.profile.full_name) || "").split(" ")[0] || "My account"; $("#navAuth").innerHTML = `<a class="btn go sm" href="dashboard.html">${esc(f)} · Dashboard</a>`; } });
+})();
+</script>
+</body>
+</html>

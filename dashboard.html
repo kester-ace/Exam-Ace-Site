@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My Courses · Exam Ace Tutorials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.greet{padding-block:36px 10px;display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
+.greet h1{font-size:clamp(1.9rem,4.4vw,2.8rem)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;padding-block:20px 10px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.mine{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:620px){.mine{grid-template-columns:1fr}}
+.c{padding:20px;display:flex;flex-direction:column;gap:10px}
+.c h3{font-size:1.2rem}
+.c p{color:var(--muted);font-size:.94rem;flex:1}
+.c .row{display:flex;gap:8px;flex-wrap:wrap}
+.c.locked{opacity:.72}
+h2.sub{font-size:1.25rem;margin:26px 0 12px}
+.side{display:grid;gap:16px}
+.side .panel{padding:18px;display:grid;gap:12px}
+.side h3{font-size:1.05rem}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:.93rem}
+.kv span:nth-child(odd){color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.88rem}
+.log li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.log time{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{padding:22px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--surface);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> Accounts are saved in this browser only.</div></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="seal"><span>EA</span></span><span class="bname"><span id="brandName">Exam Ace Tutorials</span><small>E-learning Ecosystem</small></span></a>
+    <nav class="nav" aria-label="Account">
+      <a href="courses.html">Course hub</a>
+      <a href="shop.html" data-cartlink></a>
+      <a href="admin.html" id="adminLink" hidden>Accounts</a>
+      <button class="btn ghost sm" type="button" id="signOut">Sign out</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="app" aria-busy="true">
+  <div class="greet">
+    <div><p class="eyebrow" id="roleLine">Dashboard</p><h1 id="hello">Your courses</h1></div>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="mine" id="mine"></div>
+      <h2 class="sub" id="othersHead" hidden>More courses</h2>
+      <div class="mine" id="others"></div>
+    </div>
+    <aside class="side">
+      <div class="panel">
+        <h3>Study tools</h3>
+        <p class="hint">Notes, voice notes and handwriting, memory palaces, memes and a study timer. Everything is saved to your account and linked to its course and topic.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn go sm" type="button" data-study="notebook">My notebook</button>
+          <button class="btn ghost sm" type="button" data-study="palace">Memory palace</button>
+          <button class="btn ghost sm" type="button" data-study="memes">Thanks for the Memeries</button>
+          <button class="btn ghost sm" type="button" data-study="hourglass">Study hourglass</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Exam room</h3>
+        <p class="hint" id="xmHint">Sit a live test with the room code from your teacher.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn go sm" href="exam-teacher.html" id="xmRun" hidden>Run a test</a>
+          <a class="btn go sm" href="exam.html" id="xmJoin">Join a test</a>
+        </div>
+        <label class="hint" id="xmModeBox" hidden>Default supervision for new tests<select id="xmMode" style="width:100%;margin-top:4px;border-radius:10px;padding:7px 9px;font:inherit"><option value="proctored">Proctored: live invigilator required</option><option value="bot">Bot-monitored</option><option value="unmonitored">Unmonitored</option></select></label>
+      </div>
+      <div class="panel" id="invoices">
+        <h3>My invoices</h3>
+        <div id="myInv"></div>
+      </div>
+      <div class="panel">
+        <h3>My photo and ID</h3>
+        <p class="hint">Teachers use these to check it's really you in an exam. Only teachers and the administrator can see them.</p>
+        <div id="myId"></div>
+      </div>
+      <div class="panel">
+        <h3>My account</h3>
+        <div class="kv" id="acct"></div>
+        <button class="btn ghost sm" type="button" id="pwBtn">Change password</button>
+      </div>
+      <div class="panel">
+        <h3>Request a subject</h3>
+        <p class="hint">Ask for a course to be added to your account, or suggest a subject that isn't offered yet.</p>
+        <button class="btn go sm" type="button" data-request="">Request a subject</button>
+        <ul class="log" id="reqList" hidden></ul>
+      </div>
+      <div class="panel">
+        <h3>School systems</h3>
+        <p class="hint">Grades and class records live here too.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn ghost sm" id="lnkQS" target="_blank" rel="noopener">QuickSchools</a>
+          <a class="btn ghost sm" id="lnkCV" target="_blank" rel="noopener">Canvas</a>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Recent activity</h3>
+        <ul class="log" id="log"><li><span class="muted">Your sign-ins and course visits appear here.</span></li></ul>
+      </div>
+      <div class="panel">
+        <h3>Colour theme</h3>
+        <div class="skins" id="skinPicker"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<dialog class="modal" id="dlg-change" aria-labelledby="ch-title">
+  <div class="box"><form class="inner" id="form-change" novalidate>
+    <button class="x" type="button" id="chClose" aria-label="Close">×</button>
+    <div><p class="eyebrow" id="ch-eyebrow">Security</p><h2 id="ch-title">Choose a new password</h2></div>
+    <div class="msg bad" id="ch-err" hidden></div>
+    <div class="field"><label for="ch-pw">New password</label><input id="ch-pw" type="password" autocomplete="new-password" required><span class="hint">At least 8 characters, with letters and a number.</span></div>
+    <div class="field"><label for="ch-pw2">Type it again</label><input id="ch-pw2" type="password" autocomplete="new-password" required></div>
+    <button class="btn go" type="submit" id="ch-go">Save password</button>
+  </form></div>
+</dialog>
+<dialog class="modal" id="dlg-request" aria-labelledby="rq-title">
+  <div class="box"><form class="inner" id="form-request" novalidate>
+    <button class="x" type="button" id="rqClose" aria-label="Close">×</button>
+    <div><p class="eyebrow">Subjects</p><h2 id="rq-title">Request a subject</h2></div>
+    <div class="msg bad" id="rq-err" hidden></div>
+    <div class="field"><label for="rq-course">Subject</label><select id="rq-course"></select></div>
+    <div class="field" id="rq-otherWrap" hidden><label for="rq-other">Which subject would you like added?</label><input id="rq-other" placeholder="e.g. CSEC Principles of Business"></div>
+    <div class="field"><label for="rq-note">Note (optional)</label><textarea id="rq-note" rows="3" placeholder="e.g. I'm in Form 5 and sitting this subject in May."></textarea></div>
+    <button class="btn go" type="submit" id="rq-go">Send request</button>
+  </form></div>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<footer class="foot"><div class="wrap"><p>© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p></div></footer>
+<script>document.querySelectorAll("[data-yr]").forEach(e => e.textContent = new Date().getFullYear());</script>
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/invoice-core.js"></script>
+<script src="assets/invoices.js"></script>
+<script src="assets/presence.js"></script>
+<script src="assets/study/paper.js"></script>
+<script src="assets/study/store.js"></script>
+<script src="assets/study/memes.js"></script>
+<script src="assets/study/notebook.js"></script>
+<script src="assets/study/palace.js"></script>
+<script src="assets/study/hourglass.js"></script>
+<script src="assets/study/studytools.js"></script>
+<script>
+(function(){
+  const C = window.SITE_CONFIG, $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  $("#brandName").textContent = C.siteName;
+  if (!Auth.live) $("#demoBar").hidden = false;
+  $("#lnkQS").href = C.links.quickschools; $("#lnkCV").href = C.links.canvas;
+  Auth.starfield($("#sky")); Auth.mountSkinPicker($("#skinPicker")); Auth.mountCartLinks();
+  let toastT; const toast = t => { const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,4200); };
+  const ROLE = { student:"Student", teacher:"Teacher", admin:"Administrator" };
+  const loginRole = (() => { try { return localStorage.getItem("ks-login-role") === "teacher" ? "teacher" : "student"; } catch (e) { return "student"; } })();
+
+  function go(hash){ location.href = "courses.html#" + hash; }
+  const locked = new URLSearchParams(location.search).get("locked");
+  if (locked) { const lc = C.courses.find(c => c.slug === locked); setTimeout(() => toast((lc ? lc.title : "That course") + " isn't on your plan yet. Use \u201cTry a section\u201d to look inside first."), 400); }
+
+  async function load(){
+    const me = await Auth.current();
+    if (!me) { location.replace("index.html?signin=1"); return; }
+    const p = me.profile || {}, admin = p.role === "admin";
+    const first = (p.full_name || "").split(" ")[0];
+    $("#hello").textContent = first ? "Welcome back, " + first : "Your courses";
+    $("#roleLine").textContent = (ROLE[p.role] || "Student") + " dashboard";
+    $("#adminLink").hidden = !admin;
+    try { Invoices.studentPanel($("#myInv"), { toast }); } catch (e) {}
+    window.addEventListener("ea-demo-mail", e => toast("Demo: email sent to " + e.detail.to + " · " + e.detail.subject));
+    try { Identity.picker($("#myId"), { onSaved: () => toast("Saved. Your teacher will check it."), onError: m => toast(m) }); } catch (e) {}
+    if (admin || p.role === "teacher") { $("#xmRun").hidden = false; $("#xmJoin").className = "btn ghost sm"; $("#xmJoin").textContent = "Student view"; $("#xmHint").textContent = "Run a live test: every student gets a different paper, and entry closes 20 minutes after the start."; $("#xmModeBox").hidden = false; try { $("#xmMode").value = localStorage.getItem("ea-exam-default-mode") || "proctored"; } catch (e) {} $("#xmMode").onchange = () => { try { localStorage.setItem("ea-exam-default-mode", $("#xmMode").value); } catch (e) {} toast("Saved. New exam rooms start with this."); }; }
+    $("#acct").innerHTML = `<span>Name</span><span>${esc(p.full_name||"—")}</span><span>Sign-in</span><span class="selectable">${esc(p.username || (me.user.email||"").split("@")[0])}</span><span>Role</span><span>${esc(ROLE[p.role]||"Student")}</span>`;
+
+    const ent = slug => admin ? { edition:"teacher" } : (me.courses||[]).filter(e => e.course_slug===slug || e.course_slug==="all").sort((a,b)=> a.edition==="teacher"?-1:1)[0];
+    const mine = [], others = [];
+    C.courses.forEach(c => (ent(c.slug) ? mine : others).push(c));
+    $("#mine").innerHTML = mine.length ? mine.map(c => {
+      /* the edition follows the Student / Teacher choice made at sign-in */
+      const e = ent(c.slug), teach = e.edition === "teacher" && loginRole === "teacher";
+      return `<article class="panel c"><div class="row"><span class="chip ${c.level==="CSEC"?"csec":""}">${esc(c.level)}</span><span class="chip">${teach?"Teacher edition":"Student edition"}</span>${(admin || (me.courses||[]).some(x => (x.course_slug===c.slug||x.course_slug==="all") && x.books !== false)) ? '<span class="chip">Textbook</span>' : `<a class="chip" href="shop.html?subject=${c.slug}" title="Add the flipbook textbook">Course only · add textbook</a>`}</div>
+        <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p>
+        <div class="row"><button class="btn go sm" type="button" data-go="${c.slug}">Open course</button></div></article>`;
+    }).join("") : `<div class="panel empty" style="grid-column:1/-1">No courses on your account yet. If your teacher gave you this login, ask them to add your subject. Otherwise, <a href="index.html#plans">choose a plan</a>.</div>`;
+    $("#othersHead").hidden = !others.length;
+    $("#others").innerHTML = others.map(c => `<article class="panel c locked"><div class="row"><span class="chip ${c.level==="CSEC"?"csec":""}">${esc(c.level)}</span></div>
+      <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p><div class="row"><a class="btn go sm" href="shop.html?subject=${c.slug}">Order</a><a class="btn ghost sm" href="courses/${c.slug}/preview/">Try a section</a><button class="btn ghost sm" type="button" data-request="${c.slug}">Request this course</button></div></article>`).join("");
+    myCourses = new Set(mine.map(c => c.slug));
+    await renderRequests();
+
+    const db = (() => { try { return JSON.parse(localStorage.getItem("ks-demo-db")); } catch(e){ return null; } })();
+    if (!Auth.live && db) {
+      const L = db.logs.filter(l => l.user_id === me.user.id).slice(0, 6);
+      if (L.length) $("#log").innerHTML = L.map(l => `<li><span>${esc(l.event.replace(/_/g," "))}${l.detail&&l.detail.slug?" · "+esc(l.detail.slug):""}</span><time>${new Date(l.created_at).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</time></li>`).join("");
+    } else if (Auth.live) {
+      try {
+        await Auth.ready();
+        const sb = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey);
+        const { data } = await sb.from("activity_log").select("event,detail,created_at").order("created_at",{ascending:false}).limit(6);
+        if (data && data.length) $("#log").innerHTML = data.map(l => `<li><span>${esc(l.event.replace(/_/g," "))}${l.detail&&l.detail.slug?" · "+esc(l.detail.slug):""}</span><time>${new Date(l.created_at).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</time></li>`).join("");
+      } catch(e){}
+    }
+    $("#app").setAttribute("aria-busy","false");
+    if (p.must_change_password) openChange(true);
+  }
+
+  const dlg = $("#dlg-change"); let forced = false;
+  function openChange(force){ forced = !!force; $("#chClose").hidden = forced; $("#ch-eyebrow").textContent = forced ? "First sign-in" : "Security"; dlg.showModal(); $("#ch-pw").focus(); }
+  dlg.addEventListener("cancel", e => { if (forced) e.preventDefault(); });
+  $("#chClose").onclick = () => dlg.close();
+  $("#pwBtn").onclick = () => openChange(false);
+  $("#form-change").addEventListener("submit", async e => {
+    e.preventDefault(); const er = $("#ch-err"); er.hidden = true;
+    const a = $("#ch-pw").value, b = $("#ch-pw2").value;
+    if (a !== b) { er.textContent = "The two passwords don't match. Type the same password in both boxes."; er.hidden = false; return; }
+    const btn = $("#ch-go"); btn.disabled = true;
+    try { await Auth.changePassword(a); dlg.close(); toast("Password saved."); $("#form-change").reset(); }
+    catch (x) { er.textContent = x.message; er.hidden = false; }
+    finally { btn.disabled = false; }
+  });
+  /* subject requests */
+  let myCourses = new Set();
+  const STATUS = { pending: "Waiting", approved: "Added", declined: "Not added" };
+  async function renderRequests(){
+    const list = await Auth.myRequests().catch(() => []);
+    const el = $("#reqList"); el.hidden = !list.length;
+    el.innerHTML = list.slice(0, 6).map(r => { const c = C.courses.find(x => x.slug === r.course_slug);
+      return `<li><span>${esc(c ? c.title : r.subject_text)}</span><span class="chip" style="font-size:.66rem;${r.status==="approved"?"color:var(--ok)":r.status==="declined"?"color:var(--bad)":""}">${STATUS[r.status]||r.status}</span></li>`; }).join("");
+  }
+  const rq = $("#dlg-request");
+  function openRequest(slug){
+    const avail = C.courses.filter(c => !myCourses.has(c.slug));
+    $("#rq-course").innerHTML = avail.map(c => `<option value="${c.slug}">${esc(c.level)} ${esc(c.title)}</option>`).join("") + `<option value="__other">Another subject (not on the site yet)</option>`;
+    $("#rq-course").value = slug && avail.some(c => c.slug === slug) ? slug : (avail[0] ? avail[0].slug : "__other");
+    $("#rq-otherWrap").hidden = $("#rq-course").value !== "__other";
+    $("#rq-err").hidden = true; $("#rq-other").value = ""; $("#rq-note").value = "";
+    rq.showModal();
+  }
+  $("#rq-course").addEventListener("change", e => { $("#rq-otherWrap").hidden = e.target.value !== "__other"; if (e.target.value === "__other") $("#rq-other").focus(); });
+  $("#rqClose").onclick = () => rq.close();
+  $("#form-request").addEventListener("submit", async e => {
+    e.preventDefault(); const er = $("#rq-err"); er.hidden = true;
+    const v = $("#rq-course").value, other = v === "__other";
+    const btn = $("#rq-go"); btn.disabled = true;
+    try {
+      await Auth.requestCourse({ course_slug: other ? null : v, subject_text: other ? $("#rq-other").value : "", note: $("#rq-note").value });
+      rq.close(); toast("Request sent. You'll see the subject on your dashboard once it's approved."); await renderRequests();
+    } catch (x) { er.textContent = x.message; er.hidden = false; }
+    finally { btn.disabled = false; }
+  });
+
+  document.addEventListener("click", e => {
+    const g = e.target.closest("[data-go]"); if (g) { go(g.dataset.go); return; }
+    const r = e.target.closest("[data-request]"); if (r) openRequest(r.dataset.request);
+  });
+  const askFor = new URLSearchParams(location.search).get("request");
+  $("#signOut").onclick = async () => { await Auth.signOut(); location.href = "index.html"; };
+  load().then(() => { if (askFor !== null && $("#dlg-change").open === false) openRequest(askFor); }).catch(x => toast(x.message));
+})();
+</script>
+</body>
+</html>

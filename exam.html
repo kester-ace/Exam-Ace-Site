@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Exam Room · Exam Ace Tutorials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.fsgate{position:fixed;inset:0;z-index:100;background:rgba(6,13,38,.96);display:grid;place-items:center;padding:20px;text-align:center}
+.fsgate[hidden]{display:none!important}
+.fsgate .box{max-width:520px;display:grid;gap:14px;justify-items:center}
+.fsgate h2{font-size:1.6rem}
+[hidden]{display:none!important}
+body.embed .top,body.embed footer.foot,body.embed #sky{display:none}
+main.wrap{padding-block:28px 40px}
+.screen{display:grid;gap:18px}
+.screen[hidden]{display:none}
+.card{padding:22px;display:grid;gap:14px}
+.join{max-width:520px;margin-inline:auto;width:100%}
+.code-in{font:800 1.7rem/1 "Bricolage Grotesque",sans-serif!important;letter-spacing:.3em;text-transform:uppercase;text-align:center}
+.who{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 14px;border:1px dashed var(--line);border-radius:12px}
+.linkish{background:none;border:0;color:var(--gold);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+.roomhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:end}
+.roomhead h1{font-size:clamp(1.5rem,4vw,2.2rem)}
+.facts{display:flex;gap:8px;flex-wrap:wrap}
+.desk{text-align:center;padding:8px;border-radius:10px;background:var(--soft-gold);color:var(--gold);font-weight:700;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase}
+.seats{display:grid;gap:8px;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr))}
+.seat{aspect-ratio:1.25;min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--raise);color:var(--ink);font:700 1rem "Bricolage Grotesque",sans-serif;cursor:pointer;display:grid;place-items:center;position:relative}
+.seat:hover:not([disabled]){border-color:var(--gold)}
+.seat[disabled]{cursor:not-allowed;opacity:.5;background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(255,255,255,.05) 6px 12px)}
+.seat.mine{background:var(--gold);color:var(--on-gold);border-color:var(--gold);opacity:1}
+.seat .tag{position:absolute;bottom:3px;font:600 .62rem "Atkinson Hyperlegible",sans-serif;opacity:.85}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px;border:2px solid var(--line)}
+.big{font:800 clamp(2rem,7vw,3.2rem)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+.feed{display:grid;gap:8px;max-height:300px;overflow:auto}
+.m{padding:10px 12px;border-radius:12px;background:var(--raise);border-left:4px solid var(--gold);display:grid;gap:6px}
+.m.system{border-left-color:var(--muted)}
+.m time{font-size:.78rem;color:var(--muted)}
+.m audio{width:100%;max-width:360px}
+.m .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* test */
+.bar{position:sticky;top:0;z-index:20;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(8px)}
+.bar b{font-family:"Bricolage Grotesque",sans-serif}
+.timer{font:800 1.35rem/1 "Bricolage Grotesque",sans-serif;font-variant-numeric:tabular-nums;color:var(--gold)}
+.timer.low{color:var(--bad)}
+.saved{font-size:.82rem;color:var(--muted)}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--soft-gold);border:2px solid var(--gold)}
+.banner[hidden]{display:none}
+.banner .txt{flex:1;display:grid;gap:6px}
+.nav-q{display:flex;gap:6px;flex-wrap:wrap}
+.nav-q button{min-width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--raise);color:var(--ink);font:700 .9rem "Atkinson Hyperlegible",sans-serif;cursor:pointer}
+.nav-q button.done{background:var(--soft-ok);border-color:var(--ok)}
+.nav-q button.here{outline:3px solid var(--gold);outline-offset:1px}
+.q{padding:22px;display:grid;gap:14px}
+.q .stem{font-size:1.08rem;line-height:1.6;white-space:pre-wrap}
+.q img{max-width:100%;border-radius:10px;background:#fff}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--raise);cursor:pointer;text-align:left;color:var(--ink);font:inherit;width:100%}
+.opt:hover{border-color:var(--gold)}
+.opt[aria-checked="true"]{border-color:var(--gold);background:var(--soft-gold)}
+.opt .l{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font-weight:800}
+.opt[aria-checked="true"] .l{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.q textarea{min-height:220px;width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--raise);color:var(--ink);font:1rem/1.6 "Atkinson Hyperlegible",Verdana,sans-serif;resize:vertical}
+.q textarea:focus{outline:none;border-color:var(--gold)}
+.qfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.warn{padding:10px 14px;border-radius:12px;background:var(--soft-bad);border:1px solid var(--bad)}
+.warn[hidden]{display:none}
+.center{text-align:center;justify-items:center}
+.denied h1{color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--surface);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+@media (max-width:560px){.seats{gap:5px}.seat{border-radius:9px;font-size:.85rem}.seat .tag{display:none}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> The exam room runs in this browser only: open the teacher console in another tab to try it.</div></div>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html"><span class="seal"><span>EA</span></span><span class="bname"><span>Exam Ace Tutorials</span><small>Exam room</small></span></a>
+  <nav class="nav" aria-label="Site"><a href="dashboard.html">Dashboard</a></nav>
+</div></header>
+
+<main class="wrap" id="app">
+  <!-- 1. join -->
+  <section class="screen" id="s-join">
+    <div class="panel card join">
+      <div><p class="eyebrow">Exam room</p><h1>Join your test</h1></div>
+      <div class="msg bad" id="j-err" hidden></div>
+      <div class="field"><label for="j-code">Room code from your teacher</label><input id="j-code" class="code-in" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></div>
+      <div class="who" id="j-resume" hidden></div>
+      <div class="who" id="j-me" hidden><span>Joining as <b id="j-name"></b></span><button type="button" class="linkish" id="j-guest">Join with my name and email instead</button></div>
+      <div id="j-guestbox" class="screen" style="gap:12px">
+        <div class="field"><label for="j-full">Full name</label><input id="j-full" autocomplete="name" placeholder="As it appears on your class list"></div>
+        <div class="field"><label for="j-email">Email address</label><input id="j-email" type="email" autocomplete="email" placeholder="you@example.com"><span class="hint">If you can't come in, the reason is emailed to you here.</span></div>
+        <p class="hint" id="j-signin">Have a login? <a href="index.html?signin=1&next=/exam.html">Sign in</a> and come back.</p>
+      </div>
+      <button class="btn go" type="button" id="j-go">Find the room</button>
+    </div>
+  </section>
+
+  <!-- 2. pick a seat -->
+  <section class="screen" id="s-seat" hidden>
+    <div class="roomhead"><div><p class="eyebrow" id="p-teacher"></p><h1 id="p-title"></h1></div><div class="facts" id="p-facts"></div></div>
+    <div class="panel card">
+      <h2 style="font-size:1.2rem">Take a seat</h2>
+      <p class="hint">Choose any empty seat. Everyone gets a different paper, so the people beside you won't have your questions.</p>
+      <div class="msg bad" id="p-err" hidden></div>
+      <div class="desk">Teacher's desk · front of the room</div>
+      <div class="seats" id="p-seats"></div>
+      <div class="legend"><span><i style="background:var(--raise)"></i>Empty</span><span><i style="opacity:.5"></i>Taken</span><span><i style="background:var(--gold);border-color:var(--gold)"></i>Your seat</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn go sm" type="button" data-hall>🏛️ Walk into the 3D exam hall</button><button class="btn ghost sm" type="button" id="p-back">← Change code</button></div>
+    </div>
+  </section>
+
+  <!-- 3. waiting room -->
+  <section class="screen" id="s-wait" hidden>
+    <div class="roomhead"><div><p class="eyebrow" id="w-teacher"></p><h1 id="w-title"></h1></div><div class="facts"><span class="chip" id="w-seat"></span></div></div>
+    <div class="panel card center">
+      <p class="eyebrow">Waiting room</p>
+      <div class="big" id="w-big">You're seated</div>
+      <p id="w-sub">Your teacher will start the test soon. Keep this page open: your paper appears here by itself.</p><button class="btn go sm" type="button" data-hall>🏛️ Sit in the 3D exam hall</button>
+    </div>
+    <div class="panel card" id="w-instr-card" hidden><h2 style="font-size:1.15rem">Instructions</h2><p id="w-instr" style="white-space:pre-wrap"></p></div>
+    <div class="panel card"><h2 style="font-size:1.15rem">Messages from your teacher</h2><div class="feed" id="w-feed"><p class="hint">No messages yet.</p></div></div>
+  </section>
+
+  <!-- 4. the test -->
+  <div class="fsgate" id="hold" hidden role="alert"><div class="box"><p class="eyebrow">Exam room</p><h2 id="hold-t"></h2><p id="hold-p"></p></div></div>
+  <div class="fsgate" id="fsgate" hidden role="dialog" aria-modal="true" aria-labelledby="fs-t"><div class="box"><p class="eyebrow">Exam room</p><h2 id="fs-t">This test runs in full screen</h2><p id="fs-p">Your paper opens in full screen. Leaving full screen or switching away during the test is recorded for your teacher.</p><button class="btn go" type="button" id="fs-go">⛶ Open my paper in full screen</button></div></div>
+  <section class="screen" id="s-test" hidden>
+    <div class="bar">
+      <div><b id="t-title"></b><div class="saved"><span id="t-seat"></span> · <span id="t-saved">All answers saved</span></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><button class="btn ghost sm" type="button" data-hall title="See your desk in the 3D exam hall">🏛️ 3D</button><button class="btn ghost sm" type="button" id="t-msgs">💬 Messages <span id="t-msgn"></span></button><span class="timer" id="t-timer" aria-live="off">--:--</span></div>
+    </div>
+    <div class="banner" id="t-banner" role="status" aria-live="polite" hidden><span aria-hidden="true">📣</span><div class="txt" id="t-btxt"></div><button class="btn ghost sm" type="button" id="t-bclose">OK</button></div>
+    <div class="warn" id="t-warn" hidden>You left the test page. Your teacher can see each time this happens. Stay on this page until you hand in.</div>
+    <div class="nav-q" id="t-nav" aria-label="Questions"></div>
+    <article class="panel q" id="t-q"></article>
+    <div class="qfoot"><button class="btn ghost" type="button" id="t-prev">← Previous</button><button class="btn ghost" type="button" id="t-next">Next →</button><button class="btn go" type="button" id="t-submit">Hand in my test</button></div>
+  </section>
+
+  <!-- 5. handed in -->
+  <section class="screen" id="s-done" hidden>
+    <div class="panel card center"><p class="eyebrow">Handed in</p><div class="big">✓ Well done</div><p id="d-sub"></p><p class="big" id="d-score" hidden></p><p class="hint">You can close this page.</p></div>
+  </section>
+
+  <!-- 6. turned away -->
+  <section class="screen" id="s-denied" hidden>
+    <div class="panel card denied"><p class="eyebrow">Exam room</p><h1 id="x-title"></h1><p id="x-text" style="font-size:1.05rem;line-height:1.6"></p><p id="x-mail" class="hint"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn go" type="button" id="x-retry">Try again</button><button class="btn ghost" type="button" id="x-back">Use a different code</button></div>
+      <p class="hint">If your teacher lets you in, choose Try again.</p></div>
+  </section>
+</main>
+
+<dialog class="modal" id="dlg-msgs" aria-labelledby="mm-title"><div class="box"><div class="inner">
+  <button class="x" type="button" data-close aria-label="Close">×</button>
+  <div><p class="eyebrow">From your teacher</p><h2 id="mm-title">Messages</h2></div>
+  <div class="feed" id="mm-feed" style="max-height:60vh"></div>
+</div></div></dialog>
+<dialog class="modal" id="dlg-submit" aria-labelledby="sb-title"><div class="box"><div class="inner">
+  <div><p class="eyebrow">Check before you hand in</p><h2 id="sb-title">Hand in your test?</h2></div>
+  <p id="sb-text"></p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn go" type="button" id="sb-yes">Yes, hand it in</button><button class="btn ghost" type="button" data-close>Keep working</button></div>
+</div></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<footer class="foot"><div class="wrap"><p>© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p></div></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/presence.js"></script>
+<script src="assets/exam/core.js"></script>
+<script src="assets/exam/client.js"></script>
+<script src="assets/exam/camdock.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const Q = new URLSearchParams(location.search);
+  document.querySelectorAll("[data-yr]").forEach(e => e.textContent = new Date().getFullYear());
+  if (Q.get("embed")) document.body.classList.add("embed"); else { try { Auth.starfield($("#sky")); } catch (e) { } }
+  if (!ExamAPI.live) $("#demoBar").hidden = false;
+  document.querySelectorAll("dialog [data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+  let toastT; const toast = t => { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 4500); };
+  window.addEventListener("exam-demo-mail", e => toast("Demo: email sent to " + e.detail.to));
+  const show = id => { document.querySelectorAll(".screen[id^=s-]").forEach(s => s.hidden = s.id !== id); window.scrollTo(0, 0); };
+  const clock = t => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const LS = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }, del(k) { try { localStorage.removeItem(k); } catch (e) { } } };
+
+  let me = null, guest = false, code = "", room = null, seat = null, off = 0, since = 0, msgs = [], timerT = 0, pollT = 0;
+  let myEnd = null, handIn = null;
+  let paper = null, answers = {}, cur = 0, dirty = {}, events = [], saving = false, status = "";
+
+  /* ---------- 1. join ---------- */
+  async function initJoin() {
+    $("#j-code").value = (Q.get("code") || LS.get("ea-exam-last") || "").toUpperCase();
+    try { me = await ExamAPI.actor(); } catch (e) { me = null; }
+    if (me) { $("#j-me").hidden = false; $("#j-name").textContent = me.name; $("#j-guestbox").hidden = true; }
+    else { $("#j-signin").hidden = !window.Auth; }
+    show("s-join");
+    /* a seat taken earlier in this browser: offer it, never take it automatically (lab computers are shared) */
+    const c0 = $("#j-code").value, saved = c0 ? LS.get("ea-exam-seat:" + c0) : null;
+    if (saved && saved.name) { $("#j-resume").hidden = false; $("#j-resume").innerHTML = `<span>Seat ${saved.seat_no} in room ${esc(c0)} was taken on this device by <b>${esc(saved.name)}</b>.</span><button type="button" class="btn go sm" id="j-cont">That's me: go back to my seat</button>`; }
+  }
+  $("#j-resume").addEventListener("click", e => { if (!e.target.closest("#j-cont")) return; code = $("#j-code").value; seat = LS.get("ea-exam-seat:" + code); if (seat) { guest = !!seat.guest; enterSeat(); } });
+  $("#j-guest").onclick = () => { guest = true; $("#j-me").hidden = true; $("#j-guestbox").hidden = false; $("#j-full").focus(); };
+  $("#j-code").addEventListener("input", e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
+  $("#j-code").addEventListener("keydown", e => { if (e.key === "Enter") $("#j-go").click(); });
+  const jErr = t => { $("#j-err").textContent = t; $("#j-err").hidden = !t; };
+
+  /* ---------- full screen ---------- */
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const fsCan = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  function goFull() { if (fsEl() || !fsCan()) return Promise.resolve(); const d = document.documentElement, f = d.requestFullscreen || d.webkitRequestFullscreen; try { const r = f.call(d); return r && r.catch ? r.catch(() => { }) : Promise.resolve(); } catch (e) { return Promise.resolve(); } }
+  function leaveFull() { if (!fsEl()) return; try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) { } }
+  $("#j-go").onclick = async () => {
+    goFull();
+    jErr(""); code = $("#j-code").value.trim().toUpperCase();
+    if (code.length < 6) return jErr("Type the 6-character room code.");
+    const asGuest = !me || guest;
+    if (asGuest) {
+      if (!$("#j-full").value.trim()) return jErr("Type your full name.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("#j-email").value.trim())) return jErr("Type your email address.");
+    }
+    $("#j-go").disabled = true;
+    try {
+      const saved = LS.get("ea-exam-seat:" + code);
+      const r = await ExamAPI.call("look", { code }, { guest: asGuest });
+      room = r.room; LS.set("ea-exam-last", code);
+      if (r.mine) { /* already seated on this login */ const j = await ExamAPI.call("join", { code }, { guest: false }); return seated(j.seat, false); }
+      if (saved && saved.guest === asGuest && (asGuest ? saved.email === $("#j-email").value.trim().toLowerCase() : saved.uid === me.id)) { seat = saved; return enterSeat(); }
+      if (room.entry !== "open") { /* entry closed: try anyway so the reason is recorded and emailed */ return takeSeat(null); }
+      seatPicker(r.taken);
+    } catch (e) { jErr(e.message); } finally { $("#j-go").disabled = false; }
+  };
+
+  /* ---------- 2. seats ---------- */
+  function roomFacts(r) {
+    const f = [];
+    f.push(`<span class="chip">Code ${esc(r.code)}</span>`);
+    if (r.duration_min) f.push(`<span class="chip">${r.duration_min} minutes</span>`);
+    if (r.per_student) f.push(`<span class="chip">${r.per_student + (r.written_n || 0)} questions</span>`);
+    if (r.phase === "live") f.push(`<span class="chip">Started ${esc(clock(r.started_at))}</span>`);
+    if (r.scheduled_at && r.phase === "waiting") f.push(`<span class="chip">Starts ${esc(new Date(r.scheduled_at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }))}</span>`);
+    f.push(`<span class="chip">${({ proctored: "Live invigilator", bot: "Exam bot watching", unmonitored: "Self-run" })[r.mode] || "Live invigilator"}</span>`);
+    if (r.cutoff_at && r.phase === "live") f.push(`<span class="chip">Entry closes ${esc(clock(r.cutoff_at))}</span>`);
+    else if (r.late_min && r.phase === "waiting") f.push(`<span class="chip">Entry closes ${r.late_min} min after the start</span>`);
+    return f.join("");
+  }
+  function seatPicker(taken) {
+    $("#p-title").textContent = room.title; $("#p-teacher").textContent = room.teacher_name ? "With " + room.teacher_name : "Exam room";
+    $("#p-facts").innerHTML = roomFacts(room);
+    const n = room.seats_n || 30, t = new Set(taken || []);
+    $("#p-seats").style.setProperty("--cols", room.cols || 6);
+    $("#p-seats").innerHTML = Array.from({ length: n }, (_, i) => i + 1).map(k => `<button type="button" class="seat" data-seat="${k}" ${t.has(k) ? "disabled aria-label=\"Seat " + k + ", taken\"" : "aria-label=\"Seat " + k + ", empty\""}>${k}${t.has(k) ? '<span class="tag">taken</span>' : ""}</button>`).join("");
+    $("#p-err").hidden = true; show("s-seat"); takenNow = taken || []; hallPush();
+  }
+  $("#p-seats").addEventListener("click", e => { const b = e.target.closest("[data-seat]"); if (b && !b.disabled) { goFull(); takeSeat(Number(b.dataset.seat)); } });
+  $("#p-back").onclick = () => show("s-join");
+  async function takeSeat(n) {
+    const asGuest = !me || guest;
+    const body = { code, seat_no: n };
+    if (asGuest) { body.name = $("#j-full").value.trim(); body.email = $("#j-email").value.trim(); const s = LS.get("ea-exam-seat:" + code); if (s && s.email === body.email.toLowerCase()) body.secret = s.secret; }
+    try { const j = await ExamAPI.call("join", body, { guest: asGuest }); seated(j.seat, asGuest); }
+    catch (e) {
+      if (e.data && e.data.denied) return denied(e);
+      if (e.data && e.data.taken) { seatPicker(e.data.taken); $("#p-err").textContent = e.message; $("#p-err").hidden = false; return; }
+      if (!$("#s-seat").hidden) { $("#p-err").textContent = e.message; $("#p-err").hidden = false; } else { show("s-join"); jErr(e.message); }
+    }
+  }
+  function seated(s, asGuest) { seat = { seat: s.id, secret: s.secret, seat_no: s.seat_no, guest: asGuest, uid: asGuest ? null : me && me.id, name: asGuest ? $("#j-full").value.trim() : me && me.name, email: asGuest ? $("#j-email").value.trim().toLowerCase() : null }; LS.set("ea-exam-seat:" + code, seat); enterSeat(); }
+
+  /* ---------- 6. turned away ---------- */
+  function denied(e) {
+    const d = e.data || {};
+    $("#x-title").textContent = d.title || "You can't come in right now";
+    $("#x-text").textContent = e.message;
+    $("#x-mail").textContent = d.emailed ? `We've emailed this message to ${d.email}. Your teacher has been told too.` : (d.email ? "Your teacher has been told." : "There's no email address on your account, so this message is only shown here. Your teacher has been told.");
+    show("s-denied");
+  }
+  $("#x-retry").onclick = () => { $("#j-go").click(); };
+  $("#x-back").onclick = () => show("s-join");
+
+  /* ---------- 3–5. in the room ---------- */
+  function camDock() {
+    CamDock.mount({ toast,
+      sendImage: img => ExamAPI.call("cam", { seat: seat.seat, secret: seat.secret, image: img }, { guest: true }).catch(() => { }),
+      camOff: () => ExamAPI.call("cam", { seat: seat.seat, secret: seat.secret, off: true }, { guest: true }).catch(() => { }),
+      sendVoice: (audio, mime, secs) => ExamAPI.call("speak", { seat: seat.seat, secret: seat.secret, audio, mime, secs }, { guest: true }) });
+  }
+  function enterSeat() { camDock(); since = 0; msgs = []; paper = null; LS.set("ea-exam-last", code); answers = LS.get("ea-exam-ans:" + seat.seat) || {}; poll(); }
+  async function poll() {
+    clearTimeout(pollT);
+    try {
+      const r = await ExamAPI.call("poll", { seat: seat.seat, secret: seat.secret, since, have_paper: !!paper, hall: hallOpen() }, { guest: true });
+      off = r.now - Date.now(); room = r.room; myEnd = r.my_ends_at || room.ends_at; handIn = r.hand_in_at || null;
+      /* the teacher reopened this paper: come back to the test with the saved answers */
+      if (status === "submitted" && r.status === "seated") { paper = null; answers = {}; dirty = {}; hallData.submitted = false; camDock(); $("#d-score").hidden = true; toast("Your teacher has reopened your test. Your saved answers are back."); status = r.status; return poll(); }
+      status = r.status; CamDock.request(room.cam_request && r.status !== "submitted");
+      if (r.messages && r.messages.length) { r.messages.forEach(m => { msgs.push(m); since = Math.max(since, m.id); }); newMessages(r.messages); }
+      if (r.status === "submitted") { if ($("#s-done").hidden) done(r); pollT = setTimeout(poll, 10000); return; }
+      /* a proctored test pauses with no invigilator; the exam bot can stop a paper */
+      if (r.blocked) { $("#hold-t").textContent = "Your test has been stopped"; $("#hold-p").textContent = "You left the test too many times, so the exam bot stopped your paper. Your answers so far are saved. Your teacher has been told and can let you carry on."; $("#hold").hidden = false; }
+      else if (room.paused && paper) { $("#hold-t").textContent = "Paused: waiting for the invigilator"; $("#hold-p").textContent = "This test needs a live invigilator. It will carry on by itself when they're back, and the time you lose is given back."; $("#hold").hidden = false; }
+      else $("#hold").hidden = true;
+      if (r.paper) { paper = r.paper; const server = r.answers || {}; answers = Object.assign({}, server, answers); Object.keys(answers).forEach(k => { if (JSON.stringify(answers[k]) !== JSON.stringify(server[k])) dirty[k] = true; }); startTest(); }
+      else if (!paper) waiting();
+      else updateBar();
+      if (r.taken) takenNow = r.taken;
+      hallPush();
+      if (Object.keys(dirty).length || events.length) save();
+    } catch (e) {
+      if (e.status === 404) { LS.del("ea-exam-seat:" + code); seat = null; show("s-join"); jErr(e.message); return; }
+      if (paper) $("#t-saved").textContent = e.offline ? "Offline: answers kept on this device" : "Reconnecting…";
+    }
+    pollT = setTimeout(poll, document.hidden ? 8000 : 5000);
+  }
+  function waiting() {
+    $("#w-title").textContent = room.title; $("#w-teacher").textContent = room.teacher_name ? "With " + room.teacher_name : "Exam room";
+    $("#w-seat").textContent = "Seat " + seat.seat_no;
+    $("#w-instr-card").hidden = !room.instructions; $("#w-instr").textContent = room.instructions || "";
+    $("#w-big").textContent = "You're in seat " + seat.seat_no;
+    if (room.scheduled_at) { const t = new Date(room.scheduled_at), mins = Math.round((t - (Date.now() + off)) / 60000); $("#w-sub").textContent = "The test starts at " + clock(t) + (mins > 0 ? " (in " + mins + " minute" + (mins > 1 ? "s" : "") + ")" : "") + ". Keep this page open: your paper appears here by itself."; }
+    if ($("#s-wait").hidden) show("s-wait");
+    renderFeed($("#w-feed"));
+  }
+  function renderFeed(el) {
+    el.innerHTML = msgs.length ? msgs.slice().reverse().map(m => `<div class="m ${m.kind === "system" ? "system" : ""}"><time>${esc(clock(m.at))}${m.kind === "system" ? " · Exam room" : ""}</time>${m.body ? `<div>${esc(m.body)}</div>` : ""}${m.audio ? `<audio controls preload="none" src="${esc(m.audio)}"></audio>` : ""}${m.kind === "text" && "speechSynthesis" in window ? `<div class="row"><button type="button" class="btn ghost sm" data-say="${m.id}">🔊 Read aloud</button></div>` : ""}</div>`).join("") : '<p class="hint">No messages yet.</p>';
+  }
+  document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (!b) return; const m = msgs.find(x => String(x.id) === b.dataset.say); if (m) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(m.body)); } });
+  let firstLoad = true;
+  function chime() { try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.setValueAtTime(.12, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + .5); o.start(); o.stop(a.currentTime + .5); } catch (e) { } }
+  function newMessages(list) {
+    if (paper || !$("#s-test").hidden) renderFeed($("#mm-feed"));
+    if (!$("#s-wait").hidden) renderFeed($("#w-feed"));
+    $("#t-msgn").textContent = msgs.length ? "(" + msgs.length + ")" : "";
+    if (firstLoad) { firstLoad = false; return; }
+    const last = list[list.length - 1]; chime();
+    if (last.audio) { const a = new Audio(last.audio); a.play().catch(() => toast("Your teacher sent a voice message. Open Messages to play it.")); }
+    if (!$("#s-test").hidden) {
+      $("#t-btxt").innerHTML = (last.body ? `<div>${esc(last.body)}</div>` : "") + (last.audio ? `<audio controls src="${esc(last.audio)}"></audio>` : "");
+      $("#t-banner").hidden = false;
+    }
+  }
+  $("#t-bclose").onclick = () => $("#t-banner").hidden = true;
+  $("#t-msgs").onclick = () => { renderFeed($("#mm-feed")); $("#dlg-msgs").showModal(); };
+
+  function startTest() {
+    if (fsCan() && !fsEl() && $("#s-test").hidden) $("#fsgate").hidden = false;
+    $("#t-title").textContent = room.title; $("#t-seat").textContent = "Seat " + seat.seat_no;
+    if ($("#s-test").hidden) { show("s-test"); firstLoad = false; }
+    nav(); renderQ(); updateBar();
+    clearInterval(timerT); timerT = setInterval(updateBar, 1000);
+  }
+  const all = () => paper ? paper.mcq.concat(paper.written.map(w => Object.assign({ written: true }, w))) : [];
+  const has = q => { const v = answers[q.qid]; return q.written ? !!(v && String(v).trim()) : Number.isInteger(v); };
+  function nav() { $("#t-nav").innerHTML = all().map((q, i) => `<button type="button" data-go="${i}" class="${has(q) ? "done" : ""} ${i === cur ? "here" : ""}" aria-label="Question ${q.n}${has(q) ? ", answered" : ""}">${q.n}</button>`).join(""); }
+  $("#t-nav").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) { cur = Number(b.dataset.go); renderQ(); nav(); } });
+  function renderQ() {
+    const L = all(), q = L[cur]; if (!q) return; hallPush();
+    const head = `<p class="eyebrow">Question ${q.n} of ${L.length}${q.marks ? ` · ${q.marks} marks` : ""}</p>`;
+    if (q.written) $("#t-q").innerHTML = head + `<div class="stem">${esc(q.stem)}</div><label class="hint" for="t-w">Your answer</label><textarea id="t-w" class="selectable" spellcheck="true">${esc(answers[q.qid] || "")}</textarea>`;
+    else $("#t-q").innerHTML = head + `<div class="stem">${q.stem}</div>${q.img ? `<img src="${esc(q.img)}" alt="Picture for question ${q.n}">` : ""}<div class="opts" role="radiogroup" aria-label="Answers">${q.options.map((o, k) => `<button type="button" class="opt" role="radio" aria-checked="${answers[q.qid] === k}" data-opt="${k}"><span class="l">${"ABCDEFGH"[k]}</span><span>${o}</span></button>`).join("")}</div>`;
+    $("#t-prev").disabled = cur === 0; $("#t-next").disabled = cur === L.length - 1;
+    const ta = $("#t-w"); if (ta) ta.addEventListener("input", () => { answers[q.qid] = ta.value; mark(q.qid); });
+  }
+  $("#t-q").addEventListener("click", e => { const b = e.target.closest("[data-opt]"); if (!b) return; const q = all()[cur]; answers[q.qid] = Number(b.dataset.opt); mark(q.qid); renderQ(); nav(); });
+  $("#t-prev").onclick = () => { if (cur > 0) { cur--; renderQ(); nav(); } };
+  $("#t-next").onclick = () => { if (cur < all().length - 1) { cur++; renderQ(); nav(); } };
+  let saveT, graceShown = false;
+  /* answers are saved every second while anything has changed */
+  setInterval(() => { if (seat && paper && status === "seated" && (Object.keys(dirty).length || events.length)) save(); }, 1000);
+  function mark(qid) { dirty[qid] = true; LS.set("ea-exam-ans:" + seat.seat, answers); $("#t-saved").textContent = "Saving…"; clearTimeout(saveT); saveT = setTimeout(save, 1000); if (has(all()[cur])) nav(); }
+  async function save() {
+    if (saving || !seat) return; const keys = Object.keys(dirty); if (!keys.length && !events.length) return;
+    saving = true; const part = {}; keys.forEach(k => { part[k] = answers[k] === undefined ? null : answers[k]; }); const ev = events.splice(0);
+    try { await ExamAPI.call("save", { seat: seat.seat, secret: seat.secret, answers: part, events: ev }, { guest: true }); keys.forEach(k => delete dirty[k]); $("#t-saved").textContent = "All answers saved"; }
+    catch (e) { events = ev.concat(events); $("#t-saved").textContent = e.offline ? "Offline: answers kept on this device" : e.message; if (e.status === 409) poll(); }
+    finally { saving = false; }
+  }
+  function updateBar() {
+    if (!room || !myEnd) { $("#t-timer").textContent = "No time limit"; return; }
+    const nowS = Date.now() + off, left = Math.max(0, new Date(myEnd).getTime() - nowS);
+    if (left === 0 && handIn && status === "seated") {
+      const g = Math.max(0, new Date(handIn).getTime() - nowS), gm = Math.floor(g / 60000), gs = Math.floor(g / 1000) % 60;
+      $("#t-timer").textContent = "Time's up · " + gm + ":" + String(gs).padStart(2, "0"); $("#t-timer").classList.add("low");
+      $("#t-timer").setAttribute("aria-label", "Time is up. Your test hands itself in in " + gm + " minutes");
+      if (!graceShown) { graceShown = true; $("#t-btxt").innerHTML = `<div><b>Time is up.</b> Hand in your test now. If you don't, it hands itself in at ${esc(clock(handIn))}, with everything saved so far.</div>`; $("#t-banner").hidden = false; }
+      if (g === 0) { status = "ending"; save().then(poll); }
+      return;
+    }
+    const m = Math.floor(left / 60000), s = Math.floor(left / 1000) % 60;
+    $("#t-timer").textContent = (m >= 60 ? Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0");
+    $("#t-timer").classList.toggle("low", left < 5 * 60000);
+    $("#t-timer").setAttribute("aria-label", m + " minutes left");
+    if (left > 0) graceShown = false;
+  }
+  $("#t-submit").onclick = () => { const L = all(), blank = L.filter(q => !has(q)).length; $("#sb-text").textContent = blank ? `You have ${blank} question${blank > 1 ? "s" : ""} with no answer. You can't change anything after you hand in.` : "Every question has an answer. You can't change anything after you hand in."; $("#dlg-submit").showModal(); };
+  $("#sb-yes").onclick = async () => {
+    $("#sb-yes").disabled = true;
+    const part = {}; Object.keys(dirty).forEach(k => part[k] = answers[k]);
+    try { const r = await ExamAPI.call("submit", { seat: seat.seat, secret: seat.secret, answers: part, events: events.splice(0) }, { guest: true }); $("#dlg-submit").close(); dirty = {}; status = "submitted"; done({ submitted_at: new Date(Date.now() + off).toISOString(), score: r.score }); clearTimeout(pollT); pollT = setTimeout(poll, 10000); }
+    catch (e) { toast(e.message); } finally { $("#sb-yes").disabled = false; }
+  };
+  function done(r) {
+    CamDock.stop();
+    $("#fsgate").hidden = true; setTimeout(leaveFull, 1500);
+    if (hallOpen()) { hallData.submitted = true; hallPush(); }
+    clearInterval(timerT); LS.del("ea-exam-ans:" + (seat && seat.seat)); /* polling carries on slowly, in case the teacher reopens the test */
+    $("#d-sub").textContent = "Your test was handed in at " + clock(r.submitted_at || Date.now()) + ".";
+    if (r.score) { $("#d-score").hidden = false; $("#d-score").textContent = r.score.score + " / " + r.score.total; }
+    show("s-done");
+  }
+  /* leaving the page during the test is recorded for the teacher */
+  $("#fs-go").onclick = () => { goFull().then(() => { $("#fsgate").hidden = true; }); setTimeout(() => { if (fsEl()) $("#fsgate").hidden = true; }, 400); };
+  const onFs = () => {
+    if (fsEl()) { $("#fsgate").hidden = true; return; }
+    if (paper && !$("#s-test").hidden && status === "seated") { events.push({ type: "left", d: "left full screen" }); $("#fs-t").textContent = "Go back to full screen"; $("#fs-p").textContent = "You left full screen. Your teacher can see each time this happens. Go back to full screen to carry on with your test."; $("#fs-go").textContent = "⛶ Back to full screen"; $("#fsgate").hidden = false; save(); }
+  };
+  document.addEventListener("fullscreenchange", onFs); document.addEventListener("webkitfullscreenchange", onFs);
+  document.addEventListener("visibilitychange", () => {
+    if (!paper || $("#s-test").hidden) return;
+    if (document.hidden) { events.push({ type: "left", d: "tab hidden" }); save(); /* the teacher is alerted straight away */ } else { $("#t-warn").hidden = false; save(); poll(); }
+  });
+  window.addEventListener("online", () => { if (seat) poll(); });
+
+  /* ---------- the 3D exam hall (loads only when asked for) ---------- */
+  let takenNow = [], hallData = {}, hallLoading = null;
+  const hallOpen = () => !!(window.ExamHall && ExamHall.isOpen);
+  function loadHall() {
+    if (window.ExamHall) return Promise.resolve();
+    if (!hallLoading) hallLoading = new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "assets/exam/hall3d.js"; sc.onload = ok; sc.onerror = () => { hallLoading = null; bad(new Error("The 3D hall couldn't load. Check your connection and try again.")); }; document.head.appendChild(sc); });
+    return hallLoading;
+  }
+  function hallPush() {
+    if (!hallOpen() || !room) return;
+    const mine = seat ? seat.seat_no : null, set = new Set(takenNow); if (mine) set.add(mine);
+    const lastText = msgs.slice().reverse().find(m => m.kind === "text" && m.body);
+    ExamHall.update({ room, now: Date.now() + off, seats: Array.from(set).map(n => ({ seat_no: n, status: "seated" })), mine, paper, answers, cur, message: lastText ? lastText.body : "", submitted: !!hallData.submitted });
+  }
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-hall]"); if (!b) return;
+    b.disabled = true; const lbl = b.textContent; b.textContent = "Opening the hall…";
+    try {
+      await loadHall();
+      ExamHall.open({ mode: "student",
+        onPick: n => takeSeat(n).then(() => hallPush()),
+        onAnswer: (qid, v) => { answers[qid] = v; mark(qid); renderQ(); nav(); },
+        onNav: i => { cur = i; renderQ(); nav(); },
+        onSubmit: () => { if (!$("#s-test").hidden) $("#t-submit").click(); },
+        onClose: () => { if (seat) poll(); } });
+      if (seat) poll(); else hallPush();
+    } catch (x) { toast(x.message); }
+    finally { b.disabled = false; b.textContent = lbl; }
+  });
+
+  initJoin();
+})();
+</script>
+</body>
+</html>

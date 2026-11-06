@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Exam Room Console · Exam Ace Tutorials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+[hidden]{display:none!important}
+body.embed .top,body.embed footer.foot,body.embed #sky{display:none}
+main.wrap{padding-block:28px 40px}
+.view{display:grid;gap:18px}.view[hidden]{display:none}
+.card{padding:20px;display:grid;gap:14px}
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.head h1{font-size:clamp(1.6rem,4vw,2.3rem)}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.rcard{padding:18px;display:grid;gap:8px;cursor:pointer;text-align:left;color:inherit;font:inherit;border:2px solid var(--line)}
+.rcard:hover{border-color:var(--gold)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{padding:8px 14px;border-radius:999px;border:2px solid var(--line);background:var(--raise);color:var(--ink);font:700 .9rem "Atkinson Hyperlegible",sans-serif;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.sets{display:grid;gap:6px;max-height:340px;overflow:auto;padding:4px}
+.sets label{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--raise);cursor:pointer}
+.sets label small{margin-left:auto;color:var(--muted);white-space:nowrap}
+.sets h4{margin:8px 0 2px;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em}
+.count{font:800 1.1rem "Bricolage Grotesque",sans-serif;color:var(--gold)}
+pre.fmt{background:var(--raise);border-radius:10px;padding:10px 12px;font-size:.85rem;white-space:pre-wrap;margin:0}
+.codebox{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.code{font:800 clamp(2rem,6vw,3rem)/1 "Bricolage Grotesque",sans-serif;letter-spacing:.18em;color:var(--gold)}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat div{padding:12px;border-radius:12px;background:var(--raise)}
+.stat b{display:block;font:800 1.5rem "Bricolage Grotesque",sans-serif;color:var(--gold)}
+.stat span{font-size:.82rem;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:1fr}}
+.desk{text-align:center;padding:6px;border-radius:10px;background:var(--soft-gold);color:var(--gold);font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase}
+.seats{display:grid;gap:8px;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr))}
+.seat{min-height:84px;border-radius:12px;border:2px solid var(--line);background:var(--raise);padding:7px;display:grid;gap:4px;align-content:start;font-size:.78rem;text-align:left;color:var(--ink);font-family:inherit;cursor:default}
+.seat.on{cursor:pointer;border-color:rgba(255,255,255,.25)}
+.seat.on:hover{border-color:var(--gold)}
+.seat.sub{border-color:var(--ok);background:var(--soft-ok)}
+.seat.away{border-color:var(--bad)}
+.seat .n{font:800 .8rem "Bricolage Grotesque",sans-serif;color:var(--muted)}
+.seat .nm{font-weight:700;font-size:.82rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.seat .pb{height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.seat .pb i{display:block;height:100%;background:var(--gold)}
+.seat .fl{color:var(--bad);font-weight:700}
+.seat .cam{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#060D26;display:block}
+.seat .camoff{font-size:.7rem;color:var(--muted)}
+.seat .idb{font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 7px;justify-self:start;border:1px solid currentColor}
+.idb.ok{color:var(--ok)}.idb.bad{color:var(--bad)}.idb.mid{color:var(--gold)}.idb.none{color:var(--muted)}
+.idcmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.idcmp figure{margin:0;display:grid;gap:4px}.idcmp img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#060D26}.idcmp .empty{aspect-ratio:4/3;border-radius:10px;background:#060D26;display:grid;place-items:center;color:var(--muted);font-size:.8rem;text-align:center;padding:6px}
+.alerts{display:grid;gap:8px;max-height:300px;overflow:auto}
+.alerts .al{display:grid;gap:4px;padding:9px 11px;border-radius:10px;background:var(--soft-bad);border-left:4px solid var(--bad);font-size:.9rem}
+.alerts .al.voice{background:var(--soft-gold);border-left-color:var(--gold)}
+.alerts .al time{font-size:.75rem;color:var(--muted)}
+.alerts .al audio{width:100%}
+.ping{position:fixed;right:16px;top:16px;z-index:70;max-width:min(420px,calc(100vw - 32px));background:#3A0F12;color:#fff;border:2px solid var(--bad);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);font-weight:700}
+.ping[hidden]{display:none!important}
+@media (max-width:640px){.seats{gap:4px}.seat{min-height:62px;padding:4px;font-size:.7rem}.seat .nm{font-size:.7rem}}
+.feed{display:grid;gap:8px;max-height:260px;overflow:auto}
+.m{padding:9px 11px;border-radius:10px;background:var(--raise);border-left:4px solid var(--gold);display:grid;gap:5px;font-size:.92rem}
+.m.system{border-left-color:var(--muted)}
+.m time{font-size:.75rem;color:var(--muted)}
+.m audio{width:100%}
+.rec{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rec .dot{width:12px;height:12px;border-radius:50%;background:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.tlist{display:grid;gap:8px}
+.tlist .t{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 11px;border-radius:10px;background:var(--soft-bad);flex-wrap:wrap}
+table.res{width:100%;border-collapse:collapse;font-size:.9rem}
+table.res th,table.res td{padding:8px 6px;border-bottom:1px dashed var(--line);text-align:left;vertical-align:top}
+table.res th{color:var(--muted);font-weight:700}
+.tablewrap{overflow-x:auto}
+.ans{display:grid;gap:10px;max-height:62vh;overflow:auto}
+.ans .a{padding:10px;border-radius:10px;background:var(--raise);display:grid;gap:4px}
+.ans .ok{color:var(--ok);font-weight:700}.ans .no{color:var(--bad);font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--surface);color:var(--ink);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+.check{display:flex;gap:8px;align-items:center}
+.focus{display:grid;gap:8px;padding:12px;border:1px dashed var(--line);border-radius:12px}
+.chipset{display:flex;gap:6px;flex-wrap:wrap}.chipset button{border:1.5px solid var(--line);background:var(--raise);color:var(--ink);border-radius:999px;padding:5px 11px;font:700 .82rem "Atkinson Hyperlegible",sans-serif;cursor:pointer}
+.chipset button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.rlist{display:grid;gap:6px;max-height:420px;overflow:auto;padding-left:22px;margin:6px 0}.rlist li{padding:8px 10px;border-radius:10px;background:var(--raise);display:grid;gap:4px}
+.rlist .rq{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}.rlist .rq span{font-size:.92rem}.rlist small{color:var(--muted)}
+.modechip{font-weight:800}.inv-banner{padding:10px 14px;border-radius:12px;border:2px solid var(--gold);background:var(--soft-gold);font-weight:700}
+.inv-banner.bad{border-color:var(--bad);background:var(--soft-bad)}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> Rooms are kept in this browser. Open a room, then use <b>Try it as a student</b> or <b>Add pretend students</b> to see it working.</div></div>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html"><span class="seal"><span>EA</span></span><span class="bname"><span>Exam Ace Tutorials</span><small>Exam room console</small></span></a>
+  <nav class="nav" aria-label="Site"><a href="dashboard.html">Dashboard</a></nav>
+</div></header>
+
+<main class="wrap">
+  <section class="view" id="v-gate" hidden><div class="panel card"><h1>Exam room console</h1><p id="g-text">Sign in with a teacher login to run an exam room.</p><div><a class="btn go" href="index.html?signin=1&next=/exam-teacher.html">Sign in</a></div></div></section>
+
+  <!-- rooms -->
+  <section class="view" id="v-list" hidden>
+    <div class="head"><div><p class="eyebrow">Exam room</p><h1>Your exam rooms</h1></div><button class="btn go" type="button" id="l-new">+ New exam room</button></div>
+    <div class="panel card"><div class="head"><h2 style="font-size:1.1rem">Default supervision for new exam rooms</h2></div>
+      <div class="grid3"><div class="field"><label for="l-mode">New rooms start as</label><select id="l-mode"><option value="proctored">Proctored: a live invigilator must be present</option><option value="bot">Bot-monitored: runs on its own, with automatic checks</option><option value="unmonitored">Unmonitored: runs on its own</option></select></div></div>
+      <p class="hint">You can still change it for each test.</p></div>
+    <div class="rooms" id="l-rooms"></div>
+  </section>
+
+  <!-- create -->
+  <section class="view" id="v-new" hidden>
+    <div class="head"><div><p class="eyebrow">New exam room</p><h1>Set up a test</h1></div><button class="btn ghost sm" type="button" data-back>← Your rooms</button></div>
+    <div class="panel card">
+      <div class="grid2">
+        <div class="field"><label for="n-title">Test name</label><input id="n-title" placeholder="e.g. Module 1 test"></div>
+        <div class="field"><label for="n-course">Course</label><select id="n-course"></select></div>
+      </div>
+      <div class="field"><label for="n-instr">Instructions students read in the waiting room (optional)</label><textarea id="n-instr" rows="3" placeholder="e.g. Answer every question. Calculators are not allowed."></textarea></div>
+    </div>
+    <div class="panel card">
+      <div class="head"><h2 style="font-size:1.2rem">Questions</h2><span class="count" id="n-count">0 questions</span></div>
+      <div class="focus" id="f-box" hidden><b>Focus on</b><div class="chipset" id="f-mods" aria-label="Modules"></div><div class="chipset" id="f-tops" aria-label="Sections and topics"></div><span class="hint">Nothing chosen means everything in the course.</span></div>
+      <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="bank">Question bank and past papers</button><button type="button" role="tab" aria-selected="false" data-tab="rand">🎲 Random paper to approve</button><button type="button" role="tab" aria-selected="false" data-tab="qti">QTI import</button><button type="button" role="tab" aria-selected="false" data-tab="own">Your own (sectional test)</button></div>
+      <div data-pane="bank">
+        <p class="hint" id="b-hint">Choose the past papers, mocks and tests to draw from. Every multiple-choice question in the sets you tick goes into the pool.</p>
+        <div class="ctrl" style="margin:6px 0"><button class="btn ghost sm" type="button" id="b-all">Tick all</button><button class="btn ghost sm" type="button" id="b-none">Clear</button></div>
+        <div class="sets" id="b-sets"><p class="hint">Choose a course first.</p></div>
+      </div>
+      <div data-pane="rand" hidden>
+        <p class="hint">A paper drawn at random from the course's question bank and past papers, using the modules, sections and topics chosen above. Check every question, swap any you don't want, then approve it.</p>
+        <div class="ctrl"><label>Questions <input id="r-n" type="number" min="1" max="100" value="20" style="width:90px"></label><button class="btn go sm" type="button" id="r-build">Build a random paper</button><span class="hint" id="r-from"></span></div>
+        <ol class="rlist" id="r-list"></ol>
+        <div class="ctrl" id="r-acts" hidden><button class="btn go sm" type="button" id="r-ok">✓ Approve this paper</button><span class="chip" id="r-st">Not approved yet</span><label class="check"><input type="checkbox" id="r-same" checked> Everyone answers these questions (in a different order)</label></div>
+      </div>
+      <div data-pane="qti" hidden>
+        <p class="hint">Bring in questions exported as QTI (version 1.2 or 2.x) from a learning platform or test bank. Open the .xml file, or the .zip package.</p>
+        <div class="ctrl"><label class="btn ghost sm" style="cursor:pointer">Open a QTI file<input type="file" id="q-file" accept=".xml,.zip,application/xml,text/xml,application/zip" hidden></label><button class="btn ghost sm" type="button" id="q-clear" hidden>Clear the imported questions</button><span class="hint" id="q-st"></span></div>
+        <ol class="rlist" id="q-list"></ol>
+      </div>
+      <div data-pane="own" hidden>
+        <p class="hint"><b>For a sectional test or a test you write yourself.</b> Type or paste your questions, or open a .txt or .csv file. Put a * after the right option. A question with no options is a written question; add [5 marks] to give it marks.</p>
+        <pre class="fmt">1. A school in Castries wants parents to pay fees online. Which is the most secure way to do it?
+A. Email card numbers to the bursar
+B. A payment page using HTTPS *
+C. A shared spreadsheet
+D. A WhatsApp group
+
+2. Explain two benefits of cloud storage for the school. [4 marks]</pre>
+        <div class="field"><label for="o-text">Your questions</label><textarea id="o-text" rows="10" class="selectable"></textarea></div>
+        <div class="ctrl"><label class="btn ghost sm" style="cursor:pointer">Open a file<input type="file" id="o-file" accept=".txt,.csv,text/plain,text/csv" hidden></label><span class="hint" id="o-parsed"></span></div>
+        <p class="hint">CSV columns: question, A, B, C, D, answer (A–D), marks (written only).</p>
+      </div>
+    </div>
+    <div class="panel card">
+      <h2 style="font-size:1.2rem">How it's run</h2>
+      <div class="grid3">
+        <div class="field"><label for="n-mode">Supervision</label><select id="n-mode"><option value="proctored">Proctored: a live invigilator must be present</option><option value="bot">Bot-monitored: runs on its own, with automatic checks</option><option value="unmonitored">Unmonitored: runs on its own</option></select><span class="hint" id="n-modehint"></span></div>
+        <div class="field"><label for="n-when">Start</label><select id="n-when"><option value="manual">When I press Start</option><option value="at">At a set date and time</option></select><input id="n-at" type="datetime-local" hidden></div>
+        <div class="field"><label for="n-open">Room opens before the start (minutes)</label><input id="n-open" type="number" min="0" max="240" value="15"><span class="hint">For scheduled tests</span></div>
+        <div class="field"><label for="n-grace">Hands in by itself after time is up (minutes)</label><input id="n-grace" type="number" min="0" max="60" value="15"><span class="hint">Answers are saved every second until then</span></div>
+        <div class="field" id="n-leavesbox" hidden><label for="n-leaves">Exam bot: stop a paper after leaving the test</label><input id="n-leaves" type="number" min="1" max="50" value="3"><span class="hint">times. You can let them carry on.</span></div>
+      </div>
+      <h2 style="font-size:1.2rem;margin-top:6px">Room rules</h2>
+      <div class="grid3">
+        <div class="field"><label for="n-per">Questions on each paper</label><input id="n-per" type="number" min="1" value="20"><span class="hint" id="n-perhint"></span></div>
+        <div class="field"><label for="n-dur">Time allowed (minutes)</label><input id="n-dur" type="number" min="0" value="60"><span class="hint">0 = no time limit</span></div>
+        <div class="field"><label for="n-late">Entry closes after (minutes)</label><input id="n-late" type="number" min="0" value="20"><span class="hint">Counted from when you start the test</span></div>
+        <div class="field"><label for="n-seats">Seats</label><input id="n-seats" type="number" min="1" max="60" value="30"></div>
+        <div class="field"><label for="n-cols">Seats in each row</label><input id="n-cols" type="number" min="2" max="10" value="6"></div>
+        <div class="field" style="align-content:end"><label class="check"><input type="checkbox" id="n-auto" checked> Lock the room when entry closes</label><label class="check"><input type="checkbox" id="n-score"> Show students their score when they hand in</label></div>
+      </div>
+      <div class="msg bad" id="n-err" hidden></div>
+      <div><button class="btn go" type="button" id="n-go">Open the exam room</button></div>
+    </div>
+  </section>
+
+  <!-- live room -->
+  <section class="view" id="v-room" hidden>
+    <div class="head"><div><p class="eyebrow" id="r-status"></p><h1 id="r-title"></h1></div><div class="ctrl"><button class="btn ghost sm" type="button" id="r-fs">⛶ Full screen</button><button class="btn ghost sm" type="button" data-back>← Your rooms</button></div></div>
+    <div class="panel card">
+      <div class="codebox"><div><p class="eyebrow">Room code</p><div class="code" id="r-code"></div></div>
+        <div class="ctrl"><button class="btn ghost sm" type="button" id="r-copy">Copy invite</button><button class="btn ghost sm" type="button" id="r-copylink">Copy link</button></div></div>
+      <p class="hint">Students sign in and join with this code, or type their name, email and the code. Everyone gets a different paper.</p>
+      <div class="ctrl" id="r-modes"></div>
+      <div class="inv-banner" id="r-invig" hidden></div>
+      <div class="ctrl">
+        <button class="btn go" type="button" id="r-start">▶ Start the test</button>
+        <button class="btn ghost" type="button" id="r-lock">🔒 Lock the room</button>
+        <span class="ctrl" id="r-timebox"><input id="r-mins" type="number" min="1" max="240" value="5" aria-label="Minutes" style="width:80px"><button class="btn ghost" type="button" id="r-plus">⏱ Add time for everyone</button></span>
+        <button class="btn go" type="button" id="r-reopen" hidden>↺ Reopen the test</button>
+        <button class="btn ghost sm" type="button" id="r-proctor">Copy proctor link</button>
+        <button class="btn ghost" type="button" id="r-end">■ End the test</button>
+        <button class="btn ghost" type="button" id="r-del" hidden>Delete room</button>
+        <button class="btn go" type="button" id="r-hall">🏛️ 3D exam hall</button>
+        <button class="btn ghost" type="button" id="r-cam">📷 Ask students to turn on cameras</button>
+      </div>
+      <div class="ctrl" id="r-demo" hidden>
+        <span class="chip">Demo</span>
+        <button class="btn ghost sm" type="button" id="d-kids">👥 Add 5 pretend students</button>
+        <button class="btn ghost sm" type="button" id="d-me">🎓 Try it as a student</button>
+      </div>
+      <div class="stat" id="r-stats"></div>
+    </div>
+    <div class="layout">
+      <div class="view">
+        <div class="panel card" id="d-sv" hidden><div class="head"><h2 style="font-size:1.2rem">The student's screen</h2><button class="btn ghost sm" type="button" id="d-svx">Close</button></div><p class="hint">This is what a student sees. Join with any name and email, take a seat, then press Start the test above.</p><iframe id="d-frame" title="Student view" style="width:100%;height:720px;border:0;border-radius:14px;background:#060D26" allow="microphone; autoplay; fullscreen" allowfullscreen></iframe></div>
+        <div class="panel card"><div class="head"><h2 style="font-size:1.2rem">Seating plan</h2><span class="hint">Choose a student to see their answers</span></div>
+          <div class="desk">Teacher's desk · front</div><div class="seats" id="r-seats"></div></div>
+        <div class="panel card"><div class="head"><h2 style="font-size:1.2rem">Results</h2><button class="btn ghost sm" type="button" id="r-csv">Download results and attendance (CSV)</button></div><div class="tablewrap"><table class="res" id="r-res"></table></div></div>
+      </div>
+      <aside class="view">
+        <div class="panel card"><div class="head"><h2 style="font-size:1.1rem">Alerts <span id="r-an"></span></h2><button class="btn ghost sm" type="button" id="r-snd" aria-pressed="true">🔔 Sound on</button></div>
+          <p class="hint">You're alerted straight away when a student leaves full screen, switches to another tab or app, or sends you a voice message.</p>
+          <div class="alerts" id="r-alerts"><p class="hint">No alerts yet.</p></div></div>
+        <div class="panel card">
+          <h2 style="font-size:1.1rem">Talk to the room</h2>
+          <div class="field"><label for="r-msg">Type an instruction</label><textarea id="r-msg" rows="3" class="selectable" placeholder="e.g. In question 4, read 'Unit' as 'Module'."></textarea></div>
+          <div class="ctrl"><button class="btn go sm" type="button" id="r-send">Send to everyone</button></div>
+          <div class="rec" id="r-rec"><button class="btn ghost sm" type="button" id="r-mic">🎙️ Record a voice message</button></div>
+          <div class="feed" id="r-feed"></div>
+        </div>
+        <div class="panel card"><h2 style="font-size:1.1rem">Turned away <span id="r-tn"></span></h2><div class="tlist" id="r-turned"><p class="hint">No one so far.</p></div></div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<style>dialog.modal#dlg-script{width:min(760px,calc(100vw - 24px))}#dlg-script .inner{max-height:calc(100vh - 40px);overflow:auto}</style>
+<dialog class="modal" id="dlg-script" aria-labelledby="sc-title"><div class="box"><div class="inner">
+  <button class="x" type="button" data-close aria-label="Close">×</button>
+  <div><p class="eyebrow" id="sc-eye"></p><h2 id="sc-title"></h2></div>
+  <div class="ans" id="sc-body"></div>
+  <div class="ctrl"><button class="btn go sm" type="button" id="sc-save" hidden>Save marks</button><button class="btn ghost sm" type="button" id="sc-remove">Remove from the room</button></div>
+</div></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="ping" id="ping" role="alert" hidden></div>
+<footer class="foot"><div class="wrap"><p>© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p></div></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/presence.js"></script>
+<script src="assets/exam/core.js"></script>
+<script src="assets/exam/client.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const strip = s => String(s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const C = window.SITE_CONFIG || { courses: [] }, Q = new URLSearchParams(location.search);
+  document.querySelectorAll("[data-yr]").forEach(e => e.textContent = new Date().getFullYear());
+  if (Q.get("embed")) document.body.classList.add("embed"); else { try { Auth.starfield($("#sky")); } catch (e) { } }
+  if (!ExamAPI.live) $("#demoBar").hidden = false;
+  $$("dialog [data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+  let toastT; const toast = t => { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 4500); };
+  window.addEventListener("exam-demo-mail", e => toast("Demo: email sent to " + e.detail.to));
+  const show = id => { $$(".view[id^=v-]").forEach(v => v.hidden = v.id !== id); window.scrollTo(0, 0); };
+  const clock = t => t ? new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
+  const call = (a, b) => ExamAPI.call(a, b || {});
+  const courseTitle = s => { const c = C.courses.find(x => x.slug === s); return c ? c.level + " " + c.title : (s || "Any course"); };
+  $$("[data-back]").forEach(b => b.onclick = () => { clearTimeout(pollT); loadList(); });
+
+  /* ---------- who may use this ---------- */
+  async function gate() {
+    let me = await ExamAPI.actor().catch(() => null);
+    /* demo: no sign-in needed, you are the demo teacher */
+    if (!ExamAPI.live && (!me || (me.role !== "teacher" && me.role !== "admin"))) me = ExamAPI.demoTeacher();
+    if (!me) { show("v-gate"); return; }
+    if (me.role !== "teacher" && me.role !== "admin") { $("#g-text").textContent = "The exam room console is for teachers. To sit a test, use the student exam room."; $("#v-gate .btn").href = "exam.html"; $("#v-gate .btn").textContent = "Go to the exam room"; show("v-gate"); return; }
+    const open = Q.get("room"); if (open) return openRoom(open);
+    loadList();
+  }
+
+  /* ---------- rooms ---------- */
+  const STATUS = { waiting: "Waiting to start", live: "In progress", over: "Time is up", ended: "Finished" };
+  async function loadList() {
+    show("v-list");
+    try {
+      const { rooms } = await call("list");
+      const want = Q.get("course"), list = want ? rooms.filter(r => !r.course_slug || r.course_slug === want) : rooms;
+      $("#l-rooms").innerHTML = list.length ? list.map(r => `<button type="button" class="panel rcard" data-room="${esc(r.id)}"><span class="eyebrow">${esc(STATUS[r.phase] || r.status)}</span><h3>${esc(r.title)}</h3><span class="hint">${esc(courseTitle(r.course_slug))}</span><span><span class="chip">Code ${esc(r.code)}</span> <span class="chip">${r.per_student + r.written_n} questions</span> <span class="chip">${({ proctored: "Proctored", bot: "Bot-monitored", unmonitored: "Unmonitored" })[r.mode] || "Proctored"}</span></span>${r.scheduled_at && r.status === "waiting" ? `<span class="hint">Starts ${esc(new Date(r.scheduled_at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }))}</span>` : ""}<span class="hint">Made ${new Date(r.created_at).toLocaleDateString([], { day: "numeric", month: "short" })}</span></button>`).join("")
+        : `<div class="panel card"><p>No exam rooms yet. Choose <b>New exam room</b> to set up a test.</p></div>`;
+    } catch (e) { $("#l-rooms").innerHTML = `<div class="msg bad">${esc(e.message)}</div>`; }
+  }
+  try { $("#l-mode").value = localStorage.getItem("ea-exam-default-mode") || "proctored"; } catch (e) { }
+  $("#l-mode").onchange = () => { try { localStorage.setItem("ea-exam-default-mode", $("#l-mode").value); } catch (e) { } $("#n-mode").value = $("#l-mode").value; modeUI(); toast("New exam rooms will start as " + $("#l-mode").selectedOptions[0].textContent.split(":")[0] + "."); };
+  $("#l-rooms").addEventListener("click", e => { const b = e.target.closest("[data-room]"); if (b) openRoom(b.dataset.room); });
+
+  /* ---------- new room ---------- */
+  let bank = null, tab = "bank", own = { pool: [], written: [] };
+  $("#n-course").innerHTML = `<option value="">Choose a course</option>` + C.courses.map(c => `<option value="${esc(c.slug)}">${esc(c.level + " " + c.title)}</option>`).join("");
+  $("#l-new").onclick = () => { if (Q.get("course")) { $("#n-course").value = Q.get("course"); } loadBank(); show("v-new"); };
+  $$("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; $$("[data-tab]").forEach(x => x.setAttribute("aria-selected", x === b)); $$("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== tab); recount(); });
+  $("#n-course").onchange = loadBank;
+  async function loadBank() {
+    const slug = $("#n-course").value; bank = null;
+    if (!slug) { $("#b-sets").innerHTML = '<p class="hint">Choose a course first.</p>'; return recount(); }
+    const c = C.courses.find(x => x.slug === slug);
+    $("#b-sets").innerHTML = '<p class="hint">Loading the question bank…</p>';
+    try {
+      const base = (c.teacherPath || "/courses/" + slug + "/teacher/").replace(/^\//, "");
+      const r = await fetch(base + "exam/bank.json", { cache: "no-store" }); if (!r.ok) throw new Error();
+      bank = await r.json();
+    } catch (e) { $("#b-sets").innerHTML = '<p class="hint">This course\'s question bank couldn\'t be opened. You need the Teacher\'s Version of the course. You can still use your own questions.</p>'; return recount(); }
+    const n = {}; bank.questions.forEach(q => n[q.set] = (n[q.set] || 0) + 1);
+    const KIND = { past: "Past papers", mock: "Mock papers", module: "Module tests", quiz: "Quizzes and practice" };
+    const groups = {}; bank.sets.filter(s => n[s.id]).forEach(s => (groups[s.kind] = groups[s.kind] || []).push(s));
+    $("#b-sets").innerHTML = Object.keys(groups).map(k => `<h4>${esc(KIND[k] || k)}</h4>` + groups[k].map(s => `<label><input type="checkbox" value="${esc(s.id)}"> ${esc(s.title)}<small>${n[s.id]} questions</small></label>`).join("")).join("") || '<p class="hint">No multiple-choice questions in this course yet.</p>';
+    focusMods.clear(); focusTops.clear(); drawFocus(); recount();
+  }
+  $("#b-sets").addEventListener("change", recount);
+  /* focus: modules, then the sections and topics inside them */
+  const focusMods = new Set(), focusTops = new Set();
+  function drawFocus() {
+    if (!bank) { $("#f-box").hidden = true; return; }
+    const mods = Array.from(new Set(bank.questions.map(q => q.module).filter(Boolean))).sort();
+    const inMods = q => !focusMods.size || focusMods.has(q.module);
+    const tops = Array.from(new Set(bank.questions.filter(inMods).map(q => q.topic).filter(Boolean))).sort();
+    Array.from(focusTops).forEach(t => { if (!tops.includes(t)) focusTops.delete(t); });
+    $("#f-box").hidden = !mods.length && !tops.length;
+    $("#f-mods").innerHTML = mods.map(m => `<button type="button" data-fm="${esc(m)}" aria-pressed="${focusMods.has(m)}">${esc(m)}</button>`).join("");
+    $("#f-tops").innerHTML = tops.map(t => `<button type="button" data-ft="${esc(t)}" aria-pressed="${focusTops.has(t)}">${esc(t)}</button>`).join("");
+  }
+  $("#f-box").addEventListener("click", e => { const m = e.target.closest("[data-fm]"), t = e.target.closest("[data-ft]"); if (!m && !t) return;
+    const set = m ? focusMods : focusTops, v = m ? m.dataset.fm : t.dataset.ft; set.has(v) ? set.delete(v) : set.add(v); drawFocus(); recount(); });
+  const inFocus = q => (!focusMods.size || focusMods.has(q.module)) && (!focusTops.size || focusTops.has(q.topic));
+  $("#b-all").onclick = () => { $$("#b-sets input").forEach(i => i.checked = true); recount(); };
+  $("#b-none").onclick = () => { $$("#b-sets input").forEach(i => i.checked = false); recount(); };
+  function bankPool() {
+    if (!bank) return [];
+    const sets = new Set($$("#b-sets input:checked").map(i => i.value));
+    return bank.questions.filter(q => sets.has(q.set) && inFocus(q));
+  }
+
+  /* your own questions */
+  function parseOwn(text) {
+    const pool = [], written = [];
+    text = String(text || "").replace(/\r/g, "");
+    if (/^[^\n]*,[^\n]*,/.test(text) && /answer/i.test(text.split("\n")[0])) return parseCSV(text);
+    const blocks = text.split(/\n\s*\n|\n(?=\s*\d+[.)]\s)/).map(b => b.trim()).filter(Boolean);
+    blocks.forEach((b, i) => {
+      const lines = b.split("\n").map(l => l.trim()).filter(Boolean);
+      const stemLines = [], opts = []; let ans = -1;
+      lines.forEach(l => { const m = l.match(/^\(?([A-Ha-h])[.)]\s+(.*)$/); if (m && (opts.length || stemLines.length)) { let t = m[2]; if (/\*\s*$/.test(t)) { ans = opts.length; t = t.replace(/\s*\*\s*$/, ""); } opts.push(t); } else if (!opts.length) stemLines.push(l); });
+      let stem = stemLines.join("\n").replace(/^\d+[.)]\s*/, "");
+      let marks = null; const mk = stem.match(/\[(\d+)\s*marks?\]/i); if (mk) { marks = Number(mk[1]); stem = stem.replace(mk[0], "").trim(); }
+      if (!stem) return;
+      if (opts.length >= 2) { if (ans >= 0) pool.push({ id: "own" + (i + 1), stem: esc(stem), options: opts.map(esc), answer: ans, set: "own" }); }
+      else written.push({ stem, marks });
+    });
+    return { pool, written };
+  }
+  function parseCSV(text) {
+    const rows = []; let row = [], f = "", q = false;
+    for (let i = 0; i < text.length; i++) { const c = text[i];
+      if (q) { if (c === '"' && text[i + 1] === '"') { f += '"'; i++; } else if (c === '"') q = false; else f += c; }
+      else if (c === '"') q = true; else if (c === ",") { row.push(f); f = ""; } else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; } else f += c; }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    const pool = [], written = []; rows.slice(1).forEach((r, i) => { const [stem, a, b, c, d, ans, marks] = r.map(x => (x || "").trim()); if (!stem) return; const opts = [a, b, c, d].filter(Boolean);
+      if (opts.length >= 2) { const k = "ABCDEFGH".indexOf((ans || "").toUpperCase()); if (k >= 0 && k < opts.length) pool.push({ id: "own" + (i + 1), stem: esc(stem), options: opts.map(esc), answer: k, set: "own" }); }
+      else written.push({ stem, marks: Number(marks) || null }); });
+    return { pool, written };
+  }
+  let ownT; $("#o-text").addEventListener("input", () => { clearTimeout(ownT); ownT = setTimeout(() => { own = parseOwn($("#o-text").value); recount(); }, 300); });
+  $("#o-file").onchange = async e => { const f = e.target.files[0]; if (!f) return; $("#o-text").value = await f.text(); own = parseOwn($("#o-text").value); recount(); };
+  /* ---------- a random paper, checked and approved by the teacher ---------- */
+  let rand = [], randOK = false;
+  const plain = h => String(h || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
+  function randSource() { if (!bank) return []; const sets = new Set($$("#b-sets input:checked").map(i => i.value)); return bank.questions.filter(q => (!sets.size || sets.has(q.set)) && inFocus(q)); }
+  function drawRand() {
+    $("#r-list").innerHTML = rand.map((q, i) => `<li><div class="rq"><span>${esc(plain(q.stem).slice(0, 220))}${plain(q.stem).length > 220 ? "…" : ""}</span><span style="display:flex;gap:4px;flex:none"><button class="btn ghost sm" type="button" data-rs="${i}">↻ Swap</button><button class="btn ghost sm" type="button" data-rx="${i}" aria-label="Remove">×</button></span></div><small>${esc([q.module, q.topic].filter(Boolean).join(" · "))} · Answer: ${esc(plain(q.options[q.answer]).slice(0, 80))}</small></li>`).join("");
+    $("#r-acts").hidden = !rand.length; $("#r-st").textContent = randOK ? "✓ Approved: " + rand.length + " questions" : "Not approved yet"; $("#r-ok").hidden = randOK;
+  }
+  $("#r-build").onclick = () => { if (!bank) return toast("Choose a course first."); const src = randSource(), n = Math.min(Number($("#r-n").value) || 20, src.length); if (!src.length) return toast("No questions match. Choose fewer modules or topics.");
+    const pick = src.slice().sort(() => Math.random() - 0.5); rand = pick.slice(0, n); randOK = false; drawRand(); recount(); $("#r-from").textContent = `Drawn from ${src.length} questions.`; };
+  $("#r-list").addEventListener("click", e => { const sw = e.target.closest("[data-rs]"), rx = e.target.closest("[data-rx]");
+    if (sw) { const used = new Set(rand.map(q => q.id)), cur = rand[+sw.dataset.rs], src = randSource().filter(q => !used.has(q.id)); const same = src.filter(q => q.module === cur.module && q.topic === cur.topic); const pool = same.length ? same : src; if (!pool.length) return toast("No other questions to swap in."); rand[+sw.dataset.rs] = pool[Math.floor(Math.random() * pool.length)]; randOK = false; drawRand(); recount(); }
+    if (rx) { rand.splice(+rx.dataset.rx, 1); randOK = false; drawRand(); recount(); } });
+  $("#r-ok").onclick = () => { randOK = true; $("#n-err").hidden = true; drawRand(); recount(); if ($("#r-same").checked) $("#n-per").value = rand.length; toast("Paper approved."); };
+  /* ---------- QTI import ---------- */
+  let qti = [];
+  const txt = el => el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "";
+  function parseQTI(xml, out) {
+    const d = new DOMParser().parseFromString(xml, "application/xml"); if (d.querySelector("parsererror")) return;
+    const byTag = (el, t) => Array.from(el.getElementsByTagNameNS("*", t));
+    byTag(d, "assessmentItem").forEach(it => { /* QTI 2.x */
+      const ci = byTag(it, "choiceInteraction")[0]; if (!ci) return;
+      const correct = txt(byTag(byTag(it, "correctResponse")[0] || it, "value")[0]);
+      const body = byTag(it, "itemBody")[0]; let stem = ""; if (body) { const c = body.cloneNode(true); byTag(c, "choiceInteraction").forEach(x => x.remove()); stem = txt(c); }
+      const prompt = txt(byTag(ci, "prompt")[0]); stem = [stem, prompt].filter(Boolean).join(" ");
+      const ch = byTag(ci, "simpleChoice"), opts = ch.map(txt), ans = ch.findIndex(x => x.getAttribute("identifier") === correct);
+      if (stem && opts.length >= 2 && ans >= 0) out.push({ id: "qti-" + (it.getAttribute("identifier") || out.length), stem: esc(stem), options: opts.map(esc), answer: ans, set: "qti" });
+    });
+    byTag(d, "item").forEach(it => { /* QTI 1.2 */
+      const lid = byTag(it, "response_lid")[0]; if (!lid) return;
+      const mat = byTag(byTag(it, "presentation")[0] || it, "mattext")[0]; let stem = mat ? txt(new DOMParser().parseFromString("<b>" + (mat.textContent || "") + "</b>", "text/html").body) : "";
+      const labels = byTag(lid, "response_label"), opts = labels.map(l => txt(new DOMParser().parseFromString("<b>" + (txt(byTag(l, "mattext")[0]) || "") + "</b>", "text/html").body));
+      let correct = null; byTag(it, "respcondition").forEach(rc => { const sv = byTag(rc, "setvar")[0], ve = byTag(rc, "varequal")[0]; if (ve && sv && Number(txt(sv)) > 0 && correct === null) correct = txt(ve); });
+      const ans = labels.findIndex(l => l.getAttribute("ident") === correct);
+      if (stem && opts.length >= 2 && ans >= 0) out.push({ id: "qti-" + (it.getAttribute("ident") || out.length), stem: esc(stem), options: opts.map(esc), answer: ans, set: "qti" });
+    });
+  }
+  function loadJSZip() { return window.JSZip ? Promise.resolve() : new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => bad(new Error("The .zip couldn't be opened here. Open the .xml file inside it instead.")); document.head.appendChild(sc); }); }
+  $("#q-file").onchange = async e => { const f = e.target.files[0]; if (!f) return; const out = [];
+    try { if (/\.zip$/i.test(f.name)) { await loadJSZip(); const z = await JSZip.loadAsync(f); for (const name of Object.keys(z.files)) if (/\.xml$/i.test(name) && !/imsmanifest/i.test(name)) parseQTI(await z.files[name].async("string"), out); }
+      else parseQTI(await f.text(), out);
+      const have = new Set(qti.map(q => q.id)); out.forEach(q => { while (have.has(q.id)) q.id += "x"; have.add(q.id); }); qti = qti.concat(out);
+      $("#q-st").textContent = (out.length ? `Read ${out.length} multiple-choice question${out.length > 1 ? "s" : ""} from ${f.name}.` : `No multiple-choice questions with a correct answer were found in ${f.name}.`) + (qti.length > out.length ? ` ${qti.length} imported in all.` : "");
+      $("#q-clear").hidden = !qti.length;
+      $("#q-list").innerHTML = qti.slice(0, 50).map(q => `<li><span>${esc(plain(q.stem).slice(0, 200))}</span><small>Answer: ${esc(plain(q.options[q.answer]))}</small></li>`).join("") + (qti.length > 50 ? `<li><small>…and ${qti.length - 50} more</small></li>` : "");
+    } catch (x) { $("#q-st").textContent = x.message; }
+    e.target.value = ""; recount(); };
+  $("#q-clear").onclick = () => { qti = []; $("#q-list").innerHTML = ""; $("#q-st").textContent = ""; $("#q-clear").hidden = true; recount(); };
+  function allPool() { const seen = new Set(), out = []; bankPool().concat(randOK ? rand : [], qti, own.pool).forEach(q => { if (!seen.has(q.id)) { seen.add(q.id); out.push(q); } }); return out; }
+  function recount() {
+    const b = allPool(), total = b.length;
+    $("#n-count").textContent = total + " multiple-choice" + (own.written.length ? " · " + own.written.length + " written" : "");
+    $("#o-parsed").textContent = $("#o-text").value.trim() ? `Read ${own.pool.length} multiple-choice and ${own.written.length} written question${own.written.length === 1 ? "" : "s"}.` : "";
+    const per = Number($("#n-per").value) || 0;
+    $("#n-perhint").textContent = total ? (per >= total ? "Everyone gets the same questions in a different order. Add more questions for different papers." : `Drawn from ${total}, so neighbours get different questions.`) : "";
+  }
+  $("#n-per").oninput = recount;
+  const MODEHINT = { proctored: "You (or another teacher) must have the exam room open. If no invigilator is watching, the test pauses and the time is given back.", bot: "Starts on time by itself. Cameras are requested, every time a student leaves is logged, a paper stops after too many times away, and you get a report by email.", unmonitored: "Starts on time by itself with no one watching. Times away are still logged and you get a report by email." };
+  const defMode = () => { try { return localStorage.getItem("ea-exam-default-mode") || "proctored"; } catch (e) { return "proctored"; } };
+  function modeUI() { const m = $("#n-mode").value; $("#n-modehint").textContent = MODEHINT[m]; $("#n-leavesbox").hidden = m !== "bot"; }
+  $("#n-mode").onchange = modeUI; $("#n-when").onchange = () => { $("#n-at").hidden = $("#n-when").value !== "at"; if (!$("#n-at").value) { const d = new Date(Date.now() + 864e5); d.setMinutes(0, 0, 0); d.setHours(9); $("#n-at").value = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); } };
+  $("#n-mode").value = defMode(); modeUI();
+  $("#n-go").onclick = async () => {
+    goFull();
+    const err = t => { $("#n-err").textContent = t; $("#n-err").hidden = !t; }; err("");
+    if (rand.length && !randOK) return err("Approve the random paper first, or remove it.");
+    const pool = allPool();
+    if (!pool.length && !own.written.length) return err("Add some questions: tick past papers or tests, approve a random paper, import QTI, or type your own.");
+    let at = null; if ($("#n-when").value === "at") { if (!$("#n-at").value) return err("Choose the date and time the test starts."); at = new Date($("#n-at").value).toISOString(); if (Date.parse(at) < Date.now() - 60000) return err("That start time has already passed."); }
+    if ($("#n-mode").value === "proctored" && at) toast("Proctored: the test starts at that time only if you have the exam room open.");
+    $("#n-go").disabled = true;
+    try {
+      const { room } = await call("create", { title: $("#n-title").value || "Test", course_slug: $("#n-course").value, instructions: $("#n-instr").value,
+        pool, written: own.written, per_student: Number($("#n-per").value), duration_min: Number($("#n-dur").value), late_min: Number($("#n-late").value),
+        seats_n: Number($("#n-seats").value), cols: Number($("#n-cols").value), auto_lock: $("#n-auto").checked, show_score: $("#n-score").checked,
+        mode: $("#n-mode").value, grace_min: Number($("#n-grace").value), scheduled_at: at, open_before: Number($("#n-open").value), max_leaves: Number($("#n-leaves").value) });
+      openRoom(room.id);
+    } catch (e) { err(e.message); } finally { $("#n-go").disabled = false; }
+  };
+
+  /* ---------- live room ---------- */
+  let roomId = null, S = null, pollT = 0, off = 0;
+
+  /* ---------- full screen ---------- */
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const fsCan = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  function goFull() { if (fsEl() || !fsCan()) return Promise.resolve(); const d = document.documentElement, f = d.requestFullscreen || d.webkitRequestFullscreen; try { const r = f.call(d); return r && r.catch ? r.catch(() => { }) : Promise.resolve(); } catch (e) { return Promise.resolve(); } }
+  function leaveFull() { if (!fsEl()) return; try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) { } }
+  async function openRoom(id) { if (!navigator.userActivation || navigator.userActivation.isActive) goFull(); roomId = id; show("v-room"); await refresh(); }
+  const fsLabel = () => { $("#r-fs").textContent = fsEl() ? "✕ Exit full screen" : "⛶ Full screen"; $("#r-fs").hidden = !fsCan(); };
+  $("#r-fs").onclick = () => { if (fsEl()) leaveFull(); else goFull(); };
+  document.addEventListener("fullscreenchange", fsLabel); document.addEventListener("webkitfullscreenchange", fsLabel); fsLabel();
+  async function refresh() {
+    clearTimeout(pollT);
+    try { S = await call("state", { room: roomId }); off = S.now - Date.now(); render(); hallPush(); }
+    catch (e) { toast(e.message); if (e.status === 404 || e.status === 403) return loadList(); }
+    pollT = setTimeout(refresh, document.hidden ? 10000 : 4000);
+  }
+  /* ---------- alerts ---------- */
+  let seenAlerts = null, alertSound = true, pingT = 0;
+  try { alertSound = localStorage.getItem("ea-exam-alert-sound") !== "off"; } catch (e) { }
+  const sndBtn = () => { $("#r-snd").textContent = alertSound ? "🔔 Sound on" : "🔕 Sound off"; $("#r-snd").setAttribute("aria-pressed", String(alertSound)); };
+  function beep() { try { const a = new (window.AudioContext || window.webkitAudioContext)(); [0, .18].forEach(d => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 660; g.gain.setValueAtTime(.15, a.currentTime + d); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + d + .15); o.start(a.currentTime + d); o.stop(a.currentTime + d + .16); }); } catch (e) { } }
+  function renderAlerts() {
+    const A = S.alerts || [];
+    $("#r-an").textContent = A.length ? "(" + A.length + ")" : "";
+    $("#r-alerts").innerHTML = A.length ? A.map(a => `<div class="al ${a.audio ? "voice" : ""}"><time>${esc(clock(a.at))}${a.seat_no ? " · seat " + a.seat_no : ""}</time><span><b>${esc(a.name)}</b> ${esc(a.what)}</span>${a.audio ? `<audio controls preload="none" src="${esc(a.audio)}"></audio>` : ""}</div>`).join("") : '<p class="hint">No alerts yet.</p>';
+    const keys = A.map(a => a.key);
+    if (seenAlerts === null) { seenAlerts = new Set(keys); return; } /* only new ones pop up */
+    const fresh = A.filter(a => !seenAlerts.has(a.key)); keys.forEach(k => seenAlerts.add(k));
+    if (!fresh.length) return;
+    const a = fresh[0], txt = "⚠ " + a.name + (a.seat_no ? " (seat " + a.seat_no + ")" : "") + " " + a.what + (fresh.length > 1 ? " · +" + (fresh.length - 1) + " more" : "");
+    $("#ping").textContent = txt; $("#ping").hidden = false; clearTimeout(pingT); pingT = setTimeout(() => $("#ping").hidden = true, 7000);
+    if (alertSound) beep();
+    try { if (document.hidden && "Notification" in window && Notification.permission === "granted") new Notification("Exam room alert", { body: txt }); } catch (e) { }
+  }
+  $("#r-snd").onclick = () => { alertSound = !alertSound; try { localStorage.setItem("ea-exam-alert-sound", alertSound ? "on" : "off"); } catch (e) { } sndBtn(); if (alertSound && "Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => { }); };
+  sndBtn();
+  $("#r-cam").onclick = () => act("camreq", { on: !S.room.cam_request }, S.room.cam_request ? "You've stopped asking for cameras." : "Students have been asked to turn on their cameras. Their microphones stay off.");
+
+  /* ID: what the records say, and the exam-day check */
+  function idBadge(s) {
+    if (s.idcheck && s.idcheck.status === "match") return '<span class="idb ok">ID ✓ checked</span>';
+    if (s.idcheck && s.idcheck.status === "mismatch") return '<span class="idb bad">ID ✗ doesn\'t match</span>';
+    const R = { verified: ["ok", "On record ✓"], submitted: ["mid", "Photo on record"], rejected: ["bad", "Record not verified"], none: ["none", "No photo on record"], norecord: ["bad", "Not on record"] }[s.record || "norecord"];
+    return `<span class="idb ${R[0]}">${R[1]}</span>`;
+  }
+  function render() {
+    const r = S.room, now = Date.now() + off;
+    $("#r-title").textContent = r.title; $("#r-code").textContent = r.code;
+    const left = r.ends_at ? Math.max(0, new Date(r.ends_at) - now) : null;
+    $("#r-status").textContent = (STATUS[r.phase] || r.status) + " · " + courseTitle(r.course_slug);
+    $("#r-start").hidden = r.status !== "waiting";
+    $("#r-lock").hidden = r.status === "ended"; $("#r-lock").textContent = r.locked ? "🔓 Unlock the room" : "🔒 Lock the room";
+    $("#r-timebox").hidden = r.status !== "live" || !r.duration_min;
+    $("#r-reopen").hidden = !(r.status === "ended" || r.phase === "over") || !r.started_at;
+    $("#r-end").hidden = r.status === "ended"; $("#r-del").hidden = r.status !== "ended";
+    const seated = S.seats.length, sub = S.seats.filter(s => s.status === "submitted").length;
+    const entry = r.entry === "open" ? (r.cutoff_at && r.phase === "live" ? "Open until " + clock(r.cutoff_at) : "Open") : r.entry === "late" ? "Closed at " + clock(r.cutoff_at) : r.entry === "locked" ? "Locked" : "Closed";
+    $("#r-stats").innerHTML = [[seated, "seated"], [sub, "handed in"], [S.turned.length, "turned away"], [left == null ? (r.status === "waiting" ? r.duration_min ? r.duration_min + " min" : "No limit" : "—") : Math.floor(left / 60000) + ":" + String(Math.floor(left / 1000) % 60).padStart(2, "0"), r.status === "waiting" ? "time allowed" : "time left"], [entry, "entry"]]
+      .map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+    /* seats */
+    const by = {}; S.seats.forEach(s => by[s.seat_no] = s);
+    $("#r-seats").style.setProperty("--cols", r.cols || 6);
+    $("#r-seats").innerHTML = Array.from({ length: r.seats_n || 30 }, (_, i) => i + 1).map(n => { const s = by[n];
+      if (!s) return `<div class="seat" aria-label="Seat ${n}, empty"><span class="n">${n}</span></div>`;
+      const away = s.status === "seated" && s.last_seen && now - new Date(s.last_seen) > 30000;
+      const pct = s.questions ? Math.round(100 * s.answered / s.questions) : 0;
+      return `<button type="button" class="seat on ${s.status === "submitted" ? "sub" : ""} ${away ? "away" : ""}" data-seat="${esc(s.id)}" title="${esc(s.name)}"><span class="n">${n}${s.status === "submitted" ? " · ✓" : ""}</span><span class="nm">${esc(s.name)}</span>${idBadge(s)}${s.cam && s.cam.url ? `<img class="cam" alt="Camera still from ${esc(s.name)}" src="${esc(s.cam.url)}">` : (r.cam_request && s.status === "seated" ? '<span class="camoff">camera off</span>' : "")}${s.questions ? `<span class="pb" aria-hidden="true"><i style="width:${pct}%"></i></span><span>${s.answered}/${s.questions}</span>` : '<span class="hint">waiting</span>'}${s.leaves ? `<span class="fl">left page ×${s.leaves}</span>` : ""}${s.blocked ? '<span class="fl">🤖 stopped</span>' : ""}${s.until && s.status === "seated" ? `<span class="hint">extra time to ${esc(clock(s.until))}</span>` : ""}${s.late ? `<span class="fl">changed after time ×${s.late}</span>` : ""}${away ? '<span class="fl">not connected</span>' : ""}</button>`; }).join("");
+    const ML = { proctored: "🧑‍🏫 Proctored", bot: "🤖 Bot-monitored", unmonitored: "⏱ Unmonitored" };
+    $("#r-modes").innerHTML = `<span class="chip modechip">${ML[r.mode] || r.mode}</span>` + (r.scheduled_at ? `<span class="chip">Starts ${esc(new Date(r.scheduled_at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }))}</span><span class="chip">Opens ${r.open_before} min before</span>` : "") + (r.mode === "bot" ? `<span class="chip">Stops a paper after ${r.max_leaves} times away</span>` : "");
+    const ib = $("#r-invig");
+    if (r.mode === "proctored" && r.status !== "ended") { ib.hidden = false; ib.className = "inv-banner"; ib.textContent = r.status === "waiting" ? (r.scheduled_at ? "Proctored test: keep this page open. It starts at the set time only while you're here as the invigilator." : "Proctored test: you're the live invigilator. Keep this page open while the test runs.") : "You're the live invigilator. If this page closes, the test pauses for everyone and the lost time is given back when you return."; }
+    else if (r.mode !== "proctored" && r.status === "waiting" && r.scheduled_at) { ib.hidden = false; ib.className = "inv-banner"; ib.textContent = "This test starts by itself at the set time. You don't need to be here; you'll get a report by email when it ends."; }
+    else ib.hidden = true;
+    renderAlerts(); $("#r-cam").textContent = r.cam_request ? "📷 Stop asking for cameras" : "📷 Ask students to turn on cameras"; $("#r-cam").hidden = r.status === "ended";
+    /* messages */
+    $("#r-feed").innerHTML = S.messages.slice().reverse().map(m => `<div class="m ${m.kind === "system" ? "system" : ""}"><time>${esc(clock(m.at))}</time>${m.body ? `<div>${esc(m.body)}</div>` : ""}${m.audio ? `<audio controls preload="none" src="${esc(m.audio)}"></audio>` : ""}</div>`).join("");
+    /* turned away */
+    const RS = { late: "Arrived late", locked: "Room locked", ended: "Test finished" };
+    $("#r-tn").textContent = S.turned.length ? "(" + S.turned.length + ")" : "";
+    $("#r-turned").innerHTML = S.turned.length ? S.turned.map(t => `<div class="t"><div><b>${esc(t.name || "Student")}</b><div class="hint">${esc(RS[t.reason] || t.reason)} · ${esc(clock(t.at))} · ${t.emailed ? "emailed" : t.email ? "email not sent" : "no email"}</div></div>${t.admitted ? '<span class="chip">Let in</span>' : `<button class="btn ghost sm" type="button" data-admit="${esc(t.id)}">Let in</button>`}</div>`).join("") : '<p class="hint">No one so far.</p>';
+    /* results */
+    const W = Number(r.written_n) || 0;
+    $("#r-res").innerHTML = `<thead><tr><th>Seat</th><th>Name</th><th>Multiple choice</th>${W ? "<th>Written</th>" : ""}<th>Left page</th><th>Handed in</th></tr></thead><tbody>` +
+      (S.seats.map(s => { const wm = Object.values(s.marks || {}).reduce((a, b) => a + Number(b || 0), 0); return `<tr><td>${s.seat_no}</td><td>${esc(s.name)}</td><td>${s.total ? `${s.score}/${s.total} (${Math.round(100 * s.score / s.total)}%)` : "—"}</td>${W ? `<td>${Object.keys(s.marks || {}).length ? wm : "to mark"}</td>` : ""}<td>${s.leaves || 0}</td><td>${s.submitted_at ? esc(clock(s.submitted_at)) : s.status === "seated" ? "working" : "—"}</td></tr>`; }).join("") || `<tr><td colspan="6" class="hint">No one has joined yet.</td></tr>`) + "</tbody>";
+  }
+  const act = async (a, b, okMsg) => { try { await call(a, Object.assign({ room: roomId }, b)); if (okMsg) toast(okMsg); refresh(); } catch (e) { toast(e.message); } };
+  $("#r-start").onclick = () => act("start", {}, "The test has started. Papers are being dealt.");
+  $("#r-lock").onclick = () => act("lock", { locked: !S.room.locked }, S.room.locked ? "The room is open again." : "The room is locked. No one else can come in.");
+  const mins = () => Math.max(1, Math.min(240, Number($("#r-mins").value) || 5));
+  $("#r-plus").onclick = () => act("extend", { minutes: mins() }, mins() + " minutes added for everyone.");
+  $("#r-reopen").onclick = () => { const m = prompt("Reopen the test for how many more minutes? Every student's saved answers come back to their paper.", "10"); if (!m) return;
+    const all = confirm("Reopen for everyone, including students who handed in themselves?\n\nOK = everyone · Cancel = only papers that handed themselves in when time ran out");
+    act("reopen", { minutes: Number(m) || 10, everyone: all }, "The test is open again for " + (Number(m) || 10) + " minutes."); };
+  $("#r-proctor").onclick = () => copyText(location.origin + location.pathname + "?room=" + encodeURIComponent(roomId), "Proctor link copied. Another teacher can open it to invigilate this room.");
+  $("#r-end").onclick = () => { if (confirmEnd()) act("end", {}, "The test has ended. Every paper has been handed in."); };
+  function confirmEnd() { const b = $("#r-end"); if (b.dataset.sure) { delete b.dataset.sure; b.textContent = "■ End the test"; return true; } b.dataset.sure = "1"; b.textContent = "Choose again to end for everyone"; setTimeout(() => { delete b.dataset.sure; b.textContent = "■ End the test"; }, 4000); return false; }
+  $("#r-del").onclick = () => { const b = $("#r-del"); if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Choose again to delete"; return; } call("remove_room", { room: roomId }).then(() => { toast("Room deleted."); loadList(); }, e => toast(e.message)); };
+  const invite = () => { const link = location.origin + "/exam.html?code=" + S.room.code; return `${S.room.title}\nJoin the exam room: ${link}\nRoom code: ${S.room.code}\nSign in with your login, or use your full name and email with the code. Entry closes ${S.room.late_min} minutes after the test starts.`; };
+  async function copyText(t, msg) { try { await navigator.clipboard.writeText(t); toast(msg); } catch (e) { toast("Copy didn't work here. The code is " + S.room.code + "."); } }
+  $("#r-copy").onclick = () => copyText(invite(), "Invite copied. Paste it into Google Classroom, Teams or email.");
+  $("#r-copylink").onclick = () => copyText(location.origin + "/exam.html?code=" + S.room.code, "Link copied.");
+  $("#r-send").onclick = async () => { const t = $("#r-msg").value.trim(); if (!t) return toast("Type a message first."); await act("say", { text: t }, "Sent to everyone in the room."); $("#r-msg").value = ""; };
+  $("#r-turned").addEventListener("click", e => { const b = e.target.closest("[data-admit]"); if (b) act("admit", { turnaway: b.dataset.admit }, "They can come in now. They've been emailed."); });
+
+  /* voice messages */
+  let rec = null, chunks = [], recStart = 0, recTimer = 0;
+  $("#r-rec").addEventListener("click", async e => {
+    const a = e.target.closest("button"); if (!a) return;
+    if (a.id === "r-mic") {
+      if (!navigator.mediaDevices || !window.MediaRecorder) return toast("This browser can't record. Try Chrome, Edge or Safari.");
+      try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); chunks = []; rec = new MediaRecorder(stream); rec.ondataavailable = ev => ev.data.size && chunks.push(ev.data); rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); review(); }; rec.start(); recStart = Date.now();
+        $("#r-rec").innerHTML = '<span class="dot" aria-hidden="true"></span><span id="r-rt">0:00</span><button class="btn go sm" type="button" id="r-stop">■ Stop</button>';
+        recTimer = setInterval(() => { const s = Math.floor((Date.now() - recStart) / 1000); const el = $("#r-rt"); if (el) el.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); if (s >= 120) rec.stop(); }, 250);
+      } catch (x) { toast("The microphone isn't available. Allow microphone access and try again."); }
+    }
+    if (a.id === "r-stop" && rec) { clearInterval(recTimer); rec.stop(); }
+    if (a.id === "r-discard") resetRec();
+    if (a.id === "r-vsend") {
+      a.disabled = true; const blob = new Blob(chunks, { type: (rec && rec.mimeType) || "audio/webm" });
+      const data = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); });
+      await act("voice", { audio: data, mime: blob.type, secs: Math.round((Date.now() - recStart) / 1000) }, "Voice message sent. It plays on every student's screen.");
+      resetRec();
+    }
+  });
+  function review() { clearInterval(recTimer); const url = URL.createObjectURL(new Blob(chunks, { type: (rec && rec.mimeType) || "audio/webm" })); $("#r-rec").innerHTML = `<audio controls src="${url}" style="width:100%"></audio><button class="btn go sm" type="button" id="r-vsend">Send to everyone</button><button class="btn ghost sm" type="button" id="r-discard">Discard</button>`; }
+  function resetRec() { rec = null; chunks = []; $("#r-rec").innerHTML = '<button class="btn ghost sm" type="button" id="r-mic">🎙️ Record a voice message</button>'; }
+
+  /* a student's paper */
+  let scSeat = null;
+  $("#r-seats").addEventListener("click", e => { const b = e.target.closest("[data-seat]"); if (b) openScript(b.dataset.seat); });
+  async function openScript(id) {
+    scSeat = id;
+    try {
+      const s = await call("script", { room: roomId, seat: scSeat });
+      $("#sc-eye").textContent = "Seat " + s.seat_no + " · " + s.score.score + "/" + s.score.total + " multiple choice"; $("#sc-title").textContent = s.name;
+      $("#sc-body").innerHTML = s.mcq.map(q => `<div class="a"><b>${q.n}. ${esc(strip(q.stem))}</b><span>Chose: ${q.chose == null ? "<i>no answer</i>" : esc(strip(q.options[q.chose]))} <span class="${q.right ? "ok" : "no"}">${q.right ? "✓" : "✗"}</span></span>${q.right ? "" : `<span class="hint">Answer: ${esc(strip(q.options[q.answer]))}</span>`}</div>`).join("") +
+        s.written.map(w => `<div class="a"><b>${esc(w.stem)}</b><div style="white-space:pre-wrap">${w.text ? esc(w.text) : "<i>No answer</i>"}</div><label class="hint">Mark${w.marks ? " (out of " + w.marks + ")" : ""} <input type="number" min="0" ${w.marks ? `max="${w.marks}"` : ""} data-mark="${w.qid}" value="${s.marks[w.qid] ?? ""}" style="width:90px"></label></div>`).join("") || '<p class="hint">Their paper is dealt when the test starts.</p>';
+      const R = s.record, RS = { verified: "verified by " + ((R && R.checked_by) || "a teacher"), submitted: "sent, not checked yet", rejected: "marked not verified", none: "no photo or ID sent" };
+      const fig = (src, cap, alt) => `<figure>${src ? `<img src="${esc(src)}" alt="${alt}">` : `<div class="empty">${cap === "Camera now" ? "Camera off. Ask for cameras to see them." : "Nothing on record"}</div>`}<figcaption class="hint">${cap}</figcaption></figure>`;
+      const chk = s.idcheck ? (s.idcheck.status === "match" ? "✓ You checked: same person" : "✗ You checked: doesn't match") + " · " + esc(clock(s.idcheck.at)) : "Not checked yet";
+      $("#sc-body").insertAdjacentHTML("afterbegin", `<div class="a"><b>ID check</b><span class="hint">${R ? "Record: " + esc(R.name) + " · " + esc(RS[R.status] || R.status) + (R.id_type ? " · " + esc(R.id_type) : "") : (s.guest ? "Not on record: joined with the room code as " + esc(s.email || s.name) : "No record found")}</span>
+        <div class="idcmp">${fig(R && R.photo, "Photo on record", "Photo on record")}${fig(s.cam && s.cam.url, "Camera now", "Camera still")}${R && R.doc ? fig(R.doc, "ID document" + (R.id_type ? " · " + esc(R.id_type) : ""), "ID document") : ""}</div>
+        <span class="hint">${chk}</span><div class="ctrl"><button class="btn go sm" type="button" data-idc="match">✓ Same person</button><button class="btn ghost sm" type="button" data-idc="mismatch">✗ Doesn't match</button>${s.idcheck ? '<button class="btn ghost sm" type="button" data-idc="">Clear</button>' : ""}</div></div>`);
+      const seatRow = S.seats.find(x => x.id === scSeat);
+      if (seatRow && S.room.started_at && S.room.duration_min) $("#sc-body").insertAdjacentHTML("afterbegin", `<div class="a"><b>Time for ${esc(s.name)}</b><span class="hint">${seatRow.status === "submitted" ? "Handed in " + esc(clock(seatRow.submitted_at)) + (seatRow.auto ? " (by itself when time ran out)" : "") + ". Reopening brings back every saved answer." : "Hands in by itself at " + esc(clock(seatRow.hand_in_at)) + "."}</span><div class="ctrl"><input type="number" min="1" max="240" value="10" data-sm style="width:80px" aria-label="Minutes"><button class="btn ${seatRow.status === "submitted" ? "go" : "ghost"} sm" type="button" data-stime="${seatRow.status === "submitted" ? "reopen" : "extend"}">${seatRow.status === "submitted" ? "↺ Reopen for this student" : "⏱ Give extra time"}</button></div></div>`); if (seatRow && seatRow.blocked) $("#sc-body").insertAdjacentHTML("afterbegin", `<div class="a"><b>🤖 Stopped by the exam bot</b><span class="hint">They left the test ${seatRow.leaves} times. Their answers so far are saved.</span><div class="ctrl"><button class="btn go sm" type="button" data-unblock>Let them carry on</button></div></div>`);
+      $("#sc-save").hidden = !s.written.length;
+      $("#sc-save").hidden = !s.written.length; if (!$("#dlg-script").open) $("#dlg-script").showModal();
+    } catch (x) { toast(x.message); }
+  }
+  $("#sc-body").addEventListener("click", async e => { const st = e.target.closest("[data-stime]"); if (st) { const m = Number(($("#sc-body [data-sm]") || {}).value) || 10; try { await call(st.dataset.stime, { room: roomId, seat: scSeat, minutes: m }); toast(st.dataset.stime === "reopen" ? "Reopened for " + m + " minutes. Their saved answers are back." : m + " extra minutes given."); $("#dlg-script").close(); refresh(); } catch (x) { toast(x.message); } return; }
+    if (e.target.closest("[data-unblock]")) { try { await call("unblock", { room: roomId, seat: scSeat }); toast("They can carry on with their test."); $("#dlg-script").close(); refresh(); } catch (x) { toast(x.message); } return; } const b = e.target.closest("[data-idc]"); if (!b) return; try { await call("idcheck", { room: roomId, seat: scSeat, status: b.dataset.idc }); toast(b.dataset.idc === "match" ? "Marked: same person." : b.dataset.idc === "mismatch" ? "Marked: doesn't match. You'll see it on the seating plan." : "Check cleared."); openScript(scSeat); refresh(); } catch (x) { toast(x.message); } });
+  $("#sc-save").onclick = async () => { const marks = {}; $$("[data-mark]").forEach(i => marks[i.dataset.mark] = i.value); try { await call("marks", { room: roomId, seat: scSeat, marks }); toast("Marks saved."); $("#dlg-script").close(); refresh(); } catch (e) { toast(e.message); } };
+  $("#sc-remove").onclick = async () => { const b = $("#sc-remove"); if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Choose again to remove"; setTimeout(() => { delete b.dataset.sure; b.textContent = "Remove from the room"; }, 4000); return; } delete b.dataset.sure; b.textContent = "Remove from the room"; try { await call("remove", { room: roomId, seat: scSeat }); $("#dlg-script").close(); toast("Removed. Their seat is open again."); refresh(); } catch (e) { toast(e.message); } };
+
+  $("#r-csv").onclick = () => {
+    const t = x => x ? new Date(x).toLocaleString([], { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+    const mins = (a, b) => a && b ? Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000)) : "";
+    const split = n => { const w = String(n || "").trim().split(/\s+/); return [w[0] || "", w.slice(1).join(" ")]; };
+    const rows = [["Seat", "First name", "Last name", "Email", "Joined", "Handed in", "Minutes in the room", "Score", "Out of", "Percent", "Written marks", "Left page", "Status", "ID on record", "ID check", "Changed after time"]].concat(S.seats.map(s => { const [f, l] = split(s.name), out = s.submitted_at || s.last_seen;
+      return [s.seat_no, f, l, s.email || "", t(s.joined_at), t(s.submitted_at), mins(s.joined_at, out), s.score, s.total, s.total ? Math.round(100 * s.score / s.total) : "", Object.values(s.marks || {}).reduce((a, b) => a + Number(b || 0), 0), s.leaves || 0, s.status, ({ verified: "Verified", submitted: "Sent, not checked", rejected: "Not verified", none: "No photo", norecord: "Not on record" })[s.record] || "", s.idcheck ? (s.idcheck.status === "match" ? "Same person" : "Does not match") : "Not checked", s.late || 0]; }))
+      .concat(S.turned.map(x => { const [f, l] = split(x.name); return ["—", f, l, x.email || "", "Turned away " + t(x.at), "", "", "", "", "", "", "", x.reason === "late" ? "Arrived late" : x.reason === "locked" ? "Room locked" : "Test finished"]; }));
+    const csv = rows.map(r => r.map(v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = (S.room.title || "results").replace(/[^\w -]/g, "") + " results.csv"; document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  /* ---------- the 3D exam hall: the invigilator's view ---------- */
+  let hallLoading = null;
+  const hallOpen = () => !!(window.ExamHall && ExamHall.isOpen);
+  function loadHall() {
+    if (window.ExamHall) return Promise.resolve();
+    if (!hallLoading) hallLoading = new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = "assets/exam/hall3d.js"; sc.onload = ok; sc.onerror = () => { hallLoading = null; bad(new Error("The 3D hall couldn't load. Check your connection and try again.")); }; document.head.appendChild(sc); });
+    return hallLoading;
+  }
+  function hallPush() {
+    if (!hallOpen() || !S) return; const now = Date.now() + off;
+    const lastText = S.messages.filter(m => m.kind === "text" && m.body).slice(-1)[0];
+    ExamHall.update({ room: S.room, now, message: lastText ? lastText.body : "", seats: S.seats.map(x => ({ id: x.id, seat_no: x.seat_no, name: x.name, status: x.status, answered: x.answered, questions: x.questions, leaves: x.leaves, away: x.status === "seated" && x.last_seen && now - new Date(x.last_seen) > 30000 })) });
+  }
+  $("#r-hall").onclick = async () => {
+    const b = $("#r-hall"); b.disabled = true; const lbl = b.textContent; b.textContent = "Opening the hall…";
+    try { await loadHall(); ExamHall.open({ mode: "teacher", onSelect: id => openScript(id) }); hallPush(); }
+    catch (x) { toast(x.message); } finally { b.disabled = false; b.textContent = lbl; }
+  };
+
+  /* ---------- demo helpers: pretend students and the student's screen beside yours ---------- */
+  const KIDS = ["Aaliyah Brown", "Jaden Lake", "Keisha Richardson", "Malik Hodge", "Tiana Gumbs", "Dante Arrindell", "Shanice Peterson", "Kemar Duggins", "Naomi Wathey", "Jamal Carty"];
+  let pretend = [], kidT = 0;
+  if (!ExamAPI.live) $("#r-demo").hidden = false;
+  $("#d-kids").onclick = async () => {
+    if (!S) return; const taken = new Set(S.seats.map(x => x.seat_no)); let added = 0;
+    for (const nm of KIDS) { if (added >= 5) break; if (pretend.some(p => p.name === nm)) continue;
+      let n = 1; while (taken.has(n)) n++; if (n > (S.room.seats_n || 30)) break;
+      try { const j = await ExamAPI.call("join", { code: S.room.code, name: nm, email: nm.toLowerCase().replace(/\s+/g, ".") + "@example.com", seat_no: n }, { guest: true });
+        pretend.push({ name: nm, seat: j.seat.id, secret: j.seat.secret, paper: null, done: false }); taken.add(n); added++; } catch (e) { toast(e.message); break; } }
+    toast(added ? added + " pretend students have taken seats. Press Start the test and watch them work." : "No more seats or pretend students to add.");
+    refresh(); clearInterval(kidT); kidT = setInterval(kidsWork, 2500);
+  };
+  async function kidsWork() {
+    if (!S || S.room.status !== "live") return;
+    for (const k of pretend) { if (k.done) continue;
+      try {
+        if (!k.paper) { const r = await ExamAPI.call("poll", { seat: k.seat, secret: k.secret, since: 1e9 }, { guest: true }); k.paper = r.paper; k.i = 0; if (r.status === "submitted") { k.done = true; continue; } }
+        if (!k.paper) continue;
+        if (Math.random() < 0.55) continue; /* everyone works at their own pace */
+        const L = k.paper.mcq.concat(k.paper.written.map(w => Object.assign({ written: true }, w)));
+        if (k.i < L.length) { const q = L[k.i++]; const v = q.written ? "Pretend answer from " + k.name.split(" ")[0] + "." : Math.floor(Math.random() * q.options.length);
+          await ExamAPI.call("save", { seat: k.seat, secret: k.secret, answers: { [q.qid]: v }, events: Math.random() < 0.04 ? [{ type: "left", d: "tab hidden" }] : [] }, { guest: true }); }
+        else { await ExamAPI.call("submit", { seat: k.seat, secret: k.secret }, { guest: true }); k.done = true; }
+      } catch (e) { if (e.status === 409 || e.status === 404) k.done = true; }
+    }
+  }
+  $("#d-me").onclick = () => { $("#d-sv").hidden = false; $("#d-frame").src = "exam.html?embed=1&code=" + encodeURIComponent(S.room.code); $("#d-sv").scrollIntoView({ behavior: "smooth" }); };
+  $("#d-svx").onclick = () => { $("#d-sv").hidden = true; $("#d-frame").removeAttribute("src"); };
+
+  gate();
+})();
+</script>
+</body>
+</html>

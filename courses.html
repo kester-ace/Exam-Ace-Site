@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Course Hub · Exam Ace Tutorials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Layout: one screen — a slim course rail on top, the chosen course filling everything below */
+html,body{height:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+.rail{position:relative;z-index:20;flex:none;background:var(--head);border-bottom:1px solid var(--line);box-shadow:0 8px 24px -16px rgba(0,0,0,.8);padding-top:env(safe-area-inset-top,0px)}
+.rail .row{display:flex;align-items:center;gap:10px;padding-block:8px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.rail .brand{margin-right:0;flex:none}
+.rail .brand .seal{width:30px;height:30px}
+.home-lbl{font-size:.95rem}
+@media (max-width:980px){.home-lbl{display:none}}
+.tabs{flex:1;min-width:0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;background:none;color:#C9D2F2;font:700 .9rem var(--f-body);padding:7px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.tab:hover{background:rgba(255,255,255,.07);color:#fff}
+.tab .lv{font-size:.62rem;letter-spacing:.08em;padding:1px 6px;border-radius:5px;background:rgba(255,215,102,.18);color:#FFD766}
+.tab[aria-current="page"]{background:linear-gradient(180deg,#FFE38A,#F5C542 60%);color:#0A1433;box-shadow:0 3px 0 #A97A0E}
+.tab[aria-current="page"] .lv{background:rgba(10,20,51,.15);color:#0A1433}
+.tab.locked{color:#8792B8}
+.tab svg{flex:none}
+.pick{display:none;flex:1;min-width:0}
+.pick select{width:100%;font:700 .95rem var(--f-body);color:#fff;background:rgba(255,255,255,.08);border:1.5px solid rgba(245,197,66,.4);border-radius:10px;padding:8px 10px}
+.pick select option{color:#F1F4FF;background:#0B1A46}
+@media (max-width:720px){.tabs{display:none}.pick{display:block}}
+.ed-badge{flex:none;font:700 .74rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:#FFD766;border:1px solid rgba(245,197,66,.45);border-radius:999px;padding:5px 10px;white-space:nowrap}
+@media (max-width:520px){.ed-badge{display:none}}
+.shoplink{flex:none;color:#DCE3FF;text-decoration:none;font-weight:700;font-size:.9rem;padding:6px 8px;border-radius:10px}
+.shoplink:hover{background:rgba(255,255,255,.08)}
+.studybtn{border:1.5px solid rgba(245,197,66,.55);background:transparent;cursor:pointer;font-family:inherit}.studybtn:focus-visible{outline:3px solid #FFD766;outline-offset:2px}
+@media (max-width:620px){.studybtn{font-size:.8rem;padding:5px 7px}}
+@media (max-width:620px){.shoplink span:not(.cart-n){display:none}}
+.me{flex:none;display:flex;gap:6px;align-items:center}
+.me a,.me button{color:#DCE3FF}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#0b1a46;border:2px solid #F5C542;color:#FFD766;font:800 .8rem var(--f-display);text-decoration:none}
+
+.stage{position:relative;flex:1;min-height:0}
+#sky{position:absolute}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);z-index:2}
+.stage .screen{position:absolute;inset:0;overflow:auto;z-index:1;padding-block:clamp(24px,5vw,56px) 40px}
+.screen .wrap{display:grid;gap:22px}
+.screen h1{font-size:clamp(1.8rem,4vw,2.7rem)}
+.choose{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.choose{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.choose{grid-template-columns:1fr}}
+.card{appearance:none;font:inherit;text-align:left;cursor:pointer;color:var(--ink);padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--gold) 55%,transparent)}
+.card h3{font-size:1.2rem}
+.card p{color:var(--muted);font-size:.94rem;flex:1}
+.card .foot2{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;font-weight:700;padding-top:10px;border-top:1px solid var(--line)}
+.card .foot2 .ok{color:var(--ok)}
+.card.locked{opacity:.7}
+.last{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 18px}
+.lockbox{max-width:520px;margin:clamp(30px,8vh,90px) auto 0;padding:28px;display:grid;gap:14px;text-align:center;justify-items:center}
+.loading{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 75%,transparent);font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="rail">
+  <div class="row">
+    <a class="brand" href="index.html" title="Homepage"><span class="seal"><span>EA</span></span><span class="home-lbl">Home</span></a>
+    <nav class="tabs" id="tabs" aria-label="Courses"></nav>
+    <div class="pick"><label class="sr" for="pickSel" hidden>Course</label><select id="pickSel" aria-label="Choose a course"></select></div>
+    <span class="ed-badge" id="edBadge">Student edition</span>
+    <button type="button" class="shoplink studybtn" data-study="notebook" title="Notebook, memory palace, memes and study hourglass">Study tools</button>
+    <a class="shoplink" href="shop.html" data-cartlink data-label="Shop"></a>
+    <div class="me"><a class="avatar" id="avatar" href="dashboard.html" title="My dashboard">··</a></div>
+  </div>
+</header>
+<div class="demo" id="demoBar" hidden><div class="wrap"><b>Demo mode.</b> Courses show a placeholder until the course folders are uploaded to Netlify.</div></div>
+
+<main class="stage" id="stage">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <section class="screen" id="home"><div class="wrap">
+    <div><p class="eyebrow" id="homeEyebrow">Course hub</p><h1>Choose a course</h1></div>
+    <div class="panel last" id="resume" hidden></div>
+    <div class="choose" id="choose"></div>
+    <p class="hint" style="text-align:center;margin-top:10px">© <span data-yr></span> Exam Ace Tutorials. All rights reserved.</p>
+  </div></section>
+  <section class="screen" id="locked" hidden><div class="wrap">
+    <div class="panel lockbox">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold)"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <h2 id="lockTitle">This course isn't on your plan</h2>
+      <p class="muted" id="lockText">Add it to your plan to open it here. If your teacher gave you this login, ask them to add the subject.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><a class="btn go" id="orderBtn" href="shop.html">Order this course</a><button class="btn ghost" type="button" id="reqBtn">Request this course</button><button class="btn ghost" type="button" data-home>Back to my courses</button></div>
+    </div>
+  </div></section>
+  <iframe id="frame" title="Course" hidden allow="fullscreen; autoplay; clipboard-write; xr-spatial-tracking; camera; microphone; accelerometer; gyroscope" allowfullscreen></iframe>
+  <div class="loading" id="loading" hidden>Opening course…</div>
+</main>
+
+<script>document.addEventListener("DOMContentLoaded",()=>document.querySelectorAll("[data-yr]").forEach(e=>e.textContent=new Date().getFullYear()));</script>
+<script src="assets/config.js"></script>
+<script src="assets/auth.js"></script>
+<script src="assets/presence.js"></script>
+<script src="assets/study/paper.js"></script>
+<script src="assets/study/store.js"></script>
+<script src="assets/study/memes.js"></script>
+<script src="assets/study/notebook.js"></script>
+<script src="assets/study/palace.js"></script>
+<script src="assets/study/hourglass.js"></script>
+<script src="assets/study/studytools.js"></script>
+<script>
+(function(){
+  const C = window.SITE_CONFIG, $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const LOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+  const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+  if (!Auth.live) $("#demoBar").hidden = false;
+  Auth.starfield($("#sky")); Auth.mountCartLinks();
+  /* teachers who signed in as Teacher open teacher editions by default */
+  /* The Student / Teacher choice made at sign-in decides which edition opens */
+  const loginRole = store.get("ks-login-role") === "teacher" ? "teacher" : "student";
+  let me = null, isAdmin = false, current = null, edition = loginRole;
+
+  function ent(slug){
+    if (isAdmin) return { edition: "teacher" };
+    const list = (me.courses||[]).filter(e => e.course_slug === slug || e.course_slug === "all");
+    return list.find(e => e.edition === "teacher") || list[0] || null;
+  }
+  const canTeach = slug => { const e = ent(slug); return !!(e && e.edition === "teacher"); };
+
+  function renderRail(){
+    $("#tabs").innerHTML = C.courses.map(c => { const has = !!ent(c.slug);
+      return `<button type="button" class="tab ${has?"":"locked"}" data-slug="${c.slug}" ${current===c.slug?'aria-current="page"':""} title="${esc(c.level+" "+c.title)}${has?"":" (not on your plan)"}"><span class="lv">${esc(c.level)}</span>${esc(c.title)}${has?"":LOCK}</button>`; }).join("");
+    $("#pickSel").innerHTML = `<option value="">All my courses</option>` + C.courses.map(c => `<option value="${c.slug}" ${current===c.slug?"selected":""}>${esc(c.level)} ${esc(c.title)}${ent(c.slug)?"":" (locked)"}</option>`).join("");
+    $("#edBadge").textContent = (current ? edition : loginRole) === "teacher" ? "Teacher edition" : "Student edition";
+    const cur = document.querySelector('.tab[aria-current="page"]'); if (cur) cur.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }
+  function renderHome(){
+    $("#choose").innerHTML = C.courses.map(c => { const e = ent(c.slug);
+      return `<button type="button" class="panel card ${e?"":"locked"}" data-slug="${c.slug}">
+        <span class="chip ${c.level==="CSEC"?"csec":""}">${esc(c.level)}</span><h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p>
+        <span class="foot2">${e ? `<span class="ok">${(e.edition==="teacher" && loginRole==="teacher")?"Teacher edition":"Student edition"}</span><span>Open →</span>` : `<span class="muted">Not on your plan</span>${LOCK}`}</span></button>`; }).join("");
+    const last = store.get("ks-last-course"), lc = C.courses.find(c => c.slug === last);
+    if (lc && ent(lc.slug)) { $("#resume").hidden = false; $("#resume").innerHTML = `<span class="muted">Pick up where you left off:</span><b>${esc(lc.level+" "+lc.title)}</b><button class="btn go sm" type="button" data-slug="${lc.slug}" style="margin-left:auto">Continue</button>`; }
+  }
+
+  function show(which){ $("#home").hidden = which!=="home"; $("#locked").hidden = which!=="locked"; $("#frame").hidden = which!=="frame"; }
+
+  function demoDoc(c, ed){
+    const s = getComputedStyle(document.documentElement);
+    return `<!doctype html><meta charset="utf-8"><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:${s.getPropertyValue("--bg")};color:${s.getPropertyValue("--ink")};font-family:system-ui,sans-serif;text-align:center;padding:20px">
+      <div><p style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:${s.getPropertyValue("--gold")};font-size:12px">${esc(c.level)} · ${ed==="teacher"?"Teacher edition":"Student edition"}</p>
+      <h1 style="margin:.2em 0;font-size:34px">${esc(c.title)}</h1>
+      <p style="opacity:.75;max-width:46ch">Your e-course will load here once its folder is uploaded to <b>${esc(ed==="teacher"?c.teacherPath:c.path)}</b>. Use the bar above to switch courses.</p></div></body>`;
+  }
+
+  function openCourse(slug, ed){
+    const c = C.courses.find(x => x.slug === slug);
+    if (!c) { goHome(); return; }
+    current = slug;
+    const e = ent(slug);
+    if (!e) { $("#lockTitle").textContent = c.title + " isn't on your plan"; show("locked"); renderRail(); setHash(slug); return; }
+    edition = (loginRole === "teacher" && canTeach(slug)) ? "teacher" : "student";
+    const src = edition === "teacher" ? c.teacherPath : c.path;
+    const fr = $("#frame");
+    $("#loading").hidden = false; show("frame");
+    if (Auth.live) { if (fr.getAttribute("src") !== src) fr.src = src; else $("#loading").hidden = true; }
+    else { fr.removeAttribute("src"); fr.srcdoc = demoDoc(c, edition); }
+    store.set("ks-last-course", slug);
+    document.title = c.title + " · " + C.siteName;
+    Auth.log("open_course", { slug, edition });
+    renderRail(); setHash(edition === "teacher" ? slug + "-teacher" : slug);
+  }
+  function goHome(){ current = null; show("home"); renderHome(); renderRail(); setHash(""); document.title = "Course Hub · " + C.siteName; }
+
+  let settingHash = false;
+  function setHash(h){ settingHash = true; if (h) location.hash = h; else history.replaceState(null, "", location.pathname + location.search); setTimeout(() => settingHash = false, 0); }
+  function route(){
+    if (settingHash) return;
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (!h) { goHome(); return; }
+    const teacher = /-teacher$/.test(h); openCourse(teacher ? h.replace(/-teacher$/, "") : h, teacher ? "teacher" : "student");
+  }
+
+  /* if the course gate sends the frame elsewhere (session ended, not allowed), handle it here */
+  $("#frame").addEventListener("load", () => {
+    $("#loading").hidden = true;
+    try {
+      const p = $("#frame").contentWindow.location.pathname;
+      if (Auth.live && !/^\/courses\//.test(p)) {
+        if (/signin=1/.test($("#frame").contentWindow.location.search)) { location.href = "index.html?signin=1&next=" + encodeURIComponent("/courses.html#" + (current||"")); return; }
+        $("#lockTitle").textContent = "This course isn't on your plan"; show("locked"); $("#frame").removeAttribute("src");
+      }
+    } catch (e) {}
+  });
+
+  document.addEventListener("click", e => {
+    const s = e.target.closest("[data-slug]"); if (s) { openCourse(s.dataset.slug, edition); return; }
+    if (e.target.closest("[data-home]")) goHome();
+  });
+  $("#orderBtn").addEventListener("click", e => { e.preventDefault(); location.href = "shop.html?subject=" + encodeURIComponent(current || ""); });
+  $("#reqBtn").addEventListener("click", () => { location.href = "dashboard.html?request=" + encodeURIComponent(current || ""); });
+  $("#pickSel").addEventListener("change", e => e.target.value ? openCourse(e.target.value, edition) : goHome());
+  window.addEventListener("hashchange", route);
+
+  Auth.current().then(u => {
+    if (!u) { location.replace("index.html?signin=1&next=" + encodeURIComponent("/courses.html" + location.hash)); return; }
+    me = u; isAdmin = !!(u.profile && u.profile.role === "admin");
+    if (u.profile && u.profile.must_change_password) { location.replace("dashboard.html"); return; }
+    const n = ((u.profile && u.profile.full_name) || "").split(" ").filter(Boolean);
+    $("#avatar").textContent = n.length ? (n[0][0] + (n[1] ? n[1][0] : "")).toUpperCase() : "Me";
+    $("#homeEyebrow").textContent = n.length ? "Welcome, " + n[0] : "Course hub";
+    route();
+  }).catch(x => { $("#home").querySelector("h1").textContent = x.message; });
+})();
+</script>
+</body>
+</html>
