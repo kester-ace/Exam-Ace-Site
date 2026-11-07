@@ -44,3 +44,11 @@ alter table public.invoices enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('payment-proofs', 'payment-proofs', false, 10485760)
 on conflict (id) do update set public = false, file_size_limit = 10485760;
+
+-- ---------------------------------------------------------------------
+--  Added Nov 2026: how the student paid and their MTCN / transfer number.
+--  Safe to run again. Run this block once in Supabase → SQL Editor.
+-- ---------------------------------------------------------------------
+alter table public.invoices add column if not exists proof_method text;
+alter table public.invoices add column if not exists proof_ref    text;
+create index if not exists invoices_pending on public.invoices (status) where status = 'proof';

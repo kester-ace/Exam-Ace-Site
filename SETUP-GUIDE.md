@@ -294,3 +294,30 @@ The preview lives in `courses/<course>/preview/`. Only that section is copied th
 ## Changing names, prices and text
 
 Everything you're likely to change is in `assets/config.js`: site name, your bio, contact email, the course list and descriptions, plan names, prices and what each includes, and the QuickSchools and Canvas links.
+
+---
+
+## PDF invoices and proof of payment (added November 2026)
+
+**What happens**
+1. You check, sign and send an invoice → the student is emailed with the invoice **attached as a PDF** (marked *Awaiting payment*, with the MoneyGram / Western Union details and a second page of USD wire instructions). They can also download it from **My invoices** on their dashboard.
+2. The student uploads their receipt on their dashboard, choosing how they paid and typing the **MTCN / transfer number** → **examacetutorials@gmail.com** is emailed with the file attached, a link to it, and their name and email from sign-up. The student gets a "proof received" email.
+3. Your admin page shows a gold **🔔 Pending approval** bar (and a red count on *Invoices and receipts*) until you deal with it. It refreshes every minute.
+4. You approve → the student is emailed the invoice **marked PAID** as a PDF, it replaces the old one in their dashboard, and their course opens.
+
+**One-time set-up**
+1. Supabase → SQL Editor: run the block at the bottom of `supabase/invoices.sql` (adds the payment method and MTCN columns).
+2. Netlify → Site configuration → Environment variables, add:
+
+| Variable | Value |
+|---|---|
+| `PAYMENTS_EMAIL` | examacetutorials@gmail.com |
+| `PAY_RECEIVER_NAME` | Kester Denise Small |
+| `PAY_RECEIVER_ADDRESS` | your street address for MoneyGram / Western Union and the wire form |
+| `WIRE_BENEFICIARY_ACCOUNT` | your Republic Bank account number |
+| `WIRE_TRANSIT` | your transit number |
+| `COMPANY_EMAIL` | the email to print on invoices (optional; default examacetutorials@gmail.com) |
+| `COMPANY_PHONE`, `COMPANY_WHATSAPP` | optional, printed on invoices |
+
+These private details live in Netlify, not in this (public) repository.
+3. Redeploy. Netlify installs `pdfkit` automatically from `package.json`.
