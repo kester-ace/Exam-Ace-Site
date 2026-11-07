@@ -1,0 +1,598 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+<title>Funnel Builder: Write Your Expository Essay Layer by Layer</title>
+<style>
+/* Colours: the funnel runs warm to cool, broad to narrow (amber hook, teal bridge, blue thesis, gold strategy,
+   blue topic sentences, indigo supporting details, green conclusion). Rigour is shown separately as
+   cold (blue) → warm (amber) → hot (red), always with an icon and a word as well as the colour. */
+:root{--bg:#F3F6FB;--surface:#FFFFFF;--raise:#EAF0F8;--ink:#14213D;--soft:#55657E;--line:#D3DDEA;
+--hook:#F3A83B;--bridge:#1F7F75;--thesis:#2D4E9E;--topic:#3E63B8;--detail:#4B3F9E;--concl:#1C7C4E;--strat:#B7791F;
+--good:#1C7C4E;--bad:#B9412E;--gold:#F2B33D;--focus:#7A4FD0;--cold:#3B6FD8;--warm:#D98A0B;--hot:#C7361F;
+--t1:#E69F00;--t2:#56B4E9;--t3:#D55E00;--t4:#0072B2;--t5:#009E73;--t6:#CC79A7;--t7:#8C7B00;
+--font-d:Georgia,"Times New Roman",serif;--font-b:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1528;--surface:#13223D;--raise:#1A2C4D;--ink:#E8EEF8;--soft:#A3B3CB;--line:#2A3F63;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1528;--surface:#13223D;--raise:#1A2C4D;--ink:#E8EEF8;--soft:#A3B3CB;--line:#2A3F63;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)!important;color:var(--ink)!important;font:400 16px/1.55 var(--font-b)!important;padding:0 0 90px}
+button,select,input,textarea{font:inherit;color:inherit}
+button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.hero{background:linear-gradient(180deg,#F7C36A 0%,#F3A83B 20%,#1F7F75 50%,#2D4E9E 75%,#4B3F9E 100%);color:#fff;padding:24px 16px 20px}
+.hero .in,.wrap{max-width:1080px;margin:0 auto}.wrap{padding:0 16px}
+.hero h1{font:700 clamp(1.9rem,5vw,3rem)/1.05 var(--font-d);margin:0 0 6px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+.hero p{margin:0;max-width:66ch;color:#F2F7FF;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:16px 18px;margin:16px 0}
+.card h2{font:700 1.45rem/1.2 var(--font-d);margin:0 0 8px}.card h3{margin:0 0 6px}
+.hint{color:var(--soft);font-size:.92rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:2px solid transparent;border-radius:999px;padding:9px 18px;font-weight:800;cursor:pointer;background:var(--raise)}
+.btn.gold{background:var(--gold);color:#1A1300}.btn.ghost{background:transparent;border-color:var(--line)}
+.btn.sm{padding:5px 12px;font-size:.88rem}.btn:disabled{opacity:.45;cursor:default}
+.tbadge{display:inline-block;background:#FFF2C9;color:#4A3400;border:1.5px solid #E2B63D;border-radius:999px;padding:3px 12px;font-weight:800;font-size:.85rem;margin-right:6px}
+.inp{width:100%;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.ta{resize:vertical;line-height:1.55;margin-top:4px;font-family:var(--font-d);font-size:1rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tray{display:grid;gap:8px;margin:8px 0}
+.scard{text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;line-height:1.45}
+.scard:hover{border-color:var(--gold)}
+.pipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:10px}
+.pipe{display:flex;gap:10px;align-items:center;text-align:left;background:var(--surface);border:2px solid var(--line);border-left:10px solid var(--c);border-radius:12px;padding:10px 12px;cursor:pointer;min-height:56px}
+.pipe:hover{border-color:var(--c)}.pipe.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 35%,transparent);border-color:var(--focus)}
+.pipe .e{font-size:1.4rem;flex:none}.pipe b{display:block;line-height:1.2}.pipe small{color:var(--soft)}
+.task{border-left:5px solid var(--thesis);background:var(--raise);border-radius:0 12px 12px 0;padding:10px 14px;margin:6px 0 12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}.grid2>.card{margin:0}
+.side{position:sticky;top:10px}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.dot{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:800;cursor:pointer}
+.dot.cur{border-color:var(--focus);box-shadow:0 0 0 2px color-mix(in srgb,var(--focus) 30%,transparent)}
+.dot.cold{border-left:6px solid var(--cold)}.dot.warm{border-left:6px solid var(--warm)}.dot.hot{border-left:6px solid var(--hot)}
+.fld{border:2px solid var(--line);border-left:8px solid var(--hl);border-radius:14px;padding:10px 12px;margin:0 0 10px;transition:background .3s}
+.fld.cold{--hl:var(--cold)}.fld.warm{--hl:var(--warm);background:color-mix(in srgb,#F2A33A 7%,var(--surface))}.fld.hot{--hl:var(--hot);background:color-mix(in srgb,#D1432B 8%,var(--surface))}
+.hw{display:inline-block;border-radius:999px;padding:1px 10px;font-weight:800;font-size:.82rem;border:1.5px solid;white-space:nowrap}
+.hw.cold{color:#1F4FB5;background:#E3ECFB;border-color:var(--cold)}.hw.warm{color:#6B4200;background:#FDEBC8;border-color:var(--warm)}.hw.hot{color:#8E2210;background:#FAD4CC;border-color:var(--hot)}
+.tipline{margin:6px 0 2px;font-size:.9rem;color:var(--soft)}
+.linkb{background:none;border:0;padding:0;color:var(--focus);font-weight:800;cursor:pointer;text-decoration:underline}
+.hintbox{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border-left:4px solid var(--gold);font-family:var(--font-d)}
+.why{font-size:.92rem;margin:0 0 10px}
+/* live funnel preview */
+.pf{display:flex;flex-direction:column;align-items:center;gap:3px}
+.pl{width:100%;border:0;cursor:pointer;color:#fff;text-align:center;padding:8px 14% 9px;position:relative;font-size:.8rem;line-height:1.35}
+.pl .lab{display:block;font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:.7rem}
+.pl .tx{display:block;opacity:.95;max-height:3.9em;overflow:hidden}
+.pl.hook{background:var(--hook);color:#2A1A00;clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}
+.pl.bridge{width:84%;background:var(--bridge);clip-path:polygon(0 0,100% 0,91% 100%,9% 100%)}
+.pl.thesis{width:68%;background:var(--thesis);clip-path:polygon(0 0,100% 0,88% 100%,12% 100%)}
+.pl.strat{width:60%;background:#FFF4DA;color:#3A2A00;border:2px solid var(--strat);border-radius:12px;padding:6px 10px}
+.pcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;margin-top:4px}
+.pc{display:flex;flex-direction:column;gap:3px}
+.pb{border:0;border-radius:10px;color:#fff;padding:6px 7px;cursor:pointer;text-align:center;font-size:.74rem;line-height:1.3;min-height:52px}
+.pb .lab{display:block;font-weight:800;font-size:.64rem;letter-spacing:.04em;text-transform:uppercase}
+.pb .tx{display:block;max-height:3.9em;overflow:hidden}
+.pb.t{background:var(--topic)}.pb.d{background:var(--detail)}
+.pl.concl{background:var(--concl);border-radius:12px;padding:8px 12px;margin-top:4px}
+.pl .hb,.pb .hb{position:absolute;top:2px;right:6px;font-size:.62rem;font-weight:900;background:rgba(255,255,255,.93);border-radius:999px;padding:0 6px}
+.pb{position:relative}.pb .hb{position:static;display:inline-block;margin:0 0 2px}
+.hb.cold{color:#1F4FB5}.hb.warm{color:#7A4B00}.hb.hot{color:#9A2410}
+.pl.cur,.pb.cur{box-shadow:inset 0 0 0 3px rgba(255,255,255,.85);filter:brightness(1.08)}
+.meter{margin-top:10px}.therm{height:14px;border-radius:99px;background:linear-gradient(90deg,var(--cold),#F2A33A 55%,var(--hot));position:relative;overflow:hidden;margin:6px 0}
+.therm i{display:block;height:100%;margin-left:auto;background:var(--line)}
+.wcbar{font-variant-numeric:tabular-nums;font-weight:800}.wcbar.over,.wcbar.under{color:var(--bad)}.wcbar.okk{color:var(--good)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.84rem;margin:6px 0}.legend span{display:flex;gap:6px;align-items:center}.legend i{width:13px;height:13px;border-radius:4px;display:inline-block}
+.org{border:2px solid var(--strat);border-radius:14px;padding:10px 14px;background:color-mix(in srgb,#F2B33D 9%,var(--surface));margin-top:8px}
+/* review */
+.essay{display:grid;gap:8px}.ep{border:1.5px solid var(--line);border-left:6px solid var(--c,var(--line));border-radius:12px;padding:8px 14px;background:var(--surface)}
+.ep p{margin:4px 0 0;font-family:var(--font-d);line-height:1.75}.ep .plb{font-size:.75rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+.ep0{--c:var(--hook)}.ep1,.ep2,.ep3{--c:var(--topic)}.ep4{--c:var(--concl)}
+.judge{margin-top:14px;border:2.5px solid var(--gold);border-radius:16px;padding:14px 16px;background:color-mix(in srgb,var(--gold) 8%,var(--surface))}
+.jb{font-size:1.05rem;padding:11px 22px;border:2px solid var(--line);background:var(--surface)}.jb:hover{border-color:var(--gold)}
+.checks{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px}
+.checks li{border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--surface)}
+.checks li.ok{border-color:var(--good)}.checks li.no{border-color:var(--bad)}
+.checks li .fix{display:block;color:var(--soft);font-size:.9rem;margin-top:2px}
+.verdict{border-radius:16px;padding:14px 16px;margin-top:12px;border:3px solid}
+.verdict.strong{border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,var(--surface))}.verdict.weak{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--surface))}
+.verdict .big{font:800 1.8rem/1.1 var(--font-d)}
+.dlg{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;border:1.5px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0B1736;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.sound{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));z-index:50;background:rgba(10,20,51,.7);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:6px 10px;cursor:pointer}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}.side{position:static}}
+@media (max-width:520px){.pcols{grid-template-columns:1fr}.card{padding:14px}.pl{padding:8px 10% 9px}}
+@media (prefers-reduced-motion:reduce){.fld{transition:none}}
+</style>
+<button class="sound" id="snd" type="button" aria-pressed="true">🔊 Sound</button>
+<header class="hero"><div class="in">
+<h1>Funnel Builder</h1>
+<p>Write your own expository essay through the funnel, one layer at a time: hook, bridge, thesis, organisational strategy, topic sentences, supporting details and conclusion. Every part heats up from cold to warm to hot as it gets more rigorous. Then the builder assembles your essay, checks it and lets you download it.</p>
+</div></header>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+(function () {
+  'use strict';
+  function teacher() { return /*EDITION*/true; }
+  var ID = 'funnelbuilder', PAGE = 'Funnel Builder', KEY = 'funnelbuilder-v1';
+  try { if (window.GameSave && GameSave.register) GameSave.register([KEY, KEY + '-pref']); } catch (e) { }
+
+  var TYPES = [
+    { id: 'def', n: 'Definition', e: '📖', c: 'var(--t1)', s: 'What is it?' },
+    { id: 'pro', n: 'Process', e: '🔢', c: 'var(--t2)', s: 'How does it happen?' },
+    { id: 'ce', n: 'Cause and effect', e: '🔗', c: 'var(--t3)', s: 'Why? What results?' },
+    { id: 'cc', n: 'Comparison and contrast', e: '⚖️', c: 'var(--t4)', s: 'How alike or different?' },
+    { id: 'cls', n: 'Classification', e: '🗂️', c: 'var(--t5)', s: 'What types are there?' },
+    { id: 'ill', n: 'Illustration', e: '🔍', c: 'var(--t6)', s: 'What does it look like?' },
+    { id: 'ps', n: 'Problem and solution', e: '🛠️', c: 'var(--t7)', s: 'How can it be fixed?' }
+  ];
+  var TBY = {}; TYPES.forEach(function (t) { TBY[t.id] = t; });
+  var ORG = {
+    def: ['Definition', 'Term defined first, then one key feature per paragraph, with examples and what it is not'],
+    pro: ['Process (chronological order)', 'Stages in time order: first, next, then finally'],
+    ce: ['Cause and effect', 'One cause or effect per paragraph, from the most immediate to the most significant'],
+    cc: ['Comparison and contrast (point-by-point)', 'One criterion per paragraph, comparing both subjects each time'],
+    cls: ['Classification', 'One category per paragraph, all sorted on the same basis'],
+    ill: ['Illustration (example)', 'One extended example per paragraph, from the least to the most striking'],
+    ps: ['Problem and solution', 'The problem in the introduction, then one solution per paragraph']
+  };
+  var ORDERS = [['auto', 'Follow the strategy'], ['chron', 'Chronological (time order)'], ['imp', 'Order of importance (least to most)'], ['impd', 'Order of importance (most to least)'], ['simple', 'Simple to complex'], ['gen', 'General to specific'], ['spatial', 'Spatial (place by place)']];
+  var SIGW = { def: 'refers to, is defined as, means, known as', pro: 'first, next, then, stage, finally', ce: 'because, as a result, leads to, consequently', cc: 'both, whereas, in contrast, similarly', cls: 'types, categories, kinds, falls into', ill: 'for example, for instance, such as, shows', ps: 'solution, reduce, would, could' };
+  var TH = {
+    def: { thesis: '[Term] can be understood through its [feature 1], its [feature 2] and its [feature 3].', topic: 'One key feature of [term] is…', detail: 'For example, [a Caribbean case or a short quotation]…', sig: /refers to|is defined as|\bmeans\b|known as|feature|form|understood|term|concept/i },
+    pro: { thesis: '[Process] involves three stages: [stage 1], [stage 2] and [stage 3].', topic: 'The first stage is…', detail: 'During this stage, [a specific action, time or place]…', sig: /stage|step|first|next|then|finally|process|involves|phase|procedure/i },
+    ce: { thesis: '[Topic] has three [causes / effects]: [1], [2] and [3].', topic: 'One [cause / effect] is…', detail: '[A fact, figure or named case] shows that…', sig: /because|as a result|leads? to|consequen|effect|affect|cause|result|impact|harm/i },
+    cc: { thesis: 'Both [A] and [B]…, but they differ in [criterion 1], [criterion 2] and [criterion 3].', topic: '[A] and [B] differ in [criterion]…', detail: '[A]…, whereas [B]…', sig: /whereas|both|in contrast|similar|differ|unlike|while|compar/i },
+    cls: { thesis: '[Topic] falls into three categories: [1], [2] and [3].', topic: 'The first category is [name], which…', detail: 'An example of this category is…', sig: /type|categor|kind|fall into|falls into|class|group|sort/i },
+    ill: { thesis: '[General idea], as [example 1], [example 2] and [example 3] show.', topic: '[Example 1] shows that…', detail: 'For instance, [specific details of the example]…', sig: /for example|for instance|such as|show|illustrat|example/i },
+    ps: { thesis: '[Problem] can be reduced through [solution 1], [solution 2] and [solution 3].', topic: 'One solution is…', detail: 'For example, [a school, island or programme that has tried it]…', sig: /solution|reduc|measure|would|could|prevent|tackle|improv|address/i }
+  };
+  var GEN = {
+    hook: 'Start broad: a striking fact or number, a short question, or a brief Caribbean scene.',
+    bridge: 'Give context and define the key term: "This … is known as …" or "… refers to …".',
+    explain: 'Say HOW or WHY the detail proves your point: "This shows that…", "As a result…", "because…".',
+    link: 'Tie the paragraph back to the question or thesis: "Therefore, … is one clear [effect / stage / feature] of …".',
+    concl: 'In short, [restate the thesis in new words]. Together, [recap the three points]; [wider significance]. No new points.'
+  };
+  var LIMITS = { m3: [150, 300, 'Module 3 response · no more than 300 words'], m12: [300, 500, 'Paper 02 essay (Modules 1–2) · no more than 500 words'], p32: [200, 250, 'Paper 032 Section B piece · 200–250 words'] };
+  var TOPICS = [
+    ['def', 'Explain what is meant by "code-switching" and how it appears in Caribbean speech.'], ['def', 'What is meant by "digital literacy"? Explain the term, using examples from school life.'],
+    ['pro', 'Explain how a household prepares for hurricane season.'], ['pro', 'Outline the stages by which a bill becomes law in Barbados.'],
+    ['ce', 'Explain THREE effects of sargassum on Caribbean coastlines.'], ['ce', 'Explain the consequences of brain drain for small island states.'],
+    ['cc', 'How does radio differ from social media as a source of emergency news?'], ['cc', 'Explain the similarities and differences between a formal email and a text message to a friend.'],
+    ['cls', 'Explain the types of barriers to communication in the workplace.'], ['cls', 'Explain the kinds of language attitudes found in Caribbean communities.'],
+    ['ill', 'Using examples, explain how Caribbean music carries social commentary.'], ['ill', 'Using TWO advertisements you have seen, show how advertisers appeal to emotion.'],
+    ['ps', 'Suggest ways in which secondary schools could reduce plastic waste.'], ['ps', 'Explain THREE measures that could reduce cyberbullying among teenagers.']
+  ];
+  /* a worked example (teacher demo and a model for students who ask for it) */
+  var EXAMPLE = { q: 'Explain THREE effects of sargassum on Caribbean coastlines.', type: 'ce', limit: 'm3', f: {
+    hook: 'Each summer, beaches from Barbados to Sint Maarten vanish under a thick brown blanket.',
+    bridge: 'This blanket is sargassum, a floating seaweed that has reached Caribbean shores in record amounts since 2011.',
+    thesis: 'Sargassum affects coastlines in three ways: it deters tourists, entangles fishing gear and releases harmful gas as it rots.',
+    t1: 'First, sargassum deters tourists, the main source of income for many islands.', d1: 'When thick mats pile up on beaches in Barbados and Sint Maarten, the smell drives visitors away and hotels report cancellations.', x1: 'Because each lost booking reduces income for hotel workers, vendors and tour operators, the effect is economic as well as environmental.', l1: 'Tourism is therefore the first sector that sargassum harms.',
+    t2: 'In addition, sargassum entangles fishing gear.', d2: 'Fishers in Saint Lucia report that dense mats clog their nets and wrap around boat propellers.', x2: 'As a result, trips take longer, catches fall and repairs cost more, which shows that the seaweed harms livelihoods at sea.', l2: 'This second effect extends the damage from the beach to the fishing industry.',
+    t3: 'Finally, sargassum releases harmful gas as it decomposes.', d3: 'Rotting mats give off hydrogen sulphide (H2S), which smells of rotten eggs and can irritate the eyes and lungs.', x3: 'Consequently, nearby homes and schools may have to keep windows shut, which turns a coastal problem into a public health concern.', l3: 'The gas is the most serious effect because it reaches people who never visit the beach.',
+    concl: 'In short, sargassum affects Caribbean coastlines by deterring tourists, entangling fishing gear and releasing harmful gas. Together, these effects show how one natural event reaches into the economy, daily work and public health.' } };
+
+  var STEPS = [
+    { k: 'hook', n: 'Hook', lab: 'Hook', why: 'The widest part of the funnel. Grab attention with something specific: a fact, a number, a short question or a brief Caribbean scene.', f: [['hook', 'Your hook', 'hook']] },
+    { k: 'bridge', n: 'Bridge', lab: 'Bridge', why: 'Narrow the funnel. Give the context your reader needs and define the key term.', f: [['bridge', 'Your bridge', 'bridge']] },
+    { k: 'thesis', n: 'Thesis', lab: 'Thesis', why: 'The narrowest point of the introduction. Name the topic and preview three points, in the order you will write them. No opinion.', f: [['thesis', 'Your thesis', 'thesis']] },
+    { k: 'strat', n: 'Strategy', lab: 'Organisational strategy', why: 'Where the thesis leads the body. Your essay type gives you an organisational strategy; choose how your three points will be ordered.', f: [] },
+    { k: 'b1', n: 'Body 1', lab: 'Body paragraph 1', why: 'The first point from your thesis, built with PEEL: Point (topic sentence), Evidence (supporting detail), Explain, Link.', f: [['t1', 'Point · topic sentence', 'topic'], ['d1', 'Evidence · supporting detail', 'detail'], ['x1', 'Explain', 'explain'], ['l1', 'Link', 'link']] },
+    { k: 'b2', n: 'Body 2', lab: 'Body paragraph 2', why: 'The second point from your thesis, in the same PEEL order. Open with a transition such as "In addition" or "Second".', f: [['t2', 'Point · topic sentence', 'topic'], ['d2', 'Evidence · supporting detail', 'detail'], ['x2', 'Explain', 'explain'], ['l2', 'Link', 'link']] },
+    { k: 'b3', n: 'Body 3', lab: 'Body paragraph 3', why: 'The third point from your thesis. Open with "Finally" or "Third" and keep the PEEL order.', f: [['t3', 'Point · topic sentence', 'topic'], ['d3', 'Evidence · supporting detail', 'detail'], ['x3', 'Explain', 'explain'], ['l3', 'Link', 'link']] },
+    { k: 'concl', n: 'Conclusion', lab: 'Conclusion', why: 'The 3 Rs: restate the thesis in new words, recap the three points, and resonate with the wider significance. No new points.', f: [['concl', 'Your conclusion', 'concl']] }
+  ];
+  var ALLF = []; STEPS.forEach(function (s) { s.f.forEach(function (x) { ALLF.push(x); }); });
+  var HEAT = [{ n: 'Cold', ic: '❄', css: 'cold', fill: '#E3ECFB', line: '#3B6FD8', ink: '#14213D' }, { n: 'Warm', ic: '☀', css: 'warm', fill: '#FDEBC8', line: '#D98A0B', ink: '#2A1A00' }, { n: 'Hot', ic: '🔥', css: 'hot', fill: '#FAD4CC', line: '#C7361F', ink: '#3A0E06' }];
+  var OPINION = /\b(I|me|my|I think|I believe|you|your|should|must|best|worst|terrible|amazing|awful|lazy|ashamed)\b/;
+  var TRANS = /^(first(ly)?|second(ly)?|third(ly)?|finally|lastly|in addition|additionally|furthermore|moreover|also|next|then|another|similarly|in contrast|by contrast|however|on the other hand|to begin|the first|the second|the third|the final|one )/i;
+  var STOP = /^(the|a|an|and|or|of|in|on|to|for|with|its|their|is|are|be|by|as|at|from|that|this|three|ways|can|it|they|which|how|why|what|into|through|first|second|third|finally|addition)$/i;
+  var KW = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(function (w) { return w.length > 3 && !STOP.test(w); }); };
+  var same = function (a, b) { return a.slice(0, 5) === b.slice(0, 5); };
+  function wc(t) { return String(t || '').split(/\s+/).filter(function (w) { return /[A-Za-z0-9]/.test(w); }).length; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var xs = esc;
+  var $ = function (s) { return document.querySelector(s); }, app = $('#app');
+
+  var B = null, PREF = { snd: true };
+  try { var pp = JSON.parse(localStorage.getItem(KEY + '-pref') || 'null'); if (pp) PREF = pp; } catch (e) { }
+  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.f) return s; } catch (e) { } return null; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(B)); localStorage.setItem(KEY + '-pref', JSON.stringify(PREF)); } catch (e) { } try { if (window.GameSave && GameSave.save) GameSave.save(); } catch (e) { } }
+  try { if (window.GameSave && GameSave.onReset) GameSave.onReset(function () { try { localStorage.removeItem(KEY); } catch (e) { } }); } catch (e) { }
+
+  var AC = null;
+  function tone(kind) {
+    if (!PREF.snd) return;
+    try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var now = AC.currentTime, N = kind === 'ok' ? [659.25, 987.77] : kind === 'win' ? [523.25, 659.25, 783.99, 1046.5] : kind === 'up' ? [587.33, 880] : [440];
+      N.forEach(function (f, i) { var o = AC.createOscillator(), g = AC.createGain(), t = now + i * 0.1; o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.45); }); } catch (e) { }
+  }
+  function sndBtn() { var b = $('#snd'); b.textContent = PREF.snd ? '🔊 Sound' : '🔇 Muted'; b.setAttribute('aria-pressed', PREF.snd ? 'true' : 'false'); }
+  $('#snd').addEventListener('click', function () { PREF.snd = !PREF.snd; save(); sndBtn(); });
+  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+  function report(score, max) { try { parent.postMessage({ type: 'dm:result', kind: 'game', id: ID, title: PAGE + ': ' + B.q.slice(0, 90), module: 'all', score: score, max: max, pct: Math.round(score / max * 100), level: B.limit }, '*'); } catch (e) { } }
+
+  /* ---------- rigour: cold, warm, hot ---------- */
+  function heatOf(k, kind) {
+    var f = B.f, t = String(f[k] || '').trim(), w = wc(t), H = TH[B.type], num = /\d/.test(t), proper = /\s[A-Z][a-z]+/.test(' ' + t.replace(/^\S+/, '')), op = OPINION.test(t);
+    if (!t) return { lv: 0, tip: 'Empty. ' + (GEN[kind] || (kind === 'thesis' ? 'Frame: ' + H.thesis : kind === 'topic' ? 'Starter: ' + H.topic : 'Starter: ' + H.detail)) };
+    if (op && kind !== 'hook') return { lv: 0, tip: 'Opinion or "I/you" detected. Expository writing stays objective and in the third person.' };
+    if (kind === 'hook') { if (w < 6) return { lv: 0, tip: 'Too short to grab attention. Aim for at least six words.' }; if ((num || /\?/.test(t) || proper) && w >= 9) return { lv: 2, tip: 'Hot: a specific, attention-grabbing opening.' }; return { lv: 1, tip: 'Warm. Make it sharper with a number, a place name or a short question.' }; }
+    if (kind === 'bridge') { if (w < 7) return { lv: 0, tip: 'Add context: what is the topic, and why does it matter?' }; if (/\b(is|are|was) (a|an|the|known|called)|\b(is|are) [A-Za-z]+, (a|an) |refers to|known as|defined as|means\b/i.test(t) && w >= 11) return { lv: 2, tip: 'Hot: it names and explains the topic.' }; return { lv: 1, tip: 'Warm. Define the key term ("… is known as …", "… refers to …").' }; }
+    if (kind === 'thesis') {
+      var three = (t.match(/,/g) || []).length >= 2 || (/:/.test(t) && /\band\b/.test(t)) || /\bthree\b|\b3\b/.test(t);
+      if (w < 8) return { lv: 0, tip: 'Too short. Frame: ' + H.thesis };
+      if (three && w >= 12 && !H.sig.test(t)) return { lv: 1, tip: 'Warm. This reads like a different type of essay. Use the language of a ' + TBY[B.type].n.toLowerCase() + ' essay (' + SIGW[B.type] + ').' };
+      if (three && w >= 12) return { lv: 2, tip: 'Hot: it previews three points without taking a side.' };
+      return { lv: 1, tip: three ? 'Warm. Make each of the three points specific.' : 'Warm. Preview THREE points, separated by commas. Frame: ' + H.thesis };
+    }
+    if (kind === 'topic') {
+      var hit = KW(t).some(function (x) { return KW(f.thesis).some(function (y) { return same(x, y); }); }), tr = TRANS.test(t);
+      if (w < 4) return { lv: 0, tip: 'Write a full topic sentence. Starter: ' + H.topic };
+      if (hit && tr && w >= 6) return { lv: 2, tip: 'Hot: a transition plus a point that matches the thesis.' };
+      return { lv: 1, tip: !hit ? 'Warm. Use a key word from your thesis so this point clearly follows it.' : 'Warm. Open with a transition: First, In addition, Finally…' };
+    }
+    if (kind === 'detail') {
+      var spec = num || proper || /["“]/.test(t) || /for example|for instance|such as/i.test(t);
+      if (w < 6) return { lv: 0, tip: 'Add a specific fact, statistic, named place or example. Starter: ' + H.detail };
+      if (spec && w >= 10) return { lv: 2, tip: 'Hot: a specific supporting detail.' };
+      return { lv: 1, tip: 'Warm. Make it specific: a number, a place, a named case or a short quotation.' };
+    }
+    if (kind === 'explain') {
+      var ex = /because|so that|which (shows|means)|this (shows|means|suggests)|as a result|therefore|consequently|thus|leads? to/i.test(t);
+      if (w < 6) return { lv: 0, tip: GEN.explain };
+      if (ex && w >= 12) return { lv: 2, tip: 'Hot: it explains how the detail proves the point.' };
+      return { lv: 1, tip: ex ? 'Warm. Develop the explanation further: this is where the Content marks are.' : 'Warm. Show the link: "This shows that…", "As a result…", "because…".' };
+    }
+    if (kind === 'link') {
+      var lk = KW(t).some(function (x) { return KW(f.thesis + ' ' + B.q).some(function (y) { return same(x, y); }); });
+      if (w < 5) return { lv: 0, tip: GEN.link };
+      if (lk && w >= 8) return { lv: 2, tip: 'Hot: it ties the paragraph back to the question.' };
+      return { lv: 1, tip: 'Warm. Echo a key word from the question or thesis.' };
+    }
+    if (kind === 'concl') {
+      var pk = [].concat(KW(f.t1), KW(f.t2), KW(f.t3)), n = KW(t).filter(function (x) { return pk.some(function (y) { return same(x, y); }); }).length;
+      if (w < 10) return { lv: 0, tip: 'Too short. ' + GEN.concl };
+      if (/\balso\b|another|in addition/i.test(t)) return { lv: 1, tip: 'Watch out: "also" or "another" suggests a new point. A conclusion only restates and recaps.' };
+      if (n >= 2 && w >= 16) return { lv: 2, tip: 'Hot: it restates, recaps and closes with significance.' };
+      return { lv: 1, tip: 'Warm. Recap at least two of your points in new words, then add the wider significance.' };
+    }
+    return { lv: 0, tip: '' };
+  }
+  function heats() { var o = {}; ALLF.forEach(function (x) { o[x[0]] = heatOf(x[0], x[2]); }); return o; }
+  function stepHeat(s, h) { if (s.k === 'strat') return B.type ? 2 : 0; var a = s.f.map(function (x) { return h[x[0]].lv; }); return Math.min.apply(null, a) === 2 ? 2 : a.reduce(function (p, c) { return p + c; }, 0) === 0 ? 0 : 1; }
+  function total(h) { var s = 0; ALLF.forEach(function (x) { s += h[x[0]].lv; }); return s; }
+  var MAXH = ALLF.length * 2;
+
+  /* ---------- assembled essay and checker ---------- */
+  function paras() { var f = B.f, j = function (a) { return a.map(function (x) { return String(f[x] || '').trim(); }).filter(Boolean).join(' '); }; return [['Introduction', j(['hook', 'bridge', 'thesis'])], ['Body paragraph 1', j(['t1', 'd1', 'x1', 'l1'])], ['Body paragraph 2', j(['t2', 'd2', 'x2', 'l2'])], ['Body paragraph 3', j(['t3', 'd3', 'x3', 'l3'])], ['Conclusion', j(['concl'])]]; }
+  function words() { return paras().reduce(function (a, p) { return a + wc(p[1]); }, 0); }
+  function checks() {
+    var h = heats(), f = B.f, L = LIMITS[B.limit], wcount = words(), C = [];
+    var add = function (id, ok, label, fix, step) { C.push({ id: id, ok: ok, label: label, fix: fix, step: step }); };
+    add('thesis', h.thesis.lv === 2, 'The thesis previews three points without taking a side.', 'Rewrite the thesis with three specific points, separated by commas. ' + h.thesis.tip, 2);
+    var qk = KW(B.q), tk = String(f.thesis || '').toLowerCase(), uniq = function (i) { var others = [].concat(KW(f['t' + (i % 3 + 1)]), KW(f['t' + ((i + 1) % 3 + 1)])); return KW(f['t' + i]).filter(function (x) { return !qk.some(function (y) { return same(x, y); }) && !others.some(function (y) { return same(x, y); }); }); };
+    var pos = [1, 2, 3].map(function (i) { var best = -1; uniq(i).forEach(function (x) { var m = new RegExp('\\b' + x.slice(0, 5).replace(/[^a-z0-9]/g, ''), 'i').exec(tk); if (m && (best < 0 || m.index < best)) best = m.index; }); return best; });
+    var ordered = pos.every(function (p) { return p >= 0; }) && pos[0] < pos[1] && pos[1] < pos[2];
+    add('order', ordered, 'The body paragraphs follow the thesis in the same order.', 'Each topic sentence should use a key word from the thesis, in the order the thesis lists them.', 4);
+    var peel = [1, 2, 3].every(function (i) { return ['t', 'd', 'x', 'l'].every(function (p) { return h[p + i].lv >= 1; }); });
+    add('peel', peel, 'Every body paragraph has all four PEEL parts.', 'Fill in every Point, Evidence, Explain and Link box, and warm each one up.', [1, 2, 3].map(function (i) { return ['t', 'd', 'x', 'l'].every(function (p) { return h[p + i].lv >= 1; }) ? 0 : 3 + i; }).filter(Boolean)[0] || 4);
+    var spec = [1, 2, 3].every(function (i) { return h['d' + i].lv === 2; });
+    add('evidence', spec, 'Every supporting detail is specific (a fact, figure, named case or quotation).', 'Turn each cold or warm supporting detail red-hot with a number, a place or a named example.', [1, 2, 3].filter(function (i) { return h['d' + i].lv < 2; }).map(function (i) { return 3 + i; })[0] || 4);
+    var expl = [1, 2, 3].every(function (i) { return h['x' + i].lv === 2; });
+    add('explain', expl, 'Every Explain step shows how the detail proves the point.', 'Use "This shows that…", "As a result…" or "because…" and develop each explanation.', [1, 2, 3].filter(function (i) { return h['x' + i].lv < 2; }).map(function (i) { return 3 + i; })[0] || 4);
+    var all = ['bridge', 'thesis', 't1', 'd1', 'x1', 'l1', 't2', 'd2', 'x2', 'l2', 't3', 'd3', 'x3', 'l3', 'concl'].map(function (k) { return f[k] || ''; }).join(' ');
+    add('objective', !OPINION.test(all), 'Objective third person throughout: no "I", no "you", no emotional opinion.', 'Find the cold parts flagged for opinion and rewrite them as neutral explanation.', 0);
+    add('trans', [1, 2, 3].every(function (i) { return TRANS.test(String(f['t' + i] || '').trim()); }), 'Each body paragraph opens with a transition.', 'Start body paragraphs with First, In addition, Finally (or similar).', 4);
+    var sig = SIGW[B.type].split(', ').filter(function (w) { return all.toLowerCase().indexOf(w) > -1; });
+    add('strategy', sig.length >= 2, 'The body uses the signal words of its organisational strategy (' + ORG[B.type][0] + ').', 'Use at least two of: ' + SIGW[B.type] + '.', 4);
+    add('concl', h.concl.lv === 2, 'The conclusion restates and recaps without adding a new point.', h.concl.tip, 7);
+    add('length', wcount >= L[0] && wcount <= L[1], 'Length: ' + wcount + ' words (' + L[2] + ').', wcount > L[1] ? 'Cut ' + (wcount - L[1]) + ' words: trim repeated ideas and long explanations.' : 'Add ' + (L[0] - wcount) + ' or more words by developing your Explain steps.', 4);
+    return C;
+  }
+  function verdict(C) { var pass = C.filter(function (c) { return c.ok; }).length, must = ['order', 'objective', 'length', 'thesis'].every(function (id) { return C.filter(function (c) { return c.id === id; })[0].ok; }); return { pass: pass, max: C.length, strong: pass >= C.length - 2 && must }; }
+
+  /* ---------- views ---------- */
+  function tBar() { if (!teacher()) return ''; return '<div class="row" style="margin:12px 0 0"><span class="tbadge">👩🏾‍🏫 Teacher version</span><button class="btn ghost sm" data-act="demo">✨ Load the worked example (to demonstrate)</button></div>'; }
+  function start() {
+    var saved = load();
+    var h = tBar() + (saved ? '<div class="card"><h3>Continue your essay</h3><p class="hint">' + esc(saved.q) + '</p><div class="row"><button class="btn gold" data-act="resume">↩ Continue building</button><button class="btn ghost" data-act="review">📄 See my assembled essay</button></div></div>' : '');
+    h += '<div class="card"><h2>1. Choose your length</h2><div class="row">' + Object.keys(LIMITS).map(function (k) { return '<label class="scard" style="display:flex;gap:8px;align-items:center"><input type="radio" name="lim" value="' + k + '"' + (k === 'm3' ? ' checked' : '') + '> ' + esc(LIMITS[k][2]) + '</label>'; }).join('') + '</div></div>';
+    h += '<div class="card"><h2>2. Choose your question</h2><h3>✏️ From scratch</h3><p class="hint">Type your own essay question, then choose its type of expository essay.</p><label class="sr" for="bq">Your essay question</label><input id="bq" class="inp" maxlength="220" placeholder="e.g. Explain THREE effects of social media on Caribbean teenagers."><div class="pipes">' + TYPES.map(function (t) { return '<button type="button" class="pipe" style="--c:' + t.c + '" data-act="new" data-k="' + t.id + '"><span class="e" aria-hidden="true">' + t.e + '</span><span><b>' + esc(t.n) + '</b><small>' + esc(t.s) + '</small></span></button>'; }).join('') + '</div><p class="hint" id="bqerr"></p>';
+    h += '<h3 style="margin-top:16px">📋 From the topic list</h3>' + TYPES.map(function (t) { return '<h4 style="margin:10px 0 6px">' + t.e + ' ' + esc(t.n) + '</h4><div class="tray">' + TOPICS.filter(function (x) { return x[0] === t.id; }).map(function (x) { return '<button type="button" class="scard" style="border-left:8px solid ' + t.c + '" data-act="topic" data-k="' + t.id + '" data-q="' + esc(x[1]) + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>';
+    app.innerHTML = h;
+  }
+  function begin(q, type, limit) { B = { q: q, type: type, limit: limit || 'm3', order: 'auto', step: 0, f: {}, open: {}, judge: null }; ALLF.forEach(function (x) { B.f[x[0]] = ''; }); save(); build(); window.scrollTo(0, 0); }
+  function fieldHTML(x, hh) {
+    var k = x[0], kind = x[2], H = HEAT[hh.lv], TT = TH[B.type], frame = kind === 'thesis' ? TT.thesis : kind === 'topic' ? TT.topic : kind === 'detail' ? TT.detail : GEN[kind];
+    var model = B.q === EXAMPLE.q && EXAMPLE.f[k] ? EXAMPLE.f[k] : null;
+    return '<div class="fld ' + H.css + '" id="fld-' + k + '"><div class="row" style="justify-content:space-between"><label for="b-' + k + '"><b>' + esc(x[1]) + '</b></label><span class="hw ' + H.css + '" id="hw-' + k + '">' + H.ic + ' ' + H.n + '</span></div><textarea id="b-' + k + '" class="inp ta" data-b="' + k + '" rows="' + (kind === 'concl' || kind === 'explain' ? 4 : 3) + '" spellcheck="true">' + esc(B.f[k] || '') + '</textarea><p class="tipline" id="tip-' + k + '">' + esc(hh.tip) + '</p><button type="button" class="linkb" data-act="hint" data-k="' + k + '">💡 ' + (B.open[k] ? 'Hide hint' : 'Show a hint') + '</button>' + (B.open[k] ? '<p class="hintbox">' + esc(frame) + (model ? '<br><span class="hint">Model:</span> ' + esc(model) : '') + '</p>' : '') + '</div>';
+  }
+  function previewHTML(h) {
+    var cur = STEPS[B.step].k, f = B.f, cut = function (t, n) { t = String(t || '').trim(); return t ? (t.length > n ? t.slice(0, n - 1) + '…' : t) : 'Empty'; };
+    var hb = function (lv) { var H = HEAT[lv]; return '<span class="hb ' + H.css + '">' + H.ic + ' ' + H.n + '</span>'; };
+    var L = function (cls, step, lab, k) { return '<button type="button" class="pl ' + cls + (cur === STEPS[step].k ? ' cur' : '') + '" data-act="go" data-k="' + step + '">' + hb(h[k].lv) + '<span class="lab">' + lab + '</span><span class="tx">' + esc(cut(f[k], 90)) + '</span></button>'; };
+    var OD = ORDERS.filter(function (o) { return o[0] === B.order; })[0];
+    var s = '<div class="pf">' + L('hook', 0, 'Hook · broad', 'hook') + L('bridge', 1, 'Bridge · context', 'bridge') + L('thesis', 2, 'Thesis · narrow', 'thesis');
+    s += '<button type="button" class="pl strat' + (cur === 'strat' ? ' cur' : '') + '" data-act="go" data-k="3"><span class="lab">🧭 ' + esc(ORG[B.type][0]) + '</span><span class="tx">' + esc(B.order === 'auto' ? ORG[B.type][1] : 'Points ordered: ' + OD[1]) + '</span></button>';
+    s += '<div class="pcols">' + [1, 2, 3].map(function (i) { var st = 3 + i, isCur = cur === 'b' + i; return '<div class="pc"><button type="button" class="pb t' + (isCur ? ' cur' : '') + '" data-act="go" data-k="' + st + '">' + hb(h['t' + i].lv) + '<span class="lab">Body ' + i + ' · topic</span><span class="tx">' + esc(cut(f['t' + i], 60)) + '</span></button><button type="button" class="pb d' + (isCur ? ' cur' : '') + '" data-act="go" data-k="' + st + '">' + hb(Math.min(h['d' + i].lv, h['x' + i].lv, h['l' + i].lv)) + '<span class="lab">Supporting detail + explain</span><span class="tx">' + esc(cut(f['d' + i], 60)) + '</span></button></div>'; }).join('') + '</div>';
+    s += '<button type="button" class="pl concl' + (cur === 'concl' ? ' cur' : '') + '" data-act="go" data-k="7">' + hb(h.concl.lv) + '<span class="lab">Conclusion · 3 Rs</span><span class="tx">' + esc(cut(f.concl, 100)) + '</span></button></div>';
+    return s;
+  }
+  function meterHTML(h) {
+    var sc = total(h), pct = Math.round(sc / MAXH * 100), lv = pct >= 75 ? 2 : pct >= 40 ? 1 : 0, H = HEAT[lv], hot = ALLF.filter(function (x) { return h[x[0]].lv === 2; }).length, w = words(), Lm = LIMITS[B.limit];
+    var wcls = w > Lm[1] ? 'over' : w < Lm[0] ? 'under' : 'okk';
+    return '<div class="meter"><div class="row" style="justify-content:space-between"><b>Rigour: <span class="hw ' + H.css + '">' + H.ic + ' ' + H.n + '</span></b><span class="hint">' + hot + ' of ' + ALLF.length + ' parts hot</span></div><div class="therm" role="meter" aria-label="Rigour" aria-valuemin="0" aria-valuemax="' + MAXH + '" aria-valuenow="' + sc + '"><i style="width:' + (100 - pct) + '%"></i></div><div class="row" style="justify-content:space-between"><span class="wcbar ' + wcls + '">' + w + ' words</span><span class="hint">' + esc(Lm[2]) + '</span></div><div class="legend"><span><i style="background:var(--cold)"></i>❄ Cold: empty or vague</span><span><i style="background:var(--warm)"></i>☀ Warm: developing</span><span><i style="background:var(--hot)"></i>🔥 Hot: exam-ready</span></div></div>';
+  }
+  function build() {
+    var h = heats(), S = STEPS[B.step], T = TBY[B.type];
+    var out = tBar() + '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Build your essay</h2><button class="btn ghost sm" data-act="home">← Change question</button></div><div class="task"><b>Essay question:</b> ' + esc(B.q) + '<br><span class="hint">Type: ' + T.e + ' ' + esc(T.n) + ' · 🧭 Organisational strategy: ' + esc(ORG[B.type][0]) + ' · signal words: ' + esc(SIGW[B.type]) + '</span></div>';
+    out += '<div class="dots" role="tablist" aria-label="Funnel layers">' + STEPS.map(function (s, i) { var lv = stepHeat(s, h); return '<button type="button" role="tab" aria-selected="' + (i === B.step) + '" class="dot ' + HEAT[lv].css + (i === B.step ? ' cur' : '') + '" data-act="go" data-k="' + i + '">' + (i + 1) + '. ' + esc(s.n) + '</button>'; }).join('') + '<button type="button" class="dot" data-act="review">📄 Assemble</button></div></div>';
+    out += '<div class="grid2"><div class="card"><h3>Layer ' + (B.step + 1) + ' of ' + STEPS.length + ': ' + esc(S.lab) + '</h3><p class="why">' + esc(S.why) + '</p>';
+    if (S.k === 'strat') {
+      out += '<div class="org"><b>🧭 ' + esc(ORG[B.type][0]) + '</b><p style="margin:4px 0">' + esc(ORG[B.type][1]) + '.</p><p class="hint" style="margin:0">Signal words to use in your body paragraphs: ' + esc(SIGW[B.type]) + '.</p></div>';
+      out += '<label for="bord" style="display:block;margin-top:12px"><b>How will you order your three points?</b></label><select id="bord" class="inp" data-bord="1">' + ORDERS.map(function (o) { return '<option value="' + o[0] + '"' + (B.order === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>';
+      out += '<p class="hint" style="margin-top:8px">Not the type you need? <button type="button" class="linkb" data-act="retype">Change the essay type</button>.</p>';
+      if (B.retype) out += '<div class="pipes">' + TYPES.map(function (t) { return '<button type="button" class="pipe' + (B.type === t.id ? ' on' : '') + '" style="--c:' + t.c + '" data-act="settype" data-k="' + t.id + '"><span class="e" aria-hidden="true">' + t.e + '</span><span><b>' + esc(t.n) + '</b></span></button>'; }).join('') + '</div>';
+    } else out += S.f.map(function (x) { return fieldHTML(x, h[x[0]]); }).join('');
+    out += '<div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn ghost" data-act="prev"' + (B.step === 0 ? ' disabled' : '') + '>← Back</button>' + (B.step < STEPS.length - 1 ? '<button class="btn gold" data-act="next">Next layer ↓</button>' : '<button class="btn gold" data-act="review">📄 Assemble my essay</button>') + '</div></div>';
+    out += '<div class="card side"><h3>Your funnel</h3><p class="hint" style="margin:0 0 6px">Tap any layer to jump to it.</p><div id="pv">' + previewHTML(h) + '</div><div id="mt">' + meterHTML(h) + '</div></div></div>';
+    app.innerHTML = out;
+  }
+  function onInput(k, v) {
+    B.f[k] = v; B.judge = null; save();
+    var h = heats();
+    ALLF.forEach(function (x) { var el = document.getElementById('fld-' + x[0]); if (!el) return; var H = HEAT[h[x[0]].lv]; el.className = 'fld ' + H.css; var b = document.getElementById('hw-' + x[0]); b.className = 'hw ' + H.css; b.textContent = H.ic + ' ' + H.n; document.getElementById('tip-' + x[0]).textContent = h[x[0]].tip; });
+    var pv = document.getElementById('pv'); if (pv) pv.innerHTML = previewHTML(h);
+    var mt = document.getElementById('mt'); if (mt) mt.innerHTML = meterHTML(h);
+    document.querySelectorAll('.dot[data-k]').forEach(function (d) { var i = +d.dataset.k; if (isNaN(i)) return; var lv = stepHeat(STEPS[i], h); d.className = 'dot ' + HEAT[lv].css + (i === B.step ? ' cur' : ''); });
+  }
+  document.addEventListener('input', function (e) { var t = e.target; if (t && t.dataset && t.dataset.b && B) onInput(t.dataset.b, t.value); });
+  document.addEventListener('change', function (e) { var t = e.target; if (t && t.dataset && t.dataset.bord && B) { B.order = t.value; save(); var pv = document.getElementById('pv'); if (pv) pv.innerHTML = previewHTML(heats()); } });
+
+  function review() {
+    var P = paras(), C = checks(), V = verdict(C), L = LIMITS[B.limit], w = words(), J = B.judge;
+    var h = tBar() + '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Your assembled essay</h2><button class="btn ghost sm" data-act="resume">← Back to the funnel</button></div><div class="task"><b>Essay question:</b> ' + esc(B.q) + '<br><span class="hint">' + esc(TBY[B.type].n) + ' · 🧭 ' + esc(ORG[B.type][0]) + ' · ' + esc(L[2]) + '</span></div>';
+    h += '<div class="essay">' + P.map(function (p, i) { return '<div class="ep ep' + i + '"><span class="plb">' + p[0] + ' · ' + wc(p[1]) + ' words</span><p>' + (p[1] ? esc(p[1]) : '<i class="hint">Not written yet.</i>') + '</p></div>'; }).join('') + '</div><p class="hint">Total: <b>' + w + '</b> words · ' + esc(L[2]) + '</p>';
+    if (!J) h += '<div class="judge"><b>First, judge your own essay: is it strong or weak?</b><p class="hint" style="margin:4px 0 10px">Read it as an examiner would: thesis order, PEEL in every body paragraph, specific supporting details, objective third person, transitions, a 3R conclusion and the word limit.</p><div class="row"><button class="btn jb" data-act="judge" data-k="strong">💪 Strong</button><button class="btn jb" data-act="judge" data-k="weak">⚠️ Weak</button></div></div>';
+    else {
+      var agree = (J === 'strong') === V.strong;
+      h += '<div class="verdict ' + (V.strong ? 'strong' : 'weak') + '"><span class="big">' + (V.strong ? '💪 Strong' : '⚠️ Weak, for now') + '</span><p style="margin:6px 0 0">The checker passed <b>' + V.pass + ' of ' + V.max + '</b> checks. You said <b>' + (J === 'strong' ? 'strong' : 'weak') + '</b>: ' + (agree ? 'your judgement matches the checker.' : 'the checker disagrees, so look closely at the items below.') + '</p></div>';
+      h += '<ul class="checks">' + C.map(function (c) { return '<li class="' + (c.ok ? 'ok' : 'no') + '"><b>' + (c.ok ? '✓' : '✗') + '</b> ' + esc(c.label) + (c.ok ? '' : '<span class="fix">Fix: ' + esc(c.fix) + ' <button type="button" class="linkb" data-act="go" data-k="' + c.step + '">Go to that layer</button></span>') + '</li>'; }).join('') + '</ul>';
+      h += '<div class="row" style="margin-top:14px"><span class="dlg" role="group" aria-label="Download my essay"><b>⬇ Download my essay:</b><button class="btn gold sm" data-act="pdf">PDF</button><button class="btn ghost sm" data-act="img" data-k="png">PNG</button><button class="btn ghost sm" data-act="img" data-k="jpeg">JPEG</button></span><button class="btn ghost" data-act="resume">✏️ Keep improving</button><button class="btn ghost" data-act="fresh">🆕 Start a new essay</button></div>';
+    }
+    h += '<h3 style="margin-top:18px">Your funnel</h3><div style="max-width:620px">' + previewHTML(heats()) + '</div></div>';
+    app.innerHTML = h; window.scrollTo(0, 0);
+  }
+
+  /* ---------- exports: PDF (jsPDF, with a print fallback), PNG and JPEG ---------- */
+  function wrap(t, max) { var w = String(t).split(/\s+/), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > max && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; }
+  function box(cx, y, w, hh, lv, label, text, max) {
+    var H = HEAT[lv], lines = wrap(text || '(empty)', max || 30), s = '<rect x="' + (cx - w / 2) + '" y="' + y + '" width="' + w + '" height="' + hh + '" rx="12" fill="' + H.fill + '" stroke="' + H.line + '" stroke-width="2"/>';
+    s += '<text x="' + cx + '" y="' + (y + 16) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.5" font-weight="700" letter-spacing="1" fill="' + H.ink + '">' + xs(label + ' · ' + H.n.toUpperCase()) + '</text>';
+    lines.slice(0, 3).forEach(function (l, i) { s += '<text x="' + cx + '" y="' + (y + 33 + i * 15) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12.5" fill="' + H.ink + '">' + xs(l) + '</text>'; });
+    return s;
+  }
+  function funnelSVG() {
+    var f = B.f, h = heats(), xsP = [130, 380, 630], cut = function (t, n) { t = String(t || '').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; }, s = '<rect width="760" height="660" rx="18" fill="#FFFFFF"/>';
+    var ln = function (x1, y1, x2, y2) { return '<path d="M' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="#9DB0CC" stroke-width="2.5"/>'; };
+    var OD = ORDERS.filter(function (o) { return o[0] === B.order; })[0];
+    s += ln(380, 70, 380, 92) + ln(380, 146, 380, 168) + ln(380, 236, 380, 248);
+    xsP.forEach(function (x, i) { s += ln(380, 292, x, 316) + ln(x, 382, x, 406) + ln(x, 470, x, 494) + ln(x, 552, 380, 580); });
+    s += box(380, 16, 460, 54, h.hook.lv, 'HOOK', cut(f.hook, 110), 60) + box(380, 92, 420, 54, h.bridge.lv, 'BRIDGE', cut(f.bridge, 100), 56) + box(380, 168, 520, 68, h.thesis.lv, 'THESIS · ' + TBY[B.type].n.toUpperCase(), cut(f.thesis, 170), 66);
+    s += '<rect x="80" y="248" width="600" height="44" rx="12" fill="#FFF4DA" stroke="#B7791F" stroke-width="2"/><text x="380" y="265" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.5" font-weight="700" letter-spacing="1" fill="#3A2A00">' + xs('ORGANISATIONAL STRATEGY · ' + ORG[B.type][0].toUpperCase()) + '</text><text x="380" y="282" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#3A2A00">' + xs(B.order === 'auto' ? ORG[B.type][1] : 'Points ordered: ' + OD[1]) + '</text>';
+    [1, 2, 3].forEach(function (i) { var x = xsP[i - 1]; s += box(x, 316, 230, 66, h['t' + i].lv, 'BODY ' + i + ' TOPIC', cut(f['t' + i], 56), 30) + box(x, 406, 230, 64, h['d' + i].lv, 'SUPPORTING DETAIL', cut(f['d' + i], 56), 30) + box(x, 494, 230, 58, Math.min(h['x' + i].lv, h['l' + i].lv), 'EXPLAIN + LINK', cut(f['x' + i], 56), 30); });
+    s += box(380, 580, 520, 60, h.concl.lv, 'CONCLUSION · 3 Rs', cut(f.concl, 130), 66);
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 660" width="760" height="660">' + s + '</svg>';
+  }
+  function sheetSVG() {
+    var W = 800, P = 20, y = 30, out = '', C = checks(), V = verdict(C);
+    var txt = function (t, size, weight, col, font, maxc, lh, gap) { wrap(t, maxc).forEach(function (l) { y += lh; out += '<text x="' + P + '" y="' + y + '" font-family="' + (font || 'Arial,Helvetica,sans-serif') + '" font-size="' + size + '" font-weight="' + (weight || 400) + '" fill="' + (col || '#14213D') + '">' + xs(l) + '</text>'; }); y += gap || 0; };
+    out += '<rect width="' + W + '" height="16" fill="#2D4E9E"/><rect y="16" width="' + W + '" height="4" fill="#F3A83B"/>';
+    txt('My Expository Essay · Funnel Builder', 24, 700, null, null, 60, 30, 4);
+    txt('Essay question: ' + B.q, 13, 700, null, null, 110, 19, 0); txt(TBY[B.type].n + ' · Organisational strategy: ' + ORG[B.type][0] + ' · ' + LIMITS[B.limit][2], 13, 400, '#55657E', null, 118, 19, 12);
+    txt('1. My funnel', 16, 700, '#2D4E9E', null, 80, 24, 6);
+    var fs = funnelSVG(), w = W - 2 * P, hh = Math.round(660 * w / 760); out += fs.replace('<svg ', '<svg x="' + P + '" y="' + y + '" ').replace(' width="760" height="660"', ' width="' + w + '" height="' + hh + '"'); y += hh + 12;
+    txt('2. My essay (' + words() + ' words)', 16, 700, '#2D4E9E', null, 80, 24, 6);
+    paras().forEach(function (p) { txt(p[0].toUpperCase() + ' (' + wc(p[1]) + ' words)', 11, 700, '#55657E', null, 100, 17, 0); txt(p[1] || '—', 14, 400, null, 'Georgia,Times New Roman,serif', 112, 21, 10); });
+    txt('3. Strong or weak?', 16, 700, '#2D4E9E', null, 80, 24, 6);
+    if (B.judge) txt('My judgement: ' + (B.judge === 'strong' ? 'Strong' : 'Weak') + ' · Checker: ' + (V.strong ? 'Strong' : 'Weak') + ' (' + V.pass + ' of ' + V.max + ' checks passed)', 14, 700, V.strong ? '#1C7C4E' : '#B9412E', null, 104, 20, 6);
+    C.forEach(function (c) { txt((c.ok ? '+ ' : 'x ') + c.label + (c.ok ? '' : ' Fix: ' + c.fix), 13, 400, c.ok ? '#14213D' : '#8E2A1B', null, 112, 19, 4); });
+    y += 24; out += '<text x="' + (W / 2) + '" y="' + y + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#7A8699">CAPE Communication Studies · Funnel Builder · Kester Small</text>'; y += 16;
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + y + '" width="' + W + '" height="' + y + '"><rect width="' + W + '" height="' + y + '" fill="#FFFFFF"/>' + out + '</svg>';
+  }
+  function deliver(name, blob) {
+    try { if (window.parent && window.parent !== window) { parent.postMessage({ type: 'dm:file', filename: name, data: blob }, '*'); toast('Preparing ' + name); return; } } catch (e) { }
+    var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+  }
+  function toImg(svg) { return new Promise(function (res) { var img = new Image(); img.onload = function () { var k = 2, c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k; var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); res(c); }; img.onerror = function () { res(null); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }); }
+  function saveImage(fmt) { toast('Building your ' + fmt.toUpperCase() + '…'); toImg(sheetSVG()).then(function (c) { if (!c) { toast('That image could not be made here. Try PDF.'); return; } c.toBlob(function (b) { if (b) deliver('My_Expository_Essay' + (fmt === 'png' ? '.png' : '.jpg'), b); }, fmt === 'png' ? 'image/png' : 'image/jpeg', 0.92); }); }
+  function loadPDF(cb) { if (window.jspdf && window.jspdf.jsPDF) return cb(window.jspdf.jsPDF); var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload = function () { cb(window.jspdf && window.jspdf.jsPDF); }; s.onerror = function () { cb(null); }; document.head.appendChild(s); }
+  function savePDF() {
+    toast('Building your PDF…');
+    loadPDF(async function (J) {
+      if (!J) { var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(fr); var w = fr.contentWindow; w.document.open(); w.document.write('<html><head><title>My Expository Essay</title><style>body{margin:12mm}svg{width:100%;height:auto}</style></head><body>' + sheetSVG() + '</body></html>'); w.document.close(); setTimeout(function () { try { w.focus(); w.print(); } catch (e) { } setTimeout(function () { fr.remove(); }, 60000); }, 400); toast('Choose "Save as PDF" in the print window.'); return; }
+      var doc = new J({ unit: 'mm', format: 'a4' }), M = 16, Wd = 178, y = 22, C = checks(), V = verdict(C);
+      var need = function (h) { if (y + h > 280) { doc.addPage(); y = M; } };
+      var para = function (t, size, style, col, gap) { doc.setFont(style === 'serif' ? 'times' : 'helvetica', style === 'b' ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, col || [20, 33, 61]); doc.splitTextToSize(String(t), Wd).forEach(function (l) { need(size * 0.45); doc.text(l, M, y); y += size * 0.45; }); y += gap == null ? 2 : gap; };
+      doc.setFillColor(45, 78, 158); doc.rect(0, 0, 210, 11, 'F'); doc.setFillColor(243, 168, 59); doc.rect(0, 11, 210, 2, 'F');
+      para('My Expository Essay · Funnel Builder', 17, 'b', null, 1); para('Essay question: ' + B.q, 11.5, 'b', null, 1);
+      para(TBY[B.type].n + ' · Organisational strategy: ' + ORG[B.type][0] + ' · ' + LIMITS[B.limit][2], 10, '', [85, 101, 126], 4);
+      para('1. My funnel', 12.5, 'b', [45, 78, 158], 2);
+      var c = await toImg(funnelSVG()); if (c) { var ih = Wd * 660 / 760; need(ih); doc.addImage(c.toDataURL('image/jpeg', 0.88), 'JPEG', M, y, Wd, ih); y += ih + 4; }
+      para('Rigour colours: blue = cold (empty or vague) · amber = warm (developing) · red = hot (exam-ready)', 8.5, '', [85, 101, 126], 3);
+      doc.addPage(); y = M + 4; para('2. My essay (' + words() + ' words)', 12.5, 'b', [45, 78, 158], 3);
+      paras().forEach(function (p) { para(p[0].toUpperCase() + ' (' + wc(p[1]) + ' words)', 9, 'b', [85, 101, 126], 1.5); para(p[1] || '—', 11.5, 'serif', null, 4); });
+      para('3. Strong or weak?', 12.5, 'b', [45, 78, 158], 2);
+      if (B.judge) para('My judgement: ' + (B.judge === 'strong' ? 'Strong' : 'Weak') + ' · Checker: ' + (V.strong ? 'Strong' : 'Weak') + ' (' + V.pass + ' of ' + V.max + ' checks passed)', 10.5, 'b', V.strong ? [28, 124, 78] : [185, 65, 46], 2);
+      C.forEach(function (k) { para((k.ok ? '+  ' : 'x  ') + k.label + (k.ok ? '' : '  Fix: ' + k.fix), 10, '', k.ok ? [20, 33, 61] : [142, 42, 27], 1.5); });
+      var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(120, 130, 150); doc.text('CAPE Communication Studies · Funnel Builder · Kester Small', 105, 290, { align: 'center' }); doc.text(i + ' / ' + n, 194, 290, { align: 'right' }); }
+      deliver('My_Expository_Essay.pdf', doc.output('blob'));
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-act]'); if (!b || b.disabled) return;
+    var a = b.dataset.act, k = b.dataset.k, lim = (document.querySelector('input[name=lim]:checked') || {}).value || 'm3';
+    if (a === 'home') { start(); window.scrollTo(0, 0); }
+    else if (a === 'resume') { B = B || load(); if (B) { B.open = B.open || {}; build(); window.scrollTo(0, 0); } }
+    else if (a === 'fresh') { start(); window.scrollTo(0, 0); }
+    else if (a === 'topic') begin(b.dataset.q, k, lim);
+    else if (a === 'new') { var q = ($('#bq') || {}).value || ''; if (q.trim().length < 12) { $('#bqerr').textContent = 'Type your essay question first (at least a few words), then choose its type.'; $('#bq').focus(); return; } begin(q.trim(), k, lim); }
+    else if (a === 'demo') { if (!teacher()) return; B = JSON.parse(JSON.stringify(EXAMPLE)); B.order = 'imp'; B.step = 0; B.open = {}; B.judge = null; save(); build(); toast('Worked example loaded'); }
+    else if (a === 'go') { if (!B) return; B.step = Math.max(0, Math.min(STEPS.length - 1, +k)); save(); build(); var c = document.querySelector('.grid2'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (a === 'next') { var before = stepHeat(STEPS[B.step], heats()); B.step = Math.min(STEPS.length - 1, B.step + 1); save(); tone(before === 2 ? 'up' : 'tap'); build(); }
+    else if (a === 'prev') { B.step = Math.max(0, B.step - 1); save(); build(); }
+    else if (a === 'hint') { B.open[k] = !B.open[k]; save(); var el = document.getElementById('fld-' + k), x = ALLF.filter(function (z) { return z[0] === k; })[0]; if (el && x) { var tmp = document.createElement('div'); tmp.innerHTML = fieldHTML(x, heatOf(k, x[2])); el.replaceWith(tmp.firstChild); } }
+    else if (a === 'retype') { B.retype = !B.retype; build(); }
+    else if (a === 'settype') { B.type = k; B.retype = false; save(); build(); }
+    else if (a === 'review') { B = B || load(); if (B) review(); }
+    else if (a === 'judge') { B.judge = k; save(); var C = checks(), V = verdict(C); tone(V.strong ? 'win' : 'ok'); report(V.pass, V.max); review(); }
+    else if (a === 'pdf') savePDF();
+    else if (a === 'img') saveImage(k);
+  });
+  sndBtn();
+  B = load(); start();
+})();
+</script>
+</body></html>

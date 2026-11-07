@@ -1,0 +1,1438 @@
+<!doctype html>
+<html lang="en" data-gs-own>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tabulation Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Lilita+One&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@500;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: one-screen game shell. Top bar + centred stage; each world recolours the page through --bg1/--bg2/--acc/--acc2.
+   Single deliberate look (dark game worlds, light "paper" cards and an Excel-like grid), so no light/dark switch. */
+:root{
+  --bg1:#0c2233; --bg2:#14404f; --acc:#ffcf3f; --acc2:#5fe1d0;
+  --ink:#16212b; --ink2:#4a5866; --paper:#fffaf0; --paper2:#f3ecd9; --rule:#e2d6b8;
+  --good:#1f9d55; --bad:#d64545; --warn:#e8a317;
+  --text:#f6f8fb; --muted:#c3cfda; --glass:rgba(8,14,22,.42); --glass2:rgba(255,255,255,.08);
+  --xl:#217346; --xlsel:#dcefe2; --gridline:#d6dce2; --head:#eef1f4; --headInk:#45525f;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --hand:"Caveat","Segoe Print","Comic Sans MS",cursive;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg1);background-image:radial-gradient(120% 80% at 80% 0%,var(--bg2) 0%,transparent 60%),linear-gradient(170deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;color:var(--text);font-family:var(--body);font-size:16px;line-height:1.45;transition:background .6s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--glass);backdrop-filter:blur(6px);border-bottom:1px solid var(--glass2)}
+.brand{font-family:var(--display);font-size:20px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:0;color:var(--text);padding:0}
+.brand i{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:6px;background:var(--acc);color:var(--ink);font-style:normal;font-size:15px}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--glass2);border:1px solid rgba(255,255,255,.14);padding:4px 10px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
+.chip svg{width:16px;height:16px}
+main{flex:1;overflow:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px}
+.wrap{max-width:1000px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.3px;text-wrap:balance;margin:0}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.btn{background:var(--acc);color:var(--ink);border:0;border-radius:12px;padding:10px 18px;font-weight:800;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.btn.big{font-size:20px;padding:14px 28px;font-family:var(--display);font-weight:400;letter-spacing:.5px}
+.btn.alt{background:var(--acc2)}
+.ghost{background:transparent;color:var(--text);border:1.5px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 14px;font-weight:600}
+.ghost.sm{padding:5px 10px;font-size:14px}
+.ghost.dark{color:var(--ink);border-color:var(--ink2)}
+.paper{background:var(--paper);color:var(--ink);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:800;color:var(--acc)}
+.paper .eyebrow{color:var(--ink2)}
+.muted{color:var(--muted)}
+kbd{font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.18);border-radius:4px;padding:1px 5px;margin-left:6px}
+.stars{display:inline-flex;gap:2px}
+.stars svg{width:18px;height:18px}
+
+/* Title */
+.title{display:grid;gap:22px;justify-items:center;text-align:center;padding-top:10px}
+.logo{display:grid;grid-template-columns:30px repeat(10,minmax(0,46px));background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35);max-width:100%}
+.logo span{border-right:1px solid var(--gridline);border-bottom:1px solid var(--gridline);display:grid;place-items:center;color:var(--headInk);font:600 11px/1 Arial,sans-serif;height:22px;background:var(--head)}
+.logo b{display:grid;place-items:center;aspect-ratio:1;font-family:var(--display);font-weight:400;font-size:clamp(20px,5.5vw,34px);color:var(--xl);border-right:1px solid var(--gridline);border-bottom:1px solid var(--gridline)}
+.logo b.on{background:var(--xlsel);outline:2.5px solid var(--xl);outline-offset:-2.5px}
+.logo .rh{height:auto}
+.subtitle{font-family:var(--display);font-size:clamp(22px,4vw,30px);color:var(--acc)}
+.setup{width:min(520px,100%);padding:20px;display:grid;gap:14px;text-align:left}
+.setup label{font-weight:800;font-size:14px;display:block;margin-bottom:4px}
+.field{width:100%;border:2px solid var(--rule);border-radius:10px;padding:10px 12px;font:600 16px var(--body);color:var(--ink);background:#fff}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;border:2px solid var(--rule);background:#fff;color:var(--ink);border-radius:10px;padding:8px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.seg small{display:block;font-weight:600;font-size:11px;opacity:.75}
+.credit{font-size:13px;color:var(--muted)}
+
+/* Map */
+.maphead{display:flex;flex-wrap:wrap;align-items:end;gap:12px;justify-content:space-between;margin-bottom:16px}
+.worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.wcard{position:relative;text-align:left;border:0;border-radius:18px;padding:16px;min-height:170px;color:#fff;display:flex;flex-direction:column;gap:6px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.3);transition:transform .15s}
+.wcard:hover:not([disabled]){transform:translateY(-3px)}
+.wcard .num{position:absolute;right:12px;top:6px;font-family:var(--display);font-size:54px;opacity:.18;line-height:1}
+.wcard svg.ico{width:40px;height:40px}
+.wcard h3{font-size:22px}
+.wcard p{font-size:14px;opacity:.9}
+.wcard .stars{margin-top:auto}
+.wcard[disabled]{cursor:not-allowed;filter:grayscale(.75) brightness(.7)}
+.lock{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;background:rgba(0,0,0,.25);font-size:14px;letter-spacing:.05em}
+
+/* World */
+.whead{display:grid;gap:8px;margin-bottom:18px}
+.whead h1{font-size:clamp(30px,6vw,46px)}
+.story{max-width:65ch;color:var(--muted)}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}
+.lvl{padding:16px;display:grid;gap:8px;align-content:start}
+.lvl .tag{justify-self:start;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--paper2);border-radius:999px;padding:2px 10px;color:var(--ink2)}
+.lvl h3{font-size:22px}
+.lvl .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.lvl.locked{opacity:.55}
+.bar-actions{display:flex;flex-wrap:wrap;gap:10px}
+
+/* Concept cards */
+.concepts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ccard{padding:14px 16px;display:grid;gap:6px;align-content:start;border-top:5px solid var(--acc)}
+.ccard h4{margin:0;font-family:var(--display);font-weight:400;font-size:20px}
+.ccard p{font-size:15px}
+.ccard .ex{font-family:var(--mono);font-size:12.5px;background:var(--paper2);border-radius:8px;padding:6px 8px;color:var(--ink)}
+.ccard svg{max-width:100%;height:auto}
+.brief{padding:20px;display:grid;gap:14px}
+.brief .scen{font-size:17px;max-width:65ch}
+.how{background:var(--paper2);border-radius:12px;padding:10px 14px;font-size:15px}
+.tip{display:flex;gap:10px;align-items:flex-start;background:#173042;color:#eaf6ff;border-radius:12px;padding:10px 14px;font-size:15px}
+.tip b{color:var(--acc)}
+
+/* HUD */
+.stage{display:grid;gap:12px}
+.hud{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--glass);border:1px solid var(--glass2);border-radius:14px;padding:8px 12px}
+.hud-t{display:grid;line-height:1.15;min-width:0;flex:1}
+.hud-t small{color:var(--muted);font-size:12px}
+.hud-t strong{font-family:var(--display);font-weight:400;font-size:19px}
+.hud-r{display:flex;align-items:center;gap:14px}
+.hud-s{display:grid;text-align:right;line-height:1.1}
+.hud-s small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.hud-s b{font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums;color:var(--acc)}
+.combo{font-weight:800;color:var(--acc2);min-width:6ch;text-align:right}
+.combo.bump{animation:bump .35s}
+@keyframes bump{50%{transform:scale(1.35)}}
+.hearts{display:flex;gap:3px}
+.hearts svg{width:22px;height:22px}
+.hud2{display:flex;align-items:center;gap:12px}
+.prog{font-weight:700;font-size:14px;white-space:nowrap;color:var(--muted)}
+.tbar{flex:1;height:10px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--acc2);transform-origin:left;border-radius:99px}
+.tbar.low i{background:var(--bad)}
+.stage.hurt{animation:hurt .35s}
+@keyframes hurt{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.fb{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:20;max-width:min(560px,calc(100% - 32px));padding:10px 16px;border-radius:12px;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:opacity .4s,transform .4s}
+.fb.ok{background:#e7f7ec;color:#0f4d29;border-left:6px solid var(--good)}
+.fb.no{background:#fdeceb;color:#6b1717;border-left:6px solid var(--bad)}
+.fb.out{opacity:0;transform:translate(-50%,10px)}
+
+/* Blaster */
+.qbox{padding:12px 16px;display:grid;gap:2px}
+.qnum{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.qtext{font-size:clamp(17px,2.4vw,21px);font-weight:700}
+.arena{position:relative;height:clamp(340px,52vh,520px);border-radius:18px;overflow:hidden;background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.12);cursor:crosshair;touch-action:manipulation}
+.zone{position:absolute;left:50%;top:50%;width:150%;aspect-ratio:1;border-radius:50%;border:3px dashed var(--acc);transform:translate(-50%,-50%) scale(1);opacity:.45;pointer-events:none;box-shadow:0 0 0 2000px rgba(214,69,69,.0);transition:box-shadow .3s}
+.arena.closing .zone{box-shadow:0 0 0 2000px rgba(214,69,69,.14)}
+.tg{position:absolute;left:0;top:0;max-width:min(230px,44%);padding:10px 14px;border:0;font-weight:700;font-size:15px;line-height:1.2;color:var(--ink);background:var(--paper);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.35);text-align:left;will-change:transform}
+.tg kbd{margin:0 6px 0 0;background:var(--ink);color:var(--paper)}
+.t-reef .tg{border-radius:999px;background:radial-gradient(circle at 30% 25%,#fff,#d9fbff 60%,#a6ecf5);padding:14px 18px}
+.t-volcano .tg{border-radius:40% 30% 45% 25%/35% 45% 30% 40%;background:linear-gradient(#ffe2b8,#ffc078)}
+.t-space .tg{border-radius:38% 52% 44% 48%/50% 40% 54% 42%;background:linear-gradient(135deg,#e7e1ff,#b9aef0)}
+.t-cloud .tg{background:#fff7e0;border-radius:18px 18px 18px 4px}
+.t-market .tg{background:linear-gradient(#fff0f6,#ffd6e7);border-radius:16px}
+.tg.miss{background:#5c6670;color:#d0d6dc;text-decoration:line-through;opacity:.65}
+.tg.hit{animation:pop .45s forwards}
+.tg.reveal{outline:4px solid var(--good)}
+@keyframes pop{40%{transform:var(--tf) scale(1.25)}100%{transform:var(--tf) scale(0);opacity:0}}
+.shot{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid var(--acc);pointer-events:none;animation:shot .4s forwards}
+@keyframes shot{to{transform:scale(1.8);opacity:0}}
+.burst{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--acc);pointer-events:none}
+
+/* True/False dash */
+.track{position:relative;height:190px;border-radius:18px;overflow:hidden;background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.12)}
+.gate{position:absolute;left:0;top:0;bottom:0;width:64px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,var(--ink) 12px 24px);opacity:.85;display:grid;place-items:center}
+.gate span{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--display);color:#fff;text-shadow:0 2px 4px #000;letter-spacing:.2em}
+.tcard{position:absolute;left:0;top:22px;width:min(440px,calc(100% - 96px));background:var(--paper);color:var(--ink);border-radius:16px;padding:16px 18px;font-size:clamp(16px,2.3vw,19px);font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.tcard.fly{transition:transform .5s ease-in,opacity .5s;opacity:0}
+.tcard.crash{background:#ffd9d6}
+.tfrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tfb{border:0;border-radius:16px;padding:18px;font-family:var(--display);font-size:26px;color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.tfb.t{background:var(--good)}
+.tfb.f{background:var(--bad)}
+.tfb:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+
+/* Buckets */
+.bkt-item{padding:22px;text-align:center;font-size:clamp(18px,2.6vw,22px);font-weight:800;min-height:120px;display:grid;place-items:center;gap:10px;animation:drop .35s}
+@keyframes drop{from{transform:translateY(-30px);opacity:0}}
+.bkt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.bkt{border:3px dashed rgba(255,255,255,.55);background:var(--glass);color:var(--text);border-radius:18px;padding:22px 12px;font-family:var(--display);font-size:22px}
+.bkt:hover{border-color:var(--acc)}
+
+/* Match */
+.match{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:12px}
+.mcol{display:grid;gap:8px;align-content:start}
+.mbtn{border:2px solid transparent;background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 12px;text-align:left;font-size:15px;font-weight:600;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.mbtn.term{font-family:var(--display);font-weight:400;font-size:18px}
+.mbtn.on{border-color:var(--acc);background:#fff6d6}
+.mbtn.done{background:#d8f3e0;color:#245c37;opacity:.6;box-shadow:none}
+.mbtn.wrong{animation:hurt .35s;background:#ffd9d6}
+
+/* Sheet */
+.task{padding:12px 16px;display:grid;gap:8px}
+.tlabel{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.tprompt{font-size:clamp(16px,2.2vw,19px);font-weight:700;max-width:70ch}
+.ansrow{display:flex;gap:8px;flex-wrap:wrap}
+.ans{flex:1;min-width:160px;border:2px solid var(--rule);border-radius:10px;padding:9px 12px;font:700 16px var(--mono);color:var(--ink);background:#fff;text-transform:uppercase}
+.sheethost{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25);color:#111}
+.fxrow{display:flex;align-items:center;gap:6px;padding:6px;background:#f7f8f9;border-bottom:1px solid var(--gridline)}
+.namebox{width:86px;flex:none;border:1px solid #b9c2cb;border-radius:4px;padding:5px 6px;font:600 13px var(--mono);color:#111;background:#fff;text-transform:uppercase}
+.fxl{font:italic 700 14px Georgia,serif;color:#5d6873;padding:0 4px}
+.fxbar{flex:1;min-width:0;border:1px solid #b9c2cb;border-radius:4px;padding:5px 8px;font:500 14px var(--mono);color:#111;background:#fff}
+.fxbar[readonly],.namebox[readonly]{background:#fbfbfc}
+.tick{border:0;background:var(--xl);color:#fff;border-radius:4px;width:34px;height:30px;font-weight:800;font-size:16px}
+.gridwrap{overflow:auto;max-height:min(62vh,560px);-webkit-user-select:none;user-select:none}
+.grid{border-collapse:collapse;table-layout:fixed;font:13px/1.2 Calibri,"Segoe UI",Arial,sans-serif;color:#111}
+.grid th{background:var(--head);color:var(--headInk);font-weight:600;font-size:12px;border:1px solid #c8d0d8;height:22px;text-align:center;cursor:pointer}
+.grid th.corner{cursor:default}
+.grid th.hsel{background:#cde6d5;color:var(--xl);border-bottom-color:var(--xl)}
+.grid td{border:1px solid var(--gridline);height:24px;padding:0 5px;white-space:nowrap;overflow:visible;position:relative;cursor:cell;touch-action:none;background:#fff}
+.grid td.sel{background:var(--xlsel)}
+.grid td.act{outline:2px solid var(--xl);outline-offset:-2px;background:#fff}
+.grid td.act::after{content:"";position:absolute;right:-4px;bottom:-4px;width:7px;height:7px;background:var(--xl);border:1px solid #fff;z-index:2}
+.grid td.target{box-shadow:inset 0 0 0 2px var(--warn)}
+.grid td.flash{animation:flash 1.1s infinite}
+@keyframes flash{50%{background:#ffe58a}}
+.grid td.filled{animation:filled 1s}
+@keyframes filled{0%{background:#b8f0c8}}
+.grid .rot{display:inline-block;transform:rotate(-45deg);transform-origin:center}
+.ribbon{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#f3f5f7;border-bottom:1px solid var(--gridline)}
+.rb{border:1px solid #c5ced7;background:#fff;color:#1d2833;border-radius:6px;padding:6px 10px;font:600 13px "Segoe UI",Arial,sans-serif;display:inline-flex;gap:6px;align-items:center}
+.rb:hover{border-color:var(--xl);background:#eef8f1}
+.rb.glow{border-color:var(--warn);box-shadow:0 0 0 3px #ffe08a}
+.rb b{font-family:Georgia,serif}
+.note{background:repeating-linear-gradient(#fffef7 0 29px,#c9dcef 29px 30px);border-radius:12px;padding:8px 16px 10px;color:#1b2f7a;font-family:var(--hand);font-size:24px;line-height:30px;box-shadow:0 6px 16px rgba(0,0,0,.25);transform:rotate(-.4deg)}
+.note small{display:block;font-family:var(--body);font-size:12px;color:var(--ink2);line-height:1.4;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+
+/* Order */
+.order{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.slots{list-style:none;margin:0;padding:12px;display:grid;gap:6px;min-height:120px;counter-reset:s}
+.slots li{counter-increment:s;background:#d8f3e0;color:#1d4f2f;border-radius:10px;padding:8px 10px;font-weight:700;display:flex;gap:8px;animation:drop .25s}
+.slots li::before{content:counter(s);font-family:var(--display);color:var(--good)}
+.slots .empty{background:transparent;border:2px dashed var(--rule);color:var(--ink2);font-weight:600}
+.slots .empty::before{content:none}
+.pool{display:grid;gap:8px;align-content:start}
+
+/* Results */
+.res{padding:24px;display:grid;gap:16px;justify-items:center;text-align:center}
+.res h1{font-size:clamp(32px,6vw,48px)}
+.bigstars{display:flex;gap:10px}
+.bigstars svg{width:58px;height:58px}
+.bigstars svg.on{animation:starin .5s backwards}
+.bigstars svg:nth-child(2){animation-delay:.15s}
+.bigstars svg:nth-child(3){animation-delay:.3s}
+@keyframes starin{from{transform:scale(0) rotate(-90deg)}}
+.stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.stat{background:var(--paper2);border-radius:12px;padding:8px 14px;display:grid;min-width:96px}
+.stat small{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink2);font-weight:800}
+.stat b{font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums}
+.dyk{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100% - 32px));z-index:15;background:linear-gradient(160deg,#0f7c78,#08343c);color:#fff;border-radius:18px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.45);border:2px solid #ffe066;animation:slidein .6s cubic-bezier(.2,.9,.3,1.2) backwards;display:grid;gap:6px}
+@keyframes slidein{from{transform:translateX(120%)}}
+.dyk .eyebrow{color:#ffe066}
+.dyk h4{margin:0;font-family:var(--display);font-weight:400;font-size:20px}
+.dyk p{font-size:15px}
+.dyk .row{display:flex;gap:8px;justify-content:flex-end}
+.dyk button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px}
+.review{width:100%;text-align:left;display:grid;gap:8px}
+.review details{background:var(--paper2);border-radius:10px;padding:8px 12px}
+.review summary{cursor:pointer;font-weight:700}
+.ritem{border-top:1px solid var(--rule);padding:6px 0;font-size:14px}
+.ritem .ok{color:var(--good);font-weight:800}
+.ritem .no{color:var(--bad);font-weight:800}
+.topics{width:100%;display:grid;gap:6px;text-align:left}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:10px;align-items:center;font-size:14px;font-weight:600}
+.tmeter{height:10px;background:var(--paper2);border-radius:99px;overflow:hidden}
+.tmeter i{display:block;height:100%;background:var(--good)}
+
+/* Exam */
+.exam{padding:20px;display:grid;gap:14px}
+.ehead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.clock{font:700 18px var(--mono);background:var(--ink);color:var(--paper);border-radius:8px;padding:4px 10px;font-variant-numeric:tabular-nums}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--rule);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-size:16px;font-weight:600;display:flex;gap:10px}
+.opt b{font-family:var(--display);font-weight:400;color:var(--ink2)}
+.opt[aria-pressed="true"]{border-color:var(--ink);background:#fff6d6}
+.dots{display:flex;flex-wrap:wrap;gap:4px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--rule)}
+.dots i.d{background:var(--ink2)}
+.dots i.c{background:var(--acc);outline:2px solid var(--ink)}
+.mini .gridwrap{max-height:none}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:grid;place-items:center;padding:16px}
+.modal .paper{width:min(460px,100%);padding:20px;display:grid;gap:14px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700}
+.switch input{width:22px;height:22px}
+
+@media (max-width:620px){
+  .match{grid-template-columns:1fr}
+  .hud-t strong{font-size:16px}
+  .brand span{display:none}
+  .tfb{font-size:22px;padding:14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="app">
+  <header class="topbar">
+    <button class="brand" id="home" aria-label="Tabulation Quest home"><i>Σ</i><span>Tabulation Quest</span></button>
+    <div class="spacer"></div>
+    <span class="chip" id="pchip" hidden></span>
+    <span class="chip" id="schip"></span>
+    <button class="ghost sm" id="setbtn">Settings</button>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CONTENT — EDPM Chapter 7: Tabulations
+   ============================================================ */
+const HOW={
+ match:"Tap a term, then tap its matching definition. Clear every pair before the clock runs out. Fewer mistakes, more stars.",
+ tf:"Statements slide toward the gate. Hit TRUE or FALSE (keys T and F) before they reach it. Lose three lives and you are knocked out.",
+ buckets:"Each item drops in. Send it to the right bucket (keys 1 and 2) before its timer runs out.",
+ blaster:"Answers fly around the zone. Shoot the right one (click, tap, or keys 1 to 4) before the zone closes. Wrong shots cost a life.",
+ sniper:"A live worksheet. Click cells, drag across ranges, click row or column headers, or type in the Name Box and press Enter. Wrong picks cost a life.",
+ forge:"Click the cell, type the formula in the formula bar, then press Enter or the green tick. While typing after = or an operator, click a cell to drop its reference in.",
+ format:"Read the customer’s manuscript note. Select the range (drag, or type it in the Name Box), then click the right tool on the ribbon.",
+ order:"Tap the items in the correct order. A wrong tap bounces back.",
+ exam:"A full paper: multiple choice, true or false, and practical questions. One timer, no moving targets. You get a report card at the end."
+};
+const TYPE_LABEL={match:"Matching",tf:"True or False dash",buckets:"Sort into buckets",blaster:"Zone Blaster · MCQ",sniper:"Practical · cells & ranges",forge:"Practical · formulas",format:"Practical · formatting",order:"Put in order",exam:"Final assessment"};
+
+const TIPS=[
+ "VisiCalc, released in 1979, was the first spreadsheet program for personal computers.",
+ "Microsoft Excel was first released in 1985, for the Apple Macintosh.",
+ "A modern Excel worksheet has 1,048,576 rows and 16,384 columns. The last column is XFD.",
+ "Excel 2010 started every new workbook with three sheets. Excel 2013 and later start with one.",
+ "Press Ctrl + ; to type today’s date into the active cell.",
+ "Ctrl + 1 opens the Format Cells dialog box.",
+ "Press F2 to edit the active cell without retyping it.",
+ "Type an apostrophe first (’2026) to store a number as a label instead of a value.",
+ "##### in a cell usually means the column is too narrow. Widen it or use AutoFit.",
+ "Ctrl + D fills the selected cells down with the content of the top cell.",
+ "A dollar sign makes a reference absolute: =$B$2 does not change when copied.",
+ "Double-clicking the fill handle copies a formula down as far as the data next to it goes.",
+ "Ctrl + Home jumps straight back to cell A1.",
+ "Alt + = inserts an AutoSum (SUM) formula in Excel for Windows.",
+ "Google Sheets lets several people edit the same spreadsheet at the same time.",
+ "Excel recalculates every formula automatically when you change a value it depends on."
+];
+
+const FACTS=[
+ ["Sint Maarten / Saint-Martin","The island is one of the smallest land masses in the world shared by two nations: Sint Maarten in the south and French Saint-Martin in the north."],
+ ["Maho Beach, Sint Maarten","Planes landing at Princess Juliana International Airport pass just above the heads of people on Maho Beach."],
+ ["Philipsburg, Sint Maarten","Philipsburg sits on a narrow strip of land between Great Bay and the Great Salt Pond, where salt was once harvested and exported."],
+ ["Dominican Republic","Pico Duarte, about 3,098 m high, is the highest mountain in the Caribbean."],
+ ["Dominican Republic","Lake Enriquillo lies more than 40 m below sea level, the lowest point in the Caribbean. It is saltier than the sea and home to American crocodiles."],
+ ["Trinidad","Pitch Lake at La Brea is the largest natural deposit of asphalt in the world."],
+ ["Dominica","The Boiling Lake is the second-largest hot lake in the world, inside Morne Trois Pitons National Park, a UNESCO World Heritage Site."],
+ ["Guyana","Kaieteur Falls drops about 226 m in a single plunge, roughly four times the height of Niagara Falls."],
+ ["Belize","The Belize Barrier Reef is the second-largest barrier reef system in the world. Its Great Blue Hole is about 300 m across."],
+ ["Montserrat","Eruptions of the Soufrière Hills volcano from 1995 buried Plymouth, the capital, which was abandoned."],
+ ["Grenada","Kick ’em Jenny is an active underwater volcano just north of Grenada."],
+ ["Saba","Mount Scenery on Saba (887 m) is the highest point in the whole Kingdom of the Netherlands."],
+ ["Grenada","Grenada is called the Isle of Spice, and a nutmeg appears on its national flag."],
+ ["Anguilla","Anguilla gets its name from the word for eel, because of its long, thin shape."],
+ ["Barbados","Barbados is the most easterly Caribbean island and is made mostly of coral limestone."],
+ ["Cayman Trench","The Cayman Trench, between Jamaica and the Cayman Islands, is the deepest part of the Caribbean Sea at about 7,686 m."],
+ ["Puerto Rico Trench","The deepest point of the whole Atlantic Ocean lies in the Puerto Rico Trench, about 8,400 m down."],
+ ["The Caribbean Sea","The Caribbean Sea takes its name from the Kalinago (Carib) people."],
+ ["Trinidad and Tobago","The steelpan was invented in Trinidad and Tobago in the 20th century and is its national instrument."],
+ ["Haiti","Haiti became the first independent Black republic in 1804."],
+ ["Suriname","More than 90% of Suriname is covered by forest, making it one of the most forested countries on Earth."],
+ ["Martinique","The 1902 eruption of Mount Pelée destroyed the town of Saint-Pierre."],
+ ["Bonaire","Bonaire’s entire coastline has been a protected marine park since 1979."],
+ ["Curaçao","The colourful Handelskade waterfront in Willemstad is part of a UNESCO World Heritage Site."],
+ ["Antigua","Antigua is famous for having 365 beaches, one for every day of the year."],
+ ["St. Kitts","Brimstone Hill Fortress, a UNESCO site, is nicknamed the Gibraltar of the West Indies."],
+ ["Saint Lucia","The twin Pitons are a UNESCO site, and the Sulphur Springs nearby are called the drive-in volcano."],
+ ["Guadeloupe","Guadeloupe is shaped like a butterfly, with its two main islands Basse-Terre and Grande-Terre as wings."],
+ ["Jamaica","The Luminous Lagoon in Trelawny glows at night because of bioluminescent micro-organisms."],
+ ["The Bahamas","The Bahamas has about 700 islands, and they sit in the Atlantic Ocean rather than the Caribbean Sea."],
+ ["Hurricane season","The Atlantic hurricane season runs from 1 June to 30 November each year."],
+ ["Cuba","Cuba is the largest island in the Caribbean."],
+ ["St. Eustatius","In 1776 Statia fired the First Salute, the first foreign salute to an American flag."]
+];
+
+/* ---------- Sheets ---------- */
+const REEF_SHEET={cols:5,rows:11,colW:{A:150,B:70,C:70,D:84,E:70},
+ data:{A1:"Reef Divers Tobago: Weekly Bookings",A3:"Dive Site",B3:"Divers",C3:"Price",D3:"Total",
+  A4:"Proselyte Reef",B4:6,C4:85,D4:"=B4*C4",A5:"Man of War Shoal",B5:4,C5:95,D5:"=B5*C5",
+  A6:"Carib Cargo Wreck",B6:5,C6:90,D6:"=B6*C6",A7:"Turtle Ledge",B7:8,C7:70,D7:"=B7*C7",
+  A8:"Coral Garden",B8:3,C8:65,D8:"=B8*C8",A10:"Total",D10:"=SUM(D4:D8)"},
+ styles:{A1:{bold:1},"A3:D3":{bold:1},A10:{bold:1},D10:{bold:1}}};
+const VOLC_SHEET={cols:6,rows:11,colW:{A:150,B:70,C:70,D:70,E:92,F:70},
+ data:{A1:"Volcano Island Tours: Bookings",A3:"Tour",B3:"Date",C3:"Guests",D3:"Fee",E3:"Guide",
+  A4:"Observatory Visit",B4:"12-Mar",C4:10,D4:25,E4:"Renata",
+  A5:"Hot Springs Hike",B5:"14-Mar",C5:6,D5:40,E5:"Devon",
+  A6:"Ash Town Walk",B6:"15-Mar",C6:12,D6:30,E6:"Kerry-Ann",
+  A7:"Rainforest Trail",B7:"18-Mar",C7:8,D7:35,E7:"Devon",
+  A8:"Sunset Lookout",B8:"20-Mar",C8:15,D8:20,E8:"Renata",
+  A9:"Black Sand Beach",B9:"21-Mar",C9:9,D9:15,E9:"Kerry-Ann"},
+ styles:{A1:{bold:1},"A3:E3":{bold:1},"B4:B9":{align:"right"}}};
+const FLOWERS=[["Anthurium",200,125],["Bird of Paradise",350,275],["Ginger Lily",550,300],["Heliconia",275,185],["Hibiscus",300,190],["Orchid",500,390]];
+const FORGE_SHEET=(()=>{const d={A1:"Heliconia Florist: Carnival Price List",A3:"Flowers",B3:"Reg Large",C3:"Reg Small",D3:"Disc Large",E3:"Disc Small",A11:"Total",A12:"Average",A13:"Highest",A14:"Lowest"};
+ FLOWERS.forEach((f,k)=>{const r=4+k;d["A"+r]=f[0];d["B"+r]=f[1];d["C"+r]=f[2]});
+ return{cols:5,rows:14,colW:{A:140,B:92,C:92,D:92,E:92},data:d,styles:{A1:{bold:1},"A3:E3":{bold:1},"A11:A14":{bold:1}}}})();
+const FORMAT_SHEET=(()=>{const d={A1:"Heliconia Florist",A2:"Price List & Order Form for Carnival 2026",A4:"Flowers",B4:"REGULAR PRICE",D4:"DISCOUNT PRICE",F4:"SELECTION",B5:"Large",C5:"Small",D5:"Large",E5:"Small",F5:"Large",G5:"Small"};
+ FLOWERS.forEach((f,k)=>{const r=6+k;d["A"+r]=f[0];d["B"+r]=f[1];d["C"+r]=f[2];d["D"+r]="=B"+r+"*0.8";d["E"+r]="=C"+r+"*0.8"});
+ return{cols:7,rows:12,colW:{A:72,B:76,C:76,D:76,E:76,F:76,G:76},data:d,styles:{}}})();
+const INVOICE_SHEET={cols:5,rows:13,colW:{A:56,B:196,C:90,D:96,E:86},
+ data:{A1:"INVOICE",A2:"Seaside Farm & Garden · Welfare Road, Cole Bay, Sint Maarten",A4:"SOLD TO:",B4:"Mrs. Andrea Hodge",D4:"Invoice No",E4:"SF-2048",B5:"Union Road, Cole Bay",
+  A7:"Qty",B7:"Description",C7:"Unit Price",D7:"Total",E7:"TOT 5%",
+  A8:12,B8:"Potting soil, 20 kg",C8:18.5,A9:5,B9:"Garden hose, heavy duty, 30 m",C9:42.75,A10:3,B10:"Hibiscus plant, large",C10:25,
+  B11:"Sub-total",B13:"Pay this amount"},
+ merges:["A1:E1","A2:E2"],
+ styles:{A1:{bold:1,size:18,align:"center"},A2:{align:"center",italic:1},"A7:E7":{bold:1},"C8:E13":{dec2:1},"B11:B13":{align:"right",bold:1},A4:{bold:1},D4:{bold:1}}};
+
+/* ---------- Worlds ---------- */
+const WORLDS=[
+{id:"jungle",name:"Jungle Canopy",topic:"Tabulation & spreadsheet basics",fx:"leaf",c:["#0e2b1d","#25553a","#f9c74f","#90e0a0"],
+ icon:'<path d="M4 20C4 10 10 4 20 4c0 10-6 16-16 16zM4 20l9-9"/>',
+ story:"Kerry-Ann has just joined Caribé Document Solutions on Front Street, Philipsburg. Ms. Patricia, the manager, starts her training here: why does the office turn handwritten tables into spreadsheets?",
+ concepts:[
+  {t:"Tabulation",d:"Arranging data in tabular form: a table made of rows and columns.",ex:"A florist’s handwritten price list becomes a neat table."},
+  {t:"Spreadsheet",d:"A computer application that simulates a paper accounting worksheet. It is built for processing numbers, but it can hold text too.",ex:"Microsoft Excel · LibreOffice Calc · Google Sheets"},
+  {t:"Worksheet",d:"One working area: a grid of lettered columns (A, B, C…) and numbered rows (1, 2, 3…). Each worksheet has a tab you can rename.",ex:"Double-click Sheet1 → type PriceList → Enter"},
+  {t:"Workbook",d:"A collection of related worksheets saved together as one file. Excel workbooks use the .xlsx extension.",ex:"New workbook: Book1. Open another new one: Book2."},
+  {t:"What spreadsheets prepare",d:"Documents that need tabulation and calculations.",ex:"Invoices · credit & debit notes · receipts · price lists · trial balance · balance sheet · profit & loss"},
+  {t:"Why go electronic?",d:"Bookkeepers once kept journals and ledgers by hand. A properly built spreadsheet calculates for you and recalculates instantly when one number changes."}
+ ],
+ levels:[
+  {name:"Canopy Match",type:"match",brief:"Ms. Patricia hands Kerry-Ann a stack of vocabulary cards. Match each spreadsheet term to its meaning before the monkeys scatter them.",
+   data:[["Tabulation","Arranging data in rows and columns"],["Spreadsheet","Application that simulates a paper accounting worksheet"],["Worksheet","One grid of lettered columns and numbered rows"],["Workbook","Related worksheets saved together as one file"],[".xlsx","File extension of an Excel workbook"],["Sheet tab","Double-click it to rename a worksheet"],["Calc","Spreadsheet program in the OpenOffice / LibreOffice suite"],["Book1","Default name of a new Excel workbook"]]},
+  {name:"Vine Dash",type:"tf",brief:"Swing through the canopy. Each vine carries a statement about spreadsheets. Decide if it is true or false before it reaches the gate.",
+   data:[
+    {s:"A spreadsheet is mainly used for processing numbers.",a:true,why:"Word processors handle text; spreadsheets handle numbers."},
+    {s:"Text cannot be typed into a spreadsheet.",a:false,why:"Labels such as ‘Flowers’ are text in a spreadsheet."},
+    {s:"A workbook can contain more than one worksheet.",a:true,why:"A workbook is a collection of related worksheets."},
+    {s:"A worksheet is a collection of workbooks.",a:false,why:"It is the other way round."},
+    {s:"The file extension .xlsx refers to an Excel workbook.",a:true,why:".xlsx is Excel’s workbook format."},
+    {s:"Worksheet tabs can be renamed.",a:true,why:"Double-click the tab and type a new name."},
+    {s:"In a worksheet, columns are numbered and rows are lettered.",a:false,why:"Columns are lettered (A, B…); rows are numbered."},
+    {s:"Invoices and credit notes can be prepared in a spreadsheet.",a:true,why:"They need tabulation and calculations."},
+    {s:"An electronic spreadsheet must be recalculated by hand after a change.",a:false,why:"It recalculates automatically."},
+    {s:"Calc is a spreadsheet program.",a:true,why:"Calc is part of OpenOffice and LibreOffice."},
+    {s:"A word processor is the best tool for preparing a trial balance.",a:false,why:"Financial statements are a spreadsheet job."},
+    {s:"A balance sheet is an example of a financial statement.",a:true,why:"So are the trial balance and profit & loss."},
+    {s:"If Book1 is already open, a second new workbook is likely to be named Book2.",a:true,why:"Excel numbers new workbooks in order."}
+   ]},
+  {name:"Toucan Sort",type:"buckets",buckets:["Spreadsheet","Word processor"],brief:"Customers drop off jobs all morning. Renata, the Customer Service Coordinator, decides which application suits each one. Help her sort them.",
+   data:[
+    {t:"Invoice with quantities, prices and totals",b:0,why:"Calculations: spreadsheet."},
+    {t:"Cover letter for a job application",b:1,why:"Mostly text: word processor."},
+    {t:"Price list with a 20% discount column",b:0,why:"The discount is a formula."},
+    {t:"School newsletter with photos",b:1,why:"Text and images: word processor."},
+    {t:"Trial balance",b:0,why:"A financial statement with totals."},
+    {t:"Class marks with averages",b:0,why:"AVERAGE needs a spreadsheet."},
+    {t:"Minutes of a staff meeting",b:1,why:"Text document."},
+    {t:"Credit note for returned goods",b:0,why:"Needs tabulated amounts and tax."},
+    {t:"Essay on hurricane preparedness",b:1,why:"Text document."},
+    {t:"Profit and loss statement",b:0,why:"A financial statement."},
+    {t:"Wedding invitation",b:1,why:"Design and text."},
+    {t:"Budget for the school fun day",b:0,why:"Income, costs and totals."},
+    {t:"Memo to all staff",b:1,why:"Text document."}
+   ]}
+ ]},
+{id:"reef",name:"Coral Reef",topic:"Spreadsheet terminology",fx:"bubble",c:["#03243f","#0b6175","#ff8a73","#6ee7e0"],
+ icon:'<path d="M3 12c3-5 9-6 13-2l5-3v10l-5-3c-4 4-10 3-13-2z"/><circle cx="8" cy="11" r="1"/>',
+ story:"Devon from Accounts keeps the bookings sheet for Reef Divers Tobago, a client dive shop. Before Kerry-Ann can touch it, she needs to speak the language of the worksheet.",
+ concepts:[
+  {t:"Cell",d:"The box where a row and a column meet. It holds one item of data: a label, a constant or a formula.",ex:"Column C + row 6 = cell C6"},
+  {t:"Active cell",d:"The cell at the cursor, shown with a heavy border. Whatever you type goes here.",ex:"Look for the thick green outline."},
+  {t:"Cell reference (address)",d:"The column letter followed by the row number. The Name Box, left of the formula bar, shows the active cell’s reference.",ex:"A1 · D10 · F22"},
+  {t:"Cell range",d:"Two or more adjoining cells, written first cell : last cell.",ex:"B5:D9 (3 columns × 5 rows = 15 cells)"},
+  {t:"Label",d:"Text that tells you what is in a cell, row or column.",ex:"Dive Site · Price · Total"},
+  {t:"Constant",d:"A value typed in directly. It is not calculated, so it does not change on its own.",ex:"2 · 12.5 · 12-Jun-2026"},
+  {t:"Formula",d:"An equation that calculates using values in the worksheet. It always starts with =.",ex:"=B4*C4 multiplies B4 by C4"},
+  {t:"Formula bar",d:"Shows what is really stored in the active cell (the formula, not just its answer). You can also type entries here.",ex:"Cell shows 510 · formula bar shows =B4*C4"},
+  {t:"Function",d:"A ready-made formula with a name.",ex:"=SUM(D4:D8) adds the range"},
+  {t:"Oblique heading",d:"A column heading turned to 45°. Headings can also be horizontal or vertical.",ex:"Format Cells → Alignment → Orientation"}
+ ],
+ levels:[
+  {name:"Reef Pairs",type:"match",brief:"Devon labels every part of the screen with sticky notes, and the current has mixed them up. Pair each term with its description.",
+   data:[["Active cell","The cell with the heavy border, where typing goes"],["Cell","Box where a row and a column meet"],["Cell range","Two or more adjoining cells, e.g. B5:D9"],["Cell reference","Column letter + row number, e.g. A1"],["Name Box","Shows the reference of the active cell"],["Constant","A typed value that is not calculated"],["Formula","Starts with = and calculates a result"],["Formula bar","Shows what is really stored in the active cell"],["Function","A ready-made formula such as SUM"],["Label","Text that describes data in a row or column"],["Oblique heading","Column heading angled at 45°"]]},
+  {name:"Bubble Blaster",type:"blaster",brief:"Answer bubbles are drifting up from the reef. Pop the correct one before the zone closes. Wrong pops cost a life.",
+   data:[
+    {q:"What is the reference of the cell where column C meets row 12?",opts:["C12","12C","C:12","R12"],a:0,why:"Column letter first, then row number."},
+    {q:"Where can you see the formula behind an answer in a cell?",opts:["Formula bar","Name Box","Sheet tab","Status bar"],a:0,why:"The formula bar shows what is stored."},
+    {q:"=B8*C8 is best described as a…",opts:["Formula","Label","Constant","Cell range"],a:0,why:"It starts with = and calculates."},
+    {q:"The text ‘Total Amount’ in a cell is a…",opts:["Label","Value","Formula","Function"],a:0,why:"Text describing data is a label."},
+    {q:"12.5 typed straight into a cell is a…",opts:["Constant","Formula","Label","Function"],a:0,why:"Typed, not calculated."},
+    {q:"B5:D9 is best described as a…",opts:["Cell range","Cell reference","Row range","Column range"],a:0,why:"Adjoining cells from B5 to D9."},
+    {q:"Every formula must begin with…",opts:["=","+","#","’"],a:0,why:"The equals sign tells Excel to calculate."},
+    {q:"SUM is an example of a…",opts:["Function","Label","Constant","Name Box"],a:0,why:"A ready-made, named formula."},
+    {q:"A column heading tilted at 45° is called…",opts:["Oblique","Vertical","Wrapped","Merged"],a:0,why:"Oblique = slanting."},
+    {q:"The cell with the heavy border is the…",opts:["Active cell","Cell range","Formula bar","Header"],a:0,why:"Typing goes into the active cell."},
+    {q:"How many cells are in the range B2:C4?",opts:["6","4","8","3"],a:0,why:"2 columns × 3 rows = 6."},
+    {q:"The Name Box displays…",opts:["The active cell’s reference","The file name","The formula","The sheet name"],a:0,why:"e.g. it shows B3."}
+   ]},
+  {name:"Cell Sniper: Dive Log",type:"sniper",sheet:REEF_SHEET,brief:"The Reef Divers Tobago sheet is live. Devon calls out targets; Kerry-Ann has to hit them on the grid. Watch the Name Box and the formula bar as you click.",
+   data:[
+    {type:"cell",target:"C6",p:"Devon says: “Click cell C6.”",why:"Column C, row 6: the Carib Cargo Wreck price."},
+    {type:"pick",targets:["D4","D5","D6","D7","D8","D10"],p:"Click any cell that holds a FORMULA. Watch the formula bar.",why:"Column D shows answers, but the formula bar reveals =B4*C4 and similar."},
+    {type:"pick",targets:["C3"],p:"Click the LABEL that tells us what column C holds.",why:"‘Price’ in C3 is a label."},
+    {type:"pick",targets:["B4"],p:"Click the CONSTANT showing how many divers booked Proselyte Reef.",why:"6 was typed in; it is not calculated."},
+    {type:"name",flash:"D10",answer:"D10",p:"The glowing cell holds the weekly total. Type its cell reference.",why:"Column D, row 10."},
+    {type:"range",target:"C4:C8",p:"Drag to select the cell range that holds every price.",why:"Prices run from C4 to C8."},
+    {type:"range",target:"A3:D3",p:"Select the range holding all four column headings.",why:"The headings are A3 to D3."},
+    {type:"name",flash:"A4:A8",answer:"A4:A8",p:"Type the cell range that is glowing (the dive site names).",why:"First cell : last cell."}
+   ]}
+ ]},
+{id:"volcano",name:"Volcano Island",topic:"Working with cells, rows & columns",fx:"ember",c:["#1f0a08","#5b1d0e","#ff9f1c","#ffd166"],
+ icon:'<path d="M2 21h20l-6-10h-2l-2-3-2 3H8z"/><path d="M10 5c0-2 2-2 2-4M14 6c0-2 2-2 2-3"/>',
+ story:"A tour company on a volcanic island sends its bookings to Caribé. Kerry-Ann must move around the sheet, select exactly the right cells, and insert space for new tours without breaking anything.",
+ concepts:[
+  {t:"Moving around",d:"Arrow keys move one cell at a time. With the mouse, use the scroll bars, then click a cell.",ex:"Ctrl + Home jumps to A1"},
+  {t:"Selecting a range",d:"Keyboard: hold SHIFT while pressing arrow keys. Mouse: click the first cell and drag to the last.",ex:"Drag A4 → D9"},
+  {t:"Whole row or column",d:"Click the row or column header, or type it twice with a colon in the Name Box and press Enter.",ex:"Row 5: 5:5 · Column E: E:E"},
+  {t:"Entering data",d:"Enter confirms and moves DOWN one cell. Tab confirms and moves RIGHT. The green tick on the formula bar confirms and stays in the same cell.",ex:"Type in B6 + Enter → B7 is active"},
+  {t:"Deleting data",d:"Select the cell or range and press Delete, or right-click and choose Clear Contents.",ex:"Delete removes contents, not the cell itself"},
+  {t:"Inserting cells",d:"Select as many cells as you want to insert, right-click → Insert, then choose a direction such as Shift cells down.",ex:"3 new cells? Select 3 cells first."},
+  {t:"Inserting rows & columns",d:"A new row goes ABOVE the selected row. A new column goes to the LEFT of the selected column, and the existing column moves right.",ex:"Select row 7 → Insert → new row 7"}
+ ],
+ levels:[
+  {name:"Lava Pairs",type:"match",brief:"The lava flow has split the instructions from their actions. Reconnect each key or command with what it does.",
+   data:[["Arrow keys","Move one cell at a time"],["Shift + arrow keys","Extend a selection into a range"],["Row header","Click it to select an entire row"],["5:5 in the Name Box","Selects all of row 5"],["E:E in the Name Box","Selects all of column E"],["Enter","Confirms the entry and moves down"],["Tab","Confirms the entry and moves right"],["Green tick","Confirms the entry and stays in the same cell"],["Delete key","Clears the contents of selected cells"],["Shift cells down","Pushes existing cells downward to make room"]]},
+  {name:"Magma Zone Blaster",type:"blaster",brief:"Lava rocks carry the answers. The safe zone shrinks with every second, so shoot fast and shoot right.",
+   data:[
+    {q:"What do you type in the Name Box to select all of row 5?",opts:["5:5","R5","5-5","A5"],a:0,why:"Row number twice with a colon."},
+    {q:"What do you type in the Name Box to select all of column E?",opts:["E:E","E1","EE","E-E"],a:0,why:"Column letter twice with a colon."},
+    {q:"You type in B3 and press Enter. Which cell becomes active?",opts:["B4","C3","B2","A3"],a:0,why:"Enter moves down."},
+    {q:"You type in B3 and press Tab. Which cell becomes active?",opts:["C3","B4","A3","B2"],a:0,why:"Tab moves right."},
+    {q:"Which way of confirming an entry keeps the same cell active?",opts:["Green tick on the formula bar","Enter","Tab","Down arrow"],a:0,why:"The tick confirms without moving."},
+    {q:"Which is NOT a way to confirm data typed in a cell?",opts:["Press F1","Press Enter","Press Tab","Click the green tick"],a:0,why:"F1 opens Help."},
+    {q:"To insert a blank row above row 6, you first select…",opts:["Row 6","Row 5","Row 7","Column F"],a:0,why:"New rows go above the selection."},
+    {q:"To insert three blank cells, how many cells should you select first?",opts:["3","1","2","6"],a:0,why:"Select as many as you want to insert."},
+    {q:"With the mouse, how do you remove data from a cell?",opts:["Right-click → Clear Contents","Double-click the cell","Click the Name Box","Right-click → Insert"],a:0,why:"Clear Contents empties the cell."},
+    {q:"‘Shift cells right’ means…",opts:["Existing cells move right to make space","The whole sheet scrolls right","The active cell moves right","Columns are deleted"],a:0,why:"Space opens up; data moves over."},
+    {q:"How do you select a range with the mouse?",opts:["Click the first cell, drag to the last","Double-click both cells","Right-click each cell","Press F2"],a:0,why:"Click and drag."},
+    {q:"Where is the Name Box?",opts:["Top left, beside the formula bar","Bottom right","On the sheet tab","Inside cell A1"],a:0,why:"Left end of the formula bar row."}
+   ]},
+  {name:"Range Rush: Tour Bookings",type:"sniper",sheet:VOLC_SHEET,brief:"The Volcano Island Tours sheet is open. Kerry-Ann must hit each selection exactly. Try both methods: clicking headers and typing in the Name Box.",
+   data:[
+    {type:"row",target:"5:5",p:"Select ALL of row 5. Click the row header, or type 5:5 in the Name Box and press Enter.",why:"Row 5 is the Hot Springs Hike."},
+    {type:"col",target:"E:E",p:"Select ALL of column E (the guides).",why:"E:E selects the whole column."},
+    {type:"cell",target:"B7",p:"Kerry-Ann typed a date in B6 and pressed ENTER. Click the cell that is now active.",why:"Enter moves down: B7."},
+    {type:"cell",target:"C6",p:"Now she typed in B6 and pressed TAB. Click the new active cell.",why:"Tab moves right: C6."},
+    {type:"range",target:"C4:C9",p:"Select the guest numbers for all six tours.",why:"C4 to C9."},
+    {type:"range",target:"D4:D6",p:"She wants to insert 3 blank cells starting at D4. Select the three cells she must highlight first.",why:"Select as many cells as you will insert: D4:D6."},
+    {type:"name",flash:"B4:B9",answer:"B4:B9",p:"Type the range that is glowing (all the tour dates).",why:"First cell : last cell."},
+    {type:"row",target:"7:7",p:"A new tour must go above the Rainforest Trail. Select the row you would right-click to insert a row above it.",why:"New rows go above the selected row."}
+   ]}
+ ]},
+{id:"ice",name:"Glacier Station",topic:"Formatting your worksheet",fx:"snow",c:["#0a2240","#2f6690","#9be7ff","#ffffff"],
+ icon:'<path d="M12 2v20M3 7l18 10M21 7L3 17M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+ story:"Heliconia Florist in Roseau wants a smart price list and order form for Carnival. The data is typed, but it looks frozen and plain. Time to format it exactly as the customer’s manuscript says.",
+ concepts:[
+  {t:"Merge & Centre",d:"Joins the selected cells into one and centres the content across them. Use it for titles over a table.",ex:"Select A1:G1 → Home → Merge & Centre"},
+  {t:"Character formats",d:"Font size, bold, italic and underline change how text looks without changing what is stored.",ex:"Title: 14 pt, bold · subtitle: italic"},
+  {t:"Alignment",d:"Horizontal alignment: left, centre, right. Vertical alignment: top, centre, bottom of the cell.",ex:"Numbers align right by default"},
+  {t:"AutoFit",d:"Changes the column width to fit the longest entry.",ex:"Home → Format → AutoFit Column Width"},
+  {t:"Borders",d:"All Borders draws every cell edge in the range. Outside Borders draws only the outer box.",ex:"Headings: All Borders · one column: Outside Borders"},
+  {t:"Format Cells dialog",d:"Every formatting option in one place: Number, Alignment, Font, Border, Fill, Protection tabs.",ex:"Ctrl + 1, or right-click → Format Cells"},
+  {t:"Orientation",d:"Turns text in a cell. Oblique headings sit at 45°; vertical headings run top to bottom.",ex:"Format Cells → Alignment → Orientation"},
+  {t:"Number formats",d:"Comma Style adds thousands separators and two decimal places. The stored value stays the same.",ex:"28902.65 → 28,902.65"},
+  {t:"Wrap text",d:"Lets a long label run onto more lines inside the same cell.",ex:"Better-Blend Pig Feed / 25 kg"}
+ ],
+ levels:[
+  {name:"Frost Pairs",type:"match",brief:"Frost has frozen the toolbar labels. Thaw them out by matching each formatting tool to what it does.",
+   data:[["Merge & Centre","Joins cells and centres the content across them"],["AutoFit","Sizes a column to fit its longest entry"],["All Borders","Draws an edge around every cell in the range"],["Outside Borders","Draws a box only around the outside of the range"],["Ctrl + 1","Opens the Format Cells dialog box"],["Orientation","Turns text, e.g. to 45° for an oblique heading"],["Comma Style","Adds thousands separators and 2 decimal places"],["Wrap Text","Lets a long label run onto a second line in its cell"],["Vertical alignment","Places content at the top, centre or bottom of a cell"]]},
+  {name:"Format Fixer: Price List",type:"format",sheet:FORMAT_SHEET,brief:"This is the actual practical. Read each manuscript note, select the right cells, then pick the right tool. The worksheet changes in front of you.",
+   data:[
+    {range:"A1:G1",tool:"mergeC",note:"Title: centre it across columns A to G",hint:"Merge & Centre joins A1:G1 and centres the title."},
+    {range:"A1:G1",tool:"bold",note:"Title must be bold",hint:"Use B (Bold). The title is still selected."},
+    {range:"A1:G1",tool:"size14",note:"Title: 14 point",hint:"Font size 14."},
+    {range:"A2:G2",tool:"mergeC",note:"Subtitle: centre across A to G",hint:"Merge & Centre again, for row 2."},
+    {range:"A2:G2",tool:"italic",note:"Subtitle in italics",hint:"Use I (Italic)."},
+    {range:"A4:A5",tool:"fmtCells",note:"‘Flowers’: one cell over rows 4–5, centred both ways",hint:"Format Cells (Ctrl+1) → Alignment: tick Merge cells, centre horizontally AND vertically."},
+    {range:"A:A",tool:"autofit",note:"Make column A wide enough for every flower name",hint:"Select column A (click its header), then AutoFit."},
+    {range:"B4:C4",tool:"mergeC",note:"Centre each heading over its two columns",hint:"Merge & Centre B4:C4. Kerry-Ann repeats it for D4:E4 and F4:G4.",also:["D4:E4","F4:G4"]},
+    {range:"A4:G5",tool:"allB",note:"Box every heading cell",hint:"All Borders draws every edge in A4:G5."},
+    {range:"B6:E11",tool:"comma",note:"Show all prices with 2 decimal places",hint:"Comma Style: 200 → 200.00."},
+    {range:"D6:D11",tool:"outB",note:"Draw one box around the discount (large) column",hint:"Outside Borders draws only the outer box."},
+    {range:"B5:G5",tool:"orient",note:"Size labels: oblique",hint:"Orientation → angle counter-clockwise (45°)."}
+   ]},
+  {name:"Ice Slide",type:"tf",brief:"Statements slide across the ice. Some are solid; some will crack. Call them before they reach the gate.",
+   data:[
+    {s:"Merge & Centre joins the selected cells and centres the content.",a:true,why:"That is exactly what it does."},
+    {s:"All Borders and Outside Borders give the same result on a range.",a:false,why:"Outside Borders draws only the outer box."},
+    {s:"Ctrl + 1 opens the Format Cells dialog box.",a:true,why:"Right-click → Format Cells also works."},
+    {s:"AutoFit adjusts a column’s width to fit its longest entry.",a:true,why:"Home → Format → AutoFit Column Width."},
+    {s:"Oblique headings are set on the Font tab of Format Cells.",a:false,why:"They are on the Alignment tab (Orientation)."},
+    {s:"Formatting changes how data looks, not the values stored.",a:true,why:"200 formatted as 200.00 is still 200."},
+    {s:"Comma Style changes the value stored in the cell.",a:false,why:"Only the display changes."},
+    {s:"Wrap Text lets a long label run onto a second line in the same cell.",a:true,why:"The row grows taller."},
+    {s:"Vertical alignment controls whether content sits at the top, centre or bottom of a cell.",a:true,why:"Horizontal alignment is left, centre, right."},
+    {s:"Merged cells should be included in the range when sorting data.",a:false,why:"Never include merged cells in a sort range."},
+    {s:"##### in a cell usually means the column is too narrow.",a:true,why:"Widen the column or use AutoFit."},
+    {s:"The Bold button is found on the Data tab.",a:false,why:"It is in the Font group on the Home tab."}
+   ]}
+ ]},
+{id:"space",name:"Orbit Lab",topic:"Doing calculations",fx:"star",c:["#070617","#2a1d66","#c3a6ff","#7cf0c9"],
+ icon:'<circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-20 12 12)"/>',
+ story:"Heliconia Florist offers 20% off all Carnival orders placed early. Instead of reaching for a calculator, Kerry-Ann will launch formulas that work out every price, and recalculate on their own.",
+ concepts:[
+  {t:"Formula",d:"An equation that calculates with values in the worksheet. It starts with =, and the answer appears in the cell when you press Enter.",ex:"=B4*0.8"},
+  {t:"Operators",d:"+ add · − subtract · * multiply · / divide · ^ power. Brackets are worked first, then ^, then * and /, then + and −.",ex:"=10+2*3 → 16 · =(10+2)*3 → 36"},
+  {t:"Percent discounts",d:"20% off means you pay 80% of the price. 80% = 80/100 = 0.8, so multiply the price by 0.8.",ex:"Price in B4 = 200 → =B4*0.8 → 160"},
+  {t:"Use cell references",d:"Type B4, not 200. If the price changes, every formula that uses B4 recalculates automatically.",ex:"Change B4 to 300 → D4 shows 240"},
+  {t:"Seeing the formula",d:"The cell shows the result. To see the formula: select the cell and look at the formula bar, double-click it, or press F2.",ex:"Cell: 160 · Formula bar: =B4*0.8"},
+  {t:"Fill handle",d:"The small square at the bottom-right of the active cell. Drag it to copy into neighbouring cells; formulas adjust automatically.",ex:"=B4*0.8 copied down becomes =B5*0.8, =B6*0.8…"},
+  {t:"Functions",d:"Ready-made formulas that work on a range.",ex:"=SUM(B4:B9) · =AVERAGE(B4:B9) · =MAX(B4:B9) · =MIN(B4:B9)"}
+ ],
+ levels:[
+  {name:"Orbit Pairs",type:"match",brief:"Mission control needs every symbol and function identified before launch. Match them up.",
+   data:[["*","Multiply"],["/","Divide"],["^","Raise to a power"],["=SUM(B4:B9)","Adds every value in B4 to B9"],["=AVERAGE(B4:B9)","Finds the mean of B4 to B9"],["=MAX(B4:B9)","Finds the highest value in B4 to B9"],["=MIN(B4:B9)","Finds the lowest value in B4 to B9"],["Fill handle","Small square used to copy a cell into neighbours"],["F2","Edit the active cell and see its formula"],["0.8","Multiply by this to take 20% off"]]},
+  {name:"Formula Forge: Discount Lab",type:"forge",sheet:FORGE_SHEET,brief:"The real thing. Type each formula into the formula bar exactly as you would in Excel. Use cell references, not typed numbers, so the price list keeps working when prices change.",
+   data:[
+    {type:"formula",cell:"D4",expect:160,needRef:true,hint:"=B4*0.8",p:"20% off means paying 80%, so multiply by 0.8. In D4, type a formula for the discounted LARGE Anthurium price, then press Enter.",why:"=B4*0.8 → 160"},
+    {type:"fill",from:"D4",to:"D9",p:"Use the fill handle: drag from D4 down to D9 to copy the formula.",why:"Each copy adjusts its row: =B5*0.8, =B6*0.8…"},
+    {type:"predict",answers:["=B7*0.8"],p:"What formula is now stored in D7? Click D7 and read the formula bar, then type it here.",why:"Relative references move with the copy."},
+    {type:"formula",cell:"E4",expect:100,needRef:true,hint:"=C4*0.8",p:"In E4, write the discount formula for the SMALL Anthurium price.",why:"=C4*0.8 → 100"},
+    {type:"fill",from:"E4",to:"E9",p:"Fill the formula from E4 down to E9.",why:"Six discount prices in one drag."},
+    {type:"formula",cell:"B11",expect:2175,needRef:true,hint:"=SUM(B4:B9)",p:"In B11, use a function to TOTAL the regular large prices (B4 to B9).",why:"=SUM(B4:B9) → 2,175"},
+    {type:"formula",cell:"B12",expect:362.5,needRef:true,hint:"=AVERAGE(B4:B9)",p:"In B12, find the AVERAGE regular large price.",why:"2175 ÷ 6 = 362.5"},
+    {type:"formula",cell:"B13",expect:550,needRef:true,hint:"=MAX(B4:B9)",p:"In B13, find the HIGHEST regular large price.",why:"=MAX(B4:B9) → 550 (Ginger Lily)"},
+    {type:"formula",cell:"B14",expect:200,needRef:true,hint:"=MIN(B4:B9)",p:"In B14, find the LOWEST regular large price.",why:"=MIN(B4:B9) → 200 (Anthurium)"},
+    {type:"predict",pre:{B6:500},select:"D6",answers:["400"],p:"The florist just changed Ginger Lily’s large price in B6 from 550 to 500. What does D6 show now?",why:"500 × 0.8 = 400. The sheet recalculated by itself."}
+   ]},
+  {name:"Asteroid Blaster",type:"blaster",brief:"Asteroids carry possible answers. Work out each formula in your head and blast the correct result.",
+   data:[
+    {q:"What does =10+2*3 give?",opts:["16","36","15","60"],a:0,why:"Multiply first: 10 + 6."},
+    {q:"What does =(10+2)*3 give?",opts:["36","16","15","32"],a:0,why:"Brackets first: 12 × 3."},
+    {q:"A1 holds 4 and B1 holds 5. What does =A1*B1 give?",opts:["20","9","45","1"],a:0,why:"4 × 5."},
+    {q:"A1:A3 hold 2, 4 and 6. What does =SUM(A1:A3) give?",opts:["12","6","4","246"],a:0,why:"2 + 4 + 6."},
+    {q:"A1:A3 hold 2, 4 and 6. What does =AVERAGE(A1:A3) give?",opts:["4","12","6","3"],a:0,why:"12 ÷ 3."},
+    {q:"What does =MAX(3,9,1) give?",opts:["9","1","13","3"],a:0,why:"The highest value."},
+    {q:"What does =2^3 give?",opts:["8","6","5","9"],a:0,why:"2 × 2 × 2."},
+    {q:"Which formula gives a 20% discount on the price in B2?",opts:["=B2*0.8","=B2*0.2","=B2-0.8","=B2*80"],a:0,why:"Pay 80% of the price."},
+    {q:"=B7*0.8 in D7 is copied down to D8. What does D8 contain?",opts:["=B8*0.8","=B7*0.8","=C8*0.8","=B8*0.9"],a:0,why:"The row reference moves down with the copy."},
+    {q:"To take 15% off a price, multiply by…",opts:["0.85","0.15","1.15","15"],a:0,why:"100% − 15% = 85%."},
+    {q:"D7 holds =B7*0.8 and B7 changes from 200 to 300. D7 now shows…",opts:["240","160","300","200"],a:0,why:"It recalculates: 300 × 0.8."},
+    {q:"A2 holds 7 and A3 holds =A2*5. With A3 active, the formula bar shows…",opts:["=A2*5","35","7","A3"],a:0,why:"The cell shows 35; the formula bar shows the formula."},
+    {q:"Which key lets you edit the active cell?",opts:["F2","F1","F5","F8"],a:0,why:"F2 = edit."},
+    {q:"Which is a correctly written formula?",opts:["=SUM(C4:C9)","SUM C4 to C9","=SUM[C4:C9]","+C4…C9"],a:0,why:"= name ( range )"}
+   ]}
+ ]},
+{id:"cloud",name:"Kite Sky",topic:"Sorting data & charts",fx:"kite",c:["#1d335f","#b05577","#ffd23f","#ffe3ec"],
+ icon:'<path d="M12 2l6 8-6 8-6-8z"/><path d="M12 18c-1 2 1 2 0 4"/>',
+ story:"It’s Easter, kite season across the Caribbean. Kerry-Ann sorts the florist’s list so customers can find flowers fast, then turns the numbers into a chart that tells the story at a glance.",
+ concepts:[
+  {t:"Sorting",d:"Rearranges rows. Ascending: A→Z or smallest→largest. Descending: Z→A or largest→smallest.",ex:"Data tab → Sort"},
+  {t:"Select every related column",d:"Select all the data columns (and row labels) together so each row stays together. Never include merged cells in a sort range.",ex:"Select A7:E16, not just A7:A16"},
+  {t:"Column chart",d:"Vertical bars. Compares items, or shows change over a period of time.",vis:"column"},
+  {t:"Bar chart",d:"Horizontal bars. Compares individual items, good for long category names.",vis:"bar"},
+  {t:"Pie chart",d:"Shows each item as a share of the whole. Uses only ONE data series.",vis:"pie"},
+  {t:"Line chart",d:"Shows a trend over time, like monthly rainfall.",vis:"line"},
+  {t:"Chart parts",d:"Data series: related values plotted together. Legend: key to each series’ colour. Chart title and axis titles explain what you see.",ex:"Insert tab → Charts · Chart Tools → Design / Layout / Format"}
+ ],
+ levels:[
+  {name:"Kite Pairs",type:"match",brief:"The kite strings are tangled. Untangle them by pairing each sorting or chart word with its meaning.",
+   data:[["Ascending","A→Z, or smallest to largest"],["Descending","Z→A, or largest to smallest"],["Column chart","Vertical bars comparing items or periods"],["Bar chart","Horizontal bars comparing items"],["Pie chart","Shares of a whole, one data series only"],["Line chart","A trend over time"],["Legend","Key showing which colour is which series"],["Data series","Related data points plotted in a chart"],["Axis title","Label explaining what an axis measures"]]},
+  {name:"Sky Sorter",type:"order",brief:"Every list in the sky is out of order. Tap the items in the right sequence, from the first to the last.",
+   data:[
+    {p:"Sort these islands A → Z (ascending).",items:["Anguilla","Barbados","Dominica","Montserrat","Nevis","Saba"]},
+    {p:"Sort these kite heights (m) smallest → largest.",items:["8","45","76","120","300"]},
+    {p:"Sort these CXC scores largest → smallest (descending).",items:["81","75","62","59","47"]},
+    {p:"Sort Z → A (descending).",items:["Tobago","Saint Lucia","Jamaica","Grenada","Aruba"]},
+    {p:"Put the steps for sorting the price list in order.",items:["Select A7:E16 (no merged cells)","Open the Data tab","Click Sort","Choose the column and the order","Click OK"]},
+    {p:"Put the steps for making the price-comparison chart in order.",items:["Select the range A7:B16","Insert tab → Column","Pick 2-D Clustered Column","Add the chart title","Add the axis titles","Turn off the legend","Move the chart below the table"]}
+   ]},
+  {name:"Chart Zone Blaster",type:"blaster",brief:"Kites carry the answers. Pick the right chart or sort for each situation before the wind drops.",
+   data:[
+    {q:"Show each island’s share of all visitors to the region.",opts:["Pie chart","Line chart","Bar chart","No chart"],a:0,why:"Parts of one whole → pie."},
+    {q:"Compare kite sales of six vendors side by side with vertical bars.",opts:["Column chart","Pie chart","Line chart","Scatter chart"],a:0,why:"Vertical bars comparing items."},
+    {q:"Compare items with very long names, using horizontal bars.",opts:["Bar chart","Column chart","Pie chart","Line chart"],a:0,why:"Bar charts run horizontally."},
+    {q:"Show Roseau’s rainfall rising and falling across 12 months.",opts:["Line chart","Pie chart","Bar chart","Legend"],a:0,why:"A trend over time."},
+    {q:"How many data series can a pie chart show?",opts:["One","Two","Three","Unlimited"],a:0,why:"Only one."},
+    {q:"Which chart part tells you which colour stands for which series?",opts:["Legend","Title","Axis","Gridline"],a:0,why:"The legend is the key."},
+    {q:"Related data points plotted together in a chart are a…",opts:["Data series","Legend","Cell range","Label"],a:0,why:"Each series has its own colour."},
+    {q:"Sorting A → Z is called…",opts:["Ascending","Descending","Filtering","Merging"],a:0,why:"Up the alphabet."},
+    {q:"Sorting largest number to smallest is called…",opts:["Descending","Ascending","Ranking","Filtering"],a:0,why:"Going down."},
+    {q:"The price list has a merged title in row 1. What should you select to sort it?",opts:["Only the data rows, A7:E16","The whole sheet","Column A only","A1:E16"],a:0,why:"Never include merged cells."},
+    {q:"You sort only column A and leave the prices in column B alone. What happens?",opts:["Prices end up beside the wrong flowers","Nothing changes","Excel adds a chart","The prices sort too"],a:0,why:"Always select every related column."},
+    {q:"Which tab holds the Sort button?",opts:["Data","Insert","Home → Font","View"],a:0,why:"Data tab → Sort."},
+    {q:"Which tab holds the chart types?",opts:["Insert","Data","Review","Formulas"],a:0,why:"Insert → Charts."}
+   ]}
+ ]},
+{id:"market",name:"Front Street Market",topic:"Financial documents & printing",fx:"confetti",c:["#08343c","#0f7c78","#ff6fa3","#ffe066"],
+ icon:'<path d="M12 22V11"/><path d="M12 11c-2-4-6-5-9-4M12 11c2-4 6-5 9-4M12 11c-1-4-4-7-7-8M12 11c1-4 4-7 7-8"/>',
+ story:"Back on Front Street, Philipsburg. Seaside Farm & Garden in Cole Bay needs a correct invoice by noon, and Ms. Patricia expects it printed exactly as the manuscript says. This is where everything Kerry-Ann learned comes together.",
+ concepts:[
+  {t:"Manuscript",d:"The customer’s handwritten draft. Every instruction on it must be followed.",ex:"caps = capitals · stet = let it stand · ⋀ = insert · centre · bold"},
+  {t:"Invoice",d:"A bill sent to a customer for goods or services sold. It shows invoice no., date, sold to, quantity, description, unit price, total, tax, sub-total and the amount due.",ex:"Total = Qty × Unit Price"},
+  {t:"Credit note",d:"Sent to a customer to REDUCE what they owe: goods returned, damaged, short-shipped, or overcharged.",ex:"1 hibiscus returned → credit note"},
+  {t:"Debit note",d:"Sent to INCREASE what a customer owes, for example when they were undercharged on an invoice.",ex:"Invoice was $20 too low → debit note"},
+  {t:"Receipt",d:"Proof that payment was received.",ex:"Paid in full, 14 March"},
+  {t:"Sales tax",d:"Added to the line totals. Sint Maarten businesses charge turnover tax (TOT); Jamaica uses GCT; many islands use VAT.",ex:"Tax = Total × rate, e.g. =D8*0.05"},
+  {t:"Preparing to print",d:"Before printing, set the paper size and orientation, margins, horizontal/vertical centring, and any header or footer. Then use Print Preview.",ex:"A4 · Landscape · left 1.5 in (3.81 cm)"}
+ ],
+ levels:[
+  {name:"Market Pairs",type:"match",brief:"Market stalls each sell one kind of document or manuscript mark. Match the name to the job it does.",
+   data:[["Invoice","Bill sent to a customer for goods sold"],["Credit note","Reduces what a customer owes"],["Debit note","Increases what a customer owes"],["Receipt","Proof that payment was received"],["stet","Manuscript mark: let it stand"],["caps","Manuscript mark: use capital letters"],["Footer","Text printed at the bottom of every page"],["Landscape","Page turned wide, for many columns"],["Print Preview","Check the layout before printing"],["Sub-total","Sum of the line totals before tax"]]},
+  {name:"Invoice Builder",type:"forge",sheet:INVOICE_SHEET,brief:"Seaside Farm & Garden’s invoice for Mrs. Hodge has the quantities and prices. Build every total, tax and the amount due with formulas. The shop charges 5% turnover tax.",
+   data:[
+    {type:"formula",cell:"D8",expect:222,needRef:true,hint:"=A8*C8",p:"Line total = Quantity × Unit Price. In D8, write the formula for the potting soil.",why:"12 × 18.50 = 222.00"},
+    {type:"fill",from:"D8",to:"D10",p:"Fill the formula from D8 down to D10.",why:"=A9*C9 and =A10*C10 appear."},
+    {type:"formula",cell:"E8",expect:11.1,needRef:true,hint:"=D8*0.05",p:"Tax is 5% of the line total. 5% = 0.05. In E8, calculate the TOT on D8.",why:"222 × 0.05 = 11.10"},
+    {type:"fill",from:"E8",to:"E10",p:"Fill the tax formula from E8 down to E10.",why:"Tax for every line."},
+    {type:"formula",cell:"D11",expect:510.75,needRef:true,hint:"=SUM(D8:D10)",p:"In D11, the Sub-total: add the three line totals with a function.",why:"=SUM(D8:D10) → 510.75"},
+    {type:"formula",cell:"E11",expect:25.5375,needRef:true,hint:"=SUM(E8:E10)",p:"In E11, add up the tax column.",why:"=SUM(E8:E10) → 25.54"},
+    {type:"formula",cell:"D13",expect:536.2875,needRef:true,hint:"=D11+E11",p:"In D13, Pay this amount = sub-total + total tax.",why:"510.75 + 25.54 = 536.29"},
+    {type:"predict",answers:["CREDIT NOTE","A CREDIT NOTE","CREDITNOTE"],p:"Mrs. Hodge returns one hibiscus plant. Which document should the store send her? (two words)",why:"A credit note reduces what she owes."}
+   ]},
+  {name:"Front Street Blaster",type:"blaster",brief:"Carnival confetti fills the street. Blast the right answer about documents, manuscripts and printing.",
+   data:[
+    {q:"Which document asks a customer to pay for goods sold?",opts:["Invoice","Receipt","Credit note","Memo"],a:0,why:"An invoice is a bill."},
+    {q:"Goods were returned. Which document reduces what the customer owes?",opts:["Credit note","Debit note","Invoice","Receipt"],a:0,why:"Credit reduces the debt."},
+    {q:"A customer was undercharged. Which document increases what they owe?",opts:["Debit note","Credit note","Receipt","Price list"],a:0,why:"Debit increases the debt."},
+    {q:"Which document proves payment was made?",opts:["Receipt","Invoice","Debit note","Order form"],a:0,why:"A receipt confirms payment."},
+    {q:"‘stet’ written beside crossed-out words means…",opts:["Let it stand: keep the original","Delete it","Make it bold","Move it"],a:0,why:"Stet = let it stand."},
+    {q:"‘caps’ on a manuscript means…",opts:["Type it in capital letters","Centre it","Use italics","Insert a space"],a:0,why:"Capitals."},
+    {q:"Where do you check the layout before printing?",opts:["Print Preview","Name Box","Formula bar","Sort dialog"],a:0,why:"Always preview first."},
+    {q:"A wide table with many columns usually fits best in…",opts:["Landscape","Portrait","Legal size","Draft mode"],a:0,why:"Landscape is wider."},
+    {q:"‘Printed by Caribé’ at the bottom of every page goes in the…",opts:["Footer","Header","Title row","Legend"],a:0,why:"Bottom of the page = footer."},
+    {q:"To place the table in the middle across the page width, choose…",opts:["Centre horizontally","Centre vertically","Merge & Centre","Wrap text"],a:0,why:"Page Setup → Margins → Horizontally."},
+    {q:"On an invoice, a line total is…",opts:["Quantity × unit price","Unit price + tax","Sub-total − tax","Quantity + unit price"],a:0,why:"e.g. 12 × 18.50."},
+    {q:"Amount due on the invoice is…",opts:["Sub-total + total tax","Sub-total − tax","Unit price × tax","Total ÷ quantity"],a:0,why:"Add the tax to the sub-total."},
+    {q:"A margin of 1 inch is about…",opts:["2.54 cm","1 cm","10 cm","25.4 cm"],a:0,why:"1 in = 2.54 cm."},
+    {q:"Which paper size is most used in the Caribbean outside the US-style offices?",opts:["A4","A2","Tabloid","A6"],a:0,why:"A4 (210 × 297 mm)."}
+   ]}
+ ]},
+{id:"stadium",name:"Test Match Stadium",topic:"Final assessment: the whole chapter",fx:"spark",c:["#26090f","#5e1630","#f2c14e","#ffffff"],
+ icon:'<path d="M7 4h10v4a5 5 0 0 1-10 0zM9 21h6M12 13v8M4 5h3M17 5h3"/>',
+ story:"Floodlights on, stands full. Ms. Patricia signs off Kerry-Ann’s training with a full test match: every topic in Chapter 7, every question type. Bat through the innings.",
+ concepts:[],
+ levels:[{name:"Final Test Match",type:"exam",brief:"Section A: multiple choice. Section B: true or false. Section C: practical, where you type cell references, answers and formulas. You can skip a question, but skipped means no marks."}]}
+];
+
+/* Extra exam content */
+const EXTRA_MCQ=[
+ {q:"Which of these is NOT a purpose of a spreadsheet?",opts:["Advanced text processing","Preparing price lists and invoices","Holding financial data","Calculating with numeric data"],a:0,why:"That is a word processor’s job.",topic:"Jungle Canopy"},
+ {q:"Microsoft Excel is a ___ program that stores ___ in ___ files.",opts:["spreadsheet · worksheets · workbook","workbook · spreadsheets · worksheet","worksheet · workbooks · spreadsheet","spreadsheet · workbooks · worksheet"],a:0,why:"Worksheets live inside a workbook file.",topic:"Jungle Canopy"},
+ {q:"A new Excel workbook is usually named…",opts:["Book1","Sheet1","Excel1","Workbook.docx"],a:0,why:"Book1.xlsx.",topic:"Jungle Canopy"},
+ {q:"To store 2008 as a label, start the entry with…",opts:["an apostrophe ’","^","#","="],a:0,why:"’2008 is stored as text.",topic:"Coral Reef"},
+ {q:"=SUM(A5:A10)+17. Which statement is UNTRUE?",opts:["The result is A5 + A10 + 17 only","SUM is a function","17 is a constant","A5:A10 is a cell range"],a:0,why:"A5:A10 includes A5, A6, A7, A8, A9 and A10.",topic:"Orbit Lab"},
+ {q:"To create an oblique heading you change the text’s…",opts:["Orientation","Horizontal alignment","Font","Vertical alignment"],a:0,why:"Alignment tab → Orientation.",topic:"Glacier Station"},
+ {q:"A cell shows #######. The most likely cause is…",opts:["The column is too narrow","The formula is wrong","The # key was pressed","The number is too big for Excel"],a:0,why:"Widen the column.",topic:"Glacier Station"}
+];
+const EXTRA_TF=[
+ {s:"A pie chart can show several data series at once.",a:false,why:"Only one data series.",topic:"Kite Sky"},
+ {s:"Sorting A → Z is an ascending sort.",a:true,why:"Ascending = up.",topic:"Kite Sky"},
+ {s:"A footer appears at the bottom of every printed page.",a:true,why:"A header appears at the top.",topic:"Front Street Market"},
+ {s:"A credit note increases the amount a customer owes.",a:false,why:"It reduces it; a debit note increases it.",topic:"Front Street Market"},
+ {s:"You should preview a worksheet before printing it.",a:true,why:"Print Preview catches layout problems.",topic:"Front Street Market"},
+ {s:"The fill handle adjusts formulas automatically as they are copied.",a:true,why:"Relative references move.",topic:"Orbit Lab"},
+ {s:"A formula can start with any symbol.",a:false,why:"It must start with =.",topic:"Orbit Lab"},
+ {s:"Pressing Tab after typing moves the active cell down.",a:false,why:"Tab moves right; Enter moves down.",topic:"Volcano Island"}
+];
+const PRAC=[
+ {kind:"text",p:"Type the cell reference for the cell in column F, row 22.",answers:["F22"],why:"Column letter, then row number.",topic:"Coral Reef"},
+ {kind:"text",p:"What do you type in the Name Box to select ALL of row 9?",answers:["9:9"],why:"Row number twice with a colon.",topic:"Volcano Island"},
+ {kind:"text",sheet:{cols:2,rows:4,data:{A1:"Value",A2:7,A3:"=A2*5"},styles:{A1:{bold:1}}},sel:"A3",p:"A2 holds 7 and A3 holds =A2*5. What VALUE will A3 display?",answers:["35"],why:"7 × 5 = 35.",topic:"Orbit Lab"},
+ {kind:"formula",sheet:{cols:4,rows:8,colW:{A:110},data:{A6:"Flower",B6:"Price",D6:"Discount",A7:"Anthurium",B7:200},styles:{"A6:D6":{bold:1}}},sel:"D7",p:"In D7, write a formula that gives a 20% discount on the price in B7.",expect:160,needRef:true,why:"=B7*0.8 → 160",topic:"Orbit Lab"},
+ {kind:"text",p:"=B7*0.8 in D7 is copied down to D12 with the fill handle. Type the formula that ends up in D12.",answers:["=B12*0.8"],why:"Relative reference: row 7 becomes row 12.",topic:"Orbit Lab"},
+ {kind:"formula",sheet:{cols:3,rows:10,colW:{A:120},data:{A3:"Student",C3:"Score",A4:"Aaliyah",C4:62,A5:"Jaden",C5:81,A6:"Shanice",C6:47,A7:"Kemar",C7:75,A8:"Nia",C8:59,A9:"Tyrese",C9:70,A10:"Highest"},styles:{"A3:C3":{bold:1},A10:{bold:1}}},sel:"C10",p:"In C10, write a FUNCTION that finds the highest score in C4:C9.",expect:81,needRef:true,why:"=MAX(C4:C9) → 81",topic:"Orbit Lab"},
+ {kind:"formula",sheet:{cols:4,rows:8,colW:{B:150},data:{A2:"Qty",B2:"Description",C2:"Unit Price",D2:"Total",A3:4,B3:"Bags of fertiliser",C3:12.5},styles:{"A2:D2":{bold:1}}},sel:"D3",p:"In D3, write the formula for the line total (quantity × unit price).",expect:50,needRef:true,why:"=A3*C3 → 50",topic:"Front Street Market"}
+];
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const KEY="tabquest-v1";
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SPD={chill:{f:.72,label:"Chill",sub:"more time"},normal:{f:1,label:"Normal",sub:"classic"},turbo:{f:1.45,label:"Turbo",sub:"fast & furious"}};
+const S={name:"",speed:"normal",sound:true,teacher:false,progress:{},fact:0,tip:0};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+/* saved progress (this device): stars, best scores, name, speed, sound and the world you were in. Start over clears it. */
+if(!S.progress||typeof S.progress!=="object"||Array.isArray(S.progress))S.progress={};
+if(!SPD[S.speed])S.speed="normal";
+if(typeof S.name!=="string")S.name="";
+if(window.GameSave)GameSave.register([KEY]);
+try{if(sessionStorage.getItem("tabquest.keepTeacher")){sessionStorage.removeItem("tabquest.keepTeacher");S.teacher=true;save()}}catch(e){}
+if(window.GameSave)GameSave.onReset(()=>{try{if(S.teacher)sessionStorage.setItem("tabquest.keepTeacher","1")}catch(e){}});
+const spd=()=>SPD[S.speed]?.f||1;
+const $=s=>document.querySelector(s);
+const main=$("#main");
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function h(tag,props,...kids){const e=document.createElement(tag);if(props)for(const[k,v]of Object.entries(props)){if(v===false||v==null)continue;if(k==="class")e.className=v;else if(k==="html")e.innerHTML=v;else if(k.startsWith("on")&&typeof v==="function")e.addEventListener(k.slice(2),v);else if(k==="style")e.style.cssText=v;else e.setAttribute(k,v===true?"":v)}for(const k of kids.flat()){if(k==null||k===false)continue;e.append(k.nodeType?k:document.createTextNode(k))}return e}
+const svgEl=html=>{const t=document.createElement("template");t.innerHTML=html.trim();return t.content.firstChild};
+const STAR=on=>svgEl(`<svg viewBox="0 0 24 24" class="${on?"on":""}" aria-hidden="true"><path d="M12 2l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.8 5.7 21.4l1.5-7.1L1.8 9.4 9 8.6z" fill="${on?"#ffd23f":"rgba(255,255,255,.18)"}" stroke="${on?"#b8860b":"rgba(255,255,255,.35)"}" stroke-width="1"/></svg>`);
+const HEART=on=>svgEl(`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill="${on?"#ff5d73":"rgba(255,255,255,.15)"}"/></svg>`);
+const starsRow=n=>h("span",{class:"stars","aria-label":n+" of 3 stars"},[0,1,2].map(k=>STAR(k<n)));
+const icon=w=>svgEl(`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${w.icon}</svg>`);
+
+let CLEAN=[];
+function cleanup(){CLEAN.forEach(f=>{try{f()}catch(e){}});CLEAN=[];document.querySelectorAll(".fb,.dyk,.modal").forEach(x=>x.remove())}
+function listen(t,ev,fn){t.addEventListener(ev,fn);CLEAN.push(()=>t.removeEventListener(ev,fn))}
+function later(fn,ms){const id=setTimeout(fn,ms);CLEAN.push(()=>clearTimeout(id));return id}
+function countdown(secs,onTick,onEnd){const start=performance.now(),dur=secs*1000;let stopped=false,id=0;
+ const f=now=>{if(stopped)return;const left=Math.max(0,1-(now-start)/dur);onTick&&onTick(left);if(left<=0){stopped=true;onEnd&&onEnd();return}id=requestAnimationFrame(f)};
+ id=requestAnimationFrame(f);const c={stop(){stopped=true;cancelAnimationFrame(id)},get left(){return Math.max(0,1-(performance.now()-start)/dur)}};CLEAN.push(c.stop);return c}
+
+/* Sound */
+let actx=null;
+function beep(type){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const seq={good:[[660,.07],[990,.11]],bad:[[196,.2]],win:[[523,.1],[659,.1],[784,.1],[1047,.28]],shot:[[1400,.03]]}[type]||[[440,.05]];let t=actx.currentTime;for(const[f,d]of seq){const o=actx.createOscillator(),g=actx.createGain();o.type=type==="bad"?"sawtooth":"triangle";o.frequency.value=f;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+d+.02);t+=d*.9}}catch(e){}}
+
+/* Background particles */
+const cv=$("#fx"),g2=cv.getContext("2d");let FXK="spark",P=[];
+function sizeFx(){const d=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*d;cv.height=innerHeight*d;g2.setTransform(d,0,0,d,0,0);if(RM)drawFx(0)}
+function mk(init){const W=innerWidth,H=innerHeight;const rise=FXK==="bubble"||FXK==="ember"||FXK==="spark";return{x:Math.random()*W,y:init?Math.random()*H:(rise?H+20:-20),s:.5+Math.random(),a:Math.random()*6.28,v:.3+Math.random()*.7,c:Math.random()}}
+function setFx(k){FXK=k;P=Array.from({length:k==="star"?120:k==="kite"?12:44},()=>mk(true));if(k==="kite")P.forEach(p=>{p.y=Math.random()*innerHeight*.7});if(RM)drawFx(0)}
+const PAL=["#ff6fa3","#ffe066","#5fe1d0","#ff9f1c","#9be7ff","#c3a6ff"];
+function drawFx(t){const W=innerWidth,H=innerHeight;g2.clearRect(0,0,W,H);
+ for(const p of P){g2.save();g2.translate(p.x,p.y);
+  switch(FXK){
+   case"leaf":g2.rotate(p.a);g2.fillStyle=`rgba(144,224,160,${.18+p.c*.25})`;g2.beginPath();g2.ellipse(0,0,9*p.s,4*p.s,0,0,6.28);g2.fill();break;
+   case"bubble":g2.strokeStyle=`rgba(220,250,255,${.25+p.c*.3})`;g2.lineWidth=1.5;g2.beginPath();g2.arc(0,0,3+6*p.s,0,6.28);g2.stroke();break;
+   case"ember":g2.fillStyle=`rgba(255,${120+p.c*100|0},40,${.35+.4*Math.abs(Math.sin(t/300+p.a))})`;g2.beginPath();g2.arc(0,0,1.5+2*p.s,0,6.28);g2.fill();break;
+   case"snow":g2.fillStyle=`rgba(255,255,255,${.45+p.c*.4})`;g2.beginPath();g2.arc(0,0,1+2.4*p.s,0,6.28);g2.fill();break;
+   case"star":g2.fillStyle=`rgba(255,255,255,${.25+.7*Math.abs(Math.sin(t/900+p.a*3))})`;g2.fillRect(0,0,1.2+p.s*1.4,1.2+p.s*1.4);break;
+   case"kite":{const c=PAL[(p.c*PAL.length)|0];g2.rotate(Math.sin(t/900+p.a)*.15);g2.fillStyle=c;g2.globalAlpha=.55;g2.beginPath();g2.moveTo(0,-14*p.s);g2.lineTo(10*p.s,0);g2.lineTo(0,16*p.s);g2.lineTo(-10*p.s,0);g2.closePath();g2.fill();g2.strokeStyle="rgba(255,255,255,.5)";g2.beginPath();g2.moveTo(0,16*p.s);for(let k=1;k<6;k++)g2.lineTo(Math.sin(t/300+k)*5,16*p.s+k*8);g2.stroke();break}
+   case"confetti":g2.rotate(p.a);g2.fillStyle=PAL[(p.c*PAL.length)|0];g2.globalAlpha=.6;g2.fillRect(-3,-5,6,10);break;
+   default:g2.fillStyle=`rgba(255,215,90,${.2+.5*Math.abs(Math.sin(t/700+p.a))})`;g2.beginPath();g2.arc(0,0,1+1.8*p.s,0,6.28);g2.fill();
+  }g2.restore()}}
+let lastT=0;
+function fxLoop(t){const dt=Math.min(3,(t-lastT)/16);lastT=t;const W=innerWidth,H=innerHeight;
+ for(const p of P){switch(FXK){
+  case"leaf":p.y+=p.v*dt*.8;p.x+=Math.sin(t/1200+p.a)*.6*dt;p.a+=.015*dt;break;
+  case"bubble":p.y-=p.v*dt*1.1;p.x+=Math.sin(t/700+p.a)*.4*dt;break;
+  case"ember":p.y-=p.v*dt*.9;p.x+=Math.sin(t/500+p.a)*.3*dt;break;
+  case"snow":p.y+=p.v*dt*.7;p.x+=Math.sin(t/1500+p.a)*.4*dt;break;
+  case"star":p.x-=.05*p.v*dt;break;
+  case"kite":p.x+=p.v*dt*.45;p.y+=Math.sin(t/1400+p.a)*.3*dt;break;
+  case"confetti":p.y+=p.v*dt*.9;p.a+=.04*dt;p.x+=Math.sin(t/800+p.a)*.4;break;
+  default:p.y-=p.v*.25*dt;}
+  if(p.y>H+30||p.y<-30||p.x>W+40||p.x<-40){Object.assign(p,mk(false));if(FXK==="kite"){p.x=-30;p.y=Math.random()*H*.7}if(FXK==="star"){p.x=W+10;p.y=Math.random()*H}}}
+ drawFx(t);requestAnimationFrame(fxLoop)}
+addEventListener("resize",sizeFx);sizeFx();
+if(!RM)requestAnimationFrame(fxLoop);
+
+function setTheme(w){const r=document.documentElement.style;const c=w?w.c:["#0c2233","#14404f","#ffcf3f","#5fe1d0"];r.setProperty("--bg1",c[0]);r.setProperty("--bg2",c[1]);r.setProperty("--acc",c[2]);r.setProperty("--acc2",c[3]);setFx(w?w.fx:"spark")}
+
+/* Progress */
+const lvKey=(wi,li)=>wi+"-"+li;
+const starsOf=(wi,li)=>S.progress[lvKey(wi,li)]?.stars||0;
+const totalStars=()=>Object.values(S.progress).reduce((a,b)=>a+(b.stars||0),0);
+const maxStars=()=>WORLDS.reduce((a,w)=>a+w.levels.length*3,0);
+function worldOpen(wi){if(S.teacher||wi===0)return true;const p=WORLDS[wi-1];return starsOf(wi-1,p.levels.length-1)>0}
+function levelOpen(wi,li){if(!worldOpen(wi))return false;if(S.teacher||li===0)return true;return starsOf(wi,li-1)>0}
+function updateChips(){const s=$("#schip");s.innerHTML="";s.append(STAR(true),`${totalStars()} / ${maxStars()}`);const p=$("#pchip");p.hidden=!S.name;p.textContent=S.name?"Player: "+S.name:""}
+
+/* ============================================================
+   SPREADSHEET MODEL + EVALUATOR + RENDERER
+   ============================================================ */
+const colN=c=>{let n=0;for(const ch of c)n=n*26+(ch.charCodeAt(0)-64);return n};
+const colL=n=>{let s="";while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+const pCell=ref=>{const m=/^\$?([A-Z]+)\$?(\d+)$/.exec(ref);return m?{c:colN(m[1]),r:+m[2]}:null};
+const R=(r,c)=>colL(c)+r;
+function pRange(t){t=t.toUpperCase().replace(/\s/g,"");const[a,b]=t.split(":");const A=pCell(a),B=pCell(b||a);if(!A||!B)return null;return{r1:Math.min(A.r,B.r),c1:Math.min(A.c,B.c),r2:Math.max(A.r,B.r),c2:Math.max(A.c,B.c)}}
+function refsIn(b){const out=[];for(let r=b.r1;r<=b.r2;r++)for(let c=b.c1;c<=b.c2;c++)out.push(R(r,c));return out}
+function makeSheet(spec){const sh={cols:spec.cols,rows:spec.rows,cells:{},merges:(spec.merges||[]).map(pRange),colW:{...(spec.colW||{})},rowH:{...(spec.rowH||{})}};
+ for(const[k,v]of Object.entries(spec.data||{}))sh.cells[k]=(typeof v==="string"&&v.startsWith("="))?{f:v}:{v};
+ for(const[k,s]of Object.entries(spec.styles||{}))for(const ref of refsIn(pRange(k))){const c=sh.cells[ref]??={};c.s={...(c.s||{}),...s}}
+ return sh}
+function cellVal(sh,ref,d=0){const c=sh.cells[ref];if(!c)return"";if(c.f)return evalF(c.f,sh,d+1);return c.v??""}
+function evalF(f,sh,d=0){if(d>30)return NaN;let s=String(f).replace(/^=/,"").toUpperCase().replace(/\s+/g,"");
+ const ar=x=>{x=x.replace(/\$?[A-Z]+\$?\d+/g,r=>{const v=cellVal(sh,r.replace(/\$/g,""),d);return"("+(typeof v==="number"?v:(v===""?0:NaN))+")"});
+  x=x.replace(/(\d+(?:\.\d+)?)%/g,"($1/100)");if(!/^[0-9+\-*/^().eE]*$/.test(x)||!x)return NaN;x=x.replace(/\^/g,"**");
+  try{const r=Function('"use strict";return ('+x+")")();return typeof r==="number"&&isFinite(r)?r:NaN}catch(e){return NaN}};
+ const re=/(SUM|AVERAGE|MIN|MAX|COUNT)\(([^()]*)\)/;let m,guard=0;
+ while((m=re.exec(s))&&guard++<40){const nums=[];
+  for(const arg of m[2].split(",")){if(!arg)continue;const rg=/^(\$?[A-Z]+\$?\d+):(\$?[A-Z]+\$?\d+)$/.exec(arg);
+   if(rg){const b=pRange(rg[1].replace(/\$/g,"")+":"+rg[2].replace(/\$/g,""));for(const r of refsIn(b)){const v=cellVal(sh,r,d);if(typeof v==="number")nums.push(v)}}
+   else{const v=ar(arg);if(!isNaN(v))nums.push(v)}}
+  const sum=nums.reduce((a,b)=>a+b,0);
+  const out={SUM:sum,AVERAGE:nums.length?sum/nums.length:NaN,MIN:nums.length?Math.min(...nums):0,MAX:nums.length?Math.max(...nums):0,COUNT:nums.length}[m[1]];
+  s=s.slice(0,m.index)+"("+out+")"+s.slice(m.index+m[0].length)}
+ return ar(s)}
+function shiftF(f,dr,dc){return f.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g,(m,a,col,b,row)=>a+(a?col:colL(colN(col)+dc))+b+(b?row:(+row+dr)))}
+function fmtNum(v,s={}){if(typeof v!=="number")return v;if(isNaN(v))return"#VALUE!";if(s.comma||s.dec2)return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});return String(Math.round(v*100)/100)}
+const norm=s=>String(s).toUpperCase().replace(/\s+/g,"").replace(/^['’]/,"").replace(/^\$/,"");
+
+function renderSheet(host,sh,o={}){
+ host.innerHTML="";
+ const nb=h("input",{class:"namebox",readonly:o.nameBoxEditable?null:true,"aria-label":"Name Box",spellcheck:"false",autocomplete:"off"});
+ const fx=h("input",{class:"fxbar",readonly:o.fxEditable?null:true,"aria-label":"Formula bar",spellcheck:"false",autocomplete:"off",placeholder:o.fxEditable?"Type a formula, e.g. =B4*0.8":""});
+ const tick=o.fxEditable?h("button",{class:"tick",title:"Enter (green tick)","aria-label":"Confirm entry"},"✓"):null;
+ const gw=h("div",{class:"gridwrap"});
+ if(o.ribbon)host.append(o.ribbon);
+ host.append(h("div",{class:"fxrow"},nb,h("span",{class:"fxl"},"fx"),fx,tick),gw);
+ const api={sh,sel:null,hintB:null,flashB:null,filled:new Set(),nb,fx,gw};
+ const bounds=()=>{const s=api.sel;if(!s)return null;if(s.mode==="row")return{r1:Math.min(s.ar,s.er),r2:Math.max(s.ar,s.er),c1:1,c2:sh.cols};if(s.mode==="col")return{c1:Math.min(s.ac,s.ec),c2:Math.max(s.ac,s.ec),r1:1,r2:sh.rows};
+  let b={r1:Math.min(s.ar,s.er),r2:Math.max(s.ar,s.er),c1:Math.min(s.ac,s.ec),c2:Math.max(s.ac,s.ec)};let ch=true;
+  while(ch){ch=false;for(const m of sh.merges){if(m.r1<=b.r2&&m.r2>=b.r1&&m.c1<=b.c2&&m.c2>=b.c1){const nb2={r1:Math.min(b.r1,m.r1),r2:Math.max(b.r2,m.r2),c1:Math.min(b.c1,m.c1),c2:Math.max(b.c2,m.c2)};if(JSON.stringify(nb2)!==JSON.stringify(b)){b=nb2;ch=true}}}}return b};
+ api.bounds=bounds;
+ api.selText=()=>{const s=api.sel;if(!s)return"";const b=bounds();if(s.mode==="row")return b.r1+":"+b.r2;if(s.mode==="col")return colL(b.c1)+":"+colL(b.c2);if(b.r1===b.r2&&b.c1===b.c2)return R(b.r1,b.c1);return R(b.r1,b.c1)+":"+R(b.r2,b.c2)};
+ api.anchor=()=>api.sel?R(api.sel.mode==="col"?1:api.sel.ar,api.sel.mode==="row"?1:api.sel.ac):"";
+ api.select=t=>{const b=pRange(t);if(!b)return;api.sel={ar:b.r1,ac:b.c1,er:b.r2,ec:b.c2,mode:(b.r1===b.r2&&b.c1===b.c2)?"cell":"range"};paint()};
+ api.hint=t=>{api.hintB=t?(/^[A-Z]+:[A-Z]+$/.test(t)?{r1:1,r2:sh.rows,c1:colN(t.split(":")[0]),c2:colN(t.split(":")[1])}:pRange(t)):null;paint()};
+ api.flash=t=>{api.flashB=t?pRange(t):null;paint()};
+ function disp(ref){const c=sh.cells[ref];if(!c)return"";const v=c.f?evalF(c.f,sh):c.v;return typeof v==="number"?fmtNum(v,c.s):(v??"")}
+ api.disp=disp;
+ function css(c,isNum,clip){const st=c?.s||{};let s="";if(st.bold)s+="font-weight:700;";if(st.italic)s+="font-style:italic;";if(st.underline)s+="text-decoration:underline;";if(st.size)s+=`font-size:${st.size}px;`;
+  s+=`text-align:${st.align||(isNum?"right":"left")};`;if(st.valign)s+=`vertical-align:${st.valign};`;if(st.wrap)s+="white-space:normal;";if(st.fill)s+=`background:${st.fill};`;
+  const b=st.b||{};if(b.t)s+="border-top:2px solid #1d2a36;";if(b.r)s+="border-right:2px solid #1d2a36;";if(b.bt)s+="border-bottom:2px solid #1d2a36;";if(b.l)s+="border-left:2px solid #1d2a36;";if(clip)s+="overflow:hidden;";return s}
+ function draw(){const cover=new Set(),span={};
+  for(const m of sh.merges){span[R(m.r1,m.c1)]=m;for(let r=m.r1;r<=m.r2;r++)for(let c=m.c1;c<=m.c2;c++)if(r!==m.r1||c!==m.c1)cover.add(R(r,c))}
+  let w=38,cg='<col style="width:38px">';for(let c=1;c<=sh.cols;c++){const cw=sh.colW[colL(c)]||76;w+=cw;cg+=`<col style="width:${cw}px">`}
+  let html=`<colgroup>${cg}</colgroup><thead><tr><th class="corner"></th>`;for(let c=1;c<=sh.cols;c++)html+=`<th data-col="${c}">${colL(c)}</th>`;html+="</tr></thead><tbody>";
+  for(let r=1;r<=sh.rows;r++){html+=`<tr style="height:${sh.rowH[r]||24}px"><th data-row="${r}">${r}</th>`;
+   for(let c=1;c<=sh.cols;c++){const ref=R(r,c);if(cover.has(ref))continue;const cell=sh.cells[ref];const m=span[ref];
+    const raw=cell?(cell.f?evalF(cell.f,sh):cell.v):"";const isNum=typeof raw==="number";const next=sh.cells[R(r,c+1)];const clip=!isNum&&next&&(next.v!==undefined&&next.v!==""||next.f);
+    let txt=esc(disp(ref));if(cell?.s?.orient&&txt)txt=`<span class="rot">${txt}</span>`;
+    html+=`<td data-ref="${ref}"${m?` colspan="${m.c2-m.c1+1}" rowspan="${m.r2-m.r1+1}"`:""} style="${css(cell,isNum,clip)}">${txt}</td>`}
+   html+="</tr>"}
+  gw.innerHTML=`<table class="grid" style="width:${w}px">${html}</tbody></table>`;paint()}
+ function inB(b,r,c){return b&&r>=b.r1&&r<=b.r2&&c>=b.c1&&c<=b.c2}
+ function paint(){const b=bounds();const a=api.sel;
+  gw.querySelectorAll("td").forEach(td=>{const{r,c}=pCell(td.dataset.ref);td.classList.toggle("sel",inB(b,r,c)&&b&&!(b.r1===b.r2&&b.c1===b.c2));
+   td.classList.toggle("act",!!a&&td.dataset.ref===api.anchor());td.classList.toggle("target",inB(api.hintB,r,c));td.classList.toggle("flash",inB(api.flashB,r,c));td.classList.toggle("filled",api.filled.has(td.dataset.ref))});
+  gw.querySelectorAll("th[data-col]").forEach(th=>th.classList.toggle("hsel",!!b&&+th.dataset.col>=b.c1&&+th.dataset.col<=b.c2));
+  gw.querySelectorAll("th[data-row]").forEach(th=>th.classList.toggle("hsel",!!b&&+th.dataset.row>=b.r1&&+th.dataset.row<=b.r2));
+  if(document.activeElement!==nb)nb.value=api.anchor();
+  if(document.activeElement!==fx||!o.fxEditable){const c=sh.cells[api.anchor()];fx.value=c?(c.f||(c.v??"")):""}}
+ api.draw=draw;api.paint=paint;
+ let drag=null,point=null;
+ listen(gw,"pointerdown",e=>{
+  const th=e.target.closest("th[data-col],th[data-row]");
+  if(th){e.preventDefault();if(th.dataset.col){const c=+th.dataset.col;api.sel={mode:"col",ac:c,ec:c,ar:1,er:sh.rows}}else{const r=+th.dataset.row;api.sel={mode:"row",ar:r,er:r,ac:1,ec:sh.cols}}paint();o.onSelect&&o.onSelect(api.selText());return}
+  const td=e.target.closest("td[data-ref]");if(!td)return;
+  if(o.pointMode&&document.activeElement===fx&&/[=+\-*/^(,:]$/.test(fx.value)){e.preventDefault();point={base:fx.value,start:td.dataset.ref};fx.value=point.base+point.start;drag="point";try{gw.setPointerCapture(e.pointerId)}catch(_){}return}
+  e.preventDefault();if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
+  const{r,c}=pCell(td.dataset.ref);
+  if(e.shiftKey&&api.sel&&api.sel.mode!=="row"&&api.sel.mode!=="col"){api.sel.er=r;api.sel.ec=c;api.sel.mode="range"}else api.sel={ar:r,ac:c,er:r,ec:c,mode:"cell"};
+  drag="sel";try{gw.setPointerCapture(e.pointerId)}catch(_){}paint()});
+ listen(gw,"pointermove",e=>{if(!drag)return;const el=document.elementFromPoint(e.clientX,e.clientY);const td=el&&el.closest&&el.closest("td[data-ref]");if(!td||!gw.contains(td))return;
+  if(drag==="point"){const b=pRange(point.start+":"+td.dataset.ref);fx.value=point.base+(td.dataset.ref===point.start?point.start:R(b.r1,b.c1)+":"+R(b.r2,b.c2));return}
+  const{r,c}=pCell(td.dataset.ref);if(r!==api.sel.er||c!==api.sel.ec){api.sel.er=r;api.sel.ec=c;api.sel.mode=(r===api.sel.ar&&c===api.sel.ac)?"cell":"range";paint()}});
+ const up=()=>{if(drag==="sel"){drag=null;o.onSelect&&o.onSelect(api.selText())}else if(drag==="point"){drag=null;fx.focus();const n=fx.value.length;fx.setSelectionRange(n,n)}};
+ listen(gw,"pointerup",up);listen(gw,"pointercancel",()=>{drag=null});
+ if(o.nameBoxEditable)listen(nb,"keydown",e=>{if(e.key!=="Enter")return;e.preventDefault();const t=nb.value.toUpperCase().replace(/\s/g,"");let m;
+  if((m=/^(\d+):(\d+)$/.exec(t))){api.sel={mode:"row",ar:+m[1],er:+m[2],ac:1,ec:sh.cols}}
+  else if((m=/^([A-Z]+):([A-Z]+)$/.exec(t))){api.sel={mode:"col",ac:colN(m[1]),ec:colN(m[2]),ar:1,er:sh.rows}}
+  else{const b=pRange(t);if(!b||b.r2>sh.rows||b.c2>sh.cols){nb.value=api.anchor();return}api.sel={ar:b.r1,ac:b.c1,er:b.r2,ec:b.c2,mode:(b.r1===b.r2&&b.c1===b.c2)?"cell":"range"}}
+  nb.blur();paint();o.onSelect&&o.onSelect(api.selText())});
+ if(o.fxEditable){const commit=()=>o.onCommit&&o.onCommit(fx.value.trim());listen(fx,"keydown",e=>{if(e.key==="Enter"){e.preventDefault();commit()}});listen(tick,"click",commit)}
+ draw();return api}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+function go(fn){cleanup();main.scrollTop=0;main.dataset.screen="";fn();updateChips()}
+
+function showTitle(){setTheme(null);main.innerHTML="";
+ const word="TABULATION";const logo=h("div",{class:"logo","aria-label":"Tabulation Quest logo",role:"img"});
+ logo.append(h("span",{}," "));for(let k=0;k<10;k++)logo.append(h("span",{},colL(k+1)));logo.append(h("span",{class:"rh"},"7"));
+ [...word].forEach((ch,k)=>logo.append(h("b",{class:k===0?"on":""},ch)));
+ let sp=S.speed;
+ const seg=h("div",{class:"seg",role:"group","aria-label":"Game speed"},Object.entries(SPD).map(([k,v])=>h("button",{"aria-pressed":String(k===sp),onclick(e){sp=k;seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed","false"));e.currentTarget.setAttribute("aria-pressed","true")}},v.label,h("small",{},v.sub))));
+ const nameIn=h("input",{class:"field",id:"pname",placeholder:"Your name (shows on your report card)",value:S.name,maxlength:"30",autocomplete:"off"});
+ const snd=h("input",{type:"checkbox",id:"psound"});snd.checked=S.sound;
+ main.append(h("div",{class:"wrap title"},
+  h("div",{class:"eyebrow"},"EDPM · Chapter 7"),logo,h("div",{class:"subtitle"},"Quest"),
+  h("p",{class:"muted",style:"max-width:58ch"},"Seven worlds, one chapter. Learn the terms, blast the right answers, and build real spreadsheets: formulas, formatting, sorting, charts and invoices. Finish with the Test Match final."),
+  h("div",{class:"paper setup"},
+   h("div",{},h("label",{for:"pname"},"Player name"),nameIn),
+   h("div",{},h("label",{},"Speed"),seg),
+   h("label",{class:"switch",for:"psound"},"Sound effects",snd),
+   h("button",{class:"btn big",onclick(){S.name=nameIn.value.trim();S.speed=sp;S.sound=snd.checked;save();beep("win");go(showMap)}},"Start the quest")),
+  h("p",{class:"credit"},"Kester Small")));
+}
+
+function showMap(){setTheme(null);main.innerHTML="";
+ const grid=h("div",{class:"worlds"});
+ WORLDS.forEach((w,wi)=>{const open=worldOpen(wi);const st=w.levels.reduce((a,_,li)=>a+starsOf(wi,li),0);
+  const b=h("button",{class:"wcard",disabled:open?null:true,style:`background:linear-gradient(150deg,${w.c[0]},${w.c[1]});`,onclick(){go(()=>showWorld(wi))},"aria-label":`${w.name}: ${w.topic}`},
+   h("span",{class:"num"},String(wi+1)),h("span",{style:`color:${w.c[2]}`},icon(w)),h("h3",{},w.name),h("p",{},w.topic),
+   h("span",{style:"display:flex;justify-content:space-between;align-items:center;margin-top:auto;font-size:13px;font-weight:700"},starsRow(Math.round(st/w.levels.length)),`${st}/${w.levels.length*3} ★`),
+   open?null:h("span",{class:"lock"},"LOCKED · clear world "+wi));
+  grid.append(b)});
+ main.append(h("div",{class:"wrap"},h("div",{class:"maphead"},h("div",{},h("div",{class:"eyebrow"},"World map"),h("h1",{style:"font-size:clamp(28px,5vw,40px)"},S.name?`Choose your world, ${S.name}`:"Choose your world")),
+  h("button",{class:"ghost",onclick(){go(showTitle)}},"Title screen")),grid,
+  h("p",{class:"muted",style:"margin-top:18px;font-size:14px"},"Clear the last level of a world (at least 1 star) to unlock the next one. Teachers can unlock everything in Settings.")));
+}
+
+function conceptGrid(w){return h("div",{class:"concepts"},w.concepts.map(c=>{const card=h("div",{class:"paper ccard"},h("h4",{},c.t),h("p",{},c.d));if(c.vis)card.append(svgEl(miniChart(c.vis)));if(c.ex)card.append(h("div",{class:"ex"},c.ex));return card}))}
+
+function showWorld(wi){const w=WORLDS[wi];if(S.lastWorld!==wi){S.lastWorld=wi;save()}setTheme(w);main.innerHTML="";
+ const lv=h("div",{class:"levels"});
+ w.levels.forEach((L,li)=>{const open=levelOpen(wi,li);const best=S.progress[lvKey(wi,li)];
+  lv.append(h("div",{class:"paper lvl"+(open?"":" locked")},h("span",{class:"tag"},TYPE_LABEL[L.type]),h("h3",{},`${li+1}. ${L.name}`),
+   h("p",{style:"font-size:14px;color:var(--ink2)"},L.brief),
+   h("div",{class:"row"},h("span",{style:"display:grid;font-size:12px;color:var(--ink2);font-weight:700"},starsRowDark(starsOf(wi,li)),best?`Best ${best.score} pts`:"Not played"),
+    h("button",{class:"btn",disabled:open?null:true,onclick(){go(()=>showBrief(wi,li))}},open?(best?"Replay":"Play"):"Locked"))))});
+ const body=h("div",{class:"wrap"},h("div",{class:"whead"},h("button",{class:"ghost sm",style:"justify-self:start",onclick(){go(showMap)}},"← World map"),
+  h("div",{class:"eyebrow"},`World ${wi+1} · ${w.topic}`),h("h1",{},w.name),h("p",{class:"story"},w.story)),lv);
+ if(w.concepts.length){const fg=h("details",{style:"margin-top:8px"},h("summary",{style:"cursor:pointer;font-family:var(--display);font-size:22px;margin-bottom:12px"},"Field guide: key ideas in this world"),conceptGrid(w));body.append(fg)}
+ main.append(body)}
+function starsRowDark(n){return h("span",{class:"stars"},[0,1,2].map(k=>svgEl(`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.8 5.7 21.4l1.5-7.1L1.8 9.4 9 8.6z" fill="${k<n?"#f2b705":"#e2d6b8"}"/></svg>`)))}
+
+function showBrief(wi,li){const w=WORLDS[wi],L=w.levels[li];setTheme(w);main.innerHTML="";
+ const tip=TIPS[S.tip%TIPS.length];S.tip++;save();
+ const b=h("div",{class:"paper brief"},h("div",{class:"eyebrow"},`${w.name} · Level ${li+1} · ${TYPE_LABEL[L.type]}`),h("h2",{style:"font-size:clamp(26px,5vw,36px)"},L.name),
+  h("p",{class:"scen"},L.brief),h("div",{class:"how"},h("b",{},"How to play: "),HOW[L.type]),
+  h("div",{class:"tip"},h("b",{},"Did you know?"),h("span",{},tip)),
+  h("div",{class:"bar-actions"},h("button",{class:"btn big",onclick(){beep("shot");go(()=>startLevel(wi,li))}},"Play"),h("button",{class:"ghost dark",onclick(){go(()=>showWorld(wi))}},"Back"),
+   h("span",{style:"align-self:center;font-size:14px;color:var(--ink2);font-weight:700"},"Speed: "+SPD[S.speed].label)));
+ const wrap=h("div",{class:"wrap",style:"display:grid;gap:16px"},b);
+ if(li===0&&w.concepts.length)wrap.append(h("h2",{style:"font-size:24px;margin-top:4px"},"Learn these first"),conceptGrid(w));
+ main.append(wrap)}
+
+function startLevel(wi,li){const w=WORLDS[wi],L=w.levels[li];setTheme(w);main.innerHTML="";
+ const stage=h("div",{class:"stage wrap"});main.append(stage);
+ const ctx={wi,li,world:w,level:L,finish(res){go(()=>showResults(wi,li,res))}};
+ GAMES[L.type](stage,ctx)}
+
+/* HUD + feedback */
+function Hud(stage,ctx,{total,lives=null}){const st={score:0,combo:0,maxCombo:0,lives,max:lives,correct:0,total};
+ const sc=h("b",{},"0"),cb=h("span",{class:"combo"}),hearts=h("span",{class:"hearts","aria-label":"lives"}),pr=h("span",{class:"prog"}),tb=h("div",{class:"tbar"},h("i"));
+ let armed=false;const quit=h("button",{class:"ghost sm",onclick(){if(armed)go(()=>showWorld(ctx.wi));else{armed=true;quit.textContent="Tap again to leave";later(()=>{armed=false;quit.textContent="← Leave"},2200)}}},"← Leave");
+ stage.append(h("div",{class:"hud"},quit,h("div",{class:"hud-t"},h("small",{},`${ctx.world.name} · Level ${ctx.li+1}`),h("strong",{},ctx.level.name)),h("div",{class:"hud-r"},cb,lives!=null?hearts:null,h("div",{class:"hud-s"},h("small",{},"Score"),sc))),h("div",{class:"hud2"},pr,tb));
+ const drawHearts=()=>{hearts.innerHTML="";for(let k=0;k<st.max;k++)hearts.append(HEART(k<st.lives))};if(lives!=null)drawHearts();
+ const api={st,
+  good(base=100){st.combo++;st.maxCombo=Math.max(st.maxCombo,st.combo);st.score+=Math.round(base*(1+Math.min(st.combo-1,4)*.25)*spd());sc.textContent=st.score;cb.textContent=st.combo>1?"Combo ×"+st.combo:"";cb.classList.remove("bump");void cb.offsetWidth;cb.classList.add("bump");beep("good")},
+  bad(life=true){st.combo=0;cb.textContent="";if(st.lives!=null&&life){st.lives=Math.max(0,st.lives-1);drawHearts()}stage.classList.remove("hurt");void stage.offsetWidth;stage.classList.add("hurt");beep("bad")},
+  point(){st.correct++},
+  prog(i,label="Q",tot=total){pr.textContent=`${label} ${i} / ${tot}`},
+  time(f){tb.firstChild.style.transform=`scaleX(${Math.max(0,f)})`;tb.classList.toggle("low",f<.25)},
+  dead(){return st.lives!=null&&st.lives<=0},
+  result(x={}){return{score:st.score,correct:st.correct,total:st.total,maxCombo:st.maxCombo,knocked:api.dead(),...x}}};
+ return api}
+function feedback(ok,msg,head){document.querySelectorAll(".fb").forEach(x=>x.remove());const f=h("div",{class:"fb "+(ok?"ok":"no"),role:"status"},h("b",{},head||(ok?"Correct! ":"Not quite. ")),msg||"");document.body.append(f);
+ setTimeout(()=>f.classList.add("out"),ok?1800:2800);setTimeout(()=>f.remove(),ok?2300:3300)}
+
+/* ---------- GAME: Match ---------- */
+function gameMatch(stage,ctx){const pairs=shuffle(ctx.level.data.map((p,k)=>({t:p[0],d:p[1],k})));
+ const n=Math.ceil(pairs.length/6),size=Math.ceil(pairs.length/n);const rounds=[];for(let k=0;k<pairs.length;k+=size)rounds.push(pairs.slice(k,k+size));
+ const hud=Hud(stage,ctx,{total:pairs.length});const board=h("div",{class:"match"});stage.append(board);
+ let r=0,missed=new Set(),timer;
+ function round(){board.innerHTML="";const set=rounds[r];hud.prog(r+1,"Round",rounds.length);let selT=null,selD=null,left=set.length;
+  const L=h("div",{class:"mcol"}),Rc=h("div",{class:"mcol"});board.append(L,Rc);
+  const check=()=>{if(!selT||!selD)return;const a=selT,b=selD;selT=selD=null;
+   if(a.dataset.k===b.dataset.k){[a,b].forEach(x=>{x.classList.remove("on");x.classList.add("done");x.disabled=true});if(!missed.has(a.dataset.k))hud.point();hud.good(missed.has(a.dataset.k)?40:100);left--;if(!left){timer.stop();r++;later(()=>r<rounds.length?round():ctx.finish(hud.result()),500)}}
+   else{missed.add(a.dataset.k);missed.add(b.dataset.k);[a,b].forEach(x=>{x.classList.remove("on");x.classList.add("wrong");later(()=>x.classList.remove("wrong"),400)});hud.bad(false)}};
+  shuffle(set).forEach(p=>L.append(h("button",{class:"mbtn term","data-k":p.k,onclick(e){selT?.classList.remove("on");selT=e.currentTarget;selT.classList.add("on");check()}},p.t)));
+  shuffle(set).forEach(p=>Rc.append(h("button",{class:"mbtn","data-k":p.k,onclick(e){selD?.classList.remove("on");selD=e.currentTarget;selD.classList.add("on");check()}},p.d)));
+  timer=countdown(Math.max(30,(set.length*11)/spd()),f=>hud.time(f),()=>{feedback(false,"Time’s up for this round.");r++;later(()=>r<rounds.length?round():ctx.finish(hud.result()),900)})}
+ round()}
+
+/* ---------- GAME: True/False dash ---------- */
+function gameTF(stage,ctx){const items=shuffle(ctx.level.data).slice(0,12);const hud=Hud(stage,ctx,{total:items.length,lives:3});
+ const track=h("div",{class:"track"},h("div",{class:"gate"},h("span",{},"GATE")));
+ const bt=h("button",{class:"tfb t",onclick:()=>answer(true)},"TRUE",h("kbd",{},"T")),bf=h("button",{class:"tfb f",onclick:()=>answer(false)},"FALSE",h("kbd",{},"F"));
+ stage.append(track,h("div",{class:"tfrow"},bt,bf));
+ let i=0,card=null,x=0,raf=0,busy=true,it=null;CLEAN.push(()=>cancelAnimationFrame(raf));
+ function next(){if(i>=items.length||hud.dead())return ctx.finish(hud.result());it=items[i];hud.prog(i+1,"Statement");card?.remove();
+  card=h("div",{class:"tcard"},it.s);track.append(card);const W=track.clientWidth,gx=70;x=W;const dur=(11-Math.min(i,8)*.35)/spd();const v=(W-gx)/dur*(RM?.6:1);let last=performance.now();busy=false;
+  const step=now=>{if(busy)return;const dt=(now-last)/1000;last=now;x-=v*dt;card.style.transform=`translateX(${x}px)`;hud.time((x-gx)/(W-gx));if(x<=gx){busy=true;hud.bad();card.classList.add("crash");feedback(false,`It was ${it.a?"TRUE":"FALSE"}. ${it.why}`,"Too slow! ");i++;later(next,2000);return}raf=requestAnimationFrame(step)};
+  raf=requestAnimationFrame(step)}
+ function answer(v){if(busy||!it)return;busy=true;cancelAnimationFrame(raf);const ok=v===it.a;
+  if(ok){hud.point();hud.good(100+Math.round(Math.max(0,x/track.clientWidth)*80));card.style.transform=`translateX(${x}px) translateY(-160px)`;card.classList.add("fly")}else{hud.bad();card.classList.add("crash")}
+  feedback(ok,`${it.a?"TRUE":"FALSE"}. ${it.why}`);i++;later(next,ok?1100:2400)}
+ listen(window,"keydown",e=>{const k=e.key.toLowerCase();if(k==="t"||k==="arrowleft")answer(true);if(k==="f"||k==="arrowright")answer(false)});
+ later(next,400)}
+
+/* ---------- GAME: Buckets ---------- */
+function gameBuckets(stage,ctx){const L=ctx.level;const items=shuffle(L.data).slice(0,12);const hud=Hud(stage,ctx,{total:items.length,lives:3});
+ const box=h("div");const row=h("div",{class:"bkt-row"});stage.append(box,row);let i=0,it=null,busy=true,timer;
+ L.buckets.forEach((b,k)=>row.append(h("button",{class:"bkt",onclick:()=>pick(k)},b,h("kbd",{},k+1))));
+ function next(){if(i>=items.length||hud.dead())return ctx.finish(hud.result());it=items[i];hud.prog(i+1,"Item");busy=false;
+  box.innerHTML="";box.append(h("div",{class:"paper bkt-item"},it.t));
+  timer=countdown(9/spd(),f=>hud.time(f),()=>{busy=true;hud.bad();feedback(false,`${L.buckets[it.b]}. ${it.why}`,"Too slow! ");i++;later(next,1800)})}
+ function pick(k){if(busy)return;busy=true;timer.stop();const ok=k===it.b;if(ok){hud.point();hud.good(100+Math.round(timer.left*60))}else hud.bad();feedback(ok,`${L.buckets[it.b]}. ${it.why}`);i++;later(next,ok?800:2000)}
+ listen(window,"keydown",e=>{const n=+e.key;if(n>=1&&n<=L.buckets.length)pick(n-1)});later(next,300)}
+
+/* ---------- GAME: Zone Blaster ---------- */
+function gameBlaster(stage,ctx){const qs=shuffle(ctx.level.data).slice(0,10);const hud=Hud(stage,ctx,{total:qs.length,lives:3});
+ const qbox=h("div",{class:"paper qbox"});const zone=h("div",{class:"zone"});const arena=h("div",{class:"arena t-"+ctx.world.id},zone);stage.append(qbox,arena);
+ let i=0,T=[],raf=0,timer=null,busy=true,clean=true;CLEAN.push(()=>cancelAnimationFrame(raf));
+ function next(){if(i>=qs.length||hud.dead())return ctx.finish(hud.result());const q=qs[i];busy=false;clean=true;hud.prog(i+1,"Target");
+  qbox.innerHTML="";qbox.append(h("div",{class:"qnum"},`Target ${i+1} of ${qs.length}`),h("div",{class:"qtext"},q.q));
+  arena.querySelectorAll(".tg,.shot,.burst").forEach(x=>x.remove());const W=arena.clientWidth,H=arena.clientHeight;
+  const order=shuffle(q.opts.map((_,k)=>k));const sp=(42+i*4)*spd()*(RM?.25:1);
+  T=order.map((k,n)=>{const el=h("button",{class:"tg"},h("kbd",{},n+1),q.opts[k]);arena.append(el);const bw=el.offsetWidth,bh=el.offsetHeight;
+   const qx=n%2,qy=n>>1;const x=qx*W/2+Math.random()*Math.max(4,W/2-bw-4),y=qy*H/2+Math.random()*Math.max(4,H/2-bh-4);const ang=Math.random()*6.28;
+   const t={el,k,x:Math.min(x,W-bw),y:Math.min(y,H-bh),vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,bw,bh,dead:false};el.onclick=e=>shoot(t,e);return t});
+  let last=performance.now();cancelAnimationFrame(raf);
+  const loop=now=>{const dt=Math.min(.05,(now-last)/1000);last=now;const W2=arena.clientWidth,H2=arena.clientHeight;
+   for(const t of T){if(t.dead)continue;t.x+=t.vx*dt;t.y+=t.vy*dt;if(t.x<0){t.x=0;t.vx*=-1}if(t.x>W2-t.bw){t.x=W2-t.bw;t.vx*=-1}if(t.y<0){t.y=0;t.vy*=-1}if(t.y>H2-t.bh){t.y=H2-t.bh;t.vy*=-1}
+    const tf=`translate(${t.x}px,${t.y}px)`;t.el.style.setProperty("--tf",tf);t.el.style.transform=tf}
+   raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop);
+  timer=countdown(16/spd(),f=>{hud.time(f);zone.style.transform=`translate(-50%,-50%) scale(${.3+.7*f})`;arena.classList.toggle("closing",f<.3)},()=>{if(busy)return;busy=true;hud.bad();reveal();feedback(false,`Answer: ${q.opts[q.a]}. ${q.why}`,"Zone closed! ");i++;later(next,2300)})}
+ function fx(e,big){const r=arena.getBoundingClientRect();const x=e.clientX?e.clientX-r.left:r.width/2,y=e.clientY?e.clientY-r.top:r.height/2;const s=h("div",{class:"shot",style:`left:${x}px;top:${y}px`});arena.append(s);setTimeout(()=>s.remove(),450);
+  if(big&&!RM)for(let k=0;k<12;k++){const b=h("div",{class:"burst",style:`left:${x}px;top:${y}px`});arena.append(b);const a=k/12*6.28,d=40+Math.random()*40;b.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`,opacity:0}],{duration:600,easing:"ease-out"});setTimeout(()=>b.remove(),620)}}
+ function reveal(){const q=qs[i];T.forEach(t=>{if(t.k===q.a)t.el.classList.add("reveal")})}
+ function shoot(t,e){if(busy||t.dead)return;beep("shot");const q=qs[i];
+  if(t.k===q.a){busy=true;timer.stop();t.dead=true;t.el.classList.add("hit");fx(e,true);if(clean)hud.point();hud.good(clean?100+Math.round(timer.left*100):50);feedback(true,q.why);i++;later(next,1000)}
+  else{t.dead=true;t.el.classList.add("miss");fx(e,false);clean=false;hud.bad();if(hud.dead()){busy=true;timer.stop();reveal();feedback(false,`Answer: ${q.opts[q.a]}.`,"Knocked out! ");later(()=>ctx.finish(hud.result()),2000)}else feedback(false,"Wrong target. Keep shooting!")}}
+ listen(window,"keydown",e=>{const n=+e.key;if(n>=1&&n<=T.length)shoot(T[n-1],{})});
+ later(next,350)}
+
+/* ---------- GAME: Cell Sniper ---------- */
+function gameSniper(stage,ctx){const L=ctx.level,tasks=L.data;const sh=makeSheet(L.sheet);const hud=Hud(stage,ctx,{total:tasks.length,lives:3});
+ const tbox=h("div",{class:"paper task"});const host=h("div",{class:"sheethost"});stage.append(tbox,host);
+ let i=0,t=null,busy=true,tries=0,timer=null;
+ const api=renderSheet(host,sh,{nameBoxEditable:true,onSelect:onSel});
+ const ans=h("input",{class:"ans",placeholder:"e.g. B7 or A4:A8",autocomplete:"off",spellcheck:"false","aria-label":"Your answer"});const chk=h("button",{class:"btn",onclick:()=>checkName()},"Check");
+ listen(ans,"keydown",e=>{if(e.key==="Enter")checkName()});
+ function next(){if(i>=tasks.length||hud.dead())return ctx.finish(hud.result());t=tasks[i];tries=0;busy=false;hud.prog(i+1,"Task");
+  api.flash(t.flash||null);api.sel=null;api.paint();tbox.innerHTML="";
+  tbox.append(h("div",{class:"tlabel"},{cell:"Hit the cell",pick:"Find it",name:"Name it",range:"Select the range",row:"Select the row",col:"Select the column"}[t.type]),h("p",{class:"tprompt"},t.p));
+  if(t.type==="name"){ans.value="";tbox.append(h("div",{class:"ansrow"},ans,chk));later(()=>ans.focus(),60)}
+  timer=countdown(40/spd(),f=>hud.time(f),()=>{if(busy)return;busy=true;hud.bad();show();feedback(false,t.why,"Time! ");i++;later(next,2300)})}
+ function show(){const tg=t.target||t.answer||t.targets[0];if(/^\d+:\d+$/.test(tg)||/^[A-Z]+:[A-Z]+$/.test(tg))api.hint(tg);else api.flash(tg)}
+ function pass(){busy=true;timer.stop();if(!tries)hud.point();hud.good(tries?50:100+Math.round(timer.left*80));feedback(true,t.why);i++;later(()=>{api.hint(null);next()},1300)}
+ function miss(msg){tries++;hud.bad();if(hud.dead()){busy=true;timer.stop();show();feedback(false,t.why,"Knocked out! ");later(()=>ctx.finish(hud.result()),2000)}else feedback(false,msg)}
+ function onSel(txt){if(busy||!t||t.type==="name")return;
+  if(t.type==="pick"){if(!txt.includes(":")){t.targets.includes(txt)?pass():miss(`${txt} isn’t it. Check the formula bar.`)}return}
+  if(t.type==="cell"){if(txt.includes(":"))return;txt===t.target?pass():miss(`You hit ${txt}.`);return}
+  if(t.type==="range"){if(!txt.includes(":")||/^\d|^[A-Z]+:[A-Z]+$/.test(txt)){if(/:/.test(txt))miss(`That’s a whole row or column (${txt}).`);return}txt===t.target?pass():miss(`You selected ${txt}.`);return}
+  if(t.type==="row"||t.type==="col"){if(!txt.includes(":"))return;txt===t.target?pass():miss(`You selected ${txt}.`)}}
+ function checkName(){if(busy||t.type!=="name")return;const v=norm(ans.value);if(!v)return;const a=norm(t.answer);v===a?pass():miss(`${ans.value.toUpperCase()} isn’t right. Column letter, then row number.`)}
+ later(next,300)}
+
+/* ---------- GAME: Formula Forge ---------- */
+function gameForge(stage,ctx){const L=ctx.level,tasks=L.data;const sh=makeSheet(L.sheet);const hud=Hud(stage,ctx,{total:tasks.length});
+ const tbox=h("div",{class:"paper task"});const host=h("div",{class:"sheethost"});stage.append(tbox,host);
+ let i=0,t=null,tries=0,busy=true,hinted=false;
+ const api=renderSheet(host,sh,{fxEditable:true,pointMode:true,nameBoxEditable:true,onSelect:onSel,onCommit:commit});
+ const ans=h("input",{class:"ans",placeholder:"Your answer",autocomplete:"off",spellcheck:"false","aria-label":"Your answer"});const chk=h("button",{class:"btn",onclick:()=>predict()},"Check");
+ listen(ans,"keydown",e=>{if(e.key==="Enter")predict()});
+ const hintBtn=h("button",{class:"ghost dark sm",onclick(){if(!t)return;hinted=true;feedback(true,t.hint||t.why,"Hint: ")}},"Show a hint");
+ function next(){if(i>=tasks.length)return ctx.finish(hud.result());t=tasks[i];tries=0;hinted=false;busy=false;hud.prog(i+1,"Task");hud.time(1-(i/tasks.length));
+  if(t.pre){for(const[k,v]of Object.entries(t.pre))(sh.cells[k]??={}).v=v;api.filled=new Set(Object.keys(t.pre))}else api.filled=new Set();
+  api.draw();api.hint(t.cell||(t.type==="fill"?t.from+":"+t.to:null));api.flash(null);
+  if(t.cell)api.select(t.cell);else if(t.select)api.select(t.select);else if(t.type==="fill")api.select(t.from);
+  tbox.innerHTML="";tbox.append(h("div",{class:"tlabel"},{formula:"Write the formula",fill:"Use the fill handle",predict:"Predict"}[t.type]),h("p",{class:"tprompt"},t.p));
+  if(t.type==="predict"){ans.value="";tbox.append(h("div",{class:"ansrow"},ans,chk));later(()=>ans.focus(),60)}
+  if(t.type==="formula"){tbox.append(h("div",{class:"ansrow"},hintBtn));later(()=>{api.fx.value="";api.fx.focus()},60)}
+  if(t.type==="fill")tbox.append(h("p",{style:"font-size:14px;color:var(--ink2)"},"Tip: press on "+t.from+" and drag down. (Shift + click also extends a selection.)"))}
+ function pass(msg){busy=true;if(!tries&&!hinted)hud.point();hud.good(tries||hinted?50:120);feedback(true,msg||t.why);i++;later(next,1300)}
+ function wrong(msg){tries++;hud.bad(false);if(tries>=3&&t.type==="formula"){busy=true;(sh.cells[t.cell]??={}).f=t.hint;api.filled=new Set([t.cell]);api.draw();feedback(false,`One way is ${t.hint}. ${t.why}`,"Answer: ");i++;later(next,2800)}
+  else if(tries>=3&&t.type==="predict"){busy=true;feedback(false,`${t.answers[0]}. ${t.why}`,"Answer: ");i++;later(next,2600)}else feedback(false,msg)}
+ function commit(text){if(busy||!t)return;if(t.type!=="formula"){feedback(false,t.type==="fill"?"For this task, drag from "+t.from+" to "+t.to+".":"Type your answer in the answer box above.");return}
+  if(api.anchor()!==t.cell){feedback(false,`Click cell ${t.cell} first. That’s where this answer goes.`);api.select(t.cell);return}
+  if(!text)return;if(!text.startsWith("="))return wrong("Formulas must start with = . Without it, Excel stores plain text.");
+  const v=evalF(text,sh);if(isNaN(v))return wrong("Excel can’t calculate that (#NAME? or #VALUE!). Check spelling, brackets and cell references.");
+  if(Math.abs(v-t.expect)>.006)return wrong(`That gives ${fmtNum(v,sh.cells[t.cell]?.s)}. Check which cells you used and the operator.`);
+  if(t.needRef&&!/[A-Z]+\d+/i.test(text))return wrong("Right number, but use cell references (like B4) instead of typing values, so it recalculates when prices change.");
+  const c=sh.cells[t.cell]??={};c.f=text.toUpperCase();delete c.v;api.filled=new Set([t.cell]);api.draw();api.select(t.cell);api.fx.blur();pass(`${text.toUpperCase()} → ${api.disp(t.cell)}. ${t.why}`)}
+ function onSel(txt){if(busy||!t||t.type!=="fill")return;if(!txt.includes(":"))return;
+  if(txt!==`${t.from}:${t.to}`)return wrong(`You selected ${txt}. Start on ${t.from} and drag to ${t.to}.`);
+  const b=pRange(txt),src=pCell(t.from),base=sh.cells[t.from]?.f;if(!base)return;const done=new Set();
+  for(const ref of refsIn(b)){if(ref===t.from)continue;const p=pCell(ref);const c=sh.cells[ref]??={};c.f=shiftF(base,p.r-src.r,p.c-src.c);delete c.v;done.add(ref)}
+  api.filled=done;api.draw();api.select(t.from);pass()}
+ function predict(){if(busy||t.type!=="predict")return;const v=norm(ans.value);if(!v)return;const ok=t.answers.some(a=>{const A=norm(a);if(A===v)return true;const n1=parseFloat(v.replace(/,/g,"")),n2=parseFloat(A);return!isNaN(n1)&&!isNaN(n2)&&!/[A-Z=]/.test(v)&&Math.abs(n1-n2)<.006});
+  ok?pass():wrong("Not quite. Click the cell and read the formula bar for clues.")}
+ later(next,300)}
+
+/* ---------- GAME: Format Fixer ---------- */
+const TOOLS=[["mergeC","⇔ Merge & Centre"],["bold","<b>B</b> Bold"],["italic","<i>I</i> Italic"],["underline","<u>U</u> Underline"],["size14","Font Size 14"],["fmtCells","Format Cells… (Ctrl+1)"],["autofit","↔ AutoFit Width"],["allB","▦ All Borders"],["outB","□ Outside Borders"],["orient","↗ Orientation 45°"],["comma",", Comma Style"],["wrap","↵ Wrap Text"],["sortAZ","A→Z Sort"],["fill","Fill Colour"]];
+function applyTool(sh,tool,b){const each=fn=>{for(const ref of refsIn(b)){const c=sh.cells[ref]??={};c.s=c.s||{};fn(c.s,pCell(ref))}};
+ const merge=()=>{sh.merges=sh.merges.filter(m=>!(m.r1<=b.r2&&m.r2>=b.r1&&m.c1<=b.c2&&m.c2>=b.c1));sh.merges.push({...b});const a=sh.cells[R(b.r1,b.c1)]??={};a.s={...(a.s||{}),align:"center"}};
+ switch(tool){case"mergeC":merge();break;case"fmtCells":merge();sh.cells[R(b.r1,b.c1)].s.valign="middle";break;
+  case"bold":each(s=>s.bold=1);break;case"italic":each(s=>s.italic=1);break;case"size14":each(s=>s.size=18);break;
+  case"allB":each(s=>s.b={t:1,r:1,bt:1,l:1});break;
+  case"outB":each((s,p)=>{s.b=s.b||{};if(p.r===b.r1)s.b.t=1;if(p.r===b.r2)s.b.bt=1;if(p.c===b.c1)s.b.l=1;if(p.c===b.c2)s.b.r=1});break;
+  case"orient":each(s=>{s.orient=1;s.align="center"});for(let r=b.r1;r<=b.r2;r++)sh.rowH[r]=54;break;
+  case"comma":each(s=>s.comma=1);break;case"wrap":each(s=>s.wrap=1);break;
+  case"autofit":for(let c=b.c1;c<=b.c2;c++){let mx=6;for(let r=1;r<=sh.rows;r++){const ref=R(r,c);if(sh.merges.some(m=>m.r1===r&&m.c1===c&&m.c2>m.c1))continue;const cc=sh.cells[ref];if(!cc)continue;const v=cc.f?evalF(cc.f,sh):cc.v;mx=Math.max(mx,String(fmtNum(v,cc.s)??"").length)}sh.colW[colL(c)]=Math.round(mx*7.6+16)}break}}
+function gameFormat(stage,ctx){const L=ctx.level,steps=L.data;const sh=makeSheet(L.sheet);const hud=Hud(stage,ctx,{total:steps.length});
+ const note=h("div",{class:"note"});const ribbon=h("div",{class:"ribbon",role:"toolbar","aria-label":"Ribbon"});const host=h("div",{class:"sheethost"});stage.append(note,host);
+ let i=0,s=null,tries=0,busy=true;
+ TOOLS.forEach(([id,label])=>ribbon.append(h("button",{class:"rb","data-tool":id,html:label,onclick:()=>use(id)})));
+ const api=renderSheet(host,sh,{nameBoxEditable:true,ribbon});
+ const sameSel=target=>{if(!api.sel)return false;if(/^[A-Z]+:[A-Z]+$/.test(target))return api.sel.mode==="col"&&api.selText()===target;const b=api.bounds(),t=pRange(target);return b.r1===t.r1&&b.r2===t.r2&&b.c1===t.c1&&b.c2===t.c2};
+ function next(){ribbon.querySelectorAll(".rb").forEach(b=>b.classList.remove("glow"));if(i>=steps.length){api.hint(null);return later(()=>ctx.finish(hud.result()),600)}
+  s=steps[i];tries=0;busy=false;hud.prog(i+1,"Note");hud.time(1-i/steps.length);api.hint(s.range);
+  note.innerHTML="";note.append(h("small",{},`Manuscript note ${i+1} of ${steps.length} · target ${s.range}`),s.note)}
+ function use(id){if(busy)return;
+  if(!sameSel(s.range)){tries++;hud.bad(false);feedback(false,`Select ${s.range} first: drag across it, ${/^[A-Z]+:/.test(s.range)?"click the column header":"or type "+s.range+" in the Name Box and press Enter"}.`);return}
+  if(id!==s.tool){tries++;hud.bad(false);feedback(false,s.hint,"Wrong tool. ");if(tries>=2)ribbon.querySelector(`[data-tool="${s.tool}"]`).classList.add("glow");return}
+  busy=true;applyTool(sh,id,api.bounds());(s.also||[]).forEach(r=>applyTool(sh,id,pRange(r)));api.filled=new Set(refsIn(api.bounds()));api.draw();
+  if(!tries)hud.point();hud.good(tries?40:100);feedback(true,s.hint);i++;later(next,900)}
+ later(next,300)}
+
+/* ---------- GAME: Order ---------- */
+function gameOrder(stage,ctx){const tasks=ctx.level.data;const hud=Hud(stage,ctx,{total:tasks.reduce((a,t)=>a+t.items.length,0)});
+ const tbox=h("div",{class:"paper task"});const area=h("div",{class:"order"});stage.append(tbox,area);let i=0,timer,placed=0,done=0;
+ function next(){if(i>=tasks.length)return ctx.finish(hud.result());const t=tasks[i];placed=0;let busy=false,errs=0;hud.prog(i+1,"List",tasks.length);
+  tbox.innerHTML="";tbox.append(h("div",{class:"tlabel"},"Put in order"),h("p",{class:"tprompt"},t.p));
+  const slots=h("ol",{class:"slots paper"});const pool=h("div",{class:"pool"});area.innerHTML="";area.append(slots,pool);
+  const empty=()=>{slots.querySelectorAll(".empty").forEach(x=>x.remove());for(let k=placed;k<t.items.length;k++)slots.append(h("li",{class:"empty"},`Step ${k+1}`))};empty();
+  shuffle(t.items).forEach(txt=>pool.append(h("button",{class:"mbtn",onclick(e){if(busy)return;const b=e.currentTarget;
+   if(txt===t.items[placed]){b.remove();slots.querySelectorAll(".empty").forEach(x=>x.remove());slots.append(h("li",{},txt));placed++;hud.point();hud.good(60);empty();
+    if(placed===t.items.length){busy=true;timer.stop();feedback(true,errs?`Done, with ${errs} slip${errs>1?"s":""}.`:"Perfect order!");i++;later(next,1200)}}
+   else{errs++;hud.bad(false);b.classList.add("wrong");later(()=>b.classList.remove("wrong"),400);penal++}}},txt)));
+  timer=countdown(Math.max(30,t.items.length*9)/spd(),f=>hud.time(f),()=>{busy=true;feedback(false,"Time’s up. Here’s the right order.");slots.innerHTML="";t.items.forEach(x=>slots.append(h("li",{},x)));pool.innerHTML="";i++;later(next,2600)})}
+ let penal=0;const orig=hud.result;hud.result=x=>{const r=orig(x);r.total=r.total+penal;return r};
+ later(next,300)}
+
+/* ---------- GAME: Final exam ---------- */
+function buildExam(){const mcq=[],tf=[];
+ WORLDS.forEach(w=>w.levels.forEach(L=>{if(L.type==="blaster")L.data.forEach(q=>mcq.push({...q,topic:w.name}));if(L.type==="tf")L.data.forEach(q=>tf.push({...q,topic:w.name}))}));
+ const byTopic={};[...mcq,...EXTRA_MCQ].forEach(q=>(byTopic[q.topic]??=[]).push(q));
+ let pickM=[];const topics=shuffle(Object.keys(byTopic));let k=0;while(pickM.length<14){const tp=topics[k%topics.length];const pool=byTopic[tp];if(pool.length)pickM.push(pool.splice(Math.random()*pool.length|0,1)[0]);k++;if(k>200)break}
+ const pickT=shuffle([...tf,...EXTRA_TF]).slice(0,8);const pickP=shuffle(PRAC).slice(0,6);
+ return[...pickM.map(q=>({kind:"mcq",sec:"A",...q})),...pickT.map(q=>({kind:"tf",sec:"B",...q})),...pickP.map(q=>({...q,sec:"C"}))]}
+function gameExam(stage,ctx){const Q=buildExam();const ans=new Array(Q.length).fill(null);let i=0;
+ const mins=S.speed==="chill"?26:S.speed==="turbo"?13:18;const end=performance.now()+mins*60000;
+ const card=h("div",{class:"paper exam"});const clock=h("span",{class:"clock"});stage.append(card);
+ let armed=false;const quit=h("button",{class:"ghost dark sm",onclick(){if(armed)go(()=>showWorld(ctx.wi));else{armed=true;quit.textContent="Tap again to leave";later(()=>{armed=false;quit.textContent="Leave"},2200)}}},"Leave");
+ const tick=()=>{const left=Math.max(0,end-performance.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);clock.textContent=`${m}:${String(s).padStart(2,"0")}`;if(left<=0)finish()};
+ const iv=setInterval(tick,500);CLEAN.push(()=>clearInterval(iv));tick();
+ const SEC={A:"Section A · Multiple choice",B:"Section B · True or false",C:"Section C · Practical"};
+ function render(){const q=Q[i];card.innerHTML="";const dots=h("div",{class:"dots"},Q.map((_,k)=>h("i",{class:k===i?"c":(ans[k]!=null?"d":"")})));
+  card.append(h("div",{class:"ehead"},h("div",{},h("div",{class:"eyebrow"},SEC[q.sec]),h("strong",{style:"font-family:var(--display);font-weight:400;font-size:20px"},`Question ${i+1} of ${Q.length}`)),h("div",{style:"display:flex;gap:8px;align-items:center"},clock,quit)),dots,
+   h("p",{class:"tprompt"},q.kind==="tf"?q.s:q.q||q.p));
+  const nextBtn=h("button",{class:"btn",disabled:ans[i]==null?true:null,onclick:()=>{if(i<Q.length-1){i++;render()}else finish()}},i<Q.length-1?"Next":"Finish paper");
+  const set=v=>{ans[i]=v;nextBtn.disabled=v==null||v==="";card.querySelectorAll(".dots i")[i].classList.add("d")};
+  if(q.kind==="mcq"){if(!q.order)q.order=shuffle(q.opts.map((_,k)=>k));const box=h("div",{class:"opts"});q.order.forEach((k,n)=>box.append(h("button",{class:"opt","aria-pressed":String(ans[i]===k),onclick(e){box.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed","false"));e.currentTarget.setAttribute("aria-pressed","true");set(k)}},h("b",{},"abcd"[n]),q.opts[k])));card.append(box)}
+  else if(q.kind==="tf"){const box=h("div",{class:"opts",style:"grid-template-columns:1fr 1fr"});[true,false].forEach(v=>box.append(h("button",{class:"opt","aria-pressed":String(ans[i]===v),onclick(e){box.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed","false"));e.currentTarget.setAttribute("aria-pressed","true");set(v)}},v?"True":"False")));card.append(box)}
+  else{if(q.sheet){const host=h("div",{class:"sheethost mini"});card.append(host);const api=renderSheet(host,makeSheet(q.sheet),{});if(q.sel)api.select(q.sel)}
+   const inp=h("input",{class:"ans",placeholder:q.kind==="formula"?"Type the formula, starting with =":"Type your answer",value:ans[i]||"",autocomplete:"off",spellcheck:"false","aria-label":"Your answer"});
+   listen(inp,"input",()=>set(inp.value.trim()||null));listen(inp,"keydown",e=>{if(e.key==="Enter"&&!nextBtn.disabled)nextBtn.click()});card.append(inp);later(()=>inp.focus(),60)}
+  card.append(h("div",{class:"bar-actions"},nextBtn,h("button",{class:"ghost dark",onclick:()=>{ans[i]=null;if(i<Q.length-1){i++;render()}else finish()}},"Skip")))}
+ let done=false;
+ function mark(q,a){if(a==null||a==="")return false;if(q.kind==="mcq")return a===q.a;if(q.kind==="tf")return a===q.a;
+  if(q.kind==="text")return q.answers.some(x=>norm(x)===norm(a));
+  if(q.kind==="formula"){if(!String(a).startsWith("="))return false;const v=evalF(a,makeSheet(q.sheet));return!isNaN(v)&&Math.abs(v-q.expect)<.006&&(!q.needRef||/[A-Z]+\d+/i.test(a))}return false}
+ function finish(){if(done)return;done=true;const review=Q.map((q,k)=>{const ok=mark(q,ans[k]);const your=ans[k]==null?"(skipped)":q.kind==="mcq"?q.opts[ans[k]]:q.kind==="tf"?(ans[k]?"True":"False"):ans[k];
+   const right=q.kind==="mcq"?q.opts[q.a]:q.kind==="tf"?(q.a?"True":"False"):q.kind==="text"?q.answers[0]:(q.why.split("→")[0].trim());return{q:q.kind==="tf"?q.s:q.q||q.p,ok,your,right,why:q.why,topic:q.topic,sec:q.sec}});
+  const correct=review.filter(r=>r.ok).length;ctx.finish({score:correct*100,correct,total:Q.length,maxCombo:0,exam:true,review})}
+ render()}
+
+const GAMES={match:gameMatch,tf:gameTF,buckets:gameBuckets,blaster:gameBlaster,sniper:gameSniper,forge:gameForge,format:gameFormat,order:gameOrder,exam:gameExam};
+
+/* ---------- Results ---------- */
+function showResults(wi,li,res){const w=WORLDS[wi];setTheme(w);main.innerHTML="";
+ const acc=res.total?res.correct/res.total:0;const stars=acc>=.9?3:acc>=.7?2:acc>=.5?1:0;
+ const k=lvKey(wi,li),prev=S.progress[k]||{stars:0,score:0};const newBest=res.score>prev.score;S.progress[k]={stars:Math.max(prev.stars,stars),score:Math.max(prev.score,res.score)};save();updateChips();
+ later(()=>beep(stars?"win":"bad"),200);
+ const nxt=li+1<w.levels.length?[wi,li+1]:(wi+1<WORLDS.length?[wi+1,0]:null);const canNext=nxt&&levelOpen(nxt[0],nxt[1]);
+ const head=res.exam?(stars===3?"Distinction":stars===2?"Credit":stars===1?"Pass":"Keep practising"):res.knocked?"Knocked out!":stars===3?"Flawless!":stars===2?"Level cleared!":stars===1?"Cleared, just!":"Not yet. Try again!";
+ const card=h("div",{class:"paper res"},h("div",{class:"eyebrow"},`${w.name} · Level ${li+1}`),h("h1",{},head),h("div",{class:"bigstars"},[0,1,2].map(n=>{const s=svgEl(`<svg viewBox="0 0 24 24" class="${n<stars?"on":""}" aria-hidden="true"><path d="M12 2l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.8 5.7 21.4l1.5-7.1L1.8 9.4 9 8.6z" fill="${n<stars?"#f2b705":"#e2d6b8"}" stroke="${n<stars?"#a87a00":"#cfc2a0"}"/></svg>`);return s})),
+  h("div",{class:"stats"},stat("Score",res.score+(newBest&&prev.score?" ★":"")),stat("Accuracy",Math.round(acc*100)+"%"),stat("Correct",`${res.correct}/${res.total}`),res.exam?null:stat("Best combo","×"+res.maxCombo)),
+  h("p",{style:"color:var(--ink2);font-size:14px"},stars?(stars<3?"Score 90% or more for three stars.":"Top marks."):"You need 50% to clear a level and unlock the next one."));
+ if(res.exam){card.append(topicBreak(res.review));card.append(reviewList(res.review));
+  const summary=`Tabulation Quest · Final Test Match\nPlayer: ${S.name||"(no name)"}\nDate: ${new Date().toLocaleDateString()}\nScore: ${res.correct}/${res.total} (${Math.round(acc*100)}%) · ${head}\n`+topicLines(res.review);
+  const ta=h("textarea",{readonly:true,style:"width:100%;height:120px;font:13px var(--mono);border-radius:10px;border:1px solid var(--rule);padding:8px;color:var(--ink);background:#fff"},summary);
+  card.append(h("div",{style:"width:100%;display:grid;gap:8px;text-align:left"},h("strong",{},`Report for ${S.name||"this player"}`),ta,h("button",{class:"ghost dark",style:"justify-self:start",onclick(e){const b=e.currentTarget;navigator.clipboard?.writeText(summary).then(()=>{b.textContent="Copied"},()=>{ta.select();b.textContent="Selected: press Ctrl+C"})||(ta.select())}},"Copy report for your teacher")))}
+ card.append(h("div",{class:"bar-actions",style:"justify-content:center"},canNext?h("button",{class:"btn big",onclick(){go(()=>nxt[1]===0?showWorld(nxt[0]):showBrief(nxt[0],nxt[1]))}},nxt[1]===0?"Next world →":"Next level →"):null,
+  h("button",{class:"btn alt",onclick(){go(()=>startLevel(wi,li))}},"Replay"),h("button",{class:"ghost dark",onclick(){go(()=>showWorld(wi))}},"World"),h("button",{class:"ghost dark",onclick(){go(showMap)}},"Map")));
+ main.append(h("div",{class:"wrap"},card));
+ later(showFact,900)}
+function stat(l,v){return h("div",{class:"stat"},h("small",{},l),h("b",{},String(v)))}
+function topicStats(rv){const t={};rv.forEach(r=>{const o=t[r.topic]??={c:0,n:0};o.n++;if(r.ok)o.c++});return t}
+function topicLines(rv){return Object.entries(topicStats(rv)).map(([k,o])=>`${k}: ${o.c}/${o.n}`).join("\n")}
+function topicBreak(rv){const box=h("div",{class:"topics"},h("strong",{},"By topic"));for(const[k,o]of Object.entries(topicStats(rv)))box.append(h("div",{class:"trow"},h("span",{},k),h("span",{class:"tmeter"},h("i",{style:`width:${o.c/o.n*100}%`})),h("span",{style:"text-align:right;font-variant-numeric:tabular-nums"},`${o.c}/${o.n}`)));return box}
+function reviewList(rv){const d=h("details",{},h("summary",{},"Review every answer"));rv.forEach((r,k)=>d.append(h("div",{class:"ritem"},h("span",{class:r.ok?"ok":"no"},r.ok?"✓ ":"✗ "),h("b",{},`${k+1}. `),r.q,h("br"),
+  h("span",{style:"color:var(--ink2)"},`Your answer: ${r.your}`),r.ok?null:h("span",{style:"color:var(--ink2)"},` · Correct: ${r.right}`),h("br"),h("small",{style:"color:var(--ink2)"},r.why))));return h("div",{class:"review"},d)}
+function showFact(){document.querySelectorAll(".dyk").forEach(x=>x.remove());const f=FACTS[S.fact%FACTS.length];S.fact++;save();
+ const box=h("aside",{class:"dyk",role:"note","aria-label":"Caribbean geography fact"},h("div",{class:"eyebrow"},"Did you know? · Caribbean geography"),h("h4",{},f[0]),h("p",{},f[1]),
+  h("div",{class:"row"},h("button",{onclick:showFact},"Another fact"),h("button",{onclick:()=>box.remove()},"Close")));document.body.append(box)}
+
+/* ---------- Mini charts for concept cards ---------- */
+function miniChart(kind){const C=["#e76f51","#2a9d8f","#e9c46a","#457b9d","#f4a261"];const v=[60,85,40,95,70];
+ if(kind==="pie"){let a=-Math.PI/2,p="";[.45,.3,.25].forEach((s,k)=>{const b=a+s*6.283;const x1=110+45*Math.cos(a),y1=55+45*Math.sin(a),x2=110+45*Math.cos(b),y2=55+45*Math.sin(b);p+=`<path d="M110 55L${x1.toFixed(1)} ${y1.toFixed(1)}A45 45 0 ${s>.5?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${C[k]}"/>`;a=b});return`<svg viewBox="0 0 220 110" role="img" aria-label="Pie chart example">${p}</svg>`}
+ if(kind==="bar"){return`<svg viewBox="0 0 220 110" role="img" aria-label="Bar chart example"><line x1="30" y1="6" x2="30" y2="104" stroke="#8a8f94"/>${v.map((n,k)=>`<rect x="31" y="${8+k*19}" width="${n*1.8}" height="13" fill="${C[1]}"/>`).join("")}</svg>`}
+ if(kind==="line"){const pts=[30,55,45,75,60,90,80,70].map((n,k)=>`${14+k*28},${100-n}`).join(" ");return`<svg viewBox="0 0 220 110" role="img" aria-label="Line chart example"><line x1="10" y1="102" x2="215" y2="102" stroke="#8a8f94"/><polyline points="${pts}" fill="none" stroke="${C[3]}" stroke-width="3"/>${pts.split(" ").map(p=>`<circle cx="${p.split(",")[0]}" cy="${p.split(",")[1]}" r="3" fill="${C[3]}"/>`).join("")}</svg>`}
+ return`<svg viewBox="0 0 220 110" role="img" aria-label="Column chart example"><line x1="10" y1="102" x2="215" y2="102" stroke="#8a8f94"/>${v.map((n,k)=>`<rect x="${22+k*40}" y="${102-n}" width="26" height="${n}" fill="${C[0]}"/>`).join("")}</svg>`}
+
+/* ---------- Settings ---------- */
+function openSettings(){document.querySelectorAll(".modal").forEach(x=>x.remove());
+ const tch=h("input",{type:"checkbox",id:"tch"});tch.checked=S.teacher;const snd=h("input",{type:"checkbox",id:"snd"});snd.checked=S.sound;
+ const nm=h("input",{class:"field",id:"nm",value:S.name,maxlength:"30",autocomplete:"off"});
+ const seg=h("div",{class:"seg"},Object.entries(SPD).map(([k,v])=>h("button",{"aria-pressed":String(S.speed===k),onclick(e){S.speed=k;seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed","false"));e.currentTarget.setAttribute("aria-pressed","true")}},v.label)));
+ let armed=false;const reset=h("button",{class:"ghost dark",onclick(){if(window.GameSave){GameSave.startOver();return}if(!armed){armed=true;reset.textContent="Tap again to erase all stars";return}S.progress={};save();updateChips();m.remove();go(showMap)}},"Reset progress");
+ const m=h("div",{class:"modal",onclick(e){if(e.target===m)close()}},h("div",{class:"paper",role:"dialog","aria-label":"Settings"},h("h2",{},"Settings"),
+  h("div",{},h("label",{for:"nm",style:"font-weight:800;font-size:14px"},"Player name"),nm),h("div",{},h("div",{style:"font-weight:800;font-size:14px;margin-bottom:4px"},"Speed"),seg),
+  h("label",{class:"switch",for:"snd"},"Sound effects",snd),h("label",{class:"switch",for:"tch"},h("span",{},"Teacher mode",h("br"),h("small",{style:"font-weight:600;color:var(--ink2)"},"Unlocks every world and level")),tch),
+  h("div",{class:"bar-actions"},h("button",{class:"btn",onclick:close},"Done"),reset)));
+ function close(){S.name=nm.value.trim();S.sound=snd.checked;S.teacher=tch.checked;save();updateChips();m.remove();const cur=main.dataset.screen;if(cur==="map")go(showMap)}
+ document.body.append(m)}
+$("#setbtn").addEventListener("click",openSettings);
+$("#home").addEventListener("click",()=>go(S.name||totalStars()?showMap:showTitle));
+const _showMap=showMap;showMap=function(){main.dataset.screen="map";if(S.lastWorld!=null){S.lastWorld=null;save()}_showMap()};
+updateChips();
+{const lw=S.lastWorld;if(Number.isInteger(lw)&&WORLDS[lw]&&worldOpen(lw))go(()=>showWorld(lw));else go(totalStars()?showMap:showTitle)}
+if(window.GameSave&&totalStars())setTimeout(()=>GameSave.toast("Welcome back! Your stars and progress were restored."),400);
+</script>
+</body>
+</html>

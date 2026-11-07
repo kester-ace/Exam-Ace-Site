@@ -1,0 +1,1693 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Interview Room</title>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script>
+/* ==========================================================================
+   VOICE SCRIPT - every spoken line in the game lives here.
+   To use recorded voices (e.g. ElevenLabs), save each line as audio/<id>.mp3
+   next to this file (games/audio/iv_q1.mp3 style). Missing files fall back to
+   the browser's built-in speech voices automatically.
+   ========================================================================== */
+const LINES = {
+  /* Narrator */
+  nr_welcome:  { who: 'narrator', text: "Welcome to the Interview Room. You are applying to be an Administrative Assistant at Harbourview Business Services on Water Street, Georgetown." },
+  nr_outfit:   { who: 'narrator', text: "Stage one: prepare. Start by choosing what to wear to your interview." },
+  nr_attire:   { who: 'narrator', text: "Now do a quick check in the mirror before you leave." },
+  nr_folder:   { who: 'narrator', text: "Pack your folder. Only take what the panel needs to see." },
+  nr_research: { who: 'narrator', text: "Finally, research the company so you can speak about it with confidence." },
+  nr_arrive:   { who: 'narrator', text: "Stage two: arrival. Your interview is at ten o'clock. What time do you arrive?" },
+  nr_phone:    { who: 'narrator', text: "Your phone buzzes in the waiting area. What do you do?" },
+  nr_door:     { who: 'narrator', text: "The receptionist shows you to the interview room. You knock on the door." },
+  nr_shake:    { who: 'narrator', text: "The panel stands to greet you." },
+  nr_body1:    { who: 'narrator', text: "Mr. Clarke is describing the job. Show that you are listening." },
+  nr_body2:    { who: 'narrator', text: "Mrs. Daniels pauses to write some notes. How do you wait?" },
+  nr_close:    { who: 'narrator', text: "Stage four: close. The interview is coming to an end." },
+  nr_email:    { who: 'narrator', text: "Back home, send a follow-up thank-you e-mail to the panel." },
+  nr_result:   { who: 'narrator', text: "Stage five: the result. Two days later, Harbourview gets in touch." },
+
+  /* Receptionist */
+  rc_morning:  { who: 'reception', text: "Good morning, welcome to Harbourview Business Services. How may I help you?" },
+  rc_polite:   { who: 'reception', text: "Of course. Please take a seat, and I'll let Mrs. Daniels know you're here." },
+  rc_rude:     { who: 'reception', text: "Oh. Okay then. Take a seat over there." },
+  rc_ready:    { who: 'reception', text: "The panel is ready for you now. Go right in, and good luck!" },
+
+  /* Mrs. Daniels - HR Manager */
+  dn_comein:   { who: 'daniels', text: "Come in, please!" },
+  dn_seat:     { who: 'daniels', text: "Please, have a seat." },
+  dn_intro:    { who: 'daniels', text: "Welcome. I'm Mrs. Daniels, the HR Manager, and this is Mr. Clarke, our Office Manager." },
+  dn_q1:       { who: 'daniels', text: "To begin, tell us a little about yourself." },
+  dn_q3:       { who: 'daniels', text: "What would you say is your greatest strength? And one weakness you are working on?" },
+  dn_q5:       { who: 'daniels', text: "A customer comes to reception shouting because their documents are not ready. How would you handle that?" },
+  dn_q7:       { who: 'daniels', text: "Our clients trust us with private information. How would you keep confidential documents secure?" },
+  dn_q9:       { who: 'daniels', text: "Suppose you sent an e-mail to the wrong client by mistake. What would you do?" },
+  dn_q11:      { who: 'daniels', text: "What are your salary expectations, and when would you be available to start?" },
+  dn_good1:    { who: 'daniels', text: "Excellent. That is exactly what we like to hear." },
+  dn_good2:    { who: 'daniels', text: "Very good. That's a thoughtful answer." },
+  dn_ok:       { who: 'daniels', text: "Okay. Could you be a little more specific?" },
+  dn_poor1:    { who: 'daniels', text: "Hmm. I see." },
+  dn_poor2:    { who: 'daniels', text: "That's not quite what we are looking for." },
+  dn_close:    { who: 'daniels', text: "Thank you for coming in today. We will be in touch by the end of the week." },
+  dn_hired:    { who: 'daniels', text: "Congratulations! We would like to offer you the position of Administrative Assistant." },
+  dn_notyet:   { who: 'daniels', text: "Thank you for your interest. Unfortunately, we won't be offering you the post this time. Keep practising!" },
+
+  /* Mr. Clarke - Office Manager */
+  ck_hello:    { who: 'clarke', text: "Good morning. Thank you for coming in." },
+  ck_role:     { who: 'clarke', text: "Let me tell you about the role. You would greet clients, manage our diary and filing, and prepare letters and spreadsheets." },
+  ck_q2:       { who: 'clarke', text: "Why do you want to work as an administrative assistant here at Harbourview?" },
+  ck_q4:       { who: 'clarke', text: "Tell us about a time you worked as part of a team." },
+  ck_q6:       { who: 'clarke', text: "What is your typing speed, and which software packages can you use?" },
+  ck_q8:       { who: 'clarke', text: "You have three urgent tasks at once. How would you prioritise them?" },
+  ck_q10:      { who: 'clarke', text: "Where do you see yourself in five years' time?" },
+  ck_q12:      { who: 'clarke', text: "Finally, do you have any questions for us?" },
+  ck_good1:    { who: 'clarke', text: "Impressive. That shows real professionalism." },
+  ck_good2:    { who: 'clarke', text: "Good answer. I like that." },
+  ck_ok:       { who: 'clarke', text: "Right. That's a fair start." },
+  ck_poor1:    { who: 'clarke', text: "Mm-hmm. Let's move on." },
+  ck_poor2:    { who: 'clarke', text: "I'm a little concerned by that answer." },
+  ck_bye:      { who: 'clarke', text: "All the best to you. Mind how you go." },
+  ck_second:   { who: 'clarke', text: "We were impressed. We'd like to invite you back for a second interview." }
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
+<style>
+/* Harbourside office: navy, sea-glass teal, sand paper, coral accent. One warm light theme by design. */
+:root{
+  --ink:#13283a; --ink-2:#4b5e6c; --paper:#f4ede1; --card:#fffcf7; --line:#e4d9c7;
+  --navy:#0f2f48; --navy-2:#173f5f; --teal:#13767a; --teal-2:#0c5558; --teal-soft:#e1f2ef;
+  --coral:#d2553a; --coral-2:#b8442b; --gold:#e1a63b; --gold-soft:#fff4dd;
+  --good:#2b7a49; --ok:#ad7609; --poor:#bb3a27;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --shadow:0 6px 22px rgba(15,47,72,.13);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;padding:0}
+body{background:#e9e0d0;background-image:radial-gradient(ellipse at 70% -20%,rgba(19,118,122,.10),transparent 60%);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;overflow-x:hidden;min-height:100vh}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- top bar ---------- */
+.top{position:relative;z-index:31;background:var(--navy);background-image:linear-gradient(90deg,var(--navy),var(--navy-2));color:#fff;padding:8px 16px;display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.brand{flex:1 1 300px;min-width:0;display:flex;gap:10px;align-items:center}
+.logo{flex:none;width:34px;height:34px}
+.brand h1{font:700 1.22rem/1.1 var(--display);margin:0;letter-spacing:.1px}
+.brand p{margin:1px 0 0;font-size:.74rem;color:#b9d2df}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+.tg{appearance:none;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:#fff;border-radius:999px;padding:5px 11px 5px 9px;font-size:.76rem;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.tg svg{width:15px;height:15px;flex:none}
+.tg[aria-pressed="true"]{background:#fff;color:var(--navy);border-color:#fff}
+.tg[aria-pressed="false"]{opacity:.8}
+.tg[aria-pressed="false"] .on{display:none}
+.tg[aria-pressed="true"] .off{display:none}
+
+/* ---------- layout ---------- */
+.game{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14px;padding:12px 16px 4px;max-width:1240px;margin:0 auto;align-items:start}
+.scene-col{min-width:0}
+.scene{position:relative;aspect-ratio:800/500;border-radius:14px;overflow:hidden;background:#d9ccb6;box-shadow:var(--shadow);isolation:isolate}
+.scene svg.world{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity .3s ease}
+.scene.fade svg.world{opacity:0}
+
+/* ---------- speech bubbles ---------- */
+.bubble{position:absolute;z-index:3;background:#fff;color:var(--ink);border-radius:14px;padding:7px 12px 9px;font-size:.86rem;line-height:1.36;box-shadow:0 5px 16px rgba(0,0,0,.2);border:2px solid var(--ink);opacity:0;transform:translateY(6px) scale(.97);transition:opacity .2s ease,transform .2s ease;pointer-events:none;max-width:39%;min-width:120px}
+.bubble.show{opacity:1;transform:none}
+.bubble .who{display:block;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-2);margin-bottom:1px}
+.bubble .rest{visibility:hidden}
+.bubble::after{content:"";position:absolute;width:14px;height:14px;background:inherit;border:2px solid var(--ink);border-top:0;border-right:0}
+.b-daniels{left:30.5%;top:5%}
+.b-daniels::after{left:-9px;bottom:16px;transform:rotate(45deg)}
+.b-clarke{right:30.5%;top:5%}
+.b-clarke::after{right:-9px;bottom:16px;transform:rotate(-135deg)}
+.b-reception{left:43%;top:8%}
+.b-reception::after{left:-9px;bottom:16px;transform:rotate(45deg)}
+.b-narrator{left:7%;right:7%;top:3.5%;max-width:none;background:var(--navy);color:#fff;border-color:var(--navy);font-style:italic;text-align:center}
+.b-narrator .who{color:var(--gold)}
+.b-narrator::after{display:none}
+.b-you{left:50%;bottom:4%;transform:translate(-50%,6px);max-width:64%;background:var(--teal-soft);border-color:var(--teal-2)}
+.b-you.show{transform:translate(-50%,0)}
+.b-you .who{color:var(--teal-2)}
+.b-you::after{left:calc(50% - 7px);bottom:-9px;transform:rotate(-45deg);border-color:var(--teal-2)}
+.b-you.action{font-style:italic}
+
+/* ---------- captions + meters ---------- */
+.caption{margin-top:8px;background:var(--navy);color:#f2f6f8;border-radius:10px;padding:7px 12px;font-size:.86rem;min-height:2.6em;display:flex;gap:10px;align-items:flex-start}
+.cc{flex:none;font-size:.62rem;font-weight:800;letter-spacing:.06em;border:1.5px solid #9bb7c8;color:#cfe0ea;border-radius:4px;padding:1px 4px;margin-top:2px}
+.caption b{color:var(--gold);font-weight:800}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.meter{background:var(--card);border-radius:10px;padding:7px 10px;box-shadow:0 2px 8px rgba(15,47,72,.07);position:relative}
+.meter .lab{display:flex;justify-content:space-between;font-size:.74rem;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em}
+.bar{height:9px;border-radius:9px;background:#ece3d4;margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:9px;transition:width .6s cubic-bezier(.3,.9,.3,1)}
+#mConf i{background:linear-gradient(90deg,#3aa1a5,var(--teal))}
+#mImp i{background:linear-gradient(90deg,#f0b34b,var(--coral))}
+.delta{position:absolute;right:10px;top:-6px;font-weight:800;font-size:.8rem;opacity:0;transition:opacity .25s,transform .6s;pointer-events:none}
+.delta.up{color:var(--good)} .delta.down{color:var(--poor)}
+.delta.show{opacity:1;transform:translateY(-8px)}
+
+/* ---------- side panel ---------- */
+.panel{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px 14px;min-width:0;max-height:calc(100vh - 92px);overflow:auto;overscroll-behavior:contain}
+.steps{display:flex;gap:4px;margin:0 0 10px;padding:0;list-style:none}
+.steps li{flex:1;min-width:0;text-align:center;font-size:.66rem;font-weight:800;letter-spacing:.03em;color:var(--ink-2);padding:5px 2px 4px;border-radius:7px;background:#f1e9dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps li.now{background:var(--navy);color:#fff}
+.steps li.done{background:var(--teal-soft);color:var(--teal-2)}
+.kicker{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--coral-2);margin:0 0 2px}
+.prompt{font:600 1.16rem/1.25 var(--display);margin:0 0 10px;outline:none}
+.hint{font-size:.8rem;color:var(--ink-2);margin:-4px 0 10px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;font-size:.89rem;line-height:1.38;color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.opt:hover:not([disabled]){border-color:var(--teal);background:var(--teal-soft)}
+.opt:active:not([disabled]){transform:scale(.99)}
+.opt[disabled]{cursor:default}
+.opt .key{flex:none;width:23px;height:23px;border-radius:7px;background:var(--navy);color:#fff;font-weight:800;font-size:.78rem;display:grid;place-items:center;margin-top:1px}
+.opt .txt{flex:1;min-width:0}
+.tag{display:inline-block;font-size:.63rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:1px 6px;margin-left:4px;vertical-align:1px;background:#efe6d6;color:var(--ink-2)}
+.tag.body{background:#e6eef7;color:#2c5a85}
+.opt.locked{opacity:.55;background:#f7f2ea;border-style:dashed}
+.opt.done:not(.picked):not(.best){opacity:.55}
+.opt.picked{border-width:2px}
+.opt.picked.p2{border-color:var(--good);background:#e7f4ec}
+.opt.picked.p1{border-color:var(--ok);background:#fbf1dc}
+.opt.picked.p0{border-color:var(--poor);background:#fbe9e5}
+.opt.best:not(.picked){border-color:var(--good);border-style:dashed}
+.verdict-tag{display:inline-block;margin-top:4px;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:5px;color:#fff}
+.vt2{background:var(--good)} .vt1{background:var(--ok)} .vt0{background:var(--poor)} .vtb{background:transparent;color:var(--good);border:1px solid var(--good)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cards .opt{flex-direction:column;align-items:stretch;gap:6px;padding:8px}
+.cards .opt .row{display:flex;gap:8px;align-items:flex-start}
+.cards .fig{background:linear-gradient(#f6efe3,#ece2d1);border-radius:9px;height:112px;display:grid;place-items:center}
+.cards .fig svg{height:104px;width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;gap:7px;align-items:center;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px 6px 7px;font-size:.86rem;cursor:pointer;line-height:1.25;text-align:left}
+.chip .key{width:20px;height:20px;border-radius:50%;background:#efe6d6;color:var(--ink-2);font-size:.7rem;font-weight:800;display:grid;place-items:center;flex:none}
+.chip[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft)}
+.chip[aria-pressed="true"] .key{background:var(--teal);color:#fff}
+.chip.ok-pick{border-color:var(--good);background:#e7f4ec}
+.chip.bad-pick{border-color:var(--poor);background:#fbe9e5;text-decoration:line-through;text-decoration-color:rgba(187,58,39,.6)}
+.chip.missed{border-style:dashed;border-color:var(--good)}
+.chip[disabled]{cursor:default}
+.tip{margin-top:10px;border-left:4px solid var(--gold);background:var(--gold-soft);padding:9px 12px;border-radius:9px;font-size:.86rem}
+.tip strong{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.tip.q2 strong{color:var(--good)} .tip.q1 strong{color:var(--ok)} .tip.q0 strong{color:var(--poor)}
+.tip p{margin:3px 0 0}
+.row-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;border:0;background:var(--coral);color:#fff;border-radius:999px;padding:9px 18px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 3px 0 var(--coral-2);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--coral-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--navy)}
+.btn.teal{background:var(--teal);box-shadow:0 3px 0 var(--teal-2)}
+.skip{appearance:none;background:transparent;border:0;color:var(--ink-2);font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:underline;padding:4px}
+.fact{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-top:8px;font-size:.84rem}
+.fact h3{margin:0 0 3px;font:700 .98rem/1.2 var(--display);color:var(--navy)}
+.fact dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.fact dt{font-weight:800;color:var(--ink-2);font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.fact dd{margin:0}
+
+/* e-mail builder */
+.mail{border:1px solid #cfd8de;border-radius:10px;overflow:hidden;background:#fff;font-size:.84rem;margin-bottom:10px}
+.mail .bar2{background:#eef3f6;padding:5px 10px;display:flex;gap:6px;align-items:center;border-bottom:1px solid #d9e1e6;font-weight:800;font-size:.74rem;color:var(--ink-2)}
+.mail .dotz{display:flex;gap:4px}.mail .dotz i{width:8px;height:8px;border-radius:50%;background:#d0d7dc}
+.mail .fld{padding:5px 10px;border-bottom:1px solid #edf0f2;display:flex;gap:8px}
+.mail .fld span:first-child{color:var(--ink-2);width:52px;flex:none}
+.mail .bd{padding:8px 10px;white-space:pre-wrap;min-height:90px}
+.ph{color:#9aa7b0;font-style:italic}
+.erow{margin:8px 0}
+.erow h3{font-size:.74rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:0 0 5px}
+.erow .chips .chip{border-radius:10px}
+
+/* results */
+.verdict{text-align:center;padding:4px 0 8px}
+.verdict h2{font:700 1.7rem/1.1 var(--display);margin:2px 0}
+.verdict.v-hired h2{color:var(--good)} .verdict.v-second h2{color:var(--ok)} .verdict.v-no h2{color:var(--poor)}
+.stars{display:flex;justify-content:center;gap:4px;margin:6px 0}
+.stars svg{width:28px;height:28px}
+.score-line{font-size:.86rem;color:var(--ink-2)}
+.areas{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.areas li{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.areas .h{display:flex;justify-content:space-between;font-weight:800;font-size:.86rem}
+.areas .bar{height:7px;margin:4px 0}
+.areas p{margin:0;font-size:.8rem;color:var(--ink-2)}
+.work{margin:10px 0 0;padding-left:18px;font-size:.82rem}
+.work li{margin:3px 0}
+.best-note{font-size:.78rem;color:var(--ink-2);text-align:center;margin-top:8px}
+
+footer{max-width:1240px;margin:0 auto;padding:6px 16px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.76rem;color:var(--ink-2)}
+.linkbtn{appearance:none;background:none;border:0;padding:0;color:var(--teal-2);text-decoration:underline;font-size:.76rem;cursor:pointer;font-weight:700}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(10,31,48,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:calc(var(--toph,60px) + 14px) 16px 24px;overflow:auto}
+.overlay[hidden]{display:none}
+.intro-card{background:var(--card);border-radius:18px;max-width:600px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;margin:auto}
+.intro-card .hero{background:var(--navy);color:#fff;padding:16px 20px 14px;position:relative}
+.intro-card .hero h2{font:700 1.65rem/1.1 var(--display);margin:4px 0 2px}
+.intro-card .hero p{margin:0;color:#b9d2df;font-size:.84rem}
+.intro-card .body{padding:14px 20px 18px}
+.advert{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:.86rem;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.advert dt{font-weight:800;color:var(--ink-2);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.advert dd{margin:0}
+.name-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.name-row label{font-weight:800;font-size:.84rem}
+.name-row input{flex:1 1 180px;min-width:0;font:inherit;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff}
+.stagesmini{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px;padding:0;list-style:none}
+.stagesmini li{font-size:.74rem;font-weight:800;background:var(--teal-soft);color:var(--teal-2);padding:3px 9px;border-radius:999px}
+.soundnote{font-size:.8rem;color:var(--ink-2);margin:10px 0 0}
+.teacher-card{background:var(--card);border-radius:14px;max-width:860px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:16px 18px;margin:auto}
+.teacher-card h2{font:700 1.3rem/1.2 var(--display);margin:0 0 4px}
+.teacher-card p{font-size:.84rem;margin:4px 0}
+.tbl-wrap{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#fff}
+.tbl-wrap table{border-collapse:collapse;width:100%;font-size:.8rem}
+.tbl-wrap th,.tbl-wrap td{padding:5px 8px;border-bottom:1px solid #efe7da;text-align:left;vertical-align:top}
+.tbl-wrap th{position:sticky;top:0;background:#f4ede1;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.tbl-wrap code{font-size:.78rem;color:var(--teal-2);white-space:nowrap}
+.voices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-top:8px}
+.voices div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.78rem}
+.status{font-size:.78rem;color:var(--teal-2);font-weight:700}
+
+/* ---------- characters ---------- */
+.blink{animation:blink 5.2s infinite;transform-box:fill-box;transform-origin:center}
+#p-clarke .blink{animation-duration:6.4s;animation-delay:1.3s}
+#p-reception .blink{animation-duration:4.6s;animation-delay:.6s}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}}
+.brow{transform-box:fill-box;transform-origin:center;transition:transform .35s ease}
+.expr-smiling .brow{transform:translateY(-1.2px)}
+.expr-impressed .brow{transform:translateY(-3.6px)}
+.expr-concerned .brow-l{transform:translateY(-.5px) rotate(-13deg)}
+.expr-concerned .brow-r{transform:translateY(-.5px) rotate(13deg)}
+.mouth > g{display:none}
+.expr-neutral .m-neutral,.expr-smiling .m-smile,.expr-impressed .m-impressed,.expr-concerned .m-concerned{display:inline}
+.talking .mouth > g{display:none!important}
+.talking .mouth > .m-talk{display:inline!important}
+.cheek{opacity:0;transition:opacity .3s}
+.expr-smiling .cheek,.expr-impressed .cheek{opacity:.2}
+.torso{animation:breathe 4.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+#p-clarke .torso{animation-delay:-2s}
+@keyframes breathe{50%{transform:scale(1.006,1.01)}}
+.head{transform-box:fill-box;transform-origin:50% 92%;transition:transform .4s ease}
+.expr-concerned .head{transform:rotate(2.2deg)}
+.expr-impressed .head{transform:rotate(-1.5deg) translateY(-1px)}
+.talking .head{animation:nod 1.7s ease-in-out infinite}
+@keyframes nod{0%,100%{transform:rotate(0)}30%{transform:rotate(-1.5deg) translateY(-.6px)}70%{transform:rotate(1.1deg)}}
+.bob{animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(2px) rotate(1deg)}}
+.shimmer{animation:shim 5s linear infinite}
+@keyframes shim{50%{opacity:.35}}
+#doorPanel{transform-box:fill-box;transform-origin:0 50%;transition:transform .9s cubic-bezier(.5,0,.3,1)}
+#doorPanel.open{transform:scaleX(.16)}
+.hand-anim{transition:transform .5s ease}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;animation:fall 2.8s linear forwards}
+@keyframes fall{to{transform:translateY(560px) rotate(540deg)}}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .game{grid-template-columns:1fr;padding:10px 16px 4px}
+  .panel{max-height:none;overflow:visible}
+}
+@media (max-width:640px){
+  .top{padding:8px 16px}
+  .brand h1{font-size:1.05rem}
+  .brand p{font-size:.68rem}
+  .scene{aspect-ratio:720/580}
+  .bubble{left:3%!important;right:3%!important;top:3%!important;max-width:none;font-size:.8rem;padding:6px 10px 7px;transform:translateY(6px)}
+  .bubble.show{transform:none}
+  .bubble::after{bottom:-9px!important;transform:rotate(-45deg)!important}
+  .b-daniels::after{left:17%!important;right:auto!important}
+  .b-clarke::after{right:17%!important;left:auto!important}
+  .b-reception::after{left:31%!important;right:auto!important}
+  .b-you{top:auto!important;bottom:3%!important;left:6%!important;right:6%!important;transform:translateY(6px)!important}
+  .b-you.show{transform:none!important}
+  .b-you::after{left:calc(50% - 7px)!important}
+  .caption{font-size:.8rem}
+  .steps li{font-size:.6rem;padding:5px 0 4px;letter-spacing:0}
+  .meters{gap:8px}
+  .cards{grid-template-columns:1fr 1fr}
+  .cards .fig{height:92px}.cards .fig svg{height:86px}
+  .prompt{font-size:1.06rem}
+  .intro-card .hero h2{font-size:1.35rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#fff"/><path d="M7 23c4-3 8-3 13 0s9 3 13 0v6a13 13 0 0 1-26 0z" fill="#13767a"/><path d="M9 27c4-2 7-2 11 0s8 2 11 0" stroke="#fff" stroke-width="1.6" fill="none"/><path d="M20 7l7 13H13z" fill="#d2553a"/><path d="M20 7v13" stroke="#0f2f48" stroke-width="1.4"/></svg>
+    <div><h1>The Interview Room: Simulated Job Interview</h1><p>Interview skills, professional image and business documents · Digital Media Unit 1</p></div>
+  </div>
+  <div class="toggles" role="group" aria-label="Sound settings">
+    <button class="tg" id="tgRead" aria-pressed="true" title="Read lines aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg>Read aloud</button>
+    <button class="tg" id="tgMusic" aria-pressed="true" title="Background music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/><path class="off" d="M3 3l18 18"/></svg>Music</button>
+    <button class="tg" id="tgSfx" aria-pressed="true" title="Sound effects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><path class="off" d="M3 3l18 18"/></svg>SFX</button>
+  </div>
+</header>
+
+<main class="game" id="game">
+  <section class="scene-col" aria-label="Interview scene">
+    <div class="scene" id="scene">
+      <svg class="world" id="world" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Interview scene"></svg>
+      <div class="bubble b-daniels" id="bub-daniels" aria-hidden="true"><span class="who">Mrs. Daniels · HR Manager</span><span class="txt"></span></div>
+      <div class="bubble b-clarke" id="bub-clarke" aria-hidden="true"><span class="who">Mr. Clarke · Office Manager</span><span class="txt"></span></div>
+      <div class="bubble b-reception" id="bub-reception" aria-hidden="true"><span class="who">Receptionist</span><span class="txt"></span></div>
+      <div class="bubble b-narrator" id="bub-narrator" aria-hidden="true"><span class="who">Narrator</span><span class="txt"></span></div>
+      <div class="bubble b-you" id="bub-you" aria-hidden="true"><span class="who">You</span><span class="txt"></span></div>
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+    </div>
+    <div class="caption" id="caption" role="log" aria-live="polite" aria-atomic="true" aria-label="Captions"><span class="cc" aria-hidden="true">CC</span><span id="capText">Captions appear here.</span></div>
+    <div class="meters">
+      <div class="meter" id="mConf" role="meter" aria-label="Confidence" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><div class="lab"><span>Confidence</span><span class="v">50</span></div><div class="bar"><i style="width:50%"></i></div><span class="delta"></span></div>
+      <div class="meter" id="mImp" role="meter" aria-label="Panel impression" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><div class="lab"><span>Panel impression</span><span class="v">50</span></div><div class="bar"><i style="width:50%"></i></div><span class="delta"></span></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel" aria-label="Your choices">
+    <ol class="steps" id="steps" aria-label="Stages">
+      <li>1 Prepare</li><li>2 Arrival</li><li>3 Interview</li><li>4 Close</li><li>5 Result</li>
+    </ol>
+    <div id="card" data-mode="idle"></div>
+  </section>
+</main>
+
+<footer>
+  <span>Kester Small</span>
+  <button class="linkbtn" id="openTeacher" type="button">Teacher: voice script</button>
+</footer>
+
+<div class="overlay" id="intro" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+  <div class="intro-card">
+    <div class="hero">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;color:#f3c26b;text-transform:uppercase">Vacancy · Water Street, Georgetown</div>
+      <h2 id="introTitle">The Interview Room</h2>
+      <p>Prepare, arrive, impress the panel and follow up like a professional.</p>
+    </div>
+    <div class="body">
+      <dl class="advert">
+        <dt>Post</dt><dd>Administrative Assistant (full-time)</dd>
+        <dt>Company</dt><dd>Harbourview Business Services Ltd, Water Street, Georgetown</dd>
+        <dt>Interview</dt><dd>Thursday at 10:00 a.m.</dd>
+        <dt>Panel</dt><dd>Mrs. Daniels (HR Manager) and Mr. Clarke (Office Manager)</dd>
+      </dl>
+      <ul class="stagesmini" aria-label="Stages"><li>1 Prepare</li><li>2 Arrival</li><li>3 Interview</li><li>4 Close</li><li>5 Result</li></ul>
+      <div class="name-row"><label for="pname">Your name</label><input id="pname" maxlength="32" autocomplete="off" value="Jordan Brooks"></div>
+      <div class="row-actions" style="justify-content:flex-start">
+        <button class="btn" id="beginBtn" type="button">Begin interview</button>
+        <button class="btn ghost" id="newBtn" type="button" hidden>Start a new interview</button>
+        <span class="status" id="bestIntro"></span>
+      </div>
+      <p class="soundnote">Turn your sound on: the panel speaks, and there is music and sound effects. Use the buttons at the top to switch them off. Keys <b>1–4</b> pick an answer and <b>Enter</b> continues.</p>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="teacher" hidden role="dialog" aria-modal="true" aria-labelledby="tTitle">
+  <div class="teacher-card">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+      <div><h2 id="tTitle">Teacher: voice script</h2>
+      <p>Record each line (for example in ElevenLabs) and save it as <code>audio/&lt;id&gt;.mp3</code> in the same folder as this game. Any line without a file is read by the browser's built-in voice instead.</p>
+      <p class="status" id="audioStatus">Recorded audio: not checked yet.</p></div>
+      <button class="btn ghost" id="closeTeacher" type="button">Close</button>
+    </div>
+    <div class="voices" id="voiceNotes"></div>
+    <div class="row-actions" style="justify-content:flex-start">
+      <button class="btn teal" id="copyAll" type="button">Copy all</button>
+      <button class="btn ghost" id="copyJson" type="button">Copy as JSON</button>
+      <span class="status" id="copyMsg" role="status"></span>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>File</th><th>Speaker</th><th>Line</th></tr></thead><tbody id="scriptRows"></tbody></table></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const FAST = /[?&]fast=1/.test(location.search);
+const TM = FAST ? 0.06 : 1;
+const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const wait = ms => new Promise(r => setTimeout(r, Math.max(0, ms * TM)));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+const SPEAKERS = {
+  daniels:   { name: 'Mrs. Daniels', role: 'HR Manager', gender: 'female', pitch: 1.06, rate: 0.96, note: 'Warm, composed Caribbean woman in her 40s; friendly but professional.' },
+  clarke:    { name: 'Mr. Clarke', role: 'Office Manager', gender: 'male', pitch: 0.8, rate: 0.93, note: 'Calm Barbadian man in his 50s; deep, measured, kind.' },
+  reception: { name: 'Receptionist', role: 'Front desk', gender: 'female', pitch: 1.25, rate: 1.04, note: 'Bright, young Caribbean woman; welcoming.' },
+  narrator:  { name: 'Narrator', role: '', gender: 'any', pitch: 1.0, rate: 1.0, note: 'Clear, neutral storyteller voice; steady pace.' }
+};
+
+/* ---------------- settings & storage ---------------- */
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const SETTINGS = Object.assign({ read: true, music: true, sfx: true }, store.get('hv-interview-settings', {}));
+const BEST_KEY = 'hv-interview-best';
+/* saved progress (GameSave): sound settings, your best result and the interview in progress (hv-interview-progress: the stage
+   reached, the question reached in Stage 3 and every score so far) stay on this device. After a reload, "Continue my interview"
+   picks up where you left off; Start over clears it all. */
+const PROG_KEY = 'hv-interview-progress';
+let GSRUN = null, SAVED = null;
+
+/* ======================================================================
+   WEB AUDIO: music + sound effects (all synthesised, no samples)
+   ====================================================================== */
+let AC = null, master, musicBus, sfxBus, panBus, NOISE = null;
+const BPM = 86, EIGHTH = 60 / BPM / 2;
+let speaking = false;
+
+function initAudio(){
+  try {
+    if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    AC = new C();
+    const comp = AC.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
+    master = AC.createGain(); master.gain.value = 0.9; master.connect(comp); comp.connect(AC.destination);
+    musicBus = AC.createGain(); musicBus.gain.value = 0; musicBus.connect(master);
+    sfxBus = AC.createGain(); sfxBus.gain.value = SETTINGS.sfx ? 0.85 : 0; sfxBus.connect(master);
+    panBus = AC.createGain(); panBus.gain.value = 1; panBus.connect(musicBus);
+    const dl = AC.createDelay(1.5); dl.delayTime.value = EIGHTH * 3;
+    const fb = AC.createGain(); fb.gain.value = 0.26;
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+    const wet = AC.createGain(); wet.gain.value = 0.32;
+    panBus.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(musicBus);
+    const len = AC.sampleRate * 2; NOISE = AC.createBuffer(1, len, AC.sampleRate);
+    const d = NOISE.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (AC.state === 'suspended') AC.resume();
+  } catch(e){ AC = null; }
+}
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+function envGain(t, a, peak, d, dest){
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+  g.connect(dest); return g;
+}
+function tone(t, f, o){
+  o = o || {};
+  const g = envGain(t, o.a || 0.005, o.peak || 0.2, o.d || 0.2, o.dest || sfxBus);
+  const osc = AC.createOscillator(); osc.type = o.type || 'sine';
+  osc.frequency.setValueAtTime(f, t);
+  if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.a || 0.005) + (o.d || 0.2));
+  let node = osc;
+  if (o.lp) { const f2 = AC.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = o.lp; osc.connect(f2); node = f2; }
+  node.connect(g);
+  osc.start(t); osc.stop(t + (o.a || 0.005) + (o.d || 0.2) + 0.05);
+}
+function noise(t, o){
+  o = o || {};
+  const src = AC.createBufferSource(); src.buffer = NOISE;
+  const f = AC.createBiquadFilter(); f.type = o.type || 'lowpass'; f.frequency.setValueAtTime(o.f || 800, t); f.Q.value = o.q || 0.8;
+  if (o.fTo) f.frequency.exponentialRampToValueAtTime(o.fTo, t + (o.a || 0.002) + (o.d || 0.08));
+  const g = envGain(t, o.a || 0.002, o.peak || 0.3, o.d || 0.08, o.dest || sfxBus);
+  src.connect(f); f.connect(g);
+  src.start(t, Math.random() * 1.5); src.stop(t + (o.a || 0.002) + (o.d || 0.08) + 0.05);
+}
+function canSfx(){ return AC && SETTINGS.sfx && NOISE; }
+
+const SFX = {
+  knock(){ if (!canSfx()) return; const n = AC.currentTime + 0.02;
+    [0, 0.2, 0.4].forEach(dt => { noise(n + dt, { f: 420, q: 1.2, peak: 0.9, d: 0.07 }); tone(n + dt, 120, { peak: 0.5, d: 0.09, to: 70 }); }); },
+  door(){ if (!canSfx()) return; const t = AC.currentTime + 0.02;
+    noise(t, { type: 'highpass', f: 2500, peak: 0.35, d: 0.03 }); tone(t, 1400, { type: 'square', peak: 0.04, d: 0.03 });
+    const o = AC.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(170, t + 0.1); o.frequency.linearRampToValueAtTime(240, t + 0.5); o.frequency.linearRampToValueAtTime(190, t + 0.9);
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 9;
+    const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t + 0.1); g.gain.linearRampToValueAtTime(0.09, t + 0.25); g.gain.linearRampToValueAtTime(0.05, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+    const lfo = AC.createOscillator(); lfo.frequency.value = 23; const lg = AC.createGain(); lg.gain.value = 18; lfo.connect(lg); lg.connect(o.frequency);
+    o.connect(bp); bp.connect(g); g.connect(sfxBus); o.start(t + 0.1); o.stop(t + 1.05); lfo.start(t + 0.1); lfo.stop(t + 1.05);
+    noise(t + 0.2, { f: 300, fTo: 1200, peak: 0.12, a: 0.3, d: 0.5 }); },
+  steps(n){ if (!canSfx()) return; n = n || 4; const t = AC.currentTime + 0.02;
+    for (let i = 0; i < n; i++) { const s = t + i * 0.43; noise(s, { f: 320, peak: 0.55, d: 0.09 }); tone(s, 85, { peak: 0.25, d: 0.08, to: 50 }); noise(s + 0.05, { type: 'highpass', f: 3000, peak: 0.06, d: 0.02 }); } },
+  chair(){ if (!canSfx()) return; const t = AC.currentTime + 0.02;
+    noise(t, { type: 'bandpass', f: 220, fTo: 700, q: 2, peak: 0.25, a: 0.08, d: 0.3 });
+    tone(t + 0.25, 880, { type: 'triangle', peak: 0.035, a: 0.03, d: 0.12, to: 1250 });
+    tone(t + 0.4, 70, { peak: 0.35, d: 0.12, to: 45 }); noise(t + 0.4, { f: 250, peak: 0.3, d: 0.08 }); },
+  shake(){ if (!canSfx()) return; const t = AC.currentTime + 0.02;
+    noise(t, { type: 'bandpass', f: 1600, q: 1.4, peak: 0.16, a: 0.04, d: 0.1 }); noise(t + 0.22, { type: 'bandpass', f: 1300, q: 1.4, peak: 0.14, a: 0.03, d: 0.1 });
+    noise(t + 0.45, { f: 600, peak: 0.25, d: 0.05 }); },
+  buzz(){ if (!canSfx()) return; const t = AC.currentTime + 0.02;
+    for (let i = 0; i < 3; i++) { const s = t + i * 0.42;
+      const o = AC.createOscillator(); o.type = 'square'; o.frequency.value = 155;
+      const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
+      const am = AC.createGain(); const lfo = AC.createOscillator(); lfo.frequency.value = 28; const lg = AC.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(am.gain); am.gain.value = 0.5;
+      const g = AC.createGain(); g.gain.setValueAtTime(0.0001, s); g.gain.linearRampToValueAtTime(0.22, s + 0.02); g.gain.setValueAtTime(0.22, s + 0.24); g.gain.linearRampToValueAtTime(0.0001, s + 0.27);
+      o.connect(lp); lp.connect(am); am.connect(g); g.connect(sfxBus); o.start(s); o.stop(s + 0.3); lfo.start(s); lfo.stop(s + 0.3); } },
+  typing(dur){ if (!canSfx()) return; dur = dur || 1.2; let s = AC.currentTime + 0.02; const end = s + dur;
+    while (s < end) { noise(s, { type: 'highpass', f: 2600 + Math.random() * 1500, peak: 0.12 + Math.random() * 0.08, d: 0.018 }); tone(s, 1700 + Math.random() * 600, { type: 'triangle', peak: 0.02, d: 0.012 }); s += 0.06 + Math.random() * 0.09 + (Math.random() < 0.08 ? 0.18 : 0); }
+    tone(end + 0.05, 260, { peak: 0.08, d: 0.05 }); noise(end + 0.05, { f: 900, peak: 0.25, d: 0.05 }); },
+  applause(dur){ if (!canSfx()) return; dur = dur || 2.8; const t = AC.currentTime + 0.02;
+    for (let i = 0; i < 380; i++) { const p = Math.random(); const s = t + p * dur; const env = p < 0.15 ? p / 0.15 : (p > 0.7 ? (1 - p) / 0.3 : 1);
+      noise(s, { type: 'bandpass', f: 900 + Math.random() * 1800, q: 1.1, peak: 0.07 * env + 0.004, d: 0.02 + Math.random() * 0.025 }); } },
+  chime(){ if (!canSfx()) return; const t = AC.currentTime + 0.02;
+    [72, 76, 79, 84].forEach((m, i) => { const s = t + i * 0.11; tone(s, mtof(m), { peak: 0.16, d: 1.3 }); tone(s, mtof(m) * 2.76, { peak: 0.03, d: 0.5 }); }); },
+  good(){ if (!canSfx()) return; const t = AC.currentTime + 0.01; tone(t, mtof(79), { peak: 0.09, d: 0.25 }); tone(t + 0.09, mtof(84), { peak: 0.09, d: 0.4 }); },
+  meh(){ if (!canSfx()) return; const t = AC.currentTime + 0.01; tone(t, mtof(72), { type: 'triangle', peak: 0.07, d: 0.3 }); },
+  bad(){ if (!canSfx()) return; const t = AC.currentTime + 0.01; tone(t, mtof(64), { type: 'triangle', peak: 0.08, d: 0.22 }); tone(t + 0.14, mtof(58), { type: 'triangle', peak: 0.08, d: 0.4 }); },
+  click(){ if (!canSfx()) return; const t = AC.currentTime + 0.005; tone(t, 1900, { type: 'triangle', peak: 0.04, d: 0.03 }); },
+  whoosh(){ if (!canSfx()) return; const t = AC.currentTime + 0.02; noise(t, { type: 'bandpass', f: 400, fTo: 3500, q: 1.5, peak: 0.25, a: 0.12, d: 0.35 }); }
+};
+
+/* ---- music: gentle lounge loop with steel-pan flavour ---- */
+const CHORDS = [[53, 57, 60, 64], [50, 53, 57, 60], [55, 58, 62, 65], [52, 55, 58, 62]]; // Fmaj7 Dm7 Gm7 C9
+const ROOTS = [41, 38, 43, 36];
+const MEL = [
+  [72, null, 69, 72, 74, null, 72, null],
+  [69, null, 65, null, 67, 69, null, null],
+  [74, null, 72, 70, 67, null, 65, null],
+  [67, null, 64, 67, 70, null, 72, null],
+  [77, null, 76, 74, 72, null, 69, null],
+  [74, null, 72, null, 69, 72, null, null],
+  [70, 72, 74, null, 77, null, 74, null],
+  [72, null, null, 70, 67, null, 64, null]
+];
+const Music = {
+  timer: null, step: 0, next: 0,
+  start(){ if (!AC || this.timer) return; this.next = AC.currentTime + 0.12; this.step = 0; this.timer = setInterval(() => this.tick(), 60); level(); },
+  stop(){ if (this.timer) clearInterval(this.timer); this.timer = null; level(); },
+  tick(){ try {
+    if (!AC) return;
+    if (this.next < AC.currentTime - 0.15) this.next = AC.currentTime + 0.05;
+    while (this.next < AC.currentTime + 0.25) { this.play(this.step, this.next); this.next += EIGHTH; this.step = (this.step + 1) % 64; }
+  } catch(e){} },
+  play(step, t){
+    const bar = Math.floor(step / 8), e = step % 8, ci = bar % 4;
+    if (e === 0) CHORDS[ci].forEach(m => pad(t, mtof(m), EIGHTH * 8));
+    const r = ROOTS[ci];
+    if (e === 0) bass(t, mtof(r), 0.24); if (e === 3) bass(t, mtof(r + 7), 0.15); if (e === 4) bass(t, mtof(r), 0.19);
+    if (e === 7) bass(t, mtof(ROOTS[(ci + 1) % 4] + (ci === 3 ? -1 : 2)), 0.12);
+    const m = MEL[bar][e]; if (m) steelPan(t, m, e % 2 ? 0.7 : 1);
+    if (bar % 2 === 1 && e === 6 && Math.random() < 0.5) steelPan(t + EIGHTH * 0.5, MEL[bar][4] || 72, 0.45);
+    mnoise(t, { type: 'highpass', f: 7000, peak: e % 2 ? 0.022 : 0.035, d: 0.035 });
+    if (e === 0 || e === 4) { const k = envGain(t, 0.004, 0.22, 0.22, musicBus); const o = AC.createOscillator(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(46, t + 0.2); o.connect(k); o.start(t); o.stop(t + 0.3); }
+    if (e === 2 || e === 6) mnoise(t, { type: 'bandpass', f: 1900, q: 3, peak: 0.05, d: 0.03 });
+    if (e === 7 && bar % 2 === 0) { const g = envGain(t, 0.004, 0.06, 0.16, musicBus); const o = AC.createOscillator(); o.frequency.setValueAtTime(330, t); o.frequency.exponentialRampToValueAtTime(290, t + 0.15); o.connect(g); o.start(t); o.stop(t + 0.22); }
+  }
+};
+function mnoise(t, o){ o.dest = musicBus; noise(t, o); }
+function pad(t, f, dur){
+  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.022, t + 0.45); g.gain.setValueAtTime(0.022, t + dur - 0.3); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.4);
+  const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 950;
+  [[ 'triangle', 0 ], [ 'sine', 6 ]].forEach(([ty, dt]) => { const o = AC.createOscillator(); o.type = ty; o.frequency.value = f; o.detune.value = dt; o.connect(lp); o.start(t); o.stop(t + dur + 0.5); });
+  lp.connect(g); g.connect(musicBus);
+}
+function bass(t, f, peak){
+  const g = envGain(t, 0.01, peak, 0.42, musicBus); const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.connect(g);
+  const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(lp); o.start(t); o.stop(t + 0.5);
+  const o2 = AC.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f; const g2 = AC.createGain(); g2.gain.value = 0.3; o2.connect(g2); g2.connect(lp); o2.start(t); o2.stop(t + 0.5);
+}
+function steelPan(t, m, v){
+  const f = mtof(m);
+  [[1, 1, 1.3], [2, 0.42, 0.75], [3, 0.2, 0.45], [4.07, 0.05, 0.2]].forEach(([mul, gn, dec]) => {
+    const g = envGain(t, 0.004, 0.075 * gn * v, dec, panBus); const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = f * mul; o.connect(g); o.start(t); o.stop(t + dec + 0.05);
+  });
+  noise(t, { type: 'bandpass', f: f * 3, q: 4, peak: 0.02 * v, d: 0.02, dest: panBus });
+}
+function level(){
+  if (!AC || !musicBus) return;
+  const target = (!SETTINGS.music || !Music.timer) ? 0 : (speaking ? 0.11 : 0.36);
+  try { musicBus.gain.setTargetAtTime(target, AC.currentTime, speaking ? 0.12 : 0.6); } catch(e){}
+}
+function duck(on){ speaking = on; level(); }
+document.addEventListener('visibilitychange', () => { if (!AC) return; try { document.hidden ? AC.suspend() : AC.resume(); } catch(e){} });
+
+/* ======================================================================
+   SPEECH: recorded mp3 first, then speechSynthesis, then timed captions
+   ====================================================================== */
+const audioInfo = { tried: 0, found: 0, missing: 0, filesOff: false, tts: 0, timed: 0, missingIds: [] };
+let VOICES = [];
+function loadVoices(){ try { VOICES = (window.speechSynthesis ? speechSynthesis.getVoices() : []).filter(v => /^en/i.test(v.lang)); } catch(e){ VOICES = []; } }
+if (window.speechSynthesis) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch(e){ speechSynthesis.onvoiceschanged = loadVoices; } }
+const FEMALE = /female|woman|samantha|victoria|karen|moira|tessa|serena|zira|susan|hazel|libby|sonia|aria|jenny|fiona|kate|emma|amy|olivia|natasha|allison|ava|joanna|salli|kimberly|martha|catherine|stephanie|nicky|ellie/i;
+const MALE = /\bmale\b|daniel|david|george|ryan|guy|alex|fred|oliver|thomas|arthur|mark|james|brian|matthew|joey|justin|christopher|eric|roger|rishi|lee|aaron|gordon|tom\b/i;
+const voiceCache = {};
+function pickVoice(who){
+  if (voiceCache[who] !== undefined && VOICES.includes(voiceCache[who])) return voiceCache[who];
+  if (!VOICES.length) loadVoices();
+  if (!VOICES.length) return null;
+  const rank = v => (/en-GB/i.test(v.lang) ? 0 : /en-(JM|TT|BB|CA|AU|IE|ZA)/i.test(v.lang) ? 1 : 2) + (v.localService ? 0 : 0.5);
+  const fem = VOICES.filter(v => FEMALE.test(v.name)), mal = VOICES.filter(v => !FEMALE.test(v.name) && MALE.test(v.name));
+  const used = Object.values(voiceCache);
+  const sortR = arr => arr.slice().sort((a, b) => rank(a) - rank(b));
+  let pool;
+  if (SPEAKERS[who].gender === 'female') pool = sortR(fem);
+  else if (SPEAKERS[who].gender === 'male') pool = sortR(mal);
+  else pool = sortR(VOICES);
+  let v = pool.find(x => !used.includes(x)) || pool[0] || sortR(VOICES)[0] || null;
+  voiceCache[who] = v; return v;
+}
+const estimate = t => Math.max(1300, t.length * 60);
+let currentSkip = null, currentAudio = null;
+
+function playFile(id, tw){
+  return new Promise((res, rej) => {
+    if (audioInfo.filesOff || !window.Audio) return rej('off');
+    let a; try { a = new Audio(); } catch(e){ return rej('noaudio'); }
+    currentAudio = a; audioInfo.tried++;
+    let started = false, settled = false;
+    const fail = () => { if (settled) return; settled = true; clearTimeout(to);
+      audioInfo.missing++; audioInfo.missingIds.push(id);
+      if (audioInfo.found === 0 && audioInfo.missing >= 3) audioInfo.filesOff = true;
+      try { a.removeAttribute('src'); a.load(); } catch(e){}
+      rej('missing'); };
+    const to = setTimeout(() => { if (!started) fail(); }, 3500);
+    a.preload = 'auto';
+    a.addEventListener('error', fail, { once: true });
+    a.addEventListener('loadedmetadata', () => { if (isFinite(a.duration) && a.duration > 0) tw.setDuration(a.duration * 1000 * 0.92); });
+    a.addEventListener('playing', () => { if (!started) { started = true; audioInfo.found++; } });
+    a.addEventListener('ended', () => { if (settled) return; settled = true; clearTimeout(to); res(); });
+    a.src = 'audio/' + id + '.mp3';
+    const p = a.play(); if (p && p.catch) p.catch(() => fail());
+  });
+}
+function speakTTS(L, tw){
+  return new Promise((res, rej) => {
+    const ss = window.speechSynthesis;
+    if (!ss || !window.SpeechSynthesisUtterance) return rej('notts');
+    const sp = SPEAKERS[L.who];
+    let u; try { ss.cancel(); u = new SpeechSynthesisUtterance(L.text); } catch(e){ return rej('notts'); }
+    const v = pickVoice(L.who); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+    u.pitch = sp.pitch; u.rate = sp.rate; u.volume = 1;
+    const est = estimate(L.text) / sp.rate;
+    let started = false, done = false;
+    const fin = () => { if (done) return; done = true; clearTimeout(t1); clearTimeout(t2); res(); };
+    u.onstart = () => { started = true; audioInfo.tts++; tw.setDuration(est * 0.95); };
+    u.onend = fin;
+    u.onerror = () => { if (started) return fin(); if (done) return; done = true; clearTimeout(t1); clearTimeout(t2); audioInfo.timed++; wait(est).then(res); };
+    u.onboundary = e => { if (typeof e.charIndex === 'number') tw.atLeast(e.charIndex); };
+    const t1 = setTimeout(() => { if (!started && !done) { done = true; clearTimeout(t2); try { ss.cancel(); } catch(e){} audioInfo.timed++; wait(Math.max(300, est - 1600)).then(res); } }, 1600 * TM);
+    const t2 = setTimeout(fin, est * 2 + 3000);
+    try { ss.speak(u); } catch(e){ fin(); }
+  });
+}
+function stopVoice(){
+  if (currentAudio) { try { currentAudio.pause(); } catch(e){} currentAudio = null; }
+  try { if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch(e){}
+}
+function skipLine(){ if (currentSkip) currentSkip(); }
+
+function typewriter(el, text, dur){
+  el.innerHTML = '<span class="typed"></span><span class="rest"></span>';
+  const typed = el.firstChild, rest = el.lastChild;
+  let D = dur, start = performance.now(), min = 0, raf = 0, finished = false, shown = -1;
+  const render = n => { if (n === shown) return; shown = n; typed.textContent = text.slice(0, n); rest.textContent = text.slice(n); };
+  if (REDUCED) { render(text.length); return { setDuration(){}, atLeast(){}, finish(){} }; }
+  render(0);
+  const step = now => { if (finished) return; const p = Math.min(1, (now - start) / D); const n = Math.max(min, Math.floor(p * text.length)); render(n); if (n < text.length) raf = requestAnimationFrame(step); };
+  raf = requestAnimationFrame(step);
+  return { setDuration(d){ const p = Math.min(1, (performance.now() - start) / D); D = Math.max(300, d); start = performance.now() - p * D; },
+           atLeast(i){ min = Math.max(min, i); }, finish(){ finished = true; cancelAnimationFrame(raf); render(text.length); } };
+}
+
+function caption(who, text){
+  const name = who === 'you' ? 'You' : SPEAKERS[who].name;
+  $('#capText').innerHTML = '<b>' + esc(name) + ':</b> ' + esc(text);
+}
+function showBubble(who, text){
+  ['daniels', 'clarke', 'reception', 'narrator', 'you'].forEach(w => { if (w !== who) $('#bub-' + w).classList.remove('show'); });
+  const b = $('#bub-' + who); if (!b) return null;
+  const t = b.querySelector('.txt'); if (text != null) t.textContent = text;
+  b.classList.add('show'); return t;
+}
+function hideBubbles(){ $$('.bubble').forEach(b => b.classList.remove('show')); }
+
+let activeSay = null, sayToken = 0;
+async function say(id){
+  while (activeSay) { skipLine(); try { await activeSay; } catch(e){} }
+  const my = ++sayToken;
+  const p = sayInner(id, my); activeSay = p;
+  try { await p; } finally { if (activeSay === p) activeSay = null; }
+}
+async function sayInner(id, my){
+  const L = LINES[id]; if (!L) return;
+  const sp = SPEAKERS[L.who];
+  caption(L.who, L.text);
+  const txt = showBubble(L.who, '');
+  const est = estimate(L.text) / sp.rate;
+  const readOn = SETTINGS.read;
+  const twDur = (readOn ? est : Math.min(est * 0.5, 2600)) * TM;
+  const tw = typewriter(txt, L.text, twDur);
+  setTalking(L.who, true); duck(true);
+  const skipP = new Promise(r => { currentSkip = r; });
+  let main;
+  if (readOn) main = playFile(id, tw).catch(() => speakTTS(L, tw)).catch(() => { audioInfo.timed++; return wait(est); });
+  else main = wait(Math.min(est * 0.5, 2600) + 700);
+  await Promise.race([main, skipP]);
+  currentSkip = null;
+  stopVoice(); tw.finish();
+  setTalking(L.who, false); duck(false);
+  await wait(260);
+}
+
+/* ======================================================================
+   CHARACTERS (parametric SVG)
+   ====================================================================== */
+function facePath(j){ j = j || 0;
+  return `M-30,-12 C-31,-36 -16,-48 0,-48 C16,-48 31,-36 30,-12 C30,6 27,19 20,${30 + j * 0.55} C13,${39 + j} 6,${44 + j} 0,${44 + j} C-6,${44 + j} -13,${39 + j} -20,${30 + j * 0.55} C-27,19 -30,6 -30,-12Z`; }
+function beardPath(j){ j = j || 0;
+  return `M-30.5,-4 C-30,12 -26,22 -20,${30 + j * 0.55} C-13,${39.5 + j} -6,${45.5 + j} 0,${45.5 + j} C6,${45.5 + j} 13,${39.5 + j} 20,${30 + j * 0.55} C26,22 30,12 30.5,-4 C29,6 27,13 22,17 C17,21 11,19.5 6,20 C3,19 1,19.5 0,19.5 C-1,19.5 -3,19 -6,20 C-11,19.5 -17,21 -22,17 C-27,13 -29,6 -30.5,-4Z`; }
+
+function person(o){
+  const S = o.skin, D = o.shade, H = o.hair, id = o.id;
+  const eye = x => `<g transform="translate(${x},-6)"><g class="blink"><path d="M-8.2,0 Q0,-6.2 8.2,0 Q0,5 -8.2,0Z" fill="#fbf6ef"/><circle r="3.7" fill="${o.iris || '#3b2416'}"/><circle r="1.8" fill="#0c0705"/><circle cx="1.2" cy="-1.3" r=".95" fill="#fff"/><path d="M-8.6,.4 Q0,-6.9 8.6,.4" fill="none" stroke="#170d08" stroke-width="1.8" stroke-linecap="round"/><path d="M-6.5,2.6 Q0,4.6 6.5,2.6" fill="none" stroke="${D}" stroke-width=".8" opacity=".7"/></g><path d="M-8,-4.2 Q0,-9 8,-4.2" fill="none" stroke="${D}" stroke-width="1.1" opacity=".55"/></g>`;
+  let hairBack = '', hairFront = '', extras = '', neckline = '', jacketExtra = '';
+  if (o.kind === 'daniels') {
+    hairBack = `<path d="M-37,-4 C-45,-38 -30,-64 0,-66 C30,-64 45,-38 37,-4 C34,-18 30,-28 26,-33 L-26,-33 C-30,-28 -34,-18 -37,-4Z" fill="${H}"/>
+      <ellipse cx="0" cy="-71" rx="21" ry="14" fill="${H}"/><path d="M-14,-74 Q0,-82 14,-74 M-16,-68 Q0,-76 16,-68" stroke="#3a2a24" stroke-width="1.2" fill="none" opacity=".7"/>`;
+    hairFront = `<path d="M-31.5,-13 C-33,-40 -15,-51 3,-50 C21,-49 33,-39 31.5,-13 C28,-26 21,-33 9,-35.5 C-2,-33.5 -21,-31 -31.5,-13Z" fill="${H}"/>
+      <path d="M-26,-30 Q-12,-42 6,-44 M-20,-24 Q-8,-34 10,-38 M8,-44 Q22,-40 28,-26" stroke="#34241e" stroke-width="1.1" fill="none" opacity=".75"/>`;
+    extras = `<g fill="none" stroke="#3a2418" stroke-width="1.5"><rect x="-23.5" y="-12.5" width="19.5" height="13.5" rx="5.5" fill="rgba(255,255,255,.07)"/><rect x="4" y="-12.5" width="19.5" height="13.5" rx="5.5" fill="rgba(255,255,255,.07)"/><path d="M-4,-7.5 Q0,-9.5 4,-7.5"/><path d="M-23.5,-8.5 L-30,-10"/><path d="M23.5,-8.5 L30,-10"/></g>
+      <circle cx="-31" cy="9" r="3.6" fill="none" stroke="#d9ac46" stroke-width="1.8"/><circle cx="31" cy="9" r="3.6" fill="none" stroke="#d9ac46" stroke-width="1.8"/>`;
+    neckline = `<path d="M-19,58 Q0,100 19,58Z" fill="${o.shirt}"/><path d="M-13,64 Q0,86 13,64" stroke="#d6a640" stroke-width="1.6" fill="none"/><circle cx="0" cy="86" r="2.6" fill="#d6a640"/>`;
+  } else if (o.kind === 'clarke') {
+    hairFront = `<path d="M-31.5,-11 C-34,-40 -16,-52.5 0,-52.5 C16,-52.5 34,-40 31.5,-11 C30.5,-21 28,-29 24.5,-33 C14,-38.5 -14,-38.5 -24.5,-33 C-28,-29 -30.5,-21 -31.5,-11Z" fill="${H}"/>
+      <path d="M-31.5,-11 C-31.5,-18 -30.5,-24 -28.5,-28 L-26,-20 C-27.5,-16 -29,-13 -31.5,-11Z M31.5,-11 C31.5,-18 30.5,-24 28.5,-28 L26,-20 C27.5,-16 29,-13 31.5,-11Z" fill="#8d8780" opacity=".8"/>`;
+    neckline = `<path d="M-16,58 L0,104 L16,58Z" fill="${o.shirt}"/><path d="M-16,57 L-3,76 L-9,60Z M16,57 L3,76 L9,60Z" fill="#e3e8ec"/>
+      <path d="M-6,62 L6,62 L4.5,72 L-4.5,72Z" fill="${o.tie}"/><path d="M-4.5,72 L4.5,72 L9,138 L0,150 L-9,138Z" fill="${o.tie}"/>
+      <path d="M-5,84 L7,96 M-6,102 L8,116 M-7,120 L8,134" stroke="#e2b23c" stroke-width="2.2"/>`;
+    jacketExtra = `<path d="M38,104 l14,-3 l-2,8 z" fill="#f0f2f4"/>`;
+  } else {
+    hairBack = `<path d="M22,-34 C40,-30 46,-8 40,16 C36,30 30,40 26,46 C30,26 30,4 24,-14Z" fill="${H}"/>`;
+    hairFront = `<path d="M-31.5,-12 C-33,-40 -16,-51 0,-51 C16,-51 33,-40 31.5,-12 C28,-30 16,-39 0,-39 C-16,-39 -28,-30 -31.5,-12Z" fill="${H}"/><path d="M-22,-36 Q0,-46 22,-36" stroke="#4a3022" stroke-width="1" fill="none" opacity=".7"/>`;
+    extras = `<circle cx="-30.5" cy="8" r="2.2" fill="#e9eef2"/><circle cx="30.5" cy="8" r="2.2" fill="#e9eef2"/>`;
+    neckline = `<path d="M-15,58 Q0,84 15,58Z" fill="${S}"/><path d="M-22,58 Q0,92 22,58" stroke="${o.jacketDark}" stroke-width="5" fill="none"/>
+      <path d="M-24,62 L-12,140 M24,62 L12,140" stroke="#c9d6dd" stroke-width="2.4"/><rect x="-10" y="138" width="20" height="26" rx="3" fill="#fff" stroke="#c9d6dd"/><rect x="-7" y="143" width="14" height="5" fill="${o.jacket}"/>`;
+  }
+  const lip = o.lip, lip2 = o.lip2;
+  const mouth = `<g class="mouth" transform="translate(0,27)">
+    <g class="m-neutral"><path d="M-10,0 Q-5,-2.8 0,-1.6 Q5,-2.8 10,0 Q0,1 -10,0Z" fill="${lip}"/><path d="M-9,.5 Q0,6.5 9,.5 Q0,1.8 -9,.5Z" fill="${lip2}"/><path d="M-10,0 Q0,1.3 10,0" stroke="#3a1712" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>
+    <g class="m-smile"><path d="M-12,-1.6 Q-5,-3.8 0,-2.6 Q5,-3.8 12,-1.6 Q0,4.2 -12,-1.6Z" fill="${lip}"/><path d="M-11,-.4 Q0,9 11,-.4 Q0,5.4 -11,-.4Z" fill="${lip2}"/><path d="M-12,-1.6 Q0,5.4 12,-1.6" stroke="#3a1712" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M-15,-4 Q-13.5,-1 -12.5,.5 M15,-4 Q13.5,-1 12.5,.5" stroke="${D}" stroke-width="1" fill="none" opacity=".7"/></g>
+    <g class="m-impressed"><path d="M-12.5,-2 Q0,-1 12.5,-2 Q0,11.5 -12.5,-2Z" fill="#4a1714"/><path d="M-10.5,-1.6 Q0,-.6 10.5,-1.6 L9.4,1.6 Q0,2.7 -9.4,1.6Z" fill="#fbf8f2"/><path d="M-12.5,-2 Q-5,-4.6 0,-3.4 Q5,-4.6 12.5,-2 Q0,-.6 -12.5,-2Z" fill="${lip}"/><path d="M-11.5,-.5 Q0,13 11.5,-.5 Q0,10.5 -11.5,-.5Z" fill="${lip2}"/><path d="M-15.5,-4.5 Q-14,-1 -13,.5 M15.5,-4.5 Q14,-1 13,.5" stroke="${D}" stroke-width="1" fill="none" opacity=".7"/></g>
+    <g class="m-concerned"><path d="M-9.5,1.2 Q-5,-2.6 0,-2.4 Q5,-2.6 9.5,1.2 Q0,-.6 -9.5,1.2Z" fill="${lip}"/><path d="M-8.5,1.4 Q0,4.8 8.5,1.4 Q0,.4 -8.5,1.4Z" fill="${lip2}"/><path d="M-9.5,1.2 Q0,-.8 9.5,1.2" stroke="#3a1712" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>
+    <g class="m-talk"><ellipse id="${id}-mo" cx="0" cy="1" rx="8" ry="1.5" fill="#4a1714"/><path d="M-7,-.4 Q0,.3 7,-.4 L6.4,1.1 Q0,1.7 -6.4,1.1Z" fill="#f6f1ea" opacity=".95"/><path d="M-10,-.6 Q-5,-3.2 0,-2 Q5,-3.2 10,-.6 Q0,.4 -10,-.6Z" fill="${lip}"/><g id="${id}-ll"><path d="M-8.5,1.2 Q0,6.6 8.5,1.2 Q0,2.4 -8.5,1.2Z" fill="${lip2}"/></g></g>
+  </g>`;
+  const brows = `<g class="brow brow-l"><path d="M-23,-16 Q-15,-21.5 -5,-17.6" stroke="${o.brow || H}" stroke-width="${o.browW || 3}" fill="none" stroke-linecap="round"/></g>
+    <g class="brow brow-r"><path d="M5,-17.6 Q15,-21.5 23,-16" stroke="${o.brow || H}" stroke-width="${o.browW || 3}" fill="none" stroke-linecap="round"/></g>`;
+  const nose = `<path d="M-1.6,-4 C-2.2,4 -4.2,9 -7,12.6 C-5,15.6 -2,15.1 0,16.1 C2,15.1 5,15.6 7,12.6 C4.2,9 2.2,4 1.6,-4" fill="${D}" opacity=".32"/>
+    <path d="M-6.8,12.4 C-5.2,15.9 5.2,15.9 6.8,12.4" stroke="${D}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="-3.7" cy="13.5" rx="1.7" ry="1.05" fill="#24120a" opacity=".55"/><ellipse cx="3.7" cy="13.5" rx="1.7" ry="1.05" fill="#24120a" opacity=".55"/><ellipse cx="0" cy="10" rx="2.4" ry="1.8" fill="#fff" opacity=".08"/>`;
+  const jacket = `M-15,58 C-42,60 -72,64 -86,80 C-98,94 -104,130 -106,205 L106,205 C104,130 98,94 86,80 C72,64 42,60 15,58Z`;
+  const lapels = o.kind === 'reception' ? '' : `<path d="M-16,58 L-2,114 L-25,93 L-31,70Z" fill="${o.jacketDark}"/><path d="M16,58 L2,114 L25,93 L31,70Z" fill="${o.jacketDark}"/><circle cx="0" cy="150" r="2.6" fill="${o.jacketDark}"/><circle cx="0" cy="176" r="2.6" fill="${o.jacketDark}"/>`;
+  const head = `<g class="head">${hairBack}
+      <ellipse cx="-30" cy="0" rx="5.5" ry="9.5" fill="${S}"/><ellipse cx="30" cy="0" rx="5.5" ry="9.5" fill="${S}"/><path d="M-31,-4 q-3,4 0,8 M31,-4 q3,4 0,8" stroke="${D}" stroke-width="1.2" fill="none" opacity=".7"/>
+      <path id="${id}-face" d="${facePath(0)}" fill="${S}"/>
+      <path d="M-24,22 C-18,34 -8,42 0,42 C8,42 18,34 24,22 C20,36 10,45 0,45 C-10,45 -20,36 -24,22Z" fill="${D}" opacity=".35"/>
+      <path d="M-28,-6 C-27,6 -24,14 -20,20 M28,-6 C27,6 24,14 20,20" stroke="${D}" stroke-width="2" fill="none" opacity=".25"/>
+      ${o.kind === 'clarke' ? '' : '<ellipse class="cheek" cx="-17" cy="11" rx="6" ry="4" fill="#e0614f"/><ellipse class="cheek" cx="17" cy="11" rx="6" ry="4" fill="#e0614f"/>'}
+      ${o.kind === 'clarke' ? `<path id="${id}-beard" d="${beardPath(0)}" fill="${H}" opacity=".8"/><path d="M-11,22.5 C-7,19 -2,19.5 0,20.5 C2,19.5 7,19 11,22.5 C7,22 3,22.5 0,23.5 C-3,22.5 -7,22 -11,22.5Z" fill="${H}"/>` : ''}
+      ${hairFront}${brows}${eye(-13)}${eye(13)}${nose}${mouth}${extras}
+    </g>`;
+  const torso = `<g class="torso">
+      <path d="M-14,24 L-15,66 Q0,74 15,66 L14,24Z" fill="${S}"/><path d="M-14,30 Q0,48 14,30 L14.5,44 Q0,58 -14.5,44Z" fill="${D}" opacity=".55"/>
+      <path d="${jacket}" fill="${o.jacket}"/>
+      <path d="M-84,86 C-92,112 -96,146 -98,200 M84,86 C92,112 96,146 98,200" stroke="${o.jacketDark}" stroke-width="2.2" fill="none" opacity=".7"/>
+      ${neckline}${lapels}${jacketExtra}
+    </g>`;
+  const chair = o.chair ? `<path d="M-76,-26 Q-76,-58 -42,-62 L42,-62 Q76,-58 76,-26 L82,205 L-82,205Z" fill="#262a33"/><path d="M-64,-22 Q-64,-50 -36,-52 L36,-52 Q64,-50 64,-22 L68,205 L-68,205Z" fill="#323845"/><path d="M-50,-40 L50,-40" stroke="#3d4453" stroke-width="2"/>` : '';
+  return `<g id="p-${id}" class="person expr-neutral">${chair}${torso}${head}</g>`;
+}
+function hands(o){
+  return `<g class="hands">
+    <path d="M-100,176 C-82,198 -52,204 -24,203" stroke="${o.jacket}" stroke-width="31" stroke-linecap="round" fill="none"/>
+    <path d="M100,176 C82,198 52,204 24,203" stroke="${o.jacket}" stroke-width="31" stroke-linecap="round" fill="none"/>
+    <path d="M-100,176 C-82,198 -52,204 -24,203 M100,176 C82,198 52,204 24,203" stroke="${o.jacketDark}" stroke-width="1.6" fill="none" opacity=".5" transform="translate(0,11)"/>
+    <path d="M-31,192 Q-27,203 -30,214" stroke="${o.shirt}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M31,192 Q27,203 30,214" stroke="${o.shirt}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M-27,194 C-14,188 14,188 27,194 C31,203 24,213 0,213 C-24,213 -31,203 -27,194Z" fill="${o.skin}"/>
+    <path d="M-12,192 L-11,206 M-4,191 L-3,207 M4,191 L4,207 M12,192 L11,206" stroke="${o.shade}" stroke-width="1.2" opacity=".6"/>
+    <path d="M-27,194 C-14,188 14,188 27,194" stroke="${o.shade}" stroke-width="1" fill="none" opacity=".5"/>
+    ${o.ring ? '<circle cx="-11" cy="199" r="1.8" fill="none" stroke="#d6a640" stroke-width="1.4"/>' : ''}
+  </g>`;
+}
+const P = {
+  daniels: { id: 'daniels', kind: 'daniels', skin: '#8a5636', shade: '#5f3620', hair: '#1c1310', lip: '#7e3443', lip2: '#93465a', jacket: '#7b2336', jacketDark: '#5a1828', shirt: '#f2e3cd', brow: '#1c1310', chair: true, ring: true, browW: 2.7 },
+  clarke:  { id: 'clarke', kind: 'clarke', skin: '#5e3925', shade: '#3c2215', hair: '#1a1210', lip: '#83493a', lip2: '#9a5a47', jacket: '#1e2f4f', jacketDark: '#131f37', shirt: '#f4f6f8', tie: '#1d4f9e', chair: true, browW: 3.4 },
+  reception: { id: 'reception', kind: 'reception', skin: '#b07850', shade: '#80522f', hair: '#2b1a12', lip: '#9a4a46', lip2: '#ad5c55', jacket: '#16797c', jacketDark: '#0e5b5d', shirt: '#16797c', chair: false, browW: 2.5 }
+};
+
+/* ---------------- scene ---------------- */
+function defs(){ return `<defs>
+  <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3eadb"/><stop offset="1" stop-color="#e6d8c1"/></linearGradient>
+  <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc7e6"/><stop offset=".8" stop-color="#d9f1f6"/></linearGradient>
+  <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#36b9c4"/><stop offset="1" stop-color="#11718a"/></linearGradient>
+  <linearGradient id="gDeskTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a42"/><stop offset="1" stop-color="#bd8b5c"/></linearGradient>
+  <linearGradient id="gDeskFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5032"/><stop offset="1" stop-color="#553621"/></linearGradient>
+  <linearGradient id="gRecWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2efea"/><stop offset="1" stop-color="#cfe2dc"/></linearGradient>
+  <linearGradient id="gHomeWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e4d6"/><stop offset="1" stop-color="#ecd2c0"/></linearGradient>
+  <linearGradient id="gMirror" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9f3f6"/><stop offset=".5" stop-color="#bdd3dc"/><stop offset="1" stop-color="#9fbac6"/></linearGradient>
+  <linearGradient id="gMorning" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7c58f"/><stop offset=".7" stop-color="#fbe7c8"/></linearGradient>
+  <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <radialGradient id="gLight" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="#fff8e6" stop-opacity=".55"/><stop offset="1" stop-color="#fff8e6" stop-opacity="0"/></radialGradient>
+</defs>`; }
+function logoMark(x, y, s){ return `<g transform="translate(${x},${y}) scale(${s})"><circle r="19" fill="#0f2f48"/><path d="M-13,3c4-3 8-3 13,0s9,3 13,0v6a13,13 0 0 1-26,0z" fill="#3fb3b7"/><path d="M0,-13l7,13h-14z" fill="#e0a63b"/><path d="M0,-13v13" stroke="#fff" stroke-width="1.3"/></g>`; }
+function clock(x, y, r, idp){ return `<g transform="translate(${x},${y})"><circle r="${r + 3}" fill="#2b3440"/><circle r="${r}" fill="#fdfbf6"/>
+  ${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<line x1="${Math.sin(a) * (r - 3)}" y1="${-Math.cos(a) * (r - 3)}" x2="${Math.sin(a) * (r - (i % 3 ? 5 : 7))}" y2="${-Math.cos(a) * (r - (i % 3 ? 5 : 7))}" stroke="#2b3440" stroke-width="${i % 3 ? 1 : 2}"/>`; }).join('')}
+  <g id="${idp}H" transform="rotate(300)"><line y2="${-r * 0.5}" stroke="#2b3440" stroke-width="3" stroke-linecap="round"/></g>
+  <g id="${idp}M" transform="rotate(0)"><line y2="${-r * 0.78}" stroke="#2b3440" stroke-width="2" stroke-linecap="round"/></g><circle r="2.4" fill="#d2553a"/></g>`; }
+function ceiling(fill){ return `<rect x="-20" y="-140" width="840" height="66" fill="${fill}"/><rect x="-20" y="-76" width="840" height="6" fill="rgba(0,0,0,.08)"/>
+  <ellipse cx="200" cy="-104" rx="36" ry="5" fill="#fffbe9"/><ellipse cx="600" cy="-104" rx="36" ry="5" fill="#fffbe9"/>
+  <path d="M164,-100 L120,60 L280,60 L236,-100Z M564,-100 L520,60 L680,60 L636,-100Z" fill="url(#gLight)" opacity=".5"/>`; }
+
+function roomView(){
+  const town = [[262, '#f2c14e'], [272, '#e86f51'], [281, '#f7f3ea'], [290, '#7fc8c4'], [300, '#f29d7e'], [309, '#f7f3ea'], [318, '#e9c46a'], [327, '#c96d8f'], [336, '#f7f3ea'], [346, '#88b8e0'], [356, '#f2c14e'], [366, '#f7f3ea'], [375, '#e86f51']]
+    .map(([x, c], i) => `<rect x="${x}" y="${200 - (i % 3) * 3}" width="8.5" height="${12 + (i % 3) * 3}" fill="${c}"/><rect x="${x}" y="${198 - (i % 3) * 3}" width="8.5" height="2.5" fill="#b0503a" opacity=".7"/>`).join('');
+  return `<g id="view-room">
+  <rect x="-20" y="-140" width="840" height="680" fill="url(#gWall)"/>
+  ${ceiling('#ece4d6')}
+  <rect x="-20" y="300" width="840" height="240" fill="#d6c4a6"/><rect x="-20" y="296" width="840" height="7" fill="#c2ab88"/>
+  <g>
+    <rect x="250" y="34" width="300" height="252" fill="url(#gSky)"/>
+    <circle cx="486" cy="84" r="42" fill="#fff6c9" opacity=".5"/><circle cx="486" cy="84" r="15" fill="#fff8db"/>
+    <g fill="#fff" opacity=".85"><ellipse cx="300" cy="78" rx="26" ry="8"/><ellipse cx="318" cy="72" rx="16" ry="8"/><ellipse cx="420" cy="110" rx="22" ry="6"/><ellipse cx="434" cy="105" rx="12" ry="6"/></g>
+    <path d="M250,184 C285,150 318,158 348,138 C378,120 410,148 440,136 C470,124 505,146 550,134 L550,215 L250,215Z" fill="#82b18a"/>
+    <path d="M250,203 C280,180 302,188 332,175 C362,165 384,188 414,182 C450,176 472,194 550,184 L550,215 L250,215Z" fill="#4e8a5d"/>
+    ${town}
+    <rect x="250" y="212" width="300" height="74" fill="url(#gSea)"/>
+    <g class="shimmer" stroke="#d6fbff" stroke-width="1.4" stroke-linecap="round" opacity=".75"><path d="M268,232 h22 M320,246 h30 M395,236 h18 M470,252 h26 M290,268 h20 M430,272 h24 M515,232 h16"/></g>
+    <g transform="translate(442,198)"><path d="M0,10 L86,10 L80,20 L6,20Z" fill="#fbfbf9"/><rect x="10" y="2" width="62" height="8" fill="#f2f2ee"/><rect x="18" y="-5" width="44" height="7" fill="#eceae4"/><rect x="48" y="-12" width="9" height="8" fill="#d2553a"/><path d="M12,6 h58 M8,14 h70" stroke="#5aa7c4" stroke-width="1.5" stroke-dasharray="3 3"/></g>
+    <g class="bob" style="transform-box:fill-box;transform-origin:50% 100%"><path d="M322,250 L350,250 L345,257 L327,257Z" fill="#fff"/><path d="M336,248 L336,222 L350,247Z" fill="#fff"/><path d="M334,248 L334,226 L322,247Z" fill="#f4d9a8"/></g>
+    <path d="M250,262 L300,262 L300,266 L250,266Z M258,266 v20 M276,266 v20 M294,266 v20" stroke="#8a6440" stroke-width="3" fill="#a07448"/>
+  </g>
+  <rect x="250" y="34" width="300" height="30" fill="#efe8da"/><path d="M250,41 h300 M250,48 h300 M250,55 h300 M250,62 h300" stroke="#d8cfbe" stroke-width="1.2"/>
+  <rect x="250" y="34" width="300" height="252" fill="url(#gGlass)"/>
+  <rect x="244" y="28" width="312" height="264" fill="none" stroke="#faf7f1" stroke-width="12"/><rect x="238" y="22" width="324" height="276" fill="none" stroke="#cdbfa8" stroke-width="1.5"/>
+  <rect x="396" y="34" width="8" height="252" fill="#faf7f1"/><rect x="230" y="288" width="340" height="12" rx="3" fill="#f3eee5"/>
+  <g transform="translate(72,56)"><rect width="128" height="52" rx="6" fill="#fffdf8" stroke="#d9cdb8"/>${logoMark(26, 26, 0.95)}<text x="50" y="23" font-family="Newsreader,Georgia,serif" font-weight="700" font-size="13" fill="#0f2f48">HARBOURVIEW</text><text x="50" y="37" font-family="Nunito Sans,sans-serif" font-size="7.6" font-weight="700" fill="#13767a" letter-spacing=".6">BUSINESS SERVICES</text></g>
+  ${clock(700, 96, 22, 'rc')}
+  <g transform="translate(650,160)"><rect width="64" height="80" fill="#f8f4ec" stroke="#b49a72" stroke-width="4"/><path d="M8,58 C20,40 30,48 40,34 C48,24 54,30 56,26 L56,72 L8,72Z" fill="#7fb7b0" opacity=".8"/><circle cx="44" cy="22" r="7" fill="#e9b45a" opacity=".8"/></g>
+  <g transform="translate(46,250)"><path d="M0,0 C-26,-34 -18,-88 4,-118 C10,-80 14,-40 6,0Z" fill="#3f7d4d"/><path d="M10,0 C30,-40 56,-70 70,-100 C66,-60 44,-24 18,4Z" fill="#4f9160"/><path d="M4,4 C-30,-14 -52,-30 -66,-58 C-36,-46 -12,-26 8,-2Z" fill="#356b42"/><path d="M-10,0 h40 l-6,44 h-28z" fill="#c9693f"/></g>
+  <g transform="translate(200,214)">${person(P.daniels)}</g>
+  <g transform="translate(600,207) scale(1.05)">${person(P.clarke)}</g>
+  <rect x="-20" y="384" width="840" height="38" fill="url(#gDeskTop)"/>
+  <path d="M-20,392 h840 M-20,404 h840 M-20,414 h840" stroke="#8c5e3a" stroke-width=".8" opacity=".35"/>
+  <rect x="-20" y="420" width="840" height="7" fill="#c99868"/><rect x="-20" y="427" width="840" height="120" fill="url(#gDeskFront)"/>
+  <path d="M60,440 v70 M260,440 v70 M540,440 v70 M740,440 v70" stroke="#4a2e1c" stroke-width="2" opacity=".5"/>
+  <g transform="translate(200,214)">${hands(P.daniels)}</g>
+  <g transform="translate(600,207) scale(1.05)">${hands(P.clarke)}</g>
+  <g><path d="M48,392 L136,389 L142,410 L52,414Z" fill="#fbfaf6"/><path d="M54,396 L132,393 M56,401 L120,398 M57,406 L128,403" stroke="#c8ced3" stroke-width="1.2"/><path d="M44,396 L132,392 L139,414 L48,418Z" fill="#2f6c9e" opacity=".9" transform="translate(4,-14) rotate(-2)" style="display:none"/></g>
+  <g transform="translate(150,395) rotate(-14)"><rect width="34" height="3.2" rx="1.6" fill="#1f2a36"/><rect x="28" width="6" height="3.2" fill="#d6a640"/></g>
+  <g transform="translate(262,396)"><path d="M0,22 L6,0 L96,0 L102,22Z" fill="#2b3440"/><path d="M6,0 L96,0 L97,4 L5,4Z" fill="#3c4756"/><text x="51" y="13" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="8.4" font-weight="800" fill="#f3d48c" letter-spacing=".5">MRS. A. DANIELS</text><text x="51" y="20.5" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="5.8" fill="#d9e1e7">HR Manager</text></g>
+  <g transform="translate(436,396)"><path d="M0,22 L6,0 L96,0 L102,22Z" fill="#2b3440"/><path d="M6,0 L96,0 L97,4 L5,4Z" fill="#3c4756"/><text x="51" y="13" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="8.4" font-weight="800" fill="#f3d48c" letter-spacing=".5">MR. R. CLARKE</text><text x="51" y="20.5" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="5.8" fill="#d9e1e7">Office Manager</text></g>
+  <g transform="translate(392,360)"><path d="M0,0 L16,0 L14,34 L2,34Z" fill="#cfeaf2" opacity=".75" stroke="#a9cbd6"/><path d="M1.2,12 L14.8,12 L14,34 L2,34Z" fill="#9fd3e3" opacity=".6"/></g>
+  <g transform="translate(672,328)"><path d="M0,0 L84,0 L86,62 L-2,62Z" fill="#c9cfd5"/><path d="M3,3 L81,3 L83,59 L1,59Z" fill="#d8dde2"/>${logoMark(42, 30, 0.42)}<path d="M-8,62 L94,62 L98,68 L-12,68Z" fill="#9aa3ab"/></g>
+</g>`;
+}
+function receptionView(){
+  return `<g id="view-reception" style="display:none">
+  <rect x="-20" y="-140" width="840" height="680" fill="url(#gRecWall)"/>
+  ${ceiling('#e7efec')}
+  <rect x="-20" y="400" width="840" height="140" fill="#cdbfa9"/><path d="M-20,430 h840 M-20,470 h840 M80,400 l-30,140 M240,400 l-14,140 M400,400 v140 M560,400 l14,140 M720,400 l30,140" stroke="#b7a68b" stroke-width="1.2"/>
+  <rect x="-20" y="392" width="840" height="9" fill="#a99474"/>
+  <g transform="translate(56,40)"><rect width="268" height="86" rx="10" fill="#fffdf8" stroke="#c8d8d2"/>${logoMark(46, 43, 1.5)}<text x="84" y="40" font-family="Newsreader,Georgia,serif" font-weight="700" font-size="25" fill="#0f2f48">HARBOURVIEW</text><text x="85" y="58" font-family="Nunito Sans,sans-serif" font-size="10" font-weight="800" fill="#13767a" letter-spacing="1.2">BUSINESS SERVICES LTD</text><text x="85" y="72" font-family="Nunito Sans,sans-serif" font-size="8" fill="#4b5e6c">Water Street · Georgetown</text></g>
+  <g transform="translate(64,160)"><rect width="96" height="120" fill="#fff" stroke="#9aa7a2" stroke-width="4"/><rect x="8" y="8" width="80" height="70" fill="#8fd0e6"/><path d="M8,58 C30,44 50,52 88,40 L88,78 L8,78Z" fill="#4e8a5d"/><rect x="8" y="64" width="80" height="14" fill="#2aa6b8"/><text x="48" y="96" text-anchor="middle" font-family="Newsreader,Georgia,serif" font-size="10" font-weight="700" fill="#0f2f48">Shell Beach</text><text x="48" y="108" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="7" fill="#4b5e6c">Guyana</text></g>
+  ${clock(452, 208, 22, 'rec')}
+  <g transform="translate(560,108)"><rect x="-8" y="-8" width="146" height="300" fill="#f2ede4"/><rect width="130" height="292" fill="#fff6dc"/><rect x="18" y="40" width="92" height="64" fill="#9fd6ea" opacity=".9"/><rect x="20" y="230" width="50" height="62" fill="#7a2336" opacity=".25"/>
+    <g id="doorPanel"><rect width="130" height="292" fill="#8b5a37"/><rect x="14" y="16" width="102" height="112" rx="3" fill="none" stroke="#6e4428" stroke-width="3"/><rect x="14" y="146" width="102" height="128" rx="3" fill="none" stroke="#6e4428" stroke-width="3"/><rect x="26" y="52" width="78" height="22" rx="3" fill="#f3e6c6"/><text x="65" y="67" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-weight="800" font-size="9.5" fill="#0f2f48" letter-spacing=".6">INTERVIEW ROOM</text><circle cx="114" cy="158" r="6" fill="#e1b65a"/><rect x="104" y="155" width="18" height="5" rx="2.5" fill="#cfa246"/></g></g>
+  <g transform="translate(726,300)"><rect x="0" y="40" width="60" height="12" rx="4" fill="#13767a"/><rect x="4" y="0" width="52" height="44" rx="6" fill="#178589"/><path d="M8,52 v40 M52,52 v40" stroke="#3a3f47" stroke-width="4"/></g>
+  <g transform="translate(508,318)"><path d="M10,0 C-4,-30 4,-66 18,-80 C22,-50 24,-24 16,0Z" fill="#4f9160"/><path d="M14,0 C30,-26 44,-44 56,-62 C50,-30 36,-10 20,4Z" fill="#3f7d4d"/><path d="M0,0 h36 l-5,40 h-26z" fill="#e6e0d4" stroke="#c9c0b0"/></g>
+  <g transform="translate(300,242) scale(.92)">${person(P.reception)}</g>
+  <g transform="translate(372,268)"><path d="M0,0 L58,-6 L60,58 L2,62Z" fill="#232831"/><rect x="24" y="60" width="10" height="16" fill="#3a3f47"/><rect x="12" y="74" width="34" height="5" rx="2" fill="#3a3f47"/></g>
+  <path d="M140,342 L470,342 L478,356 L132,356Z" fill="#f4f1ea"/><rect x="138" y="356" width="336" height="44" fill="url(#gDeskFront)"/><rect x="138" y="356" width="336" height="4" fill="#c99868"/>
+  <g transform="translate(240,372)">${logoMark(0, 0, 0.5)}<text x="14" y="4" font-family="Nunito Sans,sans-serif" font-weight="800" font-size="10" fill="#f3e6c6" letter-spacing="1">RECEPTION</text></g>
+  <g transform="translate(176,330)"><rect width="32" height="14" rx="3" fill="#2b3440"/><rect x="4" y="-4" width="24" height="6" rx="3" fill="#3c4756"/></g>
+</g>`;
+}
+function homeView(){
+  return `<g id="view-home" style="display:none">
+  <rect x="-20" y="-140" width="840" height="680" fill="url(#gHomeWall)"/>
+  ${ceiling('#f3e8de')}
+  <rect x="-20" y="410" width="840" height="130" fill="#b88a5f"/><path d="M-20,440 h840 M-20,475 h840" stroke="#a37549" stroke-width="1.4"/>
+  <g transform="translate(60,60)"><rect width="200" height="210" fill="url(#gMorning)"/><circle cx="150" cy="70" r="20" fill="#fff3c8"/><rect y="150" width="200" height="60" fill="#3fb0be"/><path d="M0,150 C40,130 80,140 120,128 C150,120 180,132 200,126 L200,152 L0,152Z" fill="#5f9a6a"/>
+    <path d="M40,210 C44,160 50,120 58,96" stroke="#6b4a2e" stroke-width="5" fill="none"/><path d="M58,96 C40,86 22,90 10,100 M58,96 C70,80 88,78 100,82 M58,96 C46,74 46,62 52,52 M58,96 C76,92 90,100 96,112 M58,96 C42,100 30,112 26,124" stroke="#2f6b3c" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <rect width="200" height="210" fill="none" stroke="#fffaf2" stroke-width="10"/><path d="M100,0 v210 M0,105 h200" stroke="#fffaf2" stroke-width="6"/></g>
+  <g transform="translate(690,190)"><ellipse rx="54" ry="108" fill="#b9935a"/><ellipse rx="46" ry="100" fill="url(#gMirror)"/><path d="M-26,-60 L10,-90 M-30,-30 L20,-74" stroke="#fff" stroke-width="5" opacity=".5"/></g>
+  <g transform="translate(560,92)"><path d="M30,0 v10 M30,10 L2,30 L58,30Z" stroke="#7a6a58" stroke-width="2.4" fill="none"/><path d="M4,30 L56,30 L62,150 L-2,150Z" fill="#1e2f4f"/><path d="M22,30 L30,74 L38,30Z" fill="#f4f6f8"/><path d="M22,30 L30,96 L14,70Z M38,30 L30,96 L46,70Z" fill="#131f37"/></g>
+  <rect x="280" y="330" width="290" height="14" rx="3" fill="#8a5a37"/><path d="M296,344 v70 M554,344 v70" stroke="#6e4428" stroke-width="8"/>
+  <g transform="translate(330,228)"><rect width="150" height="96" rx="6" fill="#232831"/><rect x="6" y="6" width="138" height="84" fill="#fff"/><rect x="6" y="6" width="138" height="18" fill="#0f2f48"/>${logoMark(18, 15, 0.36)}<text x="28" y="18.5" font-family="Newsreader,Georgia,serif" font-weight="700" font-size="8.6" fill="#fff">Harbourview</text>
+    <rect x="12" y="30" width="72" height="5" fill="#13767a"/><path d="M12,42 h120 M12,49 h110 M12,56 h116 M12,63 h90" stroke="#c8d0d6" stroke-width="3"/><rect x="96" y="28" width="40" height="26" fill="#9fd6ea"/><rect x="12" y="72" width="40" height="11" rx="5" fill="#d2553a"/>
+    <path d="M-10,96 L160,96 L170,104 L-20,104Z" fill="#9aa3ab"/></g>
+  <g transform="translate(494,312) rotate(-4)"><rect width="66" height="16" rx="2" fill="#13767a"/><rect x="6" y="-4" width="54" height="6" fill="#fffaf2"/><text x="33" y="12" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="8" font-weight="800" fill="#fff">MY FOLDER</text></g>
+  <g transform="translate(296,256)"><path d="M10,74 L20,74 L18,20 Z" fill="#3a3f47"/><path d="M0,20 L36,20 L28,0 L8,0Z" fill="#e1a63b"/></g>
+</g>`;
+}
+function buildScene(){ $('#world').innerHTML = defs() + roomView() + receptionView() + homeView(); }
+
+/* ---- talking animation (mouth + jaw) ---- */
+const mouthState = { daniels: { v: 0, tgt: 0, t: 0, on: false }, clarke: { v: 0, tgt: 0, t: 0, on: false }, reception: { v: 0, tgt: 0, t: 0, on: false } };
+let talkRAF = 0;
+function setTalking(who, on){
+  const st = mouthState[who]; if (!st) return;
+  st.on = on; const el = document.getElementById('p-' + who); if (el) el.classList.toggle('talking', on);
+  if (!talkRAF) talkRAF = requestAnimationFrame(talkLoop);
+}
+function talkLoop(now){
+  let any = false;
+  for (const who in mouthState) {
+    const st = mouthState[who];
+    if (st.on) { any = true; if (now > st.t) { st.tgt = Math.random() < 0.18 ? 0.05 : 0.25 + Math.random() * 0.75; st.t = now + (REDUCED ? 220 : 70 + Math.random() * 90); } }
+    else st.tgt = 0;
+    st.v += (st.tgt - st.v) * 0.35;
+    if (st.v > 0.01) any = true;
+    applyMouth(who, st.v);
+  }
+  talkRAF = any ? requestAnimationFrame(talkLoop) : 0;
+}
+function applyMouth(who, v){
+  const mo = document.getElementById(who + '-mo'); if (!mo) return;
+  mo.setAttribute('ry', (1.4 + v * 5.6).toFixed(2)); mo.setAttribute('cy', (0.8 + v * 2.4).toFixed(2));
+  const ll = document.getElementById(who + '-ll'); if (ll) ll.setAttribute('transform', `translate(0,${(v * 5.6).toFixed(2)})`);
+  const j = v * 3.4;
+  const f = document.getElementById(who + '-face'); if (f) f.setAttribute('d', facePath(j));
+  const b = document.getElementById(who + '-beard'); if (b) b.setAttribute('d', beardPath(j));
+}
+function setExpr(who, e){ const el = document.getElementById('p-' + who); if (!el) return; el.classList.remove('expr-neutral', 'expr-smiling', 'expr-impressed', 'expr-concerned'); el.classList.add('expr-' + e); }
+function panelExpr(e1, e2){ setExpr('daniels', e1); setExpr('clarke', e2 || e1); }
+function setClock(prefix, h, m){
+  const H = document.getElementById(prefix + 'H'), M = document.getElementById(prefix + 'M');
+  if (H) H.setAttribute('transform', `rotate(${(h % 12) * 30 + m * 0.5})`); if (M) M.setAttribute('transform', `rotate(${m * 6})`);
+}
+
+let curView = 'room';
+const VIEW_LABELS = {
+  home: 'At home: a desk with a laptop showing the Harbourview website, a mirror and a navy blazer on a hanger.',
+  reception: 'Harbourview reception: the receptionist sits behind the front desk; the Interview Room door is on the right.',
+  room: 'The interview room: Mrs. Daniels and Mr. Clarke sit behind a wooden desk in front of a large window overlooking the Demerara River.'
+};
+async function setView(v){
+  if (curView === v) return;
+  const sc = $('#scene'); hideBubbles();
+  if (!REDUCED) { sc.classList.add('fade'); await wait(300); }
+  ['room', 'reception', 'home'].forEach(n => { const g = document.getElementById('view-' + n); if (g) g.style.display = n === v ? '' : 'none'; });
+  curView = v; $('#world').setAttribute('aria-label', VIEW_LABELS[v]);
+  sc.classList.remove('fade');
+  await wait(200);
+}
+const mqMobile = window.matchMedia ? matchMedia('(max-width: 640px)') : null;
+function fitViewBox(){ $('#world').setAttribute('viewBox', mqMobile && mqMobile.matches ? '40 -80 720 580' : '0 0 800 500'); }
+if (mqMobile) { try { mqMobile.addEventListener('change', fitViewBox); } catch(e){ mqMobile.addListener(fitViewBox); } }
+
+/* ======================================================================
+   GAME STATE + UI
+   ====================================================================== */
+const AREAS = { prep: 'Preparation', appear: 'Appearance', comm: 'Communication', body: 'Body language', answers: 'Answers', follow: 'Follow-up' };
+const FEEDBACK = {
+  prep:   ['Preparation let you down. Pack only the right documents, research the company and plan to arrive 10–15 minutes early.', 'A fair start, but check your folder and research the company more fully next time.', 'You came fully prepared: the right documents, solid research and on time.'],
+  appear: ['First impressions count. Choose formal business attire and avoid beachwear, party clothes, gum and sunglasses.', 'Nearly there. Go for a full business outfit and check the grooming details.', 'Professional business attire and neat grooming. You looked the part.'],
+  comm:   ['Work on courtesy and clarity: greet people properly, speak formally and prepare questions to ask.', 'Mostly polite, but some answers were vague or too casual. Use formal language and be specific.', 'Clear, polite and confident communication throughout.'],
+  body:   ['Your body language sent the wrong message. Phone away, sit upright, keep eye contact and never interrupt.', 'Some good body language, but watch out for fidgeting and distractions.', 'Upright posture, eye contact and a firm handshake: excellent non-verbal communication.'],
+  answers:['Prepare answers to common questions using the STAR method, and be honest about your skills.', 'Some good answers. Add specific examples and link them to the job.', 'Strong, specific answers backed up with examples. Great use of STAR.'],
+  follow: ['Follow up professionally: thank the panel, then send a formal thank-you e-mail within 24 hours.', 'Your follow-up was okay. Use a clear subject line, a formal salutation and a full sign-off.', 'A courteous goodbye and a polished follow-up e-mail. Very professional.']
+};
+let S;
+function okState(d){
+  if (!d || typeof d !== 'object' || d.v !== 1 || !Number.isInteger(d.stage) || d.stage < 0 || d.stage > 3 || !Number.isInteger(d.qi) || d.qi < 0 || d.qi > QUESTIONS.length) return false;
+  const s = d.S; if (!s || typeof s !== 'object' || typeof s.name !== 'string' || !isFinite(s.conf) || !isFinite(s.imp) || !Array.isArray(s.work) || !s.reactN || typeof s.reactN !== 'object' || !s.areas || typeof s.areas !== 'object') return false;
+  return Object.keys(AREAS).every(k => Array.isArray(s.areas[k]) && s.areas[k].length === 2 && s.areas[k].every(n => typeof n === 'number' && isFinite(n)));
+}
+function mark(stage, qi){ GSRUN = stage == null ? null : { v: 1, stage, qi: qi || 0, S: JSON.parse(JSON.stringify(S)) }; if (window.GameSave) GameSave.save(); }
+function newState(){
+  return { name: ($('#pname').value || '').trim().slice(0, 32) || 'Jordan Brooks', conf: 50, imp: 50,
+    areas: { prep: [0, 0], appear: [0, 0], comm: [0, 0], body: [0, 0], answers: [0, 0], follow: [0, 0] },
+    work: [], researched: false, reactN: { daniels: 0, clarke: 0 }, qn: 0 };
+}
+function setStage(i){ $$('#steps li').forEach((li, k) => { li.className = k < i ? 'done' : (k === i ? 'now' : ''); if (k === i) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current'); }); }
+function bump(meter, d){
+  const key = meter === 'conf' ? 'conf' : 'imp';
+  S[key] = clamp(S[key] + d, 0, 100);
+  const m = $(meter === 'conf' ? '#mConf' : '#mImp');
+  m.querySelector('.bar i').style.width = S[key] + '%'; m.querySelector('.v').textContent = S[key]; m.setAttribute('aria-valuenow', S[key]);
+  const dl = m.querySelector('.delta'); dl.textContent = (d > 0 ? '+' : '') + d; dl.className = 'delta ' + (d >= 0 ? 'up' : 'down');
+  if (d !== 0) { void dl.offsetWidth; dl.classList.add('show'); setTimeout(() => dl.classList.remove('show'), 1300); }
+}
+function resetMeters(){ ['conf', 'imp'].forEach(k => { S[k] = 50; const m = $(k === 'conf' ? '#mConf' : '#mImp'); m.querySelector('.bar i').style.width = '50%'; m.querySelector('.v').textContent = '50'; m.setAttribute('aria-valuenow', 50); }); }
+function score(area, p, max, tip){
+  max = max || 2; S.areas[area][0] += p; S.areas[area][1] += max;
+  const r = p / max; const dc = r >= 0.99 ? 9 : r >= 0.45 ? 3 : -7, di = r >= 0.99 ? 10 : r >= 0.45 ? 2 : -11;
+  bump('conf', dc); bump('imp', di);
+  if (r < 0.99 && tip) S.work.push({ area, tip, r });
+  return r >= 0.99 ? 2 : r >= 0.45 ? 1 : 0;
+}
+const QLABEL = ['Avoid this', 'Could be stronger', 'Strong choice'];
+const card = () => $('#card');
+let keyHandler = null;
+
+function tipHTML(q, text, extra){ return `<div class="tip q${q}" role="status"><strong>${QLABEL[q]} · Coaching tip</strong>${esc(text)}${extra || ''}</div>`; }
+function continueBtn(label){
+  return new Promise(res => {
+    const wrap = document.createElement('div'); wrap.className = 'row-actions';
+    wrap.innerHTML = `<button class="btn next" type="button">${esc(label || 'Continue')} <span aria-hidden="true">→</span></button>`;
+    card().appendChild(wrap);
+    const b = wrap.querySelector('button');
+    keyHandler = null;
+    b.addEventListener('click', () => { SFX.click(); skipLine(); wrap.remove(); res(); }, { once: true });
+    setTimeout(() => { try { b.focus({ preventScroll: true }); b.scrollIntoView({ block: 'nearest', behavior: REDUCED ? 'auto' : 'smooth' }); } catch(e){} }, 50);
+  });
+}
+function setCard(mode, html){ const c = card(); c.dataset.mode = mode; c.innerHTML = html; const h = c.querySelector('.prompt'); if (h) { try { h.focus({ preventScroll: true }); } catch(e){} } $('#panel').scrollTop = 0; }
+
+/* single-choice question */
+async function ask(cfg){
+  const opts = shuffle(cfg.options).map(o => Object.assign({}, o, { locked: !!(o.needsResearch && !S.researched) }));
+  const head = `<p class="kicker">${esc(cfg.kicker)}</p><h2 class="prompt" tabindex="-1">${esc(cfg.prompt)}</h2>${cfg.hint ? `<p class="hint">${esc(cfg.hint)}</p>` : ''}`;
+  let n = 0;
+  const list = opts.map(o => {
+    if (o.locked) return `<button class="opt locked" type="button" disabled aria-disabled="true"><span class="key" aria-hidden="true">–</span><span class="txt"><b>Locked:</b> you didn't research the company, so you can't talk about its services and values.</span></button>`;
+    n++;
+    const fig = cfg.cards ? `<div class="fig" aria-hidden="true">${outfitSVG(o.fig)}</div>` : '';
+    const tag = o.body ? '<span class="tag body">Body language</span>' : '';
+    return cfg.cards
+      ? `<button class="opt" type="button" data-p="${o.p}" data-k="${n}" aria-keyshortcuts="${n}">${fig}<span class="row"><span class="key" aria-hidden="true">${n}</span><span class="txt">${esc(o.t)}</span></span></button>`
+      : `<button class="opt" type="button" data-p="${o.p}" data-k="${n}" aria-keyshortcuts="${n}"><span class="key" aria-hidden="true">${n}</span><span class="txt">${esc(o.t)}${tag}</span></button>`;
+  }).join('');
+  setCard('single', head + `<div class="opts ${cfg.cards ? 'cards' : ''}" role="group" aria-label="Answer options">${list}</div>${cfg.qLine ? '<div class="row-actions" style="justify-content:flex-start;margin-top:6px"><button class="skip" type="button" id="skipBtn">Skip speech</button></div>' : ''}`);
+  if (cfg.asker) panelExpr('neutral');
+  const sb = $('#skipBtn'); if (sb) sb.addEventListener('click', skipLine);
+  const sayP = cfg.qLine ? say(cfg.qLine) : Promise.resolve();
+  const btns = $$('#card .opt:not(.locked)');
+  const picked = await new Promise(res => {
+    btns.forEach((b, i) => b.addEventListener('click', () => res(i), { once: true }));
+    keyHandler = k => { if (k >= 1 && k <= btns.length) { btns[k - 1].click(); return true; } return false; };
+  });
+  keyHandler = null;
+  btns.forEach(b => { b.disabled = true; });
+  const unlocked = opts.filter(o => !o.locked);
+  const o = unlocked[picked];
+  skipLine(); await sayP;
+  const sk = $('#skipBtn'); if (sk) sk.parentNode.remove();
+  const best = Math.max.apply(null, unlocked.map(x => x.p));
+  btns.forEach((b, i) => { b.disabled = true; b.classList.add('done'); const ox = unlocked[i];
+    if (i === picked) { b.classList.add('picked', 'p' + ox.p); b.querySelector('.txt').insertAdjacentHTML('beforeend', `<br><span class="verdict-tag vt${ox.p}">${['Weak', 'Okay', 'Strong'][ox.p]}</span>`); }
+    else if (ox.p === best && ox.p === 2) { b.classList.add('best'); b.querySelector('.txt').insertAdjacentHTML('beforeend', '<br><span class="verdict-tag vtb">Best answer</span>'); } });
+  const q = score(cfg.area, o.p, 2, o.tip || cfg.tip);
+  (q === 2 ? SFX.good : q === 1 ? SFX.meh : SFX.bad)();
+  if (cfg.player !== false) { const t = showBubble('you', o.you || o.t); $('#bub-you').classList.toggle('action', !!o.body); caption('you', o.you || o.t); }
+  await wait(cfg.player === false ? 200 : 1100);
+  if (cfg.onPick) await cfg.onPick(o, q);
+  if (cfg.asker && cfg.react !== false) await react(cfg.asker, q, cfg.reactLines);
+  card().insertAdjacentHTML('beforeend', tipHTML(q, o.tip || cfg.tip, cfg.tipExtra ? cfg.tipExtra(o) : ''));
+  await continueBtn(cfg.next);
+  $('#bub-you').classList.remove('show');
+  return o;
+}
+async function react(who, q, custom){
+  const other = who === 'daniels' ? 'clarke' : 'daniels';
+  if (q === 2) { setExpr(who, 'impressed'); setExpr(other, 'smiling'); }
+  else if (q === 1) { setExpr(who, 'neutral'); setExpr(other, 'smiling'); }
+  else { setExpr(who, 'concerned'); setExpr(other, 'concerned'); }
+  let id;
+  if (custom && custom[q]) id = custom[q];
+  else { const pre = who === 'daniels' ? 'dn_' : 'ck_'; const n = S.reactN[who]++;
+    id = q === 2 ? pre + (n % 2 ? 'good2' : 'good1') : q === 1 ? pre + 'ok' : pre + (n % 2 ? 'poor2' : 'poor1'); }
+  $('#bub-you').classList.remove('show');
+  await say(id);
+}
+
+/* multi-select (folder, attire, research) */
+async function multi(cfg){
+  const items = shuffle(cfg.items);
+  const head = `<p class="kicker">${esc(cfg.kicker)}</p><h2 class="prompt" tabindex="-1">${esc(cfg.prompt)}</h2><p class="hint">${esc(cfg.hint || 'Tap to select, then confirm.')}</p>`;
+  const chips = items.map((it, i) => `<button class="chip" type="button" aria-pressed="false" data-good="${it.good ? 1 : 0}" data-k="${i + 1}"><span class="key" aria-hidden="true">${i + 1}</span>${esc(it.t)}</button>`).join('');
+  setCard('multi', head + `<div class="chips" role="group" aria-label="Choices">${chips}</div><div class="row-actions"><span class="status" id="selCount" aria-live="polite">0 selected</span><button class="btn teal" type="button" id="confirmMulti">${esc(cfg.confirm || 'Confirm')}</button></div>`);
+  const cs = $$('#card .chip');
+  const upd = () => { $('#selCount').textContent = cs.filter(c => c.getAttribute('aria-pressed') === 'true').length + ' selected'; };
+  cs.forEach(c => c.addEventListener('click', () => { if (c.disabled) return; SFX.click(); c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); upd(); }));
+  keyHandler = k => { if (k >= 1 && k <= cs.length) { cs[k - 1].click(); return true; } return false; };
+  await new Promise(res => $('#confirmMulti').addEventListener('click', res, { once: true }));
+  keyHandler = null; skipLine();
+  $('#confirmMulti').parentNode.remove();
+  let good = 0, bad = 0; const need = items.filter(i => i.good).length;
+  const pickedIdx = [];
+  cs.forEach((c, i) => { const on = c.getAttribute('aria-pressed') === 'true'; c.disabled = true; const it = items[i];
+    if (on) pickedIdx.push(it.id);
+    if (on && it.good) { good++; c.classList.add('ok-pick'); }
+    else if (on && !it.good) { bad++; c.classList.add('bad-pick'); }
+    else if (!on && it.good) c.classList.add('missed'); });
+  const raw = clamp(good - bad, 0, need) / need * 2;
+  const q = score(cfg.area, raw, 2, cfg.tipFor ? cfg.tipFor(good, bad, need) : cfg.tip);
+  (q === 2 ? SFX.good : q === 1 ? SFX.meh : SFX.bad)();
+  const summary = `You chose ${good} of ${need} useful items${bad ? ` and ${bad} that you didn't need` : ''}.`;
+  card().insertAdjacentHTML('beforeend', tipHTML(q, summary + ' ' + cfg.tip, cfg.extra ? cfg.extra(pickedIdx) : '') + '<p class="hint" style="margin:6px 0 0">Dashed green = something useful you missed.</p>');
+  if (cfg.onDone) cfg.onDone(pickedIdx);
+  await continueBtn();
+  return pickedIdx;
+}
+
+/* outfit figures */
+function outfitSVG(k){
+  const skin = '#9a6440', base = `<circle cx="40" cy="16" r="10" fill="${skin}"/><path d="M30,12 C30,2 50,2 50,12 C48,7 32,7 30,12Z" fill="#1c1310"/><rect x="36" y="25" width="8" height="6" fill="${skin}"/>`;
+  const F = {
+    suit: `<path d="M24,32 L56,32 L60,74 L20,74Z" fill="#1e2f4f"/><path d="M35,32 L40,52 L45,32Z" fill="#f4f6f8"/><path d="M38.5,34 L41.5,34 L42,50 L40,53 L38,50Z" fill="#1d4f9e"/><path d="M20,36 L14,72 M60,36 L66,72" stroke="#1e2f4f" stroke-width="7" stroke-linecap="round"/><circle cx="14" cy="74" r="3.5" fill="${skin}"/><circle cx="66" cy="74" r="3.5" fill="${skin}"/><path d="M27,74 L38,74 L37,108 L28,108Z M42,74 L53,74 L52,108 L43,108Z" fill="#172440"/><path d="M25,108 h13 v4 h-15z M42,108 h13 l2,4 h-15z" fill="#111"/>`,
+    smart: `<path d="M25,32 L55,32 L57,72 L23,72Z" fill="#a9c8e8"/><path d="M36,32 L40,40 L44,32" stroke="#7a9cc2" stroke-width="1.5" fill="none"/><path d="M40,40 v30" stroke="#7a9cc2" stroke-width="1" stroke-dasharray="1 4"/><path d="M22,36 L16,70 M58,36 L64,70" stroke="#a9c8e8" stroke-width="7" stroke-linecap="round"/><circle cx="16" cy="72" r="3.5" fill="${skin}"/><circle cx="64" cy="72" r="3.5" fill="${skin}"/><path d="M27,72 L38,72 L37,108 L28,108Z M42,72 L53,72 L52,108 L43,108Z" fill="#3b4048"/><path d="M25,108 h13 v4 h-15z M42,108 h13 l2,4 h-15z" fill="#6b4226"/>`,
+    beach: `<path d="M24,32 L56,32 L58,66 L22,66Z" fill="#f29d38"/><g fill="#fff4c2"><circle cx="31" cy="42" r="3"/><circle cx="47" cy="40" r="3"/><circle cx="38" cy="56" r="3"/><circle cx="52" cy="58" r="2.5"/></g><g fill="#2f9e6a"><path d="M28,50 l4,-3 l1,5z M44,48 l5,-2 l-1,5z"/></g><path d="M22,36 L18,56 M58,36 L62,56" stroke="#f29d38" stroke-width="7" stroke-linecap="round"/><path d="M18,56 L16,72 M62,56 L64,72" stroke="${skin}" stroke-width="5" stroke-linecap="round"/><path d="M25,66 L55,66 L56,82 L41,82 L40,74 L39,82 L24,82Z" fill="#c9b07a"/><path d="M29,82 L28,106 M51,82 L52,106" stroke="${skin}" stroke-width="7" stroke-linecap="round"/><path d="M22,108 h12 M46,108 h12" stroke="#2ab0c3" stroke-width="4" stroke-linecap="round"/>`,
+    party: `<path d="M27,32 L53,32 L62,90 L18,90Z" fill="#c2287a"/><g fill="#ffd56b"><circle cx="32" cy="46" r="1.4"/><circle cx="46" cy="40" r="1.4"/><circle cx="40" cy="58" r="1.4"/><circle cx="52" cy="70" r="1.4"/><circle cx="28" cy="74" r="1.4"/><circle cx="44" cy="80" r="1.4"/><circle cx="36" cy="66" r="1.4"/></g><path d="M27,34 L19,64 M53,34 L61,64" stroke="${skin}" stroke-width="5" stroke-linecap="round"/><path d="M17,58 h6 M17,62 h6 M57,58 h6 M57,62 h6" stroke="#ffd56b" stroke-width="2.4"/><path d="M33,28 Q40,36 47,28" stroke="#ffd56b" stroke-width="2.4" fill="none"/><path d="M32,90 L31,106 M48,90 L49,106" stroke="${skin}" stroke-width="5" stroke-linecap="round"/><path d="M27,108 h8 l1,-5 M45,108 h8 l1,-5" stroke="#ffd56b" stroke-width="3" fill="none"/>`
+  };
+  return `<svg viewBox="0 0 80 115">${base}${F[k] || ''}</svg>`;
+}
+
+/* e-mail builder */
+async function emailBuilder(){
+  const first = S.name.split(/\s+/)[0];
+  const ROWS = [
+    { key: 'subject', label: 'Subject line', tip: 'A clear, specific subject line tells the reader what the e-mail is about.', opts: [
+      { t: 'Thank you – Administrative Assistant interview', p: 2 }, { t: 'Interview', p: 1 }, { t: 'hiii', p: 0 }, { t: '(no subject)', p: 0 } ] },
+    { key: 'salutation', label: 'Salutation', tip: 'Use a formal salutation with titles and surnames when you know the names.', opts: [
+      { t: 'Dear Mrs. Daniels and Mr. Clarke,', p: 2 }, { t: 'To whom it may concern,', p: 1 }, { t: 'Hey guys,', p: 0 }, { t: 'Yo!', p: 0 } ] },
+    { key: 'body', label: 'Message and tone', tip: 'Keep it short, polite and formal: thank them, restate your interest and offer more information. No text-speak or capitals.', opts: [
+      { t: "Thank you for meeting with me today to discuss the Administrative Assistant post. I enjoyed learning about Harbourview's work with local businesses, and I am confident that my organisation and digital media skills would be an asset to your team. Please let me know if you need any further information.", p: 2, short: 'Formal, concise and specific' },
+      { t: 'Thank you for the interview. I really really want this job and I think I would be good at it. Please call me back as soon as possible.', p: 1, short: 'Polite but pushy and vague' },
+      { t: 'thx 4 the interview!! hope i get it lol :)', p: 0, short: 'Text-speak' },
+      { t: 'THANK YOU FOR THE INTERVIEW. PLEASE GIVE ME THE JOB.', p: 0, short: 'ALL CAPS' } ] },
+    { key: 'closing', label: 'Sign-off', tip: 'Sign off formally with your full name and contact details.', opts: [
+      { t: `Kind regards,\n${S.name}\nTel. 555-0147`, p: 2 }, { t: `Thanks,\n${first}`, p: 1 }, { t: 'Later!!', p: 0 }, { t: 'Sent from my phone', p: 0 } ] }
+  ].map(r => Object.assign(r, { opts: shuffle(r.opts) }));
+  const chosen = {};
+  const rowsHTML = ROWS.map((r, ri) => `<div class="erow" data-row="${ri}"><h3 id="eh${ri}">${esc(r.label)}</h3><div class="chips" role="radiogroup" aria-labelledby="eh${ri}">${r.opts.map((o, oi) => `<button class="chip" type="button" role="radio" aria-checked="false" aria-pressed="false" data-oi="${oi}" data-p="${o.p}"><span class="key" aria-hidden="true">${oi + 1}</span>${esc(r.key === 'body' ? o.short : o.t.replace(/\n/g, ' '))}</button>`).join('')}</div></div>`).join('');
+  setCard('email', `<p class="kicker">Stage 4 · Close · Follow-up e-mail</p><h2 class="prompt" tabindex="-1">Build your thank-you e-mail</h2><p class="hint">Choose one option in each row. Keys 1–4 fill the next empty row.</p>
+    <div class="mail" aria-label="E-mail preview"><div class="bar2"><span class="dotz"><i></i><i></i><i></i></span>New message</div>
+    <div class="fld"><span>To:</span><span>hr@harbourview.example</span></div><div class="fld"><span>Subject:</span><span id="mSubj" class="ph">Choose a subject line…</span></div>
+    <div class="bd" id="mBody"><span class="ph">Your message appears here…</span></div></div>${rowsHTML}
+    <div class="row-actions"><button class="btn teal" type="button" id="sendMail" disabled>Send e-mail</button></div>`);
+  const render = () => {
+    const s = chosen.subject, sa = chosen.salutation, b = chosen.body, c = chosen.closing;
+    const sj = $('#mSubj'); sj.textContent = s ? s.t : 'Choose a subject line…'; sj.className = s ? '' : 'ph';
+    const parts = [sa ? sa.t : '', b ? b.t : '', c ? c.t : ''].filter(Boolean);
+    const mb = $('#mBody'); if (parts.length) mb.textContent = parts.join('\n\n'); else mb.innerHTML = '<span class="ph">Your message appears here…</span>';
+    $('#sendMail').disabled = Object.keys(chosen).length < ROWS.length;
+  };
+  $$('#card .erow').forEach(rowEl => { const ri = +rowEl.dataset.row; const r = ROWS[ri];
+    rowEl.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => { if (ch.disabled) return;
+      rowEl.querySelectorAll('.chip').forEach(x => { x.setAttribute('aria-pressed', 'false'); x.setAttribute('aria-checked', 'false'); });
+      ch.setAttribute('aria-pressed', 'true'); ch.setAttribute('aria-checked', 'true'); chosen[r.key] = r.opts[+ch.dataset.oi]; SFX.typing(0.5); render(); })); });
+  keyHandler = k => { const ri = ROWS.findIndex(r => !chosen[r.key]); if (ri < 0 || k < 1 || k > ROWS[ri].opts.length) return false; $$(`#card .erow[data-row="${ri}"] .chip`)[k - 1].click(); return true; };
+  await new Promise(res => $('#sendMail').addEventListener('click', res, { once: true }));
+  keyHandler = null; skipLine();
+  $('#sendMail').parentNode.remove();
+  SFX.whoosh();
+  let tot = 0; const notes = [];
+  ROWS.forEach((r, ri) => { const o = chosen[r.key]; tot += o.p;
+    $$(`#card .erow[data-row="${ri}"] .chip`).forEach(ch => { ch.disabled = true; const p = +ch.dataset.p; if (ch.getAttribute('aria-pressed') === 'true') ch.classList.add(p === 2 ? 'ok-pick' : 'bad-pick'); else if (p === 2) ch.classList.add('missed'); });
+    if (o.p < 2) notes.push(r.label + ': ' + r.tip); });
+  const q = score('follow', tot / 4, 2, notes[0] || '');
+  (q === 2 ? SFX.chime : q === 1 ? SFX.meh : SFX.bad)();
+  const extra = `<p><b>E-mail etiquette:</b> clear subject line · formal salutation · concise, polite body · standard English (no text-speak or ALL CAPS) · professional sign-off with contact details · proofread · send within 24 hours.</p>${notes.length ? '<p>' + notes.map(esc).join('<br>') + '</p>' : ''}`;
+  card().insertAdjacentHTML('beforeend', tipHTML(q, q === 2 ? 'A model follow-up e-mail. Sent the same day, it keeps you fresh in the panel\'s mind.' : 'Your e-mail has been sent, but it could be more professional.', extra));
+  await continueBtn('See the result');
+}
+
+/* ======================================================================
+   CONTENT: stages and questions
+   ====================================================================== */
+const QUESTIONS = [
+  { qLine: 'dn_q1', asker: 'daniels', area: 'comm', prompt: 'Tell us a little about yourself.', tip: 'Keep it to about a minute: present (your studies), past (relevant experience), future (why this role). Link it to the job.', options: [
+    { p: 2, t: "I'm a CAPE student at Breadfruit Valley Secondary studying Digital Media, Communication Studies and Literatures in English. I'm organised and I enjoy working with documents and people. Last summer I helped in my aunt's office with filing and answering the phone." },
+    { p: 1, t: "I like music, football and spending time with my friends. I'm a fun person.", tip: 'Hobbies are fine to mention, but link yourself to the job: your studies, skills and any experience.' },
+    { p: 0, t: "Um... it's all on my CV, really.", tip: 'Never refuse to answer. The panel wants to hear you speak about yourself confidently.' },
+    { p: 0, body: true, t: "Lean back, shrug and say, \"Not much to tell, Miss.\"", tip: 'Slouching and shrugging look uninterested, and "Miss" is too informal. Sit up and use the interviewer\'s name.' } ] },
+  { qLine: 'ck_q2', asker: 'clarke', area: 'answers', prompt: 'Why do you want to work as an administrative assistant here at Harbourview?', tip: 'Show that you have researched the company and link its work and values to your own skills.', options: [
+    { p: 2, needsResearch: true, t: "I read that Harbourview supports small businesses across Guyana with document preparation and bookkeeping support. I value accuracy and confidentiality too, and I'd like to use my digital media skills to help your clients." },
+    { p: 1, t: "I've always wanted to work in an office, and this job is close to my home.", tip: 'True, but not very convincing. Mention what the company does and what you can offer it.' },
+    { p: 0, t: 'To be honest, I just need the money.', tip: 'Everyone needs an income, but the panel wants to hear why you want THIS job.' },
+    { p: 0, t: "I applied to lots of places. Whichever calls first, really.", tip: 'This tells the panel you are not really interested in them. Research the company first.' } ] },
+  { qLine: 'dn_q3', asker: 'daniels', area: 'answers', prompt: 'What is your greatest strength, and one weakness you are working on?', tip: 'Back up a strength with an example. Choose a real but small weakness and explain how you are improving.', options: [
+    { p: 2, t: 'My strength is attention to detail: I always proofread documents before I hand them in. I used to find speaking in front of people hard, so I volunteered to present in class and I am improving.' },
+    { p: 1, t: "My strength is that I'm hard-working. My weakness is that I'm a perfectionist.", tip: '"Perfectionist" is a cliché. Give a real weakness and the steps you are taking.' },
+    { p: 0, t: "I don't really have any weaknesses.", tip: 'Everyone has weaknesses. Saying you have none sounds arrogant or unprepared.' },
+    { p: 0, t: "I'm always late, but I'm working on it... sometimes.", tip: 'Lateness is a serious weakness for an office job. Choose something less damaging, and show real improvement.' } ] },
+  { body: true, narr: 'nr_body1', qLine: 'ck_role', asker: 'clarke', area: 'body', prompt: 'Mr. Clarke is describing the job. What do you do?', tip: 'Active listening: sit upright, keep natural eye contact and nod now and then. Never interrupt.', options: [
+    { p: 2, body: true, t: 'Sit upright, keep eye contact and nod now and then.', you: '(You sit upright, keep eye contact and nod.)' },
+    { p: 1, body: true, t: 'Listen, but keep clicking your pen.', you: '(You listen... click, click, click.)', tip: 'Fidgeting is distracting and looks nervous. Rest your hands on your lap or the desk.' },
+    { p: 0, body: true, t: 'Slouch back and glance at your phone under the desk.', you: '(You slouch and check your phone.)', tip: 'Checking your phone is one of the quickest ways to lose an interview. It must be away and silent.' },
+    { p: 0, body: true, t: 'Interrupt: "Yeah, yeah, I know all that."', you: '"Yeah, yeah, I know all that."', tip: 'Interrupting is rude. Let the interviewer finish, then respond.' } ] },
+  { qLine: 'ck_q4', asker: 'clarke', area: 'answers', prompt: 'Tell us about a time you worked as part of a team.', hint: 'Think STAR: Situation, Task, Action, Result.', tip: 'Use STAR: Situation, Task, Action, Result. Give a real example with a clear outcome.', options: [
+    { p: 2, t: 'For our Digital Media project, my group had to produce a school promo video in two weeks. I set up a shared timeline and did the layout in Publisher. We finished a day early, and the principal printed it for parents.' },
+    { p: 1, t: "I've done group work at school. We usually get it done.", tip: 'Too vague. Give one specific example using STAR.' },
+    { p: 0, t: "Group work is annoying because others never pull their weight, so I just do it all myself.", tip: 'Complaining about others suggests you are hard to work with. Show cooperation.' } ] },
+  { qLine: 'dn_q5', asker: 'daniels', area: 'comm', prompt: 'A customer comes to reception shouting because their documents are not ready. How would you handle it?', tip: 'Stay calm and professional: listen, empathise, apologise, then solve the problem or refer it to a supervisor.', options: [
+    { p: 2, t: "Stay calm and listen without interrupting, apologise for the inconvenience, check the job record and tell them clearly when it will be ready, or pass them to my supervisor if I can't help." },
+    { p: 1, t: 'Tell them to wait and call my manager straight away.', tip: 'Involving a manager is fine, but first listen and show the customer you care.' },
+    { p: 0, t: "Raise my voice so they know they can't speak to me like that.", tip: 'Shouting back always makes things worse. Stay calm and polite.' },
+    { p: 0, t: 'Ignore them until they calm down.', tip: 'Ignoring a customer is unprofessional. Acknowledge them straight away.' } ] },
+  { qLine: 'ck_q6', asker: 'clarke', area: 'answers', prompt: 'What is your typing speed, and which software packages can you use?', tip: 'Be specific and honest: give a figure and name each package with what you use it for.', options: [
+    { p: 2, t: 'About 40 words per minute with good accuracy. I use Word for letters and mail merge, Excel for formulas and charts, Access for databases and queries, PowerPoint for presentations and Publisher for flyers.' },
+    { p: 1, t: "I type quite fast and I'm good with computers.", tip: 'Too vague. Give a typing speed and name the software and tasks.' },
+    { p: 0, t: "About 150 words per minute, and I'm an expert in every program.", tip: 'Exaggerating is risky: you may be given a typing test. Be honest.' },
+    { p: 0, t: "I mostly use my phone, so I don't really type.", tip: 'Administrative work needs keyboarding skills. Practise and mention your Digital Media training.' } ] },
+  { qLine: 'dn_q7', asker: 'daniels', area: 'answers', prompt: 'How would you keep confidential documents secure?', tip: 'Think physical security, passwords, access only for authorised staff, and shredding.', options: [
+    { p: 2, t: 'Lock paper files in a filing cabinet, use strong passwords and lock my screen when I step away, share files only with authorised staff, and shred documents that are no longer needed.' },
+    { p: 1, t: "I'd keep them in a folder on my desk.", tip: 'A folder on an open desk can be read by anyone. Lock files away and protect computer files.' },
+    { p: 0, t: "I'd e-mail them to my personal account so I can work on them at home.", tip: 'This is a serious breach of confidentiality. Company documents stay on company systems.' },
+    { p: 0, t: "I wouldn't tell anyone, except maybe my best friend.", tip: 'Confidential means confidential: no one outside the authorised staff.' } ] },
+  { body: true, narr: 'nr_body2', asker: 'daniels', area: 'body', prompt: 'Mrs. Daniels pauses to write some notes. How do you wait?', tip: 'Silence is normal in interviews. Wait calmly with relaxed hands and a pleasant expression.', options: [
+    { p: 2, body: true, t: 'Sit calmly with your hands relaxed and wait quietly, with a slight smile.', you: '(You wait calmly, hands relaxed.)' },
+    { p: 1, body: true, t: 'Look around the room and out at the harbour.', you: '(You gaze out at the cruise ship in the harbour.)', tip: 'Looking around is not rude, but staying focused shows you are engaged.' },
+    { p: 0, body: true, t: 'Drum your fingers loudly on the desk.', you: '(Tap-tap-tap-tap on the desk.)', tip: 'Drumming your fingers sounds impatient. Keep your hands still.' },
+    { p: 0, body: true, t: 'Check your phone to see your messages.', you: '(You check your phone.)', tip: 'Never check your phone during an interview, even during a pause.' } ] },
+  { qLine: 'ck_q8', asker: 'clarke', area: 'answers', prompt: 'You have a letter that must be posted today, a meeting to arrange for tomorrow and a pile of filing. How would you prioritise?', tip: 'Prioritise by deadline and importance; use a to-do list or diary, and check with your supervisor if unsure.', options: [
+    { p: 2, t: "Sort by deadline and importance: finish and post the letter first, then book the meeting and send the invitations, then do the filing. If I'm unsure, I'd check with my supervisor." },
+    { p: 1, t: "I'd do the easiest task first to get it out of the way.", tip: 'The easiest task is not always the most urgent. Start with the nearest deadline.' },
+    { p: 0, t: "I'd try to do all three at the same time.", tip: 'Multitasking leads to mistakes. Work through tasks in order of priority.' },
+    { p: 0, t: "I'd leave the filing for someone else.", tip: 'Every task matters. Plan time for it rather than passing it on.' } ] },
+  { qLine: 'dn_q9', asker: 'daniels', area: 'answers', prompt: 'You sent an e-mail to the wrong client by mistake. What would you do?', tip: 'Own the mistake quickly, limit the damage and learn from it. Always check the recipient before you press Send (e-mail etiquette).', options: [
+    { p: 2, t: 'Tell my supervisor straight away, recall the message if possible, send a short, polite apology asking the client to delete it, then send it to the right person. In future I would double-check addresses before sending.' },
+    { p: 1, t: 'Send it again to the right client and hope nobody notices.', tip: 'Fixing it is good, but hiding a mistake can cause bigger problems, especially with confidential information.' },
+    { p: 0, t: "Say nothing. It's not a big deal.", tip: 'A wrongly sent e-mail can breach confidentiality. Report it immediately.' },
+    { p: 0, t: 'Blame the computer system.', tip: 'Blaming others damages trust. Take responsibility.' } ] },
+  { qLine: 'ck_q10', asker: 'clarke', area: 'answers', prompt: 'Where do you see yourself in five years’ time?', tip: 'Show ambition that fits the company, such as growing in the role and continuing to study.', options: [
+    { p: 2, t: "I'd like to have grown with Harbourview, perhaps as a senior administrator, while studying for a qualification in business or office administration." },
+    { p: 1, t: "I'm not sure yet. Maybe still working here?", tip: 'Uncertainty is normal, but give the panel a goal to show you are motivated.' },
+    { p: 0, t: 'In your chair, Mr. Clarke!', tip: 'A joke like this can sound arrogant. Keep it professional.' },
+    { p: 0, t: 'Probably at a different job. This is just temporary.', tip: 'Employers invest in training you. Saying you will leave soon is a red flag.' } ] },
+  { qLine: 'dn_q11', asker: 'daniels', area: 'comm', prompt: 'What are your salary expectations, and when would you be available to start?', tip: 'Research the usual salary for the role, answer politely and flexibly, and give a clear start date.', options: [
+    { p: 2, t: "I'm happy to discuss a salary in line with the advertised range for this role. I could start two weeks after receiving an offer." },
+    { p: 1, t: 'Whatever you pay is fine. I can start whenever.', tip: 'Polite, but too vague. Show you know the typical range and give a clear date.' },
+    { p: 0, t: "I want the highest salary you can offer, and I can't work Mondays.", tip: 'Demanding and inflexible. Be polite and reasonable.' },
+    { p: 0, t: 'How much holiday do I get? That’s my main question.', tip: 'Focusing on time off before you are hired gives the wrong impression.' } ] },
+  { qLine: 'ck_q12', asker: 'clarke', area: 'comm', prompt: 'Finally, do you have any questions for us?', tip: 'Always prepare one or two questions about the role, the team or training. It shows real interest.', options: [
+    { p: 2, t: 'Yes. What does a typical day look like in this role, and what training do you offer new staff?' },
+    { p: 1, t: "No, I think you've covered everything.", tip: 'Having no questions can look uninterested. Prepare one or two in advance.' },
+    { p: 0, t: 'How soon can I take leave?', tip: 'Ask about the job, not about time off.' },
+    { p: 0, t: 'Can I leave now? I have football practice.', tip: 'Rushing off is rude. Show interest until the very end.' } ] }
+];
+
+async function stagePrep(){
+  setStage(0); await setView('home');
+  setCard('info', `<p class="kicker">Your application</p><h2 class="prompt" tabindex="-1">Administrative Assistant at Harbourview</h2>
+    <div class="fact"><dl><dt>Company</dt><dd>Harbourview Business Services Ltd</dd><dt>Address</dt><dd>Water Street, Georgetown</dd><dt>Interview</dt><dd>Thursday, 10:00 a.m.</dd><dt>Panel</dt><dd>Mrs. Daniels (HR Manager), Mr. Clarke (Office Manager)</dd></dl></div>
+    <p class="hint" style="margin-top:10px">Every choice changes your <b>confidence</b> and the <b>panel's impression</b>. Read the coaching tip after each one.</p>`);
+  say('nr_welcome');
+  await continueBtn('Start preparing');
+  say('nr_outfit');
+  await ask({ kicker: 'Stage 1 · Prepare · Outfit', prompt: 'What will you wear to the interview?', area: 'appear', cards: true, player: false,
+    tip: 'Business attire: a suit or blazer, pressed shirt or blouse, dark trousers or a knee-length skirt and polished closed shoes.',
+    options: [
+      { p: 2, fig: 'suit', t: 'Navy suit or blazer, pressed shirt, dark trousers or skirt, polished shoes' },
+      { p: 1, fig: 'smart', t: 'Neat shirt and dark trousers, no jacket', tip: 'Smart, but for an office interview a jacket or blazer looks more professional.' },
+      { p: 0, fig: 'beach', t: "Beach shirt, shorts and flip-flops. It's hot!", tip: 'Beachwear is for the beach, not the office. Dress formally even in the heat.' },
+      { p: 0, fig: 'party', t: 'Sparkly party outfit with lots of jewellery', tip: 'Party clothes and lots of jewellery distract the panel. Keep it simple and professional.' } ] });
+  say('nr_attire');
+  await multi({ kicker: 'Stage 1 · Prepare · Mirror check', prompt: 'Quick business-attire check. What will you do?', area: 'appear', confirm: 'Done',
+    tip: 'Neat grooming completes a professional image: ironed clothes, polished shoes, tidy hair, clean nails and very little fragrance.',
+    items: [ { id: 'iron', t: 'Iron clothes the night before', good: 1 }, { id: 'shoes', t: 'Polish your shoes', good: 1 }, { id: 'hair', t: 'Neat, tidy hair', good: 1 }, { id: 'nails', t: 'Clean, short nails', good: 1 },
+      { id: 'scent', t: 'Light or no fragrance', good: 1 }, { id: 'shades', t: 'Sunglasses on your head', good: 0 }, { id: 'gum', t: 'Chew gum to stay fresh', good: 0 }, { id: 'bangles', t: 'Lots of loud bangles', good: 0 } ] });
+  say('nr_folder');
+  await multi({ kicker: 'Stage 1 · Prepare · Folder', prompt: 'Pack your interview folder.', area: 'prep', confirm: 'Pack folder',
+    tip: 'Take your CV (résumé), application letter, certificates and ID, plus a pen and notepad. Leave everything else at home.',
+    items: [ { id: 'cv', t: 'CV / résumé (2 copies)', good: 1 }, { id: 'letter', t: 'Application letter', good: 1 }, { id: 'certs', t: 'Certificates and results slips', good: 1 }, { id: 'id', t: 'ID card or passport', good: 1 },
+      { id: 'pen', t: 'Pen and notepad', good: 1 }, { id: 'towel', t: 'Beach towel', good: 0 }, { id: 'game', t: 'Handheld games console', good: 0 }, { id: 'snacks', t: 'Big bag of snacks', good: 0 }, { id: 'speaker', t: 'Bluetooth speaker', good: 0 } ] });
+  say('nr_research');
+  await multi({ kicker: 'Stage 1 · Prepare · Research', prompt: 'How will you research Harbourview before the interview?', area: 'prep', confirm: 'Done',
+    tip: 'Research helps you answer "Why do you want to work here?" and to ask good questions.',
+    items: [ { id: 'web', t: "Read Harbourview's website and services", good: 1 }, { id: 'advert', t: 'Re-read the job advert and match your skills', good: 1 }, { id: 'route', t: 'Plan your route to Water Street and the travel time', good: 1 },
+      { id: 'qs', t: 'Prepare two questions to ask the panel', good: 1 }, { id: 'practise', t: 'Practise answers aloud with family or a friend', good: 1 }, { id: 'skip', t: "Skip it. You'll find out on the day", good: 0 }, { id: 'script', t: 'Memorise a script word for word', good: 0 } ],
+    onDone: picked => { S.researched = picked.includes('web'); },
+    extra: picked => picked.includes('web')
+      ? `<div class="fact"><h3>Your research notes</h3><dl><dt>Founded</dt><dd>2011, Water Street, Georgetown</dd><dt>Services</dt><dd>Document preparation, bookkeeping support, virtual office and reception services for small businesses</dd><dt>Values</dt><dd>Accuracy, courtesy, confidentiality</dd></dl></div>`
+      : '<p><b>You did not read the company website</b>, so you will not be able to talk about its services in the interview.</p>' });
+}
+
+async function stageArrival(){
+  setStage(1); await setView('reception'); setClock('rec', 9, 45);
+  setExpr('reception', 'smiling');
+  SFX.steps(3);
+  say('nr_arrive');
+  await ask({ kicker: 'Stage 2 · Arrival', prompt: 'Your interview is at 10:00. What time do you arrive?', area: 'prep', player: false,
+    tip: 'Aim to arrive 10–15 minutes early. It gives you time to calm down, use the bathroom and check your appearance.',
+    onPick: async o => { setClock('rec', o.h, o.m); },
+    options: [ { p: 2, t: '9:45 a.m., 15 minutes early', h: 9, m: 45 }, { p: 1, t: '10:00 a.m. exactly', h: 10, m: 0, tip: 'On the dot is cutting it fine. Any delay and you will be late.' },
+      { p: 1, t: '9:00 a.m., a whole hour early', h: 9, m: 0, tip: 'Arriving an hour early can put pressure on the staff. Wait nearby and go in 10–15 minutes before.' },
+      { p: 0, t: '10:15 a.m., rushing in and apologising', h: 10, m: 15, tip: 'Lateness tells the panel you are unreliable. Plan your route and leave extra time.' } ] });
+  setClock('rec', 9, 47);
+  await say('rc_morning');
+  await ask({ kicker: 'Stage 2 · Arrival · Reception', prompt: 'How do you greet the receptionist?', area: 'comm', asker: null,
+    tip: 'Be polite to everyone you meet. Receptionists often tell the panel how candidates behaved.',
+    onPick: async (o, q) => { setExpr('reception', q === 2 ? 'smiling' : 'concerned'); await say(q === 2 ? 'rc_polite' : 'rc_rude'); setExpr('reception', 'neutral'); },
+    options: [ { p: 2, t: `Smile and say: "Good morning. My name is ${S.name}. I'm here for the ten o'clock interview with Mrs. Daniels."` },
+      { p: 1, t: '"Hi. Interview."', tip: 'Too short. Greet the receptionist, give your name and say who you are seeing.' },
+      { p: 0, t: '"Hey, where’s the interview at?"', tip: 'Too casual. Use a polite greeting and full sentences.' },
+      { p: 0, t: 'Say nothing and sit down to wait.', tip: 'Always introduce yourself so staff know you have arrived.' } ] });
+  SFX.chair(); await wait(500);
+  SFX.buzz(); await wait(300);
+  say('nr_phone');
+  await ask({ kicker: 'Stage 2 · Arrival · Phone', prompt: 'Your phone buzzes in the waiting area. What do you do?', area: 'body', player: false,
+    tip: 'Switch your phone to silent (not vibrate) and put it away before you go in.',
+    options: [ { p: 2, t: 'Switch it to silent and put it away in your bag.' }, { p: 1, t: 'Put it on vibrate in your pocket.', tip: 'A buzzing pocket can still be heard in a quiet room. Use silent.' },
+      { p: 0, t: 'Keep it in your hand and reply to the group chat.', tip: 'Being on your phone looks unprofessional, even in the waiting area.' }, { p: 0, t: 'Leave the ringer on loud in case someone calls.', tip: 'A ringing phone in an interview is a disaster. Silence it.' } ] });
+  setClock('rec', 9, 58); setExpr('reception', 'smiling');
+  await say('rc_ready');
+  SFX.steps(3); await wait(900);
+  await say('nr_door'); SFX.knock(); await wait(1100);
+  await say('dn_comein');
+  const door = document.getElementById('doorPanel'); if (door) door.classList.add('open');
+  SFX.door(); await wait(1000);
+  setStage(2); await setView('room'); panelExpr('smiling');
+  SFX.steps(3); await wait(1300);
+  say('nr_shake');
+  await ask({ kicker: 'Stage 2 · Arrival · Greeting', prompt: 'The panel stands to greet you. What do you do?', area: 'body', asker: 'clarke', reactLines: { 2: 'ck_hello', 1: 'ck_hello', 0: 'ck_hello' },
+    tip: 'A firm (not crushing) handshake, a smile, eye contact and a polite greeting using their names.',
+    onPick: async (o, q) => { if (q > 0 || o.shake) SFX.shake(); await wait(400); },
+    options: [ { p: 2, body: true, t: 'Firm handshake, smile and eye contact: "Good morning, Mrs. Daniels. Good morning, Mr. Clarke."', you: '"Good morning, Mrs. Daniels. Good morning, Mr. Clarke."' },
+      { p: 1, body: true, t: 'Wave from the doorway and say "Hi."', you: '"Hi." (You wave.)', tip: 'A wave is too casual. Walk over, shake hands and greet each person.' },
+      { p: 0, body: true, shake: true, t: 'Limp handshake while looking at the floor.', you: '(You give a limp handshake and look at the floor.)', tip: 'A limp handshake and no eye contact look nervous. Practise a firm, friendly handshake.' },
+      { p: 0, body: true, shake: true, t: 'Squeeze their hands really hard and shake for too long.', you: '(Squeeze... shake... shake... shake.)', tip: 'A crushing handshake is uncomfortable. Firm and brief is best.' } ] });
+  await ask({ kicker: 'Stage 2 · Arrival · Seating', prompt: 'What do you do about sitting down?', area: 'body', player: true, react: false,
+    tip: 'Wait to be offered a seat, say thank you, and place your bag on the floor beside you.',
+    onPick: async (o, q) => {
+      if (q === 0) { SFX.chair(); await wait(500); panelExpr('concerned'); await say('dn_poor1'); }
+      else { panelExpr(q === 2 ? 'smiling' : 'neutral'); await say('dn_seat'); SFX.chair(); await wait(500); }
+    },
+    options: [ { p: 2, body: true, t: 'Wait until you are invited to sit, then say "Thank you."', you: '(You wait to be invited.) "Thank you."' },
+      { p: 1, body: true, t: 'Stand and wait with your arms folded.', you: '(You stand with your arms folded.)', tip: 'Waiting is right, but folded arms look defensive. Keep an open posture.' },
+      { p: 0, body: true, t: 'Sit down straight away and drop your bag on the desk.', you: '(You flop into the chair and drop your bag on the desk.)', tip: 'Sitting before you are invited and putting your bag on their desk looks disrespectful.' } ] });
+  panelExpr('smiling');
+  await say('dn_intro');
+}
+
+async function stageInterview(from){
+  setStage(2);
+  let qn = 0, qi = 0;
+  for (const Q of QUESTIONS) {
+    if (!Q.body) qn++;
+    if (qi++ < (from || 0)) continue;
+    if (Q.narr) { panelExpr('neutral'); if (Q.narr === 'nr_body2') SFX.typing(1.4); await say(Q.narr); }
+    await ask(Object.assign({}, Q, { kicker: Q.body ? 'Stage 3 · Interview · Body language' : `Stage 3 · Interview · Question ${qn} of 12` }));
+    mark(2, qi);
+  }
+}
+
+async function stageClose(){
+  setStage(3); panelExpr('smiling');
+  await say('nr_close');
+  await ask({ kicker: 'Stage 4 · Close', prompt: 'The panel is wrapping up. How do you leave?', qLine: 'dn_close', asker: 'clarke', area: 'follow', reactLines: { 2: 'ck_bye', 1: 'ck_bye', 0: 'ck_bye' },
+    tip: 'End as well as you began: stand, smile, shake hands and thank each panel member.',
+    onPick: async (o, q) => { if (q === 2) SFX.shake(); },
+    options: [ { p: 2, t: 'Stand, smile, shake hands and say: "Thank you both for your time. I look forward to hearing from you."', you: '"Thank you both for your time. I look forward to hearing from you."' },
+      { p: 1, t: 'Say "Thanks, bye!" and head for the door.', tip: 'Polite, but rushed. Take a moment to thank each person properly.' },
+      { p: 0, t: 'Ask: "So... did I get the job?"', tip: 'The panel needs time to decide. Asking this puts them on the spot.' },
+      { p: 0, t: 'Leave without saying anything.', tip: 'Leaving without thanking the panel undoes a lot of good work.' } ] });
+  SFX.steps(3); await wait(900); SFX.door(); await wait(700);
+  await setView('home');
+  say('nr_email');
+  await emailBuilder();
+}
+
+function computeResult(){
+  let s = 0, m = 0; for (const k in S.areas) { s += S.areas[k][0]; m += S.areas[k][1]; }
+  const pct = m ? s / m * 100 : 0;
+  const final = Math.round(pct * 0.75 + S.imp * 0.25);
+  const verdict = final >= 78 ? 'hired' : final >= 52 ? 'second' : 'no';
+  const stars = clamp(Math.round(final / 20), 1, 5);
+  return { pct: Math.round(pct), final, verdict, stars };
+}
+function starSVG(on){ return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${on ? '#e1a63b' : '#e7ddcc'}" stroke="${on ? '#b8801f' : '#d5c8b3'}" stroke-width="1"/></svg>`; }
+function confetti(){
+  if (REDUCED) return; const c = $('#confetti'); c.innerHTML = '';
+  const cols = ['#d2553a', '#e1a63b', '#13767a', '#3fb3b7', '#0f2f48', '#c2287a'];
+  for (let i = 0; i < 60; i++) { const e = document.createElement('i'); e.style.left = Math.random() * 100 + '%'; e.style.background = cols[i % cols.length]; e.style.animationDelay = (Math.random() * 1.2) + 's'; e.style.animationDuration = (2.2 + Math.random() * 1.6) + 's'; c.appendChild(e); }
+  setTimeout(() => { c.innerHTML = ''; }, 5200);
+}
+async function stageResult(){
+  setStage(4); await setView('room');
+  const R = computeResult();
+  const best = store.get(BEST_KEY, null);
+  const isBest = !best || R.final > best.final;
+  if (isBest) store.set(BEST_KEY, { final: R.final, verdict: R.verdict, stars: R.stars, name: S.name, date: new Date().toLocaleDateString('en-GB') });
+  const title = { hired: "You're hired!", second: 'Second interview', no: 'Not this time' }[R.verdict];
+  const blurb = { hired: 'Harbourview has offered you the post of Administrative Assistant.', second: 'The panel liked you and wants to see you again before deciding.', no: 'The panel has chosen another candidate. Use the feedback below and try again.' }[R.verdict];
+  setCard('result', `<p class="kicker">Stage 5 · Result</p><h2 class="prompt sr" tabindex="-1">Result</h2><div class="verdict v-${R.verdict}" id="verdict"><p class="score-line">Waiting for the call…</p></div>`);
+  panelExpr('neutral');
+  await say('nr_result');
+  if (R.verdict === 'hired') { panelExpr('impressed', 'smiling'); SFX.chime(); setTimeout(() => SFX.applause(3), 300); confetti(); await say('dn_hired'); }
+  else if (R.verdict === 'second') { panelExpr('smiling'); SFX.chime(); await say('ck_second'); }
+  else { panelExpr('concerned', 'neutral'); SFX.meh(); await say('dn_notyet'); }
+  const areaRows = Object.keys(AREAS).map(k => { const [s, m] = S.areas[k]; const pc = m ? Math.round(s / m * 100) : 0; const lvl = pc >= 75 ? 2 : pc >= 45 ? 1 : 0;
+    return `<li><div class="h"><span>${AREAS[k]}</span><span style="color:${['var(--poor)', 'var(--ok)', 'var(--good)'][lvl]}">${pc}%</span></div><div class="bar"><i style="width:${pc}%;background:${['var(--poor)', 'var(--ok)', 'var(--good)'][lvl]}"></i></div><p>${esc(FEEDBACK[k][lvl])}</p></li>`; }).join('');
+  const work = S.work.slice().sort((a, b) => a.r - b.r).filter((w, i, arr) => w.tip && arr.findIndex(x => x.tip === w.tip) === i).slice(0, 4);
+  const prev = best && !isBest ? `Your best so far: ${best.final}% (${{ hired: "You're hired!", second: 'Second interview', no: 'Not this time' }[best.verdict]}) on ${esc(best.date)}.` : 'New personal best saved on this device.';
+  $('#verdict').innerHTML = `<h2>${title}</h2><div class="stars" role="img" aria-label="${R.stars} out of 5 stars">${[1, 2, 3, 4, 5].map(i => starSVG(i <= R.stars)).join('')}</div>
+    <p class="score-line">${esc(blurb)}<br>Overall score <b>${R.final}%</b> · Confidence ${S.conf} · Panel impression ${S.imp}</p>`;
+  card().insertAdjacentHTML('beforeend', `<h3 style="font:700 1rem var(--display);margin:10px 0 0">Feedback report</h3><ul class="areas">${areaRows}</ul>
+    ${work.length ? `<h3 style="font:700 1rem var(--display);margin:12px 0 0">What to work on</h3><ul class="work">${work.map(w => `<li><b>${AREAS[w.area]}:</b> ${esc(w.tip)}</li>`).join('')}</ul>` : ''}
+    <p class="best-note">${prev}</p>
+    <div class="row-actions" style="justify-content:center"><button class="btn" type="button" id="replay">Play again</button></div>`);
+  $('#capText').innerHTML = `<b>Result:</b> ${esc(title)} ${R.stars} out of 5 stars. Overall score ${R.final}%.`;
+  const rb = $('#replay'); try { $('#verdict h2').setAttribute('tabindex', '-1'); $('#verdict h2').focus({ preventScroll: true }); } catch(e){}
+  rb.addEventListener('click', () => { SFX.click(); run(); }, { once: true });
+}
+
+let running = false;
+async function run(from){
+  if (running) return; running = true;
+  try {
+    S = newState(); resetMeters(); hideBubbles();
+    const k = from && okState(from) ? from.stage : 0;
+    if (k) { S = JSON.parse(JSON.stringify(from.S)); ['conf', 'imp'].forEach(n => { const m = $(n === 'conf' ? '#mConf' : '#mImp'); m.querySelector('.bar i').style.width = S[n] + '%'; m.querySelector('.v').textContent = S[n]; m.setAttribute('aria-valuenow', S[n]); }); }
+    const door = document.getElementById('doorPanel'); if (door) door.classList.toggle('open', k >= 2);
+    ['daniels', 'clarke', 'reception'].forEach(w => setExpr(w, 'neutral'));
+    if (k >= 2) { await setView('room'); panelExpr('smiling'); }
+    if (k <= 0) { mark(0); await stagePrep(); }
+    if (k <= 1) { mark(1); await stageArrival(); }
+    if (k <= 2) { mark(2, k === 2 ? from.qi : 0); await stageInterview(k === 2 ? from.qi : 0); }
+    if (k <= 3) { mark(3); await stageClose(); }
+    mark(null); await stageResult();
+  } catch(e){ console.warn('Game flow error', e); }
+  running = false;
+}
+
+/* ======================================================================
+   TOGGLES, TEACHER PANEL, KEYBOARD, START
+   ====================================================================== */
+function syncToggles(){ $('#tgRead').setAttribute('aria-pressed', SETTINGS.read); $('#tgMusic').setAttribute('aria-pressed', SETTINGS.music); $('#tgSfx').setAttribute('aria-pressed', SETTINGS.sfx); }
+$('#tgRead').addEventListener('click', () => { SETTINGS.read = !SETTINGS.read; if (!SETTINGS.read) stopVoice(); syncToggles(); store.set('hv-interview-settings', SETTINGS); });
+$('#tgMusic').addEventListener('click', () => { SETTINGS.music = !SETTINGS.music; syncToggles(); store.set('hv-interview-settings', SETTINGS); if (AC) { if (SETTINGS.music) Music.start(); else { level(); setTimeout(() => { if (!SETTINGS.music) Music.stop(); }, 900); } } });
+$('#tgSfx').addEventListener('click', () => { SETTINGS.sfx = !SETTINGS.sfx; syncToggles(); store.set('hv-interview-settings', SETTINGS); if (AC && sfxBus) sfxBus.gain.setTargetAtTime(SETTINGS.sfx ? 0.85 : 0, AC.currentTime, 0.05); if (SETTINGS.sfx) SFX.click(); });
+
+function scriptRows(){ return Object.keys(LINES).map(id => ({ id, who: LINES[id].who, text: LINES[id].text })); }
+function buildTeacher(){
+  $('#scriptRows').innerHTML = scriptRows().map((r, i) => `<tr><td>${i + 1}</td><td><code>audio/${esc(r.id)}.mp3</code></td><td>${esc(SPEAKERS[r.who].name)}</td><td>${esc(r.text)}</td></tr>`).join('');
+  $('#voiceNotes').innerHTML = Object.keys(SPEAKERS).map(k => `<div><b>${esc(SPEAKERS[k].name)}</b> (${scriptRows().filter(r => r.who === k).length} lines)<br>${esc(SPEAKERS[k].note)}</div>`).join('');
+}
+function updateAudioStatus(){
+  const a = audioInfo;
+  $('#audioStatus').textContent = a.tried === 0 ? 'Recorded audio: not checked yet (starts when a line plays with Read aloud on).'
+    : a.found > 0 ? `Recorded audio: ${a.found} file(s) playing; ${a.missing} missing (browser voice used for those).`
+    : `Recorded audio: no files found in audio/, so the browser's built-in voices are used${a.timed && !a.tts ? ' (or timed captions if no voice is available)' : ''}.`;
+}
+async function copyText(t){
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(t); return true; } } catch(e){}
+  try { const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch(e){ return false; }
+}
+let lastFocus = null;
+function openTeacher(){ lastFocus = document.activeElement; buildTeacher(); updateAudioStatus(); $('#teacher').hidden = false; $('#closeTeacher').focus(); }
+function closeTeacher(){ $('#teacher').hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+$('#openTeacher').addEventListener('click', openTeacher);
+$('#closeTeacher').addEventListener('click', closeTeacher);
+$('#teacher').addEventListener('click', e => { if (e.target.id === 'teacher') closeTeacher(); });
+$('#copyAll').addEventListener('click', async () => { const t = scriptRows().map(r => `${r.id}.mp3\t${SPEAKERS[r.who].name}\t${r.text}`).join('\n'); const ok = await copyText(t); $('#copyMsg').textContent = ok ? `Copied ${scriptRows().length} lines.` : 'Copy failed: select the table and copy manually.'; });
+$('#copyJson').addEventListener('click', async () => { const ok = await copyText(JSON.stringify(scriptRows(), null, 2)); $('#copyMsg').textContent = ok ? 'Copied as JSON.' : 'Copy failed: select the table and copy manually.'; });
+
+document.addEventListener('keydown', e => {
+  if (e.target && e.target.matches && e.target.matches('input,textarea')) return;
+  if (!$('#teacher').hidden) { if (e.key === 'Escape') closeTeacher(); return; }
+  if (!$('#intro').hidden) return;
+  if (/^[1-9]$/.test(e.key) && keyHandler && !e.ctrlKey && !e.metaKey && !e.altKey) { if (keyHandler(+e.key)) e.preventDefault(); }
+  else if (e.key === 'Enter') { const nb = document.querySelector('#card .next'); if (nb && document.activeElement !== nb && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) { e.preventDefault(); nb.click(); } }
+});
+
+function showBestIntro(){ const b = store.get(BEST_KEY, null); $('#bestIntro').textContent = b ? `Best so far: ${b.final}% · ${'★'.repeat(b.stars)}${'☆'.repeat(5 - b.stars)}` : ''; }
+$('#beginBtn').addEventListener('click', () => {
+  initAudio();
+  try { if (window.speechSynthesis) { loadVoices(); } } catch(e){}
+  if (SETTINGS.music) Music.start();
+  SFX.click();
+  $('#intro').hidden = true;
+  const from = SAVED; SAVED = null;
+  run(from);
+});
+if (window.GameSave) {
+  GameSave.register(['hv-interview-settings', BEST_KEY, PROG_KEY]);
+  GameSave.persist({ key: PROG_KEY, get: () => GSRUN, set: d => { if (okState(d)) { SAVED = d; GSRUN = d; } }, welcome: false });
+}
+const STAGE_NAMES = ['Stage 1 · Prepare', 'Stage 2 · Arrival', 'Stage 3 · Interview', 'Stage 4 · Close'];
+function showResume(){
+  const nb = $('#newBtn');
+  if (!SAVED) { $('#beginBtn').textContent = 'Begin interview'; nb.hidden = true; return; }
+  const qd = SAVED.stage === 2 ? QUESTIONS.slice(0, SAVED.qi).filter(q => !q.body).length : 0;
+  $('#beginBtn').textContent = 'Continue my interview'; nb.hidden = false; $('#pname').value = SAVED.S.name;
+  $('#bestIntro').textContent = `Saved: ${STAGE_NAMES[SAVED.stage]}${qd ? ` (${qd} of 12 questions answered)` : ''}. ` + $('#bestIntro').textContent;
+}
+$('#newBtn').addEventListener('click', () => { SAVED = null; GSRUN = null; if (window.GameSave) GameSave.save(); showBestIntro(); showResume(); SFX.click(); try { $('#beginBtn').focus(); } catch(e){} });
+
+const setTopH = () => document.documentElement.style.setProperty('--toph', $('.top').offsetHeight + 'px');
+setTopH(); window.addEventListener('resize', setTopH);
+buildScene(); fitViewBox(); syncToggles(); showBestIntro(); showResume();
+if ((SAVED || store.get(BEST_KEY, null)) && window.GameSave && GameSave.toast) setTimeout(() => GameSave.toast('Welcome back! Your progress was restored.'), 400);
+$('#world').setAttribute('aria-label', VIEW_LABELS.room);
+panelExpr('smiling');
+setCard('idle', '<p class="kicker">Ready</p><h2 class="prompt" tabindex="-1">Press "Begin interview" to start.</h2>');
+window.__iv = { get state(){ return S; }, audioInfo, LINES, computeResult: () => computeResult() };
+setTimeout(() => { try { $('#beginBtn').focus({ preventScroll: true }); } catch(e){} }, 50);
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

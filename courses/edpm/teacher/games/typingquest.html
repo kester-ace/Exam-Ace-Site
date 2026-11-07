@@ -1,0 +1,976 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body>
+<title>Typing Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&family=JetBrains+Mono:wght@600;800&display=swap">
+<style>
+/* Layout: sticky top bar over one scrolling stage. Home = world cards + lab lessons; play = HUD, arena (overlays inside), keyboard below. */
+:root{
+ --bg:#eaf1f9;--panel:#ffffff;--panel2:#dde8f4;--ink:#13202d;--muted:#52647a;--line:#c5d3e3;
+ --accent:#1a5fd6;--accent-ink:#ffffff;--good:#0f7a57;--bad:#c42b39;--star:#e39a00;
+ --key:#ffffff;--keyline:#a9b9cb;--keyink:#17283a;
+ --f-pinky:#f6bccb;--f-ring:#f7d595;--f-mid:#aee0b8;--f-index:#abcdf6;--f-thumb:#d3c3f5;
+ --font-display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+ --font-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+ --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+ --bg:#0b1420;--panel:#132131;--panel2:#1b2f45;--ink:#e9f1f9;--muted:#9db0c5;--line:#2a4259;
+ --accent:#6aa8ff;--accent-ink:#06182e;--good:#4fd1a1;--bad:#ff8590;--star:#ffc533;
+ --key:#1b3048;--keyline:#3a5a7b;--keyink:#e9f1f9;
+ --f-pinky:#7b3a4f;--f-ring:#7c5f26;--f-mid:#2f6b43;--f-index:#2e5a94;--f-thumb:#5b4a8f;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0b1420;--panel:#132131;--panel2:#1b2f45;--ink:#e9f1f9;--muted:#9db0c5;--line:#2a4259;
+ --accent:#6aa8ff;--accent-ink:#06182e;--good:#4fd1a1;--bad:#ff8590;--star:#ffc533;
+ --key:#1b3048;--keyline:#3a5a7b;--keyink:#e9f1f9;
+ --f-pinky:#7b3a4f;--f-ring:#7c5f26;--f-mid:#2f6b43;--f-index:#2e5a94;--f-thumb:#5b4a8f;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding-block:12px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,5vw,44px)}h2{font-size:clamp(22px,3.4vw,28px)}h3{font-size:19px}
+p{margin:0}
+.muted{color:var(--muted)}
+.top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:6px 0 14px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;font-family:var(--font-display);font-weight:700;font-size:25px}
+.brand i{font-style:normal;background:var(--f-index);color:var(--keyink);border:1px solid var(--keyline);border-bottom-width:4px;border-radius:8px;padding:0 9px;font-family:var(--font-mono);font-size:18px;line-height:30px}
+.nav{display:flex;gap:6px;flex:1;min-width:0}
+.nav button,.chip{background:var(--panel);border:2px solid var(--line);border-radius:999px;padding:5px 14px;font-weight:800;font-size:14px}
+.nav button[aria-current="page"],.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.hud-top{display:flex;gap:8px;align-items:center;font-weight:800}
+.star{color:var(--star)}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:10px 18px;font-weight:800;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.btn.sm{padding:6px 12px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.sec{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+/* hero */
+.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:center;margin-top:6px}
+.hero p{font-size:18px;color:var(--muted);margin-top:10px;max-width:52ch}
+.caps{display:flex;gap:8px;justify-content:center}
+.caps b{width:clamp(48px,9vw,74px);height:clamp(52px,10vw,80px);border-radius:12px;border:1px solid var(--keyline);border-bottom-width:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:clamp(22px,4vw,34px);color:var(--keyink)}
+.caps b:nth-child(1){background:var(--f-index)}.caps b:nth-child(2){background:var(--f-pinky);transform:translateY(8px)}.caps b:nth-child(3){background:var(--f-ring)}.caps b:nth-child(4){background:var(--f-mid);transform:translateY(8px)}
+@media(max-width:720px){.hero{grid-template-columns:1fr}}
+/* goals */
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.goal-i{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;width:100%}
+.goal-i .n{flex:none;width:34px;height:34px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:800}
+.goal-i b{display:block}.goal-i span{color:var(--muted);font-size:14px}
+/* worlds */
+.worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.wcard{position:relative;overflow:hidden;border:0;border-radius:20px;padding:18px;min-height:190px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;background:linear-gradient(145deg,var(--w1),var(--w2));box-shadow:0 5px 0 rgba(0,0,0,.28);transition:transform .15s}
+.wcard:hover{transform:translateY(-3px)}
+.wcard .sp{position:absolute;top:10px;right:14px;font-size:62px;line-height:1;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+.wcard .tag{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.wcard h3{font-size:26px}.wcard p{font-size:15px;opacity:.95}
+.wcard .st{margin-top:6px;font-weight:800;font-size:14px}
+.world-jungle{--w1:#0a4a2a;--w2:#1b7a44}.world-underwater{--w1:#07507f;--w2:#0a82b0}.world-space{--w1:#0a0d2e;--w2:#3b2a85}
+.world-caribbean{--w1:#066679;--w2:#0a8ea2}.world-dino{--w1:#733510;--w2:#b3561b}.world-robot{--w1:#12244a;--w2:#2b4a8c}
+/* world screen */
+.whead{border-radius:20px;color:#fff;padding:20px;background:linear-gradient(145deg,var(--w1),var(--w2));display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.whead .sp{font-size:60px}.whead>div{flex:1;min-width:220px}
+.whead .chip{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff}
+.whead .chip[aria-pressed="true"]{background:#fff;color:#10202f;border-color:#fff}
+.lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.lv{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px;min-height:120px}
+.lv:hover:not(:disabled){border-color:var(--accent)}
+.lv:disabled{opacity:.5;cursor:not-allowed}
+.lv .big{font-family:var(--font-display);font-weight:700;font-size:20px}
+.lv small{color:var(--muted)}
+.stars{font-size:20px;letter-spacing:2px}.stars .off{opacity:.25}
+/* play */
+.hud{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 2px}
+.hud b{font-family:var(--font-display);font-size:20px}
+.hud .pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-weight:800;font-family:var(--font-mono);font-size:14px}
+.hearts{color:var(--bad);letter-spacing:2px;font-size:18px}
+.prog{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden;margin-bottom:8px}.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.arena{position:relative;overflow:hidden;border-radius:20px;height:clamp(320px,56vh,460px);color:#fff;user-select:none;border:3px solid rgba(0,0,0,.25)}
+.arena.shake{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.arena.world-jungle{background:radial-gradient(120% 60% at 50% 110%,#0b5a30 0 40%,transparent 41%),linear-gradient(#2c8f55,#0a3d23)}
+.arena.world-underwater{background:radial-gradient(circle at 20% 80%,rgba(255,255,255,.1) 0 3px,transparent 4px),linear-gradient(#0b86b8,#042a52 70%,#021a35)}
+.arena.world-space{background:#050818}
+.arena.world-space::before{content:"";position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;left:0;top:0;box-shadow:40px 60px #fff,120px 220px #cfe,220px 90px #fff,330px 300px #fcd,410px 40px #fff,520px 180px #dff,610px 330px #fff,700px 70px #cef,790px 250px #fff,880px 120px #fed,960px 360px #fff,90px 380px #fff,300px 150px #bdf,560px 400px #fff,740px 400px #fff,1010px 220px #fff,1100px 80px #cdf,450px 290px #fff,170px 30px #fff,660px 20px #fff}
+.arena.world-caribbean{background:linear-gradient(#8bdcff 0 34%,#18b9cc 34% 100%)}
+.arena.world-dino{background:radial-gradient(circle at 85% 105%,#4a1d08 0 18%,transparent 19%),linear-gradient(#f7b068,#d6762f 55%,#7a3f1b)}
+.arena.world-robot{background-color:#0b1a30;background-image:linear-gradient(rgba(80,160,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(80,160,255,.14) 1px,transparent 1px);background-size:38px 38px}
+.decor{position:absolute;inset:0;pointer-events:none;font-size:36px;opacity:.5;z-index:0}
+.decor span{position:absolute}
+.goal{position:absolute;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:rgba(255,255,255,.18);border:2px dashed rgba(255,255,255,.6);color:#fff;z-index:2}
+.goal span{white-space:nowrap}
+.goal.down{left:0;right:0;bottom:0;height:22px}.goal.up{left:0;right:0;top:0;height:22px}
+.goal.left{top:0;bottom:0;left:0;width:26px;writing-mode:vertical-rl}.goal.right{top:0;bottom:0;right:0;width:26px;writing-mode:vertical-rl}
+.avatar{position:absolute;font-size:40px;z-index:2;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4));animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.tok{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;background:#fff;color:#10202f;border-radius:999px;padding:4px 16px 4px 10px;font-family:var(--font-mono);font-weight:800;font-size:clamp(17px,2.6vw,22px);box-shadow:0 4px 0 rgba(0,0,0,.28);white-space:nowrap;z-index:20;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.tok .sp{font-size:26px;line-height:1}
+.tok .typed{color:#0b8a5a}
+.tok.lock{outline:4px solid #ffd23f;z-index:30}
+.pt{position:absolute;z-index:26;font-size:22px;pointer-events:none;animation:pop .7s ease-out forwards}
+@keyframes pop{to{transform:translate(var(--dx),var(--dy)) scale(.5);opacity:0}}
+.fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+.overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(4,10,22,.82);overflow:auto;align-items:flex-start}
+.ocard{backdrop-filter:none;background:var(--panel);color:var(--ink);border-radius:20px;padding:20px;width:100%;max-width:540px;display:flex;flex-direction:column;gap:12px;text-align:center;margin:0 auto}
+.ocard .big{font-size:44px}
+.fact{background:var(--panel2);border-radius:14px;padding:12px 14px;text-align:left;font-size:16px}
+.fact b{display:block;font-family:var(--font-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.hint{min-height:28px;margin:8px 0 2px;text-align:center;font-weight:800;color:var(--muted)}
+.hint b{color:var(--ink)}
+.stats3{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.stats3 span{background:var(--panel2);border-radius:10px;padding:4px 12px;font-weight:800;font-size:14px}
+kbd{font-family:var(--font-mono);background:var(--key);border:1px solid var(--keyline);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.9em;color:var(--keyink)}
+/* keyboard */
+.kbw{overflow-x:auto;padding:6px 2px}
+.kb{display:flex;flex-direction:column;gap:5px;min-width:560px;max-width:880px;margin:0 auto;font-family:var(--font-mono)}
+.kr{display:flex;gap:5px}
+.key{position:relative;min-width:0;height:42px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--key);border:1px solid var(--keyline);border-bottom-width:3px;color:var(--keyink);white-space:nowrap;transition:transform .05s,opacity .15s}
+.kb.color .f-pinky{background:var(--f-pinky)}.kb.color .f-ring{background:var(--f-ring)}.kb.color .f-mid{background:var(--f-mid)}.kb.color .f-index{background:var(--f-index)}.kb.color .f-thumb{background:var(--f-thumb)}
+.key.bump::after{content:"";position:absolute;bottom:5px;width:12px;height:2px;border-radius:2px;background:currentColor}
+.key.hi{outline:3px solid var(--accent);outline-offset:1px;animation:pulse .9s infinite;z-index:1}
+@keyframes pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 35%,transparent)}}
+.key.down{transform:translateY(2px);filter:brightness(.82)}
+.key.dim{opacity:.22}
+.key.sel{outline:3px solid var(--ink)}
+.legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.legend .chip{display:flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--keyline);display:inline-block}
+.gamekb{margin-top:6px}
+@media(max-width:600px){.gamekb{display:none}}
+/* copy typer */
+.passage{font-family:var(--font-mono);font-weight:600;font-size:clamp(18px,2.8vw,26px);line-height:1.9;padding:18px;border-radius:16px;background:var(--panel);border:1px solid var(--line);min-height:130px}
+.passage .c{border-radius:4px;color:var(--muted)}
+.passage .c.ok{color:var(--good)}
+.passage .c.cur{background:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 2px var(--accent)}
+.passage .c.bad{background:var(--bad);color:#fff}
+/* lab */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.lab{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fk{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.fk[aria-pressed="true"]{border-color:var(--accent)}
+.fk kbd{align-self:flex-start;font-weight:800}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.opts button{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:10px;font-weight:800}
+.opts button.right{background:var(--good);color:#fff;border-color:var(--good)}.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.doc{width:100%;min-height:190px;resize:vertical;font:600 17px/1.6 var(--font-mono);background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:14px}
+.doc:focus{border-color:var(--accent);outline:none}
+.chal{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.chal.done{opacity:.6}.chal.now{border-color:var(--accent);border-width:2px}
+.chal .tick{width:26px;height:26px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.chal.done .tick{background:var(--good);color:#fff}
+.pose{display:grid;grid-template-columns:minmax(260px,1.1fr) 1fr;gap:16px;align-items:start}
+@media(max-width:760px){.pose{grid-template-columns:1fr}}
+.pose svg{width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.chk{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:9px 12px;width:100%}
+.chk .bx{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--keyline);display:flex;align-items:center;justify-content:center;font-weight:800}
+.chk[aria-pressed="true"] .bx{background:var(--good);border-color:var(--good);color:#fff}
+.chk.focus{border-color:var(--accent)}
+.chk span{font-size:14px;color:var(--muted);display:block}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+ <header class="top">
+  <button class="brand" data-go="home" aria-label="Typing Quest home"><i>TQ</i>Typing Quest</button>
+  <nav class="nav" aria-label="Main">
+   <button data-go="home" id="navHome">Worlds</button>
+   <button data-go="lab" id="navLab">Keyboard Lab</button>
+  </nav>
+  <div class="hud-top"><span id="starTotal" class="star">★ 0</span><button class="chip" id="soundBtn" aria-pressed="true">Sound on</button></div>
+ </header>
+ <main id="app"></main>
+</div>
+<script>
+'use strict';
+/* ---------- DATA: worlds, levels, words, facts ---------- */
+const LEVELS=[
+ {keys:'Home row',pool:['t1'],travel:17,gap:3.0,n:12},
+ {keys:'Home + top row',pool:['t1','t2'],travel:15,gap:2.7,n:15},
+ {keys:'Whole keyboard',pool:['t2','t3'],travel:13,gap:2.4,n:18},
+ {keys:'World words',pool:['w4'],travel:11,gap:2.1,n:20},
+ {keys:'Speed round',pool:['w5','w4'],travel:9,gap:1.8,n:22}
+];
+const SPEEDS={
+ chill:{m:.75,lives:5,bonus:.8,goal:12,label:'Chill'},
+ normal:{m:1,lives:4,bonus:1,goal:18,label:'Normal'},
+ turbo:{m:1.4,lives:3,bonus:1.3,goal:25,label:'Turbo'}
+};
+const POOLS={
+ t1:'ask sad dad fall lass flask glad hall salad half dash flash gas had lag sag jag ash gash slash alas'.split(' '),
+ t2:'type write power tower quiet outer pretty your wet were tree ripe pour quit trip top yet rope tire pepper equip poetry'.split(' '),
+ t3:'zebra exam vixen number cabin black quick money camera window brown fox jump lazy vowel bounce combine zoom blank vibe crazy'.split(' ')
+};
+const TYPING_FACTS=[
+ 'The name QWERTY comes from the first six letters on the top row of letters.',
+ 'Most keyboards have small bumps on the F and J keys so your fingers can find the home row without looking.',
+ 'The word "typewriter" can be typed using only the top row of letters.',
+ 'The space bar is the longest key on the keyboard, and your thumbs press it.',
+ 'A typical adult types around 40 words per minute. Good touch typists can reach 60 or more.',
+ 'Touch typists keep their eyes on the screen, not on the keys.',
+ 'The QWERTY layout was designed in the 1870s for early typewriters and is still used today.',
+ 'Taking a short break every 20 minutes helps your hands, eyes and back.'
+];
+const WORLDS={
+ jungle:{id:'jungle',name:'Jungle Trek',subject:'Nature & Science',sprite:'🦜',blurb:'Catch tumbling fruit before it hits the forest floor.',
+  dir:'down',goal:'Forest floor',avatar:'🐒',items:['🥭','🍌','🍍','🥥','🍉'],burst:['🍃','✨','🌿'],laser:null,decor:['🌴','🌿','🦋','🌴'],
+  levels:['Base Camp','Vine Swing','River Crossing','Canopy Climb','Temple Summit'],
+  w4:'jungle monkey parrot jaguar banana python vines canopy toucan mango sloth tiger bamboo orchid gorilla river'.split(' '),
+  w5:'rainforest chameleon butterfly waterfall anaconda explorer mahogany orangutan scarlet treetops camouflage adventure'.split(' '),
+  facts:['Three-toed sloths move so slowly that green algae can grow in their fur.',
+   'The Amazon River carries more water than any other river on Earth.',
+   'Howler monkeys are among the loudest land animals. Their calls can travel about five kilometres.',
+   'Jaguars have such a powerful bite that they can crack open turtle shells.',
+   'Poison dart frogs are brightly coloured to warn predators. They get their toxins from the insects they eat.',
+   'Kapok trees in the rainforest can grow taller than 60 metres.',
+   'Rainforests cover a small part of the land but are home to roughly half of all plant and animal species.'],
+  passages:['The Amazon River carries more water than any other river on Earth.',
+   'Poison dart frogs are tiny, but their bright colours warn hungry animals to stay away.',
+   'Howler monkeys have loud calls that can travel through the rainforest for kilometres.',
+   'The jungle has four layers: the forest floor, the understory, the canopy and the tall emergent trees above.']},
+ underwater:{id:'underwater',name:'Deep Blue Dive',subject:'Ocean Science',sprite:'🐙',blurb:'Pop the rising bubbles before they reach the surface.',
+  dir:'up',goal:'Surface',avatar:'🐙',items:['🫧','🐟','🐠','🦀','🐚'],burst:['🫧','💦','✨'],laser:null,decor:['🪸','🌊','🐢','🪸'],
+  levels:['Shallows','Kelp Forest','Coral Reef','Shipwreck','Deep Trench'],
+  w4:'coral dolphin octopus seahorse turtle shark lobster jelly anchor kelp clam whale shell pearl squid reef'.split(' '),
+  w5:'submarine starfish treasure jellyfish seaweed barracuda manatee snorkel mermaid lighthouse tidepool plankton anglerfish'.split(' '),
+  facts:['The ocean covers about 71 percent of Earth\'s surface.',
+   'An octopus has three hearts and blue blood.',
+   'The blue whale is the largest animal known to have ever lived.',
+   'Male seahorses carry the babies until they are ready to be born.',
+   'The Mariana Trench is nearly 11 kilometres deep, deeper than Mount Everest is tall.',
+   'Coral reefs cover a tiny part of the ocean floor, yet support about a quarter of all marine species.',
+   'Dolphins rest by sleeping with one half of the brain awake at a time.'],
+  passages:['An octopus has three hearts, blue blood and eight strong arms.',
+   'The blue whale is the largest animal that has ever lived on our planet.',
+   'Coral reefs cover a tiny part of the ocean floor, yet thousands of sea animals live there.',
+   'Sunlight reaches only the top layer of the ocean, so the deep sea is cold and very dark.']},
+ space:{id:'space',name:'Space Mission',subject:'Astronomy',sprite:'🚀',blurb:'Zap asteroids before they reach planet Earth.',
+  dir:'left',goal:'Earth',avatar:'🌍',items:['☄️','🪨','🛸','🌑'],burst:['✨','⭐','💥'],laser:'#66f0ff',decor:['🪐','🌙','⭐','🛰️'],
+  levels:['Launch Pad','Orbit','Moon Walk','Asteroid Belt','Deep Space'],
+  w4:'planet rocket comet galaxy orbit moon alien saturn venus solar cosmos meteor lunar pluto earth star'.split(' '),
+  w5:'astronaut satellite telescope asteroid universe spacesuit gravity nebula mercury jupiter eclipse constellation'.split(' '),
+  facts:['A day on Venus is longer than a year on Venus.',
+   'Sunlight takes about eight minutes to travel from the Sun to Earth.',
+   'Jupiter\'s Great Red Spot is a giant storm that is wider than Earth.',
+   'Neil Armstrong was the first person to walk on the Moon, in 1969.',
+   'Saturn is so light for its size that it would float in a giant bathtub of water.',
+   'Olympus Mons on Mars is the tallest volcano in our solar system.',
+   'The International Space Station circles Earth about sixteen times every day.'],
+  passages:['The Sun is a star, and its light takes about eight minutes to reach Earth.',
+   'Neil Armstrong became the first person to walk on the Moon in 1969.',
+   'Olympus Mons on Mars is the tallest volcano in our solar system.',
+   'The International Space Station circles Earth about sixteen times every day.']},
+ caribbean:{id:'caribbean',name:'Caribbean Voyage',subject:'Geography',sprite:'⛵',blurb:'Sail from island to island and learn your Caribbean geography.',
+  dir:'right',goal:'Harbour',avatar:'🏝️',items:['⛵','🚤','🛶','🦜'],burst:['🌊','🥥','✨'],laser:null,decor:['☀️','🌴','🐬','🌴'],
+  levels:['Harbour','Sandy Cay','Island Hop','Hurricane Season','Carnival Finale'],
+  w4:'island jamaica cuba haiti aruba nassau havana kingston barbados trinidad grenada dominica antigua bahamas curacao tobago'.split(' '),
+  w5:'philipsburg bridgetown basseterre kingstown guadeloupe martinique montserrat dominican cayman anguilla carnival steelpan hurricane archipelago reggae'.split(' '),
+  facts:['Sint Maarten shares its island with Saint-Martin. It is one of the smallest islands in the world divided between two countries.',
+   'Cuba is the largest island in the Caribbean. Its capital is Havana.',
+   'The Bahamas is made up of hundreds of islands. The capital, Nassau, is on New Providence.',
+   'Haiti declared independence in 1804, after a revolution led by formerly enslaved people.',
+   'The steelpan was invented in Trinidad and Tobago.',
+   'Dominica is home to the Boiling Lake, a flooded volcanic vent in the rainforest.',
+   'The Caribbean Sea is named after the Carib people, who lived on many of the islands.',
+   'Barbados became a republic in 2021. Its capital is Bridgetown.',
+   'Kingston is the capital of Jamaica, the birthplace of reggae music.'],
+  passages:['Sint Maarten is a small island shared by two countries, with Philipsburg as the capital of the Dutch side.',
+   'Cuba is the largest island in the Caribbean, and its capital city is Havana.',
+   'The Bahamas has hundreds of islands, and its capital, Nassau, is on New Providence.',
+   'Kingston is the capital of Jamaica, the home of reggae music and the runner Usain Bolt.',
+   'The steelpan was invented in Trinidad and Tobago, where Port of Spain is the capital.',
+   'Bridgetown is the capital of Barbados, which became a republic in 2021.']},
+ dino:{id:'dino',name:'Dino Valley',subject:'Earth History',sprite:'🦖',blurb:'Stop falling dino eggs and bones before they crack on the ground.',
+  dir:'down',goal:'Nest',avatar:'🦖',items:['🥚','🦴','🌋','🦕'],burst:['🦴','🌿','✨'],laser:null,decor:['🌋','🌿','🦕','🌿'],
+  levels:['Nest','Fern Valley','Swamp Run','Volcano Ridge','Meteor Day'],
+  w4:'dino fossil raptor claw tail nest herd roar swamp fern bones tooth stomp egg horn plates'.split(' '),
+  w5:'triceratops stegosaurus herbivore carnivore jurassic cretaceous pterodactyl extinction meteorite excavation skeleton predator'.split(' '),
+  facts:['Triceratops means "three-horned face".',
+   'Birds are living dinosaurs. They descended from small feathered dinosaurs.',
+   'Fossils form when bones are buried and slowly turn into stone over millions of years.',
+   'Velociraptor was about the size of a turkey, and it had feathers.',
+   'Stegosaurus had large plates on its back and spikes on its tail.',
+   'Most non-bird dinosaurs died out about 66 million years ago.',
+   'Scientists who study fossils are called palaeontologists.'],
+  passages:['Triceratops means three-horned face, and it used its horns to defend itself.',
+   'Birds are living dinosaurs, because they descended from small feathered dinosaurs.',
+   'Fossils form when bones are buried and slowly turn into stone over millions of years.',
+   'Velociraptor was about the size of a turkey and was covered in feathers.']},
+ robot:{id:'robot',name:'Robot City',subject:'Technology',sprite:'🤖',blurb:'Stop runaway data packets before they hit the mainframe.',
+  dir:'left',goal:'Mainframe',avatar:'🖥️',items:['📦','💾','🔋','⚙️'],burst:['⚡','💥','✨'],laser:'#7dffb0',decor:['🏙️','📡','🤖','🏙️'],
+  levels:['Boot Up','Circuit Lab','Data Stream','Firewall','Mainframe'],
+  w4:'robot pixel circuit laser code byte data gear chip wifi cyber drone logic input power cable'.split(' '),
+  w5:'keyboard processor algorithm software internet android battery network computer hardware program binary motherboard'.split(' '),
+  facts:['The word "robot" comes from a Czech word meaning forced work. It was first used in a play in 1920.',
+   'The first computer mouse was made of wood. It was invented in the 1960s.',
+   'Ada Lovelace wrote notes in the 1840s that are often called the first computer program.',
+   'A bit is a one or a zero. Eight bits make one byte.',
+   'The first website went public in 1991. It was created by Tim Berners-Lee.',
+   'A real moth found stuck inside a computer in 1947 made the word "bug" famous.',
+   'The CPU is often called the brain of the computer.'],
+  passages:['The word robot comes from a Czech word that means forced work.',
+   'A bit is a one or a zero, and eight bits make one byte.',
+   'The first computer mouse was made of wood and invented in the 1960s.',
+   'Ada Lovelace wrote notes in the 1840s that are often called the first computer program.']}
+};
+const WORLD_ORDER=['jungle','underwater','space','caribbean','dino','robot'];
+
+/* ---------- CORE: state, sound, keyboard, router ---------- */
+const app=document.getElementById('app');
+let S={sound:true,kb:true,speed:'normal',stars:{},best:0,hits:0,misses:0};
+try{const j=JSON.parse(localStorage.getItem('typingquest.v1')||'null');if(j)S=Object.assign(S,j)}catch(e){}
+/* saved progress (this device): stars, best speed, settings, Keyboard Lab progress and the last screen. Start over clears it. */
+if(!S.stars||typeof S.stars!=='object'||Array.isArray(S.stars))S.stars={};
+if(!SPEEDS[S.speed])S.speed='normal';
+['best','hits','misses'].forEach(k=>{if(typeof S[k]!=='number'||!isFinite(S[k]))S[k]=0});
+if(!S.lab||typeof S.lab!=='object'||Array.isArray(S.lab))S.lab={};
+['known','posture'].forEach(k=>{if(!Array.isArray(S.lab[k]))S.lab[k]=[]});
+if(typeof S.lab.nav!=='number'||!isFinite(S.lab.nav))S.lab.nav=0;
+if(window.GameSave)GameSave.register(['typingquest.v1']);
+function save(){try{localStorage.setItem('typingquest.v1',JSON.stringify(S))}catch(e){}}
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function starStr(n,max){max=max||3;let h='<span class="stars" aria-label="'+n+' of '+max+' stars">';for(let i=0;i<max;i++)h+=i<n?'<span class="star">★</span>':'<span class="star off">★</span>';return h+'</span>'}
+function totalStars(){return Object.values(S.stars).reduce((a,b)=>a+b,0)}
+function updateTop(){$('#starTotal').textContent='★ '+totalStars();const b=$('#soundBtn');b.textContent=S.sound?'Sound on':'Sound off';b.setAttribute('aria-pressed',S.sound)}
+
+/* sound */
+let AC=null;
+function tone(f,d,type,v,delay){if(!S.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;o.connect(g);g.connect(AC.destination);const t=AC.currentTime+(delay||0);v=v||.05;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.03)}catch(e){}}
+const sfx={
+ key(c){tone(520+Math.min(c,12)*25,.07,'triangle',.04)},
+ word(c){tone(660+Math.min(c,12)*25,.12,'sine',.06);tone(880+Math.min(c,12)*25,.14,'sine',.05,.07)},
+ miss(){tone(150,.14,'square',.035)},
+ life(){tone(120,.3,'sawtooth',.05)},
+ win(){[523,659,784,1046].forEach((f,i)=>tone(f,.2,'triangle',.06,i*.11))},
+ lose(){[392,330,262].forEach((f,i)=>tone(f,.25,'triangle',.05,i*.16))}
+};
+
+/* keyboard model */
+const KC=(c)=>['Key'+c.toUpperCase(),c];
+const R0=[['Backquote','`']].concat('1234567890'.split('').map(d=>['Digit'+d,d]),[['Minus','-'],['Equal','='],['Backspace','Backspace',2]]);
+const R1=[['Tab','Tab',1.5]].concat('qwertyuiop'.split('').map(KC),[['BracketLeft','['],['BracketRight',']'],['Backslash','\\',1.5]]);
+const R2=[['CapsLock','Caps Lock',1.75]].concat('asdfghjkl'.split('').map(KC),[['Semicolon',';'],['Quote',"'"],['Enter','Enter',2.25]]);
+const R3=[['ShiftLeft','Shift',2.25]].concat('zxcvbnm'.split('').map(KC),[['Comma',','],['Period','.'],['Slash','/'],['ShiftRight','Shift',2.75]]);
+const R4=[['ControlLeft','Ctrl',1.5],['AltLeft','Alt',1.5],['Space','Space',9],['AltRight','Alt',1.5],['ControlRight','Ctrl',1.5]];
+const KROWS=[R0,R1,R2,R3,R4];
+const FM={};
+function setF(codes,f,h){codes.forEach(c=>FM[c]={f:f,h:h})}
+setF(['Backquote','Digit1','KeyQ','KeyA','KeyZ','Tab','CapsLock','ShiftLeft','ControlLeft'],'pinky','left');
+setF(['Digit2','KeyW','KeyS','KeyX'],'ring','left');
+setF(['Digit3','KeyE','KeyD','KeyC'],'mid','left');
+setF(['Digit4','Digit5','KeyR','KeyT','KeyF','KeyG','KeyV','KeyB'],'index','left');
+setF(['Digit6','Digit7','KeyY','KeyU','KeyH','KeyJ','KeyN','KeyM'],'index','right');
+setF(['Digit8','KeyI','KeyK','Comma'],'mid','right');
+setF(['Digit9','KeyO','KeyL','Period'],'ring','right');
+setF(['Digit0','Minus','Equal','Backspace','KeyP','BracketLeft','BracketRight','Backslash','Semicolon','Quote','Enter','Slash','ShiftRight','ControlRight'],'pinky','right');
+setF(['Space','AltLeft','AltRight'],'thumb','both');
+const FNAME={pinky:'pinky',ring:'ring finger',mid:'middle finger',index:'index finger',thumb:'thumb'};
+const PUNCT={',':'Comma','.':'Period','-':'Minus',"'":'Quote',';':'Semicolon','/':'Slash','?':'Slash','!':'Digit1',':':'Semicolon','"':'Quote'};
+function codeOf(ch){if(ch===' ')return 'Space';if(/[a-z]/i.test(ch))return 'Key'+ch.toUpperCase();if(/[0-9]/.test(ch))return 'Digit'+ch;return PUNCT[ch]||null}
+function needsShift(ch){return /[A-Z?!:"]/.test(ch)}
+function fingerText(ch){const c=codeOf(ch);if(!c||!FM[c])return '';const f=FM[c];let t=(f.h==='both'?'thumb':f.h+' '+FNAME[f.f]);if(needsShift(ch)){const sh=f.h==='left'?'right':'left';t+=' (hold Shift with your '+sh+' pinky)'}return t}
+let KBS=[];
+function buildKB(host,opts){
+ opts=opts||{};host.innerHTML='';
+ const kb=document.createElement('div');kb.className='kb'+(opts.plain?'':' color');
+ const map={},rows=[];
+ KROWS.forEach((row,ri)=>{const r=document.createElement('div');r.className='kr';rows.push(r);
+  row.forEach(a=>{const code=a[0],label=a[1],w=a[2]||1;const k=document.createElement('div');
+   k.className='key f-'+(FM[code]?FM[code].f:'x');k.style.flex=w+' 1 0';k.dataset.code=code;
+   k.textContent=/^[a-z]$/.test(label)?label.toUpperCase():label;
+   if(code==='KeyF'||code==='KeyJ')k.classList.add('bump');map[code]=k;r.appendChild(k)});
+  kb.appendChild(r)});
+ const w=document.createElement('div');w.className='kbw';w.appendChild(kb);host.appendChild(w);
+ const o={el:kb,map:map,rows:rows};KBS.push(o);return o;
+}
+function setHi(kb,codes){Object.values(kb.map).forEach(k=>k.classList.remove('hi'));(codes||[]).forEach(c=>{if(kb.map[c])kb.map[c].classList.add('hi')})}
+function kbPress(code,on){KBS.forEach(kb=>{const k=kb.map[code];if(k)k.classList.toggle('down',on)})}
+
+/* routing + key dispatch */
+let cleanup=null,keyHandler=null,keyUpHandler=null,game=null;
+document.addEventListener('keydown',e=>{kbPress(e.code,true);if(keyHandler)keyHandler(e)});
+document.addEventListener('keyup',e=>{kbPress(e.code,false);if(keyUpHandler)keyUpHandler(e)});
+window.addEventListener('blur',()=>{KBS.forEach(kb=>Object.values(kb.map).forEach(k=>k.classList.remove('down')))});
+const SCREENS={};
+function go(name,a,b){
+ if(cleanup){try{cleanup()}catch(e){}cleanup=null}
+ if(game){game.dead=true;game=null}
+ KBS=[];keyHandler=null;keyUpHandler=null;
+ window.scrollTo(0,0);
+ $('#navHome').removeAttribute('aria-current');$('#navLab').removeAttribute('aria-current');
+ if(name==='home'||name==='world')$('#navHome').setAttribute('aria-current','page');
+ if(name==='lab')$('#navLab').setAttribute('aria-current','page');
+ SCREENS[name](a,b);updateTop();
+ const at=name==='rush'||name==='copy'?['world',a,null]:[name,a==null?null:a,b==null?null:b];
+ if(['home','world','lab'].includes(at[0])&&JSON.stringify(at)!==JSON.stringify(S.at||null)){S.at=at;save()}
+}
+document.addEventListener('click',e=>{
+ const t=e.target.closest('[data-go]');if(t&&!t.disabled){go(t.dataset.go,t.dataset.a,t.dataset.b)}
+});
+$('#soundBtn').addEventListener('click',()=>{S.sound=!S.sound;save();updateTop();if(S.sound)sfx.key(2)});
+
+/* ---------- HOME ---------- */
+const GOALS=[
+ ['1','Describe the layout of a standard QWERTY keyboard','lab','1'],
+ ['2','Identify the functions of the various keys','lab','2'],
+ ['3','Move around a document using the navigation keys','lab','3'],
+ ['4','Use correct keyboarding technique','lab','4'],
+ ['5','Show correct posture while typing','lab','5'],
+ ['6','Build speed and accuracy in copy typing','worlds','']
+];
+function worldStars(wid){let n=0;for(let i=1;i<=5;i++)n+=S.stars[wid+':w'+i]||0;WORLDS[wid].passages.forEach((p,i)=>{n+=S.stars[wid+':c'+i]||0});return n}
+function worldMax(wid){return (5+WORLDS[wid].passages.length)*3}
+SCREENS.home=function(){
+ const cards=WORLD_ORDER.map(id=>{const W=WORLDS[id];return `<button class="wcard world-${id}" data-go="world" data-a="${id}">
+  <span class="sp" aria-hidden="true">${W.sprite}</span><span class="tag">${W.subject}</span><h3>${W.name}</h3><p>${W.blurb}</p>
+  <span class="st">★ ${worldStars(id)} / ${worldMax(id)}</span></button>`}).join('');
+ const goals=GOALS.map(g=>`<button class="goal-i" data-go="${g[2]==='worlds'?'home':'lab'}" ${g[2]==='lab'?`data-a="${g[3]}"`:''}><span class="n">${g[1]}</span><div><b>I can ${g[1].charAt(0).toLowerCase()+g[1].slice(1)}</b><span>${g[2]==='lab'?'Keyboard Lab, lesson '+g[3]:'Play the worlds below'}</span></div></button>`).join('');
+ const acc=S.hits+S.misses>0?Math.round(100*S.hits/(S.hits+S.misses)):0;
+ app.innerHTML=`
+ <section class="hero"><div><h1>Learn to type by exploring six worlds</h1>
+  <p>Pick a world, choose your speed and collect stars. Between waves you will meet a fact worth knowing.</p>
+  <p class="muted" style="font-size:15px">Best with a physical keyboard. Best speed so far: <b>${S.best} WPM</b>${S.hits+S.misses>0?' · Accuracy: <b>'+acc+'%</b>':''}</p></div>
+  <div class="caps" aria-hidden="true"><b>T</b><b>Y</b><b>P</b><b>E</b></div></section>
+ <section class="sec"><h2>Pick a world</h2><div class="worlds">${cards}</div></section>
+ <section class="sec"><h2>What you will be able to do</h2><div class="goals">${goals}</div></section>`;
+};
+
+/* ---------- WORLD SCREEN ---------- */
+function unlocked(wid,l){return l===1||(S.stars[wid+':w'+(l-1)]||0)>0}
+SCREENS.world=function(wid){
+ const W=WORLDS[wid];
+ const speedChips=Object.keys(SPEEDS).map(k=>`<button class="chip" data-speed="${k}" aria-pressed="${S.speed===k}">${SPEEDS[k].label}</button>`).join('');
+ const lv=LEVELS.map((L,i)=>{const n=i+1,ok=unlocked(wid,n);return `<button class="lv" ${ok?'':'disabled'} data-go="rush" data-a="${wid}" data-b="${n}">
+  <span class="big">${n}. ${W.levels[i]}</span><small>${L.keys} · ${L.n} words</small>${ok?starStr(S.stars[wid+':w'+n]||0):'<small>Earn a star on level '+(n-1)+' to unlock</small>'}</button>`}).join('');
+ const ps=W.passages.map((p,i)=>`<button class="lv" data-go="copy" data-a="${wid}" data-b="${i}"><span class="big">Passage ${i+1}</span><small>${p.length} characters</small><small>${esc(p.slice(0,38))}…</small>${starStr(S.stars[wid+':c'+i]||0)}</button>`).join('');
+ app.innerHTML=`<div class="world-${wid} stack">
+  <div class="whead"><span class="sp" aria-hidden="true">${W.sprite}</span><div><span class="muted" style="color:#fff;opacity:.85;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:12px">${W.subject}</span><h1>${W.name}</h1><p style="opacity:.95">${W.blurb}</p></div>
+   <div class="stack" style="gap:8px"><div class="row" role="group" aria-label="Speed">${speedChips}</div><button class="chip" id="kbTog" aria-pressed="${S.kb}">On-screen keyboard</button></div></div>
+  <div class="fact"><b>Did you know?</b>${esc(rnd(W.facts))}</div>
+  <section class="sec" style="margin-top:6px"><h2>Word Rush</h2><p class="muted">Type each word before it reaches the ${W.goal.toLowerCase()}. Five levels, each adding more of the keyboard.</p><div class="lvgrid">${lv}</div></section>
+  <section class="sec"><h2>Copy Race</h2><p class="muted">Copy a short passage exactly. Your goal on ${SPEEDS[S.speed].label} speed is ${SPEEDS[S.speed].goal} words per minute with at least 95% accuracy for three stars.</p><div class="lvgrid">${ps}</div></section>
+  <div><button class="btn ghost" data-go="home">Back to worlds</button></div></div>`;
+ $$('[data-speed]').forEach(b=>b.addEventListener('click',()=>{S.speed=b.dataset.speed;save();SCREENS.world(wid)}));
+ $('#kbTog').addEventListener('click',()=>{S.kb=!S.kb;save();$('#kbTog').setAttribute('aria-pressed',S.kb)});
+};
+
+/* ---------- TYPER (shared by Copy Race and Lab drills) ---------- */
+function makeTyper(host,text,o){
+ o=o||{};
+ host.innerHTML='<div class="passage"></div><div class="hint"></div><div class="stats3"><span class="s-wpm">0 WPM</span><span class="s-acc">100% accuracy</span><span class="s-time">0.0 s</span></div><div class="gamekb tkb"></div>';
+ const pass=$('.passage',host),hint=$('.hint',host),kbHost=$('.tkb',host);
+ const spans=[];[...text].forEach(ch=>{const s=document.createElement('span');s.className='c';s.textContent=ch;pass.appendChild(s);spans.push(s)});
+ const kb=o.kb?buildKB(kbHost):null;if(!o.kb)kbHost.hidden=true;
+ let pos=0,errors=0,correct=0,start=0,done=false;
+ const timer=setInterval(()=>{if(start&&!done)stats()},200);
+ function stats(){const el=start?(performance.now()-start)/1000:0;const wpm=el>1?Math.round(correct/5/(el/60)):0;const acc=Math.round(100*correct/Math.max(1,correct+errors));
+  $('.s-wpm',host).textContent=wpm+' WPM';$('.s-acc',host).textContent=acc+'% accuracy';$('.s-time',host).textContent=el.toFixed(1)+' s';return {wpm:wpm,acc:acc,time:el}}
+ function mark(){
+  spans.forEach((s,i)=>{if(i===pos)s.classList.add('cur')});
+  const ch=text[pos];const lbl=ch===' '?'Space':ch;
+  hint.innerHTML='Next: <b>'+esc(lbl)+'</b> · '+fingerText(ch);
+  if(kb){const codes=[codeOf(ch)];if(needsShift(ch)){const f=FM[codeOf(ch)];codes.push(f&&f.h==='left'?'ShiftRight':'ShiftLeft')}setHi(kb,codes.filter(Boolean))}
+  const c=spans[pos];if(c&&c.scrollIntoView&&c.getBoundingClientRect().bottom>innerHeight)c.scrollIntoView({block:'center'});
+ }
+ keyHandler=e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='Escape'){if(o.onEsc)o.onEsc();return}
+  if(e.key.length!==1)return;e.preventDefault();if(done)return;
+  if(!start)start=performance.now();
+  if(e.key===text[pos]){spans[pos].className='c ok';pos++;correct++;S.hits++;sfx.key(Math.floor(pos/8));
+   if(pos>=text.length){done=true;clearInterval(timer);if(kb)setHi(kb,[]);hint.textContent='Finished!';const st=stats();save();if(o.onDone)o.onDone({wpm:Math.max(1,Math.round(text.length/5/(st.time/60))),acc:Math.round(100*correct/Math.max(1,correct+errors)),time:st.time,errors:errors});return}
+   mark()}
+  else{errors++;S.misses++;sfx.miss();const s=spans[pos];s.classList.add('bad');setTimeout(()=>s.classList.remove('bad'),200)}
+  stats();
+ };
+ mark();
+ return {destroy(){clearInterval(timer)}};
+}
+
+/* ---------- COPY RACE ---------- */
+SCREENS.copy=function(wid,idx){
+ idx=+idx;const W=WORLDS[wid],text=W.passages[idx],sp=SPEEDS[S.speed];
+ app.innerHTML=`<div class="world-${wid} stack"><div class="hud"><div><b>${W.name}: Copy Race ${idx+1}</b><div class="muted">Goal: ${sp.goal} WPM with 95% accuracy · the timer starts on your first key · <kbd>Esc</kbd> to leave</div></div>
+  <button class="btn ghost sm" data-go="world" data-a="${wid}">Back</button></div><div id="ty"></div><div id="res"></div></div>`;
+ const t=makeTyper($('#ty'),text,{kb:S.kb,onEsc(){go('world',wid)},onDone(st){
+  const stars=st.acc>=95&&st.wpm>=sp.goal?3:st.acc>=90?2:1;
+  const k=wid+':c'+idx;S.stars[k]=Math.max(S.stars[k]||0,stars);S.best=Math.max(S.best,st.wpm);save();updateTop();sfx.win();
+  const next=idx+1<W.passages.length;
+  $('#res').innerHTML=`<div class="ocard" style="margin:14px auto 0"><h2>${stars===3?'Brilliant!':stars===2?'Nice work!':'Passage complete'}</h2>${starStr(stars)}
+   <div class="stats3"><span>${st.wpm} WPM</span><span>${st.acc}% accuracy</span><span>${st.errors} slips</span></div>
+   <div class="fact"><b>Did you know?</b>${esc(rnd(W.facts))}</div>
+   <div class="row" style="justify-content:center"><button class="btn" data-go="copy" data-a="${wid}" data-b="${idx}">Try again</button>${next?`<button class="btn ghost" data-go="copy" data-a="${wid}" data-b="${idx+1}">Next passage</button>`:''}<button class="btn ghost" data-go="world" data-a="${wid}">World menu</button></div></div>`;
+  $('#res').scrollIntoView({block:'nearest',behavior:'smooth'});
+ }});
+ cleanup=()=>t.destroy();
+};
+
+/* ---------- WORD RUSH ---------- */
+SCREENS.rush=function(wid,lvl){
+ lvl=+lvl;const W=WORLDS[wid],L=LEVELS[lvl-1],sp=SPEEDS[S.speed];
+ let pool=[];L.pool.forEach(p=>{pool=pool.concat(p==='w4'?W.w4:p==='w5'?W.w5:POOLS[p])});
+ const dec=W.decor.map((d,i)=>`<span style="left:${[6,30,62,86][i]}%;top:${[10,62,18,66][i]}%">${d}</span>`).join('');
+ const av={down:'bottom:26px;left:calc(50% - 20px)',up:'top:26px;left:calc(50% - 20px)',left:'left:30px;top:calc(50% - 24px)',right:'right:30px;top:calc(50% - 24px)'}[W.dir];
+ app.innerHTML=`<div class="world-${wid}">
+  <div class="hud"><div><b>${W.name}</b> <span class="muted">Level ${lvl}: ${W.levels[lvl-1]}</span></div>
+   <div class="row"><span class="pill" id="hScore">0 pts</span><span class="pill" id="hCombo">x1</span><span class="pill" id="hWpm">0 WPM</span><span class="hearts" id="hLives" aria-label="Lives"></span><button class="btn ghost sm" id="pauseBtn">Pause</button></div></div>
+  <div class="prog"><i id="pbar"></i></div>
+  <div class="arena world-${wid}" id="arena"><div class="decor" aria-hidden="true">${dec}</div><div class="goal ${W.dir}"><span>${W.goal}</span></div><div class="avatar" id="avatar" style="${av}" aria-hidden="true">${W.avatar}</div><div id="toks"></div><svg class="fx" id="fx" aria-hidden="true"></svg><div class="overlay" id="ov"></div></div>
+  <div class="hint" id="hint"></div><div class="gamekb" id="gkb"></div></div>`;
+ const arena=$('#arena'),toks=$('#toks'),ov=$('#ov'),fx=$('#fx'),hint=$('#hint');
+ const kb=S.kb?buildKB($('#gkb')):null;
+ const g={state:'ready',dir:W.dir,tokens:[],lock:null,spawned:0,resolved:0,hits:0,miss:0,lives:sp.lives,score:0,combo:0,bestCombo:0,t:0,active:0,charsOK:0,nextSpawn:.6,last:performance.now(),dead:false,
+  factAt:[Math.floor(L.n/3),Math.floor(2*L.n/3)],factIdx:0,factPool:shuffle(W.facts),lastWord:''};
+ game=g;
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ function show(html,binds){ov.hidden=false;ov.innerHTML=html;(binds||[]).forEach(b=>{const el=$(b[0],ov);if(el)el.addEventListener('click',b[1])})}
+ function hide(){ov.innerHTML='';ov.hidden=true}
+ function hud(){
+  $('#hScore').textContent=g.score+' pts';const m=1+Math.min(4,Math.floor(g.combo/4));$('#hCombo').textContent='x'+m+(g.combo?' · '+g.combo+' in a row':'');
+  const w=g.active>3?Math.round(g.charsOK/5/(g.active/60)):0;$('#hWpm').textContent=w+' WPM';
+  $('#hLives').textContent='♥'.repeat(Math.max(0,g.lives))+'♡'.repeat(sp.lives-Math.max(0,g.lives));
+  $('#pbar').style.width=Math.round(100*g.resolved/L.n)+'%';
+ }
+ function draw(tk){tk.el.innerHTML='<span class="sp">'+tk.sprite+'</span><span><b class="typed">'+tk.word.slice(0,tk.typed)+'</b>'+tk.word.slice(tk.typed)+'</span>'}
+ function place(tk,Wd,Ht){
+  const p=tk.p,d=g.dir;let x,y;
+  if(d==='down'||d==='up'){
+   x=clamp((tk.lane+.5)/tk.nL*Wd,tk.hw+8,Wd-tk.hw-8)+(d==='up'?Math.sin(g.t*1.6+tk.seed)*9:0);
+   const a=d==='down'?tk.hh+4:Ht-tk.hh-4,b=d==='down'?Ht-tk.hh-26:tk.hh+26;y=a+(b-a)*p;
+  }else{
+   y=clamp((tk.lane+.5)/tk.nL*Ht,tk.hh+6,Ht-tk.hh-6)+(d==='right'?Math.sin(g.t*2.2+tk.seed)*5:0);
+   const a=d==='right'?tk.hw+6:Wd-tk.hw-6,b=d==='right'?Wd-tk.hw-30:tk.hw+30;x=a+(b-a)*p;
+  }
+  tk.x=x;tk.y=y;tk.el.style.transform='translate('+Math.round(x-tk.hw)+'px,'+Math.round(y-tk.hh)+'px)';
+ }
+ function spawn(Wd,Ht){
+  const vert=g.dir==='down'||g.dir==='up';const nL=vert?clamp(Math.floor(Wd/190),2,5):clamp(Math.floor(Ht/72),3,5);
+  const busy=g.tokens.filter(t=>t.p<.2).map(t=>t.lane);let lanes=[];for(let i=0;i<nL;i++)if(busy.indexOf(i)<0)lanes.push(i);
+  const lane=lanes.length?rnd(lanes):Math.floor(Math.random()*nL);
+  let word,tries=0;do{word=rnd(pool);tries++}while((word===g.lastWord||g.tokens.some(t=>t.word===word))&&tries<12);g.lastWord=word;
+  const el=document.createElement('div');el.className='tok';toks.appendChild(el);
+  const tk={word:word,typed:0,p:0,lane:lane,nL:nL,el:el,sprite:rnd(W.items),seed:Math.random()*6.28,hw:0,hh:0,x:0,y:0};
+  draw(tk);tk.hw=el.offsetWidth/2;tk.hh=el.offsetHeight/2;g.tokens.push(tk);g.spawned++;place(tk,Wd,Ht);hintUpdate();
+ }
+ function burst(x,y){for(let i=0;i<7;i++){const s=document.createElement('span');s.className='pt';s.textContent=rnd(W.burst);s.style.left=x+'px';s.style.top=y+'px';s.style.setProperty('--dx',(Math.random()*120-60)+'px');s.style.setProperty('--dy',(Math.random()*120-60)+'px');arena.appendChild(s);setTimeout(()=>s.remove(),720)}}
+ function laser(x,y){if(!W.laser)return;const Ht=arena.clientHeight;const ax=34,ay=Ht/2;const ln=document.createElementNS('http://www.w3.org/2000/svg','line');ln.setAttribute('x1',ax);ln.setAttribute('y1',ay);ln.setAttribute('x2',x);ln.setAttribute('y2',y);ln.setAttribute('stroke',W.laser);ln.setAttribute('stroke-width','5');ln.setAttribute('stroke-linecap','round');fx.appendChild(ln);setTimeout(()=>ln.remove(),160)}
+ function shake(){arena.classList.remove('shake');void arena.offsetWidth;arena.classList.add('shake')}
+ function hintUpdate(){
+  let tk=g.lock;if(!tk&&g.tokens.length)tk=g.tokens.reduce((a,b)=>a.p>b.p?a:b);
+  if(!tk){hint.textContent='';if(kb)setHi(kb,[]);return}
+  const ch=g.lock?tk.word[tk.typed]:tk.word[0];
+  hint.innerHTML=g.lock?'Next key: <b>'+ch.toUpperCase()+'</b> · '+fingerText(ch):'Closest word: <b>'+tk.word+'</b> · start with <b>'+ch.toUpperCase()+'</b> · '+fingerText(ch);
+  if(kb)setHi(kb,[codeOf(ch)]);
+ }
+ function progress(){
+  hud();
+  if(g.state!=='run')return;
+  if(g.resolved>=L.n&&g.tokens.length===0){finish(true);return}
+  if(g.factIdx<g.factAt.length&&g.resolved>=g.factAt[g.factIdx]&&g.resolved<L.n){g.factIdx++;showFact()}
+ }
+ function complete(tk){
+  g.tokens.splice(g.tokens.indexOf(tk),1);if(g.lock===tk)g.lock=null;tk.el.remove();
+  g.combo++;g.bestCombo=Math.max(g.bestCombo,g.combo);const m=1+Math.min(4,Math.floor(g.combo/4));
+  g.score+=Math.round(tk.word.length*10*m*sp.bonus);g.resolved++;burst(tk.x,tk.y);laser(tk.x,tk.y);sfx.word(g.combo);hintUpdate();progress();
+ }
+ function lose(tk){
+  g.tokens.splice(g.tokens.indexOf(tk),1);if(g.lock===tk)g.lock=null;tk.el.remove();
+  g.lives--;g.combo=0;g.resolved++;sfx.life();shake();hintUpdate();
+  if(g.lives<=0){finish(false);return}progress();
+ }
+ function typeChar(c){
+  let tk=g.lock;
+  if(!tk){const c2=g.tokens.filter(t=>t.word[0]===c);if(c2.length){tk=c2.reduce((a,b)=>a.p>b.p?a:b);g.lock=tk;tk.el.classList.add('lock')}}
+  if(tk&&tk.word[tk.typed]===c){tk.typed++;g.hits++;S.hits++;g.charsOK++;sfx.key(g.combo);if(tk.typed>=tk.word.length)complete(tk);else{draw(tk);hintUpdate()}}
+  else{g.miss++;S.misses++;g.combo=0;sfx.miss();shake();hud()}
+  hintUpdate();
+ }
+ function step(dt){
+  const Wd=arena.clientWidth,Ht=arena.clientHeight;g.active+=dt;g.t+=dt;g.nextSpawn-=dt;
+  if(g.spawned<L.n&&g.tokens.length===0&&g.nextSpawn>.4)g.nextSpawn=.4;
+  if(g.spawned<L.n&&g.nextSpawn<=0){spawn(Wd,Ht);g.nextSpawn=L.gap/sp.m*(.85+Math.random()*.3)}
+  const T=L.travel/sp.m;
+  g.tokens.slice().forEach(tk=>{if(g.state!=='run')return;tk.p+=dt/T;if(tk.p>=1)lose(tk);else place(tk,Wd,Ht)});
+  if(Math.floor(g.active*2)%2===0)hud();
+ }
+ function loop(ts){if(g.dead)return;const dt=Math.min(.05,(ts-g.last)/1000);g.last=ts;if(g.state==='run')step(dt);requestAnimationFrame(loop)}
+ function resume(){hide();g.state='run';g.last=performance.now();hintUpdate()}
+ function pause(){if(g.state!=='run')return;g.state='pause';show('<div class="ocard"><h2>Paused</h2><div class="row" style="justify-content:center"><button class="btn" id="rb">Resume (Esc)</button><button class="btn ghost" data-go="world" data-a="'+wid+'">Quit (Q)</button></div></div>',[['#rb',resume]])}
+ function showFact(){g.state='fact';const f=g.factPool.length?g.factPool.pop():rnd(W.facts);
+  show('<div class="ocard"><div class="big">💡</div><h2>Did you know?</h2><div class="fact" style="font-size:18px">'+esc(f)+'</div><button class="btn" id="cb">Keep going (Enter)</button></div>',[['#cb',resume]])}
+ function countdown(){g.state='count';let n=3;(function tick(){if(g.dead)return;if(n>0){show('<div class="ocard"><div class="big">'+n+'</div><p class="muted">Fingers on the home row</p></div>');tone(440+n*0,.1,'triangle',.05);n--;setTimeout(tick,650)}else{tone(880,.2,'triangle',.06);hide();g.state='run';g.last=performance.now();hintUpdate()}})()}
+ function finish(win){
+  g.state='done';const acc=Math.round(100*g.hits/Math.max(1,g.hits+g.miss));const wpm=g.active>2?Math.round(g.charsOK/5/(g.active/60)):0;
+  const stars=!win?0:acc>=90?3:acc>=75?2:1;const k=wid+':w'+lvl;S.stars[k]=Math.max(S.stars[k]||0,stars);S.best=Math.max(S.best,wpm);save();updateTop();
+  win?sfx.win():sfx.lose();g.next=win&&lvl<5?lvl+1:0;
+  const fact=rnd(W.facts.concat(TYPING_FACTS));
+  show('<div class="ocard"><h2>'+(win?(stars===3?'Superb!':'Level complete!'):'The '+W.goal.toLowerCase()+' was overrun')+'</h2>'+starStr(stars)+
+   '<div class="stats3"><span>'+g.score+' pts</span><span>'+acc+'% accuracy</span><span>'+wpm+' WPM</span><span>Best streak '+g.bestCombo+'</span></div>'+
+   '<div class="fact"><b>Did you know?</b>'+esc(fact)+'</div><div class="row" style="justify-content:center">'+
+   (g.next?'<button class="btn" data-go="rush" data-a="'+wid+'" data-b="'+g.next+'">Next level (Enter)</button><button class="btn ghost" data-go="rush" data-a="'+wid+'" data-b="'+lvl+'">Replay</button>':'<button class="btn" data-go="rush" data-a="'+wid+'" data-b="'+lvl+'">'+(win?'Replay':'Try again (Enter)')+'</button>')+
+   '<button class="btn ghost" data-go="world" data-a="'+wid+'">World menu</button></div></div>');
+  hint.textContent='';if(kb)setHi(kb,[]);
+ }
+ keyHandler=e=>{
+  if(g.state==='ready'){if(e.key==='Enter'){e.preventDefault();countdown()}return}
+  if(g.state==='fact'){if(e.key==='Enter'){e.preventDefault();resume()}return}
+  if(g.state==='pause'){if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();resume()}else if(e.key.toLowerCase()==='q')go('world',wid);return}
+  if(g.state==='done'){if(e.key==='Enter'){e.preventDefault();go('rush',wid,g.next||lvl)}return}
+  if(g.state!=='run'||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='Escape'){pause();return}
+  if(/^[a-zA-Z]$/.test(e.key)){e.preventDefault();typeChar(e.key.toLowerCase())}
+ };
+ $('#pauseBtn').addEventListener('click',pause);
+ show('<div class="ocard"><h2>Level '+lvl+': '+W.levels[lvl-1]+'</h2><p>'+L.keys+' · '+L.n+' words · '+sp.label+' speed</p>'+
+  '<p class="muted">Rest your fingers on <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> and <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd>. Start typing a word to lock on to it, then finish it before it reaches the '+W.goal.toLowerCase()+'.</p>'+
+  '<div class="row" style="justify-content:center"><button class="btn" id="sb">Start (Enter)</button><button class="btn ghost" data-go="world" data-a="'+wid+'">Back</button></div></div>',[['#sb',countdown]]);
+ hud();hintUpdate();requestAnimationFrame(loop);
+};
+
+/* ---------- KEYBOARD LAB ---------- */
+const LAB_NAMES=['QWERTY layout','Key functions','Navigation keys','Technique','Posture'];
+SCREENS.lab=function(n){
+ n=Math.max(1,Math.min(5,+n||1));
+ const tabs=LAB_NAMES.map((t,i)=>`<button class="chip" data-go="lab" data-a="${i+1}" aria-pressed="${i+1===n}">${i+1}. ${t}</button>`).join('');
+ app.innerHTML=`<div class="stack"><div><h1>Keyboard Lab</h1><p class="muted" style="margin-top:6px">Five short lessons. The on-screen keys light up when you press keys on your own keyboard, so try them all.</p></div><div class="tabs" role="group" aria-label="Lessons">${tabs}</div><div id="lesson" class="stack"></div>
+  <div class="row">${n>1?`<button class="btn ghost" data-go="lab" data-a="${n-1}">Previous lesson</button>`:''}${n<5?`<button class="btn" data-go="lab" data-a="${n+1}">Next lesson</button>`:'<button class="btn" data-go="home">Practise in a world</button>'}</div></div>`;
+ [lesson1,lesson2,lesson3,lesson4,lesson5][n-1]($('#lesson'));
+};
+const LEGEND=[['pinky','Pinky'],['ring','Ring finger'],['mid','Middle finger'],['index','Index finger'],['thumb','Thumb']];
+function legendHTML(){return '<div class="legend">'+LEGEND.map(a=>`<span class="chip"><i style="background:var(--f-${a[0]})"></i>${a[1]}</span>`).join('')+'</div>'}
+
+/* lesson 1 */
+const ROWINFO=[
+ ['All rows','A standard keyboard has five rows. Each key belongs to one finger, shown by its colour.'],
+ ['Number row','Digits 1 to 0 and some symbols, finishing with the Backspace key.'],
+ ['Top row','Tab, then Q W E R T Y U I O P and the brackets. The first six letters give the layout its name: QWERTY.'],
+ ['Home row','A S D F G H J K L ; is where your fingers rest. Feel for the small bumps on F and J.'],
+ ['Bottom row','Z X C V B N M , . / with a Shift key at each end.'],
+ ['Space bar row','Ctrl and Alt keys, and the long Space bar that your thumbs press.']
+];
+function lesson1(host){
+ host.innerHTML=`<div class="panel stack"><h2>The QWERTY layout</h2><p>Choose a row to see where it sits. The colours show which finger presses each key.</p>
+  <div class="row" id="rowchips" role="group" aria-label="Rows"></div><div id="kb1"></div>${legendHTML()}<p id="rinfo" class="fact"></p></div>
+  <div class="panel stack"><h3>Find it!</h3><p>Press the key named below on your own keyboard. Try not to look at your hands.</p><div id="fq" class="row" style="font-size:20px;min-height:44px"></div><div id="fs" class="muted"></div></div>`;
+ const kb=buildKB($('#kb1'));
+ function pick(i){
+  $$('#rowchips .chip').forEach((c,j)=>c.setAttribute('aria-pressed',j===i));
+  kb.rows.forEach((r,ri)=>Array.from(r.children).forEach(k=>k.classList.toggle('dim',i>0&&ri!==i-1)));
+  $('#rinfo').innerHTML='<b>'+ROWINFO[i][0]+'</b>'+ROWINFO[i][1];
+ }
+ ROWINFO.forEach((r,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=r[0];b.addEventListener('click',()=>pick(i));$('#rowchips').appendChild(b)});
+ pick(0);
+ const pool='asdfjklqwertyuiopzxcvbnm;'.split('');let q={n:0,ok:0,miss:0,t:null};
+ function next(){
+  if(q.n>=8){$('#fq').innerHTML='<b>Done!</b> <button class="btn sm" id="again">Play again</button>';$('#fs').textContent=q.ok+' found, '+q.miss+' wrong presses.';sfx.win();setHi(kb,[]);q.t=null;$('#again').addEventListener('click',()=>{q={n:0,ok:0,miss:0,t:null};next()});return}
+  q.t=rnd(pool);q.n++;q.tries=0;setHi(kb,[]);
+  $('#fq').innerHTML='Key '+q.n+' of 8: press <kbd style="font-size:24px">'+q.t.toUpperCase()+'</kbd>';$('#fs').textContent=q.ok?q.ok+' found so far':'';
+ }
+ keyHandler=e=>{
+  if(!q.t||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='Tab'||e.key.length>1&&e.key!=='Enter'&&e.key!=='Backspace')return;
+  e.preventDefault();
+  if(e.code===codeOf(q.t)){q.ok++;sfx.word(q.ok);next()}
+  else{q.miss++;q.tries++;sfx.miss();if(q.tries>=2)setHi(kb,[codeOf(q.t)])}
+ };
+ next();
+}
+
+/* lesson 2 */
+const KEYFUN=[
+ ['Esc','Cancels a menu or dialog box, or leaves full-screen view.','Which key cancels a menu or closes a dialog box?'],
+ ['Tab','Moves to the next field or button. In a document it indents the line.','Which key moves you to the next field in a form?'],
+ ['Caps Lock','Locks letters into capitals until you press it again.','Which key makes every letter a capital until you press it again?'],
+ ['Shift','Hold it to type a capital letter or the symbol on the top of a key.','Which key do you hold to type one capital letter?'],
+ ['Ctrl','Hold it with another key for a shortcut, such as Ctrl + C to copy and Ctrl + V to paste.','Which key is held for shortcuts such as copy and paste?'],
+ ['Alt','Works with other keys for shortcuts. Alt + Tab switches between open windows on Windows.','Which key, with Tab, switches between open windows on Windows?'],
+ ['Space','Adds a space between words. Your thumb presses it.','Which key adds a space between words?'],
+ ['Enter','Starts a new line or paragraph, or confirms a choice.','Which key starts a new paragraph or confirms a choice?'],
+ ['Backspace','Deletes the character to the left of the cursor.','Which key deletes the character to the left of the cursor?'],
+ ['Delete','Deletes the character to the right of the cursor, or the selected item.','Which key deletes the character to the right of the cursor?'],
+ ['Home','Jumps to the start of the line.','Which key jumps to the start of a line?'],
+ ['End','Jumps to the end of the line.','Which key jumps to the end of a line?'],
+ ['Page Up / Down','Scrolls up or down one screen at a time.','Which keys scroll one screen at a time?'],
+ ['Arrow keys','Move the cursor one character left or right, or one line up or down.','Which keys move the cursor one character or one line at a time?'],
+ ['F1 to F12','Function keys. F1 usually opens Help and F5 refreshes a web page.','Which row of keys includes F5, which refreshes a web page?']
+];
+function lesson2(host){
+ host.innerHTML=`<div class="panel stack"><h2>What do the keys do?</h2><p>Tap a card to mark it as one you know. Then test yourself.</p><div class="lab" id="fk"></div></div>
+  <div class="panel stack"><h3>Name that key</h3><div id="qz" class="stack"></div></div>`;
+ KEYFUN.forEach(a=>{const b=document.createElement('button');b.className='fk';b.setAttribute('aria-pressed',String(S.lab.known.includes(a[0])));b.innerHTML='<kbd>'+a[0]+'</kbd><span>'+a[1]+'</span>';b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);S.lab.known=S.lab.known.filter(k=>k!==a[0]);if(on)S.lab.known.push(a[0]);save();sfx.key(3)});$('#fk').appendChild(b)});
+ let qs=shuffle(KEYFUN).slice(0,6),qi=0,sc=0;
+ function render(){
+  const box=$('#qz');
+  if(qi>=qs.length){box.innerHTML='<p><b>You scored '+sc+' out of '+qs.length+'.</b></p><div><button class="btn" id="qa">Try again</button></div>';sfx.win();$('#qa').addEventListener('click',()=>{qs=shuffle(KEYFUN).slice(0,6);qi=0;sc=0;render()});return}
+  const q=qs[qi];const opts=shuffle([q].concat(shuffle(KEYFUN.filter(x=>x!==q)).slice(0,3)));
+  box.innerHTML='<p>Question '+(qi+1)+' of '+qs.length+': '+q[2]+'</p><div class="opts">'+opts.map((o,i)=>'<button data-i="'+i+'">'+o[0]+'</button>').join('')+'</div><p id="qf" class="muted"></p>';
+  $$('.opts button',box).forEach((b,i)=>b.addEventListener('click',()=>{
+   $$('.opts button',box).forEach(x=>x.disabled=true);
+   if(opts[i]===q){b.classList.add('right');sc++;sfx.word(sc);$('#qf').textContent='Correct. '+q[1]}
+   else{b.classList.add('wrong');sfx.miss();$$('.opts button',box).forEach((x,j)=>{if(opts[j]===q)x.classList.add('right')});$('#qf').textContent=q[0]+': '+q[1]}
+   setTimeout(()=>{qi++;render()},1800);
+  }));
+ }
+ render();
+}
+
+/* lesson 3 */
+const NAVTEXT=['Dear class,','Welcome to Keyboard Lab.','Today we practise moving around a document.','Arrow keys move one character or one line.','Home and End jump to the start or end of a line.','Ctrl jumps a whole word, or to the top or bottom.','Happy typing!'].join('\n');
+const LI=(function(){let s=0;return NAVTEXT.split('\n').map(l=>{const o={start:s,end:s+l.length};s+=l.length+1;return o})})();
+const NAVCH=[
+ {t:'Press End to jump to the end of the line.',set:()=>[LI[2].start+10,LI[2].start+10],ok:(a,b)=>a===LI[2].end&&a===b},
+ {t:'Press Home to jump to the start of the line.',set:()=>[LI[3].start+15,LI[3].start+15],ok:(a,b)=>a===LI[3].start&&a===b},
+ {t:'Press Ctrl + End to jump to the end of the whole document.',set:()=>[0,0],ok:(a)=>a===NAVTEXT.length},
+ {t:'Press Ctrl + Home to jump back to the very top.',set:()=>[NAVTEXT.length,NAVTEXT.length],ok:(a)=>a===0},
+ {t:'Press Ctrl + the right arrow to jump forward one word.',set:()=>[0,0],ok:(a)=>a>=4&&a<=6},
+ {t:'Press the down arrow twice to move down two lines.',set:()=>[LI[0].start+3,LI[0].start+3],ok:(a)=>a>=LI[2].start&&a<=LI[2].end},
+ {t:'Hold Shift and press End to select to the end of the line.',set:()=>[LI[4].start,LI[4].start],ok:(a,b)=>a===LI[4].start&&b===LI[4].end}
+];
+function lesson3(host){
+ host.innerHTML=`<div class="panel stack"><h2>Moving around a document</h2><p>Navigation keys let you move the cursor without the mouse. Complete each challenge in the document below.</p>
+  <div class="row" id="navkeys" aria-hidden="true" style="gap:14px"></div>
+  <textarea id="doc" class="doc" readonly wrap="off" rows="8" spellcheck="false" aria-label="Practice document" style="white-space:pre;overflow:auto"></textarea>
+  <div class="stack" id="chs" style="gap:8px"></div><div class="row"><button class="btn ghost sm" id="rs">Reset this challenge</button><span id="done" class="muted"></span></div></div>`;
+ const ta=$('#doc');ta.value=NAVTEXT;
+ const cl=$('#navkeys');
+ function cluster(rows){const d=document.createElement('div');d.className='kb';d.style.cssText='min-width:0;gap:4px;font-family:var(--font-mono)';const m={};rows.forEach(r=>{const rr=document.createElement('div');rr.className='kr';r.forEach(a=>{const k=document.createElement('div');k.className='key f-index';k.style.width='64px';k.style.flex='none';k.textContent=a[1];if(a[0])m[a[0]]=k;else k.style.visibility='hidden';rr.appendChild(k)});d.appendChild(rr)});cl.appendChild(d);KBS.push({map:m,rows:[]})}
+ cluster([[['Home','Home'],['PageUp','PgUp']],[['End','End'],['PageDown','PgDn']]]);
+ cluster([[[null,''],['ArrowUp','↑'],[null,'']],[['ArrowLeft','←'],['ArrowDown','↓'],['ArrowRight','→']]]);
+ let idx=Math.max(0,Math.min(NAVCH.length,Math.floor(S.lab.nav)||0));const list=$('#chs');
+ function drawList(){list.innerHTML=NAVCH.map((c,i)=>`<div class="chal ${i<idx?'done':i===idx?'now':''}"><span class="tick">${i<idx?'✓':i+1}</span><span>${c.t}</span></div>`).join('');$('#done').textContent=idx>=NAVCH.length?'All challenges complete. Well done!':''}
+ function apply(){if(idx>=NAVCH.length)return;const s=NAVCH[idx].set();ta.focus();ta.setSelectionRange(s[0],s[1])}
+ keyUpHandler=e=>{
+  if(document.activeElement!==ta||idx>=NAVCH.length)return;
+  if(['Shift','Control','Alt','Meta'].indexOf(e.key)>=0)return;
+  if(NAVCH[idx].ok(ta.selectionStart,ta.selectionEnd)){idx++;S.lab.nav=idx;save();sfx.win();drawList();if(idx<NAVCH.length)setTimeout(apply,700)}
+ };
+ $('#rs').addEventListener('click',apply);
+ drawList();
+}
+
+/* lesson 4 */
+const DRILLS=[['Home row','asdf jkl; asdf jkl; fj fj dk dk sl sl a; a; fall sad flask dad'],['Index fingers','fur jug hurt turf judge fun rugby jump bring grunt'],['Whole alphabet','The quick brown fox jumps over the lazy dog.']];
+const RULES=[
+ ['Home row first','Rest your fingers on A S D F and J K L ; Return to this spot after every key.'],
+ ['Feel the bumps','Your index fingers find the bumps on F and J. That tells you where home is without looking.'],
+ ['Eyes on the screen','Look at the screen or the page you are copying, not at the keys. Mistakes show up as you go.'],
+ ['One finger, one zone','Each finger covers its own keys and the ones above and below. Use the colour map.'],
+ ['Even rhythm','Smooth and steady beats fast and messy. Speed arrives when accuracy is secure.'],
+ ['Thumbs for Space','Use whichever thumb is closest. Keep wrists level and your hands light.']
+];
+function lesson4(host){
+ host.innerHTML=`<div class="panel stack"><h2>Correct keyboarding technique</h2><p>Pick a finger to see the keys it owns.</p><div class="row" id="fing" role="group" aria-label="Fingers"></div><div id="kb4"></div><p id="fi" class="fact"><b>Home row</b>Left hand: A S D F. Right hand: J K L ;. Thumbs rest on the space bar.</p></div>
+  <div class="lab" id="rl"></div>
+  <div class="panel stack"><h3>Try it: guided drill</h3><div class="row" id="dr" role="group"></div><div id="ty4"></div></div>`;
+ const kb=buildKB($('#kb4'));
+ const fs=[['left','pinky'],['left','ring'],['left','mid'],['left','index'],['right','index'],['right','mid'],['right','ring'],['right','pinky'],['both','thumb']];
+ function choose(f){
+  $$('#fing .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.k===(f?f.join('-'):'home')));
+  Object.keys(kb.map).forEach(c=>{const m=FM[c];const on=f?(m&&m.h===f[0]&&m.f===f[1]):'KeyA KeyS KeyD KeyF KeyJ KeyK KeyL Semicolon'.indexOf(c)>=0;kb.map[c].classList.toggle('dim',!on)});
+  if(f){const ks=Object.keys(kb.map).filter(c=>FM[c]&&FM[c].h===f[0]&&FM[c].f===f[1]).map(c=>kb.map[c].textContent);$('#fi').innerHTML='<b>'+(f[0]==='both'?'Thumbs':f[0][0].toUpperCase()+f[0].slice(1)+' '+FNAME[f[1]])+'</b>Keys: '+ks.join('  ')}
+  else $('#fi').innerHTML='<b>Home row</b>Left hand: A S D F. Right hand: J K L ;. Thumbs rest on the space bar.';
+ }
+ const hb=document.createElement('button');hb.className='chip';hb.dataset.k='home';hb.textContent='Home row';hb.addEventListener('click',()=>choose(null));$('#fing').appendChild(hb);
+ fs.forEach(f=>{const b=document.createElement('button');b.className='chip';b.dataset.k=f.join('-');b.textContent=f[0]==='both'?'Thumbs':f[0]+' '+f[1];b.addEventListener('click',()=>choose(f));$('#fing').appendChild(b)});
+ choose(null);
+ $('#rl').innerHTML=RULES.map(r=>'<div class="panel"><h3>'+r[0]+'</h3><p class="muted">'+r[1]+'</p></div>').join('');
+ let ty=null;
+ function drill(i){$$('#dr .chip').forEach((c,j)=>c.setAttribute('aria-pressed',i===j));if(ty)ty.destroy();ty=makeTyper($('#ty4'),DRILLS[i][1],{kb:true,onDone(){sfx.win()}})}
+ DRILLS.forEach((d,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=d[0];b.addEventListener('click',()=>drill(i));$('#dr').appendChild(b)});
+ drill(0);cleanup=()=>{if(ty)ty.destroy()};
+}
+
+/* lesson 5 */
+const POSTURE=[
+ ['Feet flat on the floor','Use a footrest if your feet do not reach.',[160,238]],
+ ['Hips and knees at about 90°','Sit back in the chair so your thighs are level.',[120,155]],
+ ['Back straight and supported','Let the chair back support your lower back. Do not slouch forward.',[91,125]],
+ ['Shoulders relaxed','Keep them down, not hunched up towards your ears.',[92,100]],
+ ['Elbows at about 90°','Keep them close to your body, not stretched out in front.',[102,127]],
+ ['Wrists straight','Hold your wrists level and slightly floating. Do not bend them up or rest them hard on the desk edge.',[205,130]],
+ ['Screen at eye level','The top of the screen should be about eye height, roughly an arm’s length away.',[310,95]],
+ ['Rest your eyes','Every 20 minutes, look at something about 6 metres away for 20 seconds.',[110,70]]
+];
+function lesson5(host){
+ host.innerHTML=`<div class="panel stack"><h2>Sitting well while you type</h2><p>Compare the two postures, then tick each habit you do.</p>
+  <div class="pose"><div class="stack" style="gap:8px"><svg viewBox="0 0 360 260" role="img" aria-label="Side view of a person typing at a desk">
+   <line x1="10" y1="240" x2="350" y2="240" stroke="var(--keyline)" stroke-width="4" stroke-linecap="round"/>
+   <rect x="200" y="140" width="150" height="8" rx="3" fill="var(--keyline)"/><line x1="340" y1="148" x2="340" y2="240" stroke="var(--keyline)" stroke-width="6"/>
+   <rect x="215" y="132" width="62" height="8" rx="3" fill="var(--f-index)" stroke="var(--keyline)"/>
+   <rect x="296" y="70" width="46" height="50" rx="4" fill="var(--panel2)" stroke="var(--keyline)" stroke-width="3"/><line x1="319" y1="120" x2="319" y2="140" stroke="var(--keyline)" stroke-width="5"/>
+   <rect x="60" y="162" width="82" height="8" rx="3" fill="var(--keyline)"/><line x1="62" y1="162" x2="62" y2="98" stroke="var(--keyline)" stroke-width="6" stroke-linecap="round"/><line x1="100" y1="170" x2="100" y2="240" stroke="var(--keyline)" stroke-width="5"/>
+   <g id="gd" fill="none" stroke="var(--good)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><polyline points="90,155 150,155 150,238 172,238"/><line x1="90" y1="155" x2="92" y2="94"/><polyline points="92,100 102,127 208,128"/><circle cx="94" cy="72" r="17" fill="var(--panel2)"/><line x1="112" y1="72" x2="292" y2="86" stroke-width="2" stroke-dasharray="5 5" stroke="var(--muted)"/></g>
+   <g id="gp" hidden fill="none" stroke="var(--bad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><polyline points="90,155 150,155 124,238 100,238"/><line x1="90" y1="155" x2="122" y2="102"/><polyline points="122,106 138,136 212,118"/><circle cx="144" cy="82" r="17" fill="var(--panel2)"/><line x1="162" y1="84" x2="292" y2="90" stroke-width="2" stroke-dasharray="5 5" stroke="var(--muted)"/></g>
+   <circle id="ring" cx="-50" cy="-50" r="20" fill="none" stroke="var(--accent)" stroke-width="4"/></svg>
+   <div class="row" role="group" aria-label="Posture view"><button class="chip" id="pg" aria-pressed="true">Good posture</button><button class="chip" id="pp" aria-pressed="false">Poor posture</button></div></div>
+  <div class="stack" style="gap:8px" id="cl"></div></div><p id="sc" class="fact" aria-live="polite"></p></div>`;
+ const ring=$('#ring'),gd=$('#gd'),gp=$('#gp');
+ function view(g){gd.hidden=!g;gp.hidden=g;$('#pg').setAttribute('aria-pressed',g);$('#pp').setAttribute('aria-pressed',!g)}
+ $('#pg').addEventListener('click',()=>view(true));$('#pp').addEventListener('click',()=>view(false));
+ function score(){const n=$$('#cl .chk[aria-pressed="true"]').length;$('#sc').innerHTML='<b>Posture check</b>'+n+' of '+POSTURE.length+' habits ticked'+(n===POSTURE.length?'. Great set-up! Hold it while you play.':'.')}
+ POSTURE.forEach(p=>{const b=document.createElement('button');b.className='chk';b.setAttribute('aria-pressed',String(S.lab.posture.includes(p[0])));b.innerHTML='<span class="bx" style="color:inherit;font-size:14px;display:flex">✓</span><div><b>'+p[0]+'</b><span>'+p[1]+'</span></div>';
+  b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);S.lab.posture=S.lab.posture.filter(k=>k!==p[0]);if(on)S.lab.posture.push(p[0]);save();ring.setAttribute('cx',p[2][0]);ring.setAttribute('cy',p[2][1]);view(true);score();sfx.key(4)});$('#cl').appendChild(b)});
+ score();
+}
+
+/* boot: back to the last screen (a Word Rush or Copy Race round starts again from its world) */
+(function(){const at=Array.isArray(S.at)?S.at:null;let ok=false;
+ try{if(at&&at[0]==='world'&&Object.prototype.hasOwnProperty.call(WORLDS,at[1])){go('world',at[1]);ok=true}else if(at&&at[0]==='lab'){go('lab',at[1]);ok=true}}catch(e){ok=false}
+ if(!ok){SCREENS.home();updateTop()}
+ if(window.GameSave&&(Object.keys(S.stars).length||S.lab.known.length||S.lab.nav||S.lab.posture.length))setTimeout(()=>GameSave.toast('Welcome back! Your stars and progress were restored.'),400);
+})();
+
+</script>
+
+</body></html>

@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en-GB" data-gs-none>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoloGo · Sample Pair Assignment</title>
+<meta name="description" content="A sample early-stage Pair Assignment proposal for the LoloGo app, prepared for teaching by Kester Small.">
+<style>
+:root{
+  --bg:#E8ECED; --paper:#FFFFFF; --ink:#1D2528; --muted:#5A6468; --line:#D5DCDE; --soft:#F4F6F7;
+  --head:#13262B; --accent:#0B5D6B; --note:#7A4B00; --note-bg:#FFF6DB; --note-line:#E8B93A;
+  --serif:Georgia, "Times New Roman", Times, serif;
+  --sans:"Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --teal:#0B5D6B; --sea:#2FB7A9; --sun:#FFC23C; --flame:#E5482F; --sand:#FFF6E6;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:64px; -webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:17px; line-height:1.62}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--sun); outline-offset:2px}
+img,svg{max-width:100%}
+
+/* sample banner + toolbar */
+.banner{background:#13262B; color:#fff; font-family:var(--sans); font-size:13.5px; line-height:1.45; padding:10px 16px; text-align:center}
+.banner b{color:var(--sun)}
+.toolbar{position:sticky; top:0; z-index:20; flex-wrap:wrap; background:rgba(255,255,255,.94); backdrop-filter:saturate(1.4) blur(6px); border-bottom:1px solid var(--line);
+  display:flex; gap:8px; align-items:center; padding:8px 16px; font-family:var(--sans)}
+.toolbar .brand{font-weight:700; font-size:14px; color:var(--head); margin-right:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.toolbar .brand small{font-weight:400; color:var(--muted)}
+.tbtn{font:600 13px/1 var(--sans); border:1px solid var(--line); background:#fff; color:var(--head); border-radius:999px; padding:9px 14px; min-height:40px; cursor:pointer; white-space:nowrap}
+.tbtn[aria-pressed="true"]{background:var(--note-bg); border-color:var(--note-line); color:var(--note)}
+.tbtn.primary{background:var(--teal); color:#fff; border-color:var(--teal)}
+#tocbtn{display:none}
+
+/* layout */
+.layout{display:grid; grid-template-columns:260px minmax(0,1fr); gap:28px; max-width:1500px; margin:0 auto; padding:28px 24px 60px}
+.side{position:sticky; top:72px; align-self:start; max-height:calc(100vh - 90px); overflow:auto; font-family:var(--sans); font-size:13px; padding:4px 6px 20px 0}
+.side h2{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
+.side ol{list-style:none; margin:0; padding:0}
+.side li a{display:block; text-decoration:none; color:var(--ink); padding:4px 8px; border-radius:6px; line-height:1.35}
+.side li.l1 a{font-weight:600; margin-top:6px}
+.side li.l2 a{padding-left:18px; color:var(--muted); font-size:12.5px}
+.side li a:hover{background:#fff}
+.side li a.on{background:#fff; color:var(--teal); box-shadow:inset 3px 0 0 var(--teal)}
+main{min-width:0}
+.sheet{background:var(--paper); max-width:820px; margin:0 auto 28px; padding:64px 72px; box-shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 28px rgba(19,38,43,.08); border-radius:4px; position:relative; transition:margin .25s}
+.sheet::after{content:""; display:table; clear:both}
+
+/* typography */
+h1,h2,h3,h4{font-family:var(--serif); color:#111; line-height:1.3}
+h1{font-size:25px; margin:0 0 26px; text-align:center; text-transform:uppercase; letter-spacing:.04em}
+h2{font-size:20px; margin:40px 0 14px; text-align:center}
+h3{font-size:17px; margin:28px 0 8px; text-decoration:underline; text-underline-offset:3px}
+h4{font-size:15.5px; margin:20px 0 6px; font-family:var(--sans)}
+.hn{color:var(--teal); margin-right:.45em; font-weight:700; font-family:var(--sans); font-size:.8em; letter-spacing:0; text-decoration:none; display:inline-block}
+p{margin:0 0 14px}
+.sheet > p{text-indent:2em; line-height:1.85}
+.sheet > p.statement{text-indent:0}
+.statement{border:2px solid var(--head); border-radius:4px; padding:12px 16px; background:#FAFBFB; font-weight:600}
+.cfoot{clear:both; margin-top:40px; padding-top:10px; border-top:1px solid var(--line); text-align:center; font-size:13px; color:var(--muted)}
+.figrow{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; align-items:start}
+.figrow .fig{margin:12px 0}
+.figrow .figlabel{font-size:14px}
+.fig svg.thumb{display:block; width:100%; max-width:180px; height:auto; margin:0 auto}
+.wc{font:600 12.5px/1.25 var(--sans); color:var(--head); background:#F1F8F8; border:1px solid #CFE3E3; border-radius:8px; padding:6px 10px; white-space:normal; max-width:420px}
+.wc b{color:var(--teal)}
+.wc.over{background:#FDECEA; border-color:#F2B8B0} .wc.over b{color:#A2311E}
+.mn.mn-top{font-size:13px}
+.maplist,.mstitle{display:block; margin-top:8px}
+.mstitle{font-weight:700; color:#5A3600}
+.mswrap{display:block; overflow-x:auto; margin-top:6px}
+table.ms{font-size:12px; min-width:620px; background:#fff}
+table.ms th, table.ms td{padding:4px 6px; border-bottom:1px solid #EED9A8}
+ul,ol{margin:0 0 14px; padding-left:24px}
+li{margin:3px 0}
+.lead{font-size:18.5px}
+.small{font-size:14.5px}
+.muted{color:var(--muted)}
+.sans{font-family:var(--sans)}
+blockquote{margin:14px 0; padding:10px 16px; border-left:4px solid var(--sea); background:var(--soft); font-style:italic}
+blockquote p:last-child{margin:0}
+.kv{display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; font-family:var(--sans); font-size:14.5px}
+.kv dt{font-weight:600; color:var(--muted)} .kv dd{margin:0}
+.box{border:1px solid var(--line); background:var(--soft); border-radius:8px; padding:16px 18px; margin:16px 0}
+.box h4:first-child,.box h3:first-child{margin-top:0}
+.box.link{border:2px solid var(--teal); background:#F1F8F8}
+.box.integrity{border-left:5px solid var(--head)}
+code{font-family:ui-monospace, Menlo, Consolas, monospace; font-size:.86em; background:var(--soft); padding:1px 5px; border-radius:4px; overflow-wrap:anywhere}
+.cols2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+
+/* tables */
+.tbl{margin:22px 0}
+.tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; border-top:2px solid var(--head); border-bottom:2px solid var(--head)}
+table{border-collapse:collapse; width:100%; font-family:var(--sans); font-size:13.5px; line-height:1.45}
+th,td{padding:7px 9px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line)}
+thead th{border-bottom:1.5px solid var(--head); font-weight:700; background:#fff}
+tbody tr:last-child td{border-bottom:0}
+tr.total td{font-weight:700; border-top:1.5px solid var(--head)}
+tr.sub td{font-weight:600; background:var(--soft)}
+td.n,th.n{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+table.wide{min-width:640px}
+.ok{color:#1F7A45; font-weight:700} .part{color:#A05A00; font-weight:700}
+.tnote{font-size:13.5px; color:var(--muted); margin-top:8px; font-family:var(--serif)}
+
+/* figures */
+.fig{margin:26px 0; padding:0}
+.figlabel{font-family:var(--serif); margin-bottom:8px; font-size:16px}
+.figlabel b{display:block}
+.figlabel i{display:block}
+.fig svg.chart{display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; padding:8px}
+.fignote{font-size:14px; color:var(--muted); margin-top:8px}
+.thumbs{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:14px}
+.thumbs.four{grid-template-columns:repeat(4, minmax(0, 1fr))}
+.thumb{text-align:center; font-family:var(--sans); font-size:12px; color:var(--muted)}
+.thumb svg{width:100%; max-width:150px; height:auto; display:block; margin:0 auto 6px}
+.sb{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px}
+.sbf{border:1.5px solid var(--head); border-radius:6px; padding:8px; font-family:var(--sans); font-size:11.5px; line-height:1.4; background:#fff}
+.sbf p{margin:4px 0 0}
+.sbh{display:flex; justify-content:space-between; margin-bottom:6px}
+.sbh span{color:var(--muted)}
+.sbart{width:100%; height:auto; border:1px solid var(--line); display:block}
+.personas{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px}
+.persona{border:1px solid var(--line); border-radius:8px; padding:14px; font-family:var(--sans); font-size:12.5px; line-height:1.45; background:#fff}
+.persona .avatar{width:64px; height:64px; display:block; margin-bottom:8px}
+.persona h4{margin:0 0 2px; font-size:15px}
+.persona p{margin:6px 0 0}
+.persona .q{font-style:italic; color:var(--muted)}
+.swatches{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:10px}
+.sw{border:1px solid var(--line); border-radius:8px; overflow:hidden; font-family:var(--sans); font-size:12px; background:#fff}
+.sw i{display:block; height:58px}
+.sw div{padding:6px 8px; line-height:1.35}
+.sw code{background:none; padding:0; font-size:11.5px}
+.typespec{border:1px solid var(--line); border-radius:8px; padding:14px 16px; background:#fff}
+.typespec .p1{font:700 30px/1.15 var(--sans); color:#0B5D6B}
+.typespec .p2{font:600 18px/1.3 var(--sans); color:#13262B}
+.typespec .p3{font:400 15px/1.5 var(--sans); color:#13262B}
+
+/* sprint board */
+.board{display:grid; grid-template-columns:repeat(4, minmax(150px, 1fr)); gap:10px; font-family:var(--sans); min-width:640px}
+.bcol{background:#EEF3F2; border-radius:8px; padding:8px}
+.bcol h5{margin:2px 4px 8px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); display:flex; justify-content:space-between}
+.card{background:#fff; border-radius:6px; padding:7px 8px; margin-bottom:7px; font-size:12px; line-height:1.35; box-shadow:0 1px 2px rgba(0,0,0,.12); border-left:4px solid var(--teal)}
+.card.must{border-left-color:var(--flame)} .card.should{border-left-color:var(--sun)} .card.could{border-left-color:var(--sea)}
+.card .m{display:flex; justify-content:space-between; margin-top:5px; color:var(--muted); font-size:11px}
+.card .who{background:#13262B; color:#fff; border-radius:999px; padding:0 7px; font-weight:700}
+.boardwrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff}
+
+/* front matter */
+.titlepage{text-align:center; font-family:var(--serif); padding-top:10px}
+.titlepage p{margin:0 0 6px}
+.titlepage .tp-l{font-size:18px; letter-spacing:.02em; margin:0 0 30px}
+.titlepage .tp-title{font-size:30px; font-weight:700; margin:6px 0 2px}
+.titlepage .tp-sub{font-style:italic; color:var(--muted); margin-bottom:34px}
+.titlepage .tp-ful{max-width:600px; margin:0 auto 26px; font-size:16.5px}
+.titlepage .tp-date{margin-bottom:26px}
+.titlepage .tp-b{margin-top:22px}
+.titlepage .tp-ids{font-variant-numeric:tabular-nums}
+.titlepage .tp-meta{margin-top:30px; font:13px/1.5 var(--sans); color:var(--muted)}
+.titlepage .org{letter-spacing:.14em; font-size:13px; font-weight:700; color:var(--muted)}
+.titlepage .exam{font-size:15px; margin-top:4px}
+.titlepage .subject{font-size:22px; font-weight:700; margin:28px 0 2px; color:var(--head)}
+.titlepage .ia{font-size:15px; color:var(--muted)}
+.titlepage .ptitle{font-size:34px; font-weight:700; color:var(--teal); margin:36px 0 4px; line-height:1.15}
+.titlepage .psub{font-family:var(--serif); font-style:italic; font-size:18px; color:var(--muted); margin-bottom:28px}
+.titlepage table{max-width:560px; margin:0 auto 18px; text-align:left}
+.titlepage .logo{width:84px; height:84px; margin:0 auto 6px; display:block}
+.fm-sample{display:inline-block; margin-top:22px; border:1.5px dashed var(--flame); color:#A2311E; border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600}
+.toc-list{list-style:none; padding:0; font-family:var(--sans); font-size:14.5px}
+.toc-list{font-family:var(--serif); font-size:16px}
+.toc-list li a{display:flex; gap:8px; text-decoration:none; color:var(--ink); padding:2px 0}
+.toc-list li a .tt{flex:0 1 auto}
+.toc-list li a::after{content:""; flex:1 1 auto; border-bottom:2px dotted #9AA5A8; margin:0 0 6px 4px; min-width:20px}
+.toc-list li.l1 a{font-weight:700; margin-top:12px; text-transform:uppercase; font-size:15px}
+.toc-list li.l2 a{padding-left:24px}
+.toc-list li.l3 a{padding-left:48px; font-size:15px; font-style:italic}
+.toc-list .tn{min-width:2.4em; color:var(--teal); font-family:var(--sans); font-size:.86em; order:3; text-align:right}
+.lof{list-style:none; padding:0; font-size:15px}
+.lof li a{display:flex; gap:10px; text-decoration:none; color:var(--ink); padding:3px 0}
+.lof b{min-width:5.6em; font-weight:700}
+.lr a,.kv dd,.appx-form{overflow-wrap:anywhere}
+.refs p{padding-left:36px; text-indent:-36px; margin-bottom:12px; overflow-wrap:anywhere}
+.appx-form{border:1px solid var(--head); padding:16px 20px; font-family:var(--sans); font-size:14px}
+.appx-form ol>li{margin-bottom:10px}
+.opts{color:var(--muted)}
+.transcript p{font-size:15.5px}
+.transcript b{font-family:var(--sans); font-size:13.5px}
+
+/* marking notes */
+.mn{display:none; font-family:var(--sans); font-size:12.5px; line-height:1.45; color:var(--note); background:var(--note-bg); border:1px solid var(--note-line); border-left:4px solid var(--note-line); border-radius:6px; padding:8px 10px; margin:10px 0}
+.mn::before{content:"Marking note"; display:block; font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; margin-bottom:2px}
+body.notes-on .mn{display:block}
+@media (min-width: 1300px){
+  body.notes-on .sheet{margin-left:max(0px, calc(50% - 410px - 125px)); margin-right:auto}
+  body.notes-on main{padding-right:250px}
+  body.notes-on .mn{float:right; clear:right; width:224px; margin:4px -316px 12px 0; position:relative}
+  body.notes-on .mn::after{content:""; position:absolute; left:-18px; top:14px; width:14px; border-top:1.5px dashed var(--note-line)}
+  body.notes-on .mn.mn-top{float:none; width:auto; margin:0 0 24px}
+  body.notes-on .mn.mn-top::after{display:none}
+}
+
+.pfoot{display:none}
+
+/* responsive */
+@media (max-width: 1100px){
+  .layout{grid-template-columns:minmax(0,1fr); padding:20px 14px 40px}
+  .side{display:none; position:fixed; z-index:30; top:57px; left:0; right:0; bottom:0; max-height:none; background:#F7F9F9; padding:16px; border-top:1px solid var(--line)}
+  body.toc-open .side{display:block}
+  #tocbtn{display:inline-block}
+}
+@media (max-width: 720px){
+  body{font-size:16.5px}
+  .layout{padding:12px 0 30px}
+  .sheet{padding:28px 16px; border-radius:0; margin-bottom:12px}
+  h1{font-size:24px} h2{font-size:19px}
+  .toolbar{padding:8px 10px; gap:6px}
+  .toolbar .brand small{display:none}
+  .wc{order:5; flex:1 1 100%; max-width:none; font-size:11.5px; padding:4px 8px}
+  .figrow{grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+  .figrow .figlabel{font-size:12px}
+  .sheet > p{text-indent:1.2em; line-height:1.7}
+  .titlepage .tp-l{margin-bottom:18px; font-size:16px}
+  .tbtn{padding:8px 10px; font-size:12.5px}
+  .cols2,.personas{grid-template-columns:1fr}
+  .sb{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .thumbs.four{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .thumbs{gap:8px; padding:8px}
+  .titlepage .ptitle{font-size:27px}
+  .kv{grid-template-columns:1fr} .kv dd{margin-bottom:6px}
+  table{font-size:12.5px}
+  th,td{padding:6px 7px}
+}
+@media (max-width: 420px){
+  .tbtn .long{display:none}
+  .toolbar .bx{display:none}
+  .sb{grid-template-columns:1fr}
+}
+
+/* print */
+@page{size:A4; margin:16mm 15mm 22mm;
+  @top-right{content:counter(page); font:9pt Georgia, serif; color:#555}
+  @bottom-center{content:"© 2026 Candidate A, Candidate B and Candidate C. All Rights Reserved\A SAMPLE SBA for teaching: all names, businesses, survey data and costs are sample material. Do not copy; use it to understand structure and standards."; white-space:pre-wrap; font:7.5pt/1.35 Georgia, serif; color:#555; text-align:center}
+}
+@page:first{@top-right{content:none}}
+@media print{
+  html,body{background:#fff}
+  body{font-size:11pt; line-height:1.5}
+  .banner,.toolbar,.side,#tocbtn,.pfoot{display:none !important}
+  .layout{display:block; padding:0; max-width:none}
+  main{padding:0 !important}
+  .sheet{box-shadow:none; padding:0; margin:0 !important; max-width:none; border-radius:0; break-before:page}
+  .sheet:first-child{break-before:auto}
+  body.notes-on .mn{float:none; width:auto; margin:8px 0}
+  body.notes-on .mn::after{display:none}
+  h1,h2,h3,h4,.figlabel{break-after:avoid}
+  .fig,.thumbs,.sbf,.persona,tr,.card,.sw,.box,.tbl{break-inside:avoid}
+  .figlabel{break-after:avoid; page-break-after:avoid}
+  .tscroll,.boardwrap{overflow:visible}
+  table.wide,.board{min-width:0}
+  a{color:inherit; text-decoration:none}
+  .cfoot,.wc{display:none !important}
+  .sheet > p{line-height:1.7}
+  .figrow{grid-template-columns:repeat(3, 1fr)}
+  .sheet:last-child{padding-bottom:0}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="banner" role="note"><b>SAMPLE SBA for teaching:</b> all names, businesses, survey data and costs are sample material. Do not copy; use it to understand structure and standards.</div>
+<div class="toolbar">
+  <span class="brand">LoloGo<span class="bx"> · Pair Assignment</span> <small>CAPE Digital Media Unit 1</small></span>
+    <button class="tbtn" id="tocbtn" aria-expanded="false" aria-controls="side">Contents</button>
+  <button class="tbtn" id="notesbtn" aria-pressed="false">Show <span class="long">marking </span>notes</button>
+  <button class="tbtn primary" id="printbtn">Print<span class="long"> / Save as PDF</span></button>
+</div>
+<div class="layout">
+<nav class="side" id="side" aria-label="Contents"><h2>Contents</h2><ol><li class="l1"><a href="#introduction">Introduction</a></li><li class="l1"><a href="#description">Description</a></li><li class="l1"><a href="#target-audience">Target Audience</a></li><li class="l1"><a href="#inspiration">Inspiration</a></li><li class="l1"><a href="#collection-of-data">Collection of Data</a></li><li class="l1"><a href="#references">References</a></li></ol></nav>
+<main id="main">
+<section class="sheet cover" id="cover" aria-label="Title page">
+<aside class="mn mn-top"><b>How to read these notes.</b> This is the early Pair Assignment, the first proposal stage. It follows the Flamboyant Heights College house structure for this task (Title page, Table of Contents, Introduction, Description, Target audience, Inspiration, Collection of Data, References). Each note explains what lifts a section above a basic answer. Compare it with the final Internal Assessment to see how the idea developed.</aside>
+<div class="titlepage">
+  <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="LoloGo logo"><circle cx="32" cy="32" r="31" fill="#FFC23C"/><circle cx="32" cy="32" r="26" fill="#0B5D6B"/>
+<path d="M32 9c5 6 10 10 9 17-.6 4.6-4.4 7.6-9 7.6s-8.6-3-8.8-7.4c-.2-4.2 2.4-6.6 3.8-9.8 1 2.6 2.4 3.8 3.8 4.2.8-3.6.2-7.4 1.2-11.6z" fill="#E5482F"/>
+<path d="M32 19.5c2.6 3 4.8 5.2 4.4 8.4-.3 2.4-2.2 3.9-4.4 3.9s-4.2-1.5-4.4-3.8c-.2-2.6 1.6-4 2.6-6 .5 1.2 1 1.7 1.6 2 .3-1.4.1-2.8.2-4.5z" fill="#FFC23C"/>
+<rect x="15" y="35.5" width="34" height="3.6" rx="1.8" fill="#FFF6E6"/>
+<rect x="21" y="35.5" width="1.6" height="3.6" fill="#0B5D6B"/><rect x="27" y="35.5" width="1.6" height="3.6" fill="#0B5D6B"/><rect x="33" y="35.5" width="1.6" height="3.6" fill="#0B5D6B"/><rect x="39" y="35.5" width="1.6" height="3.6" fill="#0B5D6B"/>
+<path d="M18 40.5h28a14 8.5 0 0 1-28 0z" fill="#FFF6E6"/>
+<path d="M24.5 47.5l-3 6.5M39.5 47.5l3 6.5" stroke="#FFF6E6" stroke-width="2.6" stroke-linecap="round"/></svg>
+  <p class="tp-title">LoloGo</p>
+  <p class="tp-sub">Local flavour, on the go</p>
+  <p class="tp-b"><b>Submitted to:</b></p>
+  <p>Ms. Kester Small<br>Digital Media Course Facilitator</p>
+  <p class="tp-b"><b>School:</b> Flamboyant Heights College</p>
+  <p class="tp-b">Name of Group Members:</p>
+  <p>Candidate A<br>Candidate B<br>Candidate C</p>
+  <p class="tp-ful" style="margin-top:28px">A paper completed in partial fulfillment of the requirements set out for candidates sitting the Unit 1 Caribbean Advanced Proficiency Examinations (CAPE) for the Caribbean Examinations Council.</p>
+  <p class="tp-date">September 2025</p>
+  <p class="tp-meta">Pair Assignment (early proposal stage) · CAPE Digital Media Unit 1</p>
+</div>
+<aside class="mn">The title page matches the house format for this task and adds the date, which the school’s sample left out. Group members appear as placeholders; real students write their full names.</aside>
+<div class="cfoot">© 2026 Candidate A, Candidate B and Candidate C. All Rights Reserved</div></section>
+
+<section class="sheet">
+<h1 class="fm notoc" id="contents">Table of Contents</h1>
+<ol class="toc-list"><li class="l1"><a href="#introduction"><span class="tn"></span><span class="tt">Introduction</span></a></li><li class="l1"><a href="#description"><span class="tn"></span><span class="tt">Description</span></a></li><li class="l1"><a href="#target-audience"><span class="tn"></span><span class="tt">Target Audience</span></a></li><li class="l1"><a href="#inspiration"><span class="tn"></span><span class="tt">Inspiration</span></a></li><li class="l1"><a href="#collection-of-data"><span class="tn"></span><span class="tt">Collection of Data</span></a></li><li class="l1"><a href="#references"><span class="tn"></span><span class="tt">References</span></a></li></ol>
+<div class="cfoot">© 2026 Candidate A, Candidate B and Candidate C. All Rights Reserved</div></section>
+
+<section class="sheet">
+<h1 class="nonum" id="introduction">Introduction</h1>
+<aside class="mn">A strong introduction starts from a <i>local, observable</i> problem and says why it matters now. Compare the school’s sample, which opened with a general global issue. This one also says what the group does not yet know, and that leads naturally into Collection of Data.</aside>
+<p>In Sint Maarten a <em>lolo</em> is a roadside food stand: a drum grill, a counter and a hand-painted sign. Lolos sell johnny cakes and saltfish in the morning, BBQ chicken and ribs at lunch, and conch, plantain and fresh juices into the evening. They are part of the island’s culture and an important source of income for small family businesses.</p>
+<p>Anyone who buys from a lolo at a busy time knows the problems. Queues stretch towards the road. Popular dishes sell out while people are still waiting. Opening hours change from day to day and are rarely posted online, so customers drive to a lolo that turns out to be closed. Most lolos accept cash only, so customers without cash walk away. Visitors hear about lolos from taxi drivers and hotel staff but cannot find them on a map.</p>
+<p>At the same time, nearly every customer carries a smartphone and already orders other things through apps and WhatsApp. Palfrey and Gasser (2008) describe a generation of “digital natives” who expect information and services to be available on demand. Many lolo owners, however, use their phones mainly for calls and WhatsApp. This proposal suggests a digital solution, LoloGo, and explains how the group will collect data to find out whether customers and owners really need it.</p>
+
+<h1 class="nonum" id="description">Description</h1>
+<aside class="mn">Good descriptions say what the product <i>does</i>, step by step, and keep to what a student team can actually build. Note the honest scope line: a working prototype, not a launched business.</aside>
+<p>LoloGo is a planned mobile app that lets customers order food from local lolos for pick-up or delivery. The working idea has five parts:</p>
+<ol>
+<li><b>Find a lolo.</b> Customers choose their area and see nearby lolos, with distance, preparation time and a clear <i>Open</i> or <i>Closed</i> label.</li>
+<li><b>Build a plate.</b> Each dish shows its price in US dollars and its options, such as a side, a sauce and a spice level. Dishes that have sold out are marked so that nobody orders them.</li>
+<li><b>Order and pay.</b> Customers order ahead and pay by card, by an in-app wallet or in cash on pick-up, so the app helps people without cash but does not exclude people who prefer it.</li>
+<li><b>Track the order.</b> A simple tracker shows when the order has been received, when it is on the grill and when it is ready or on its way.</li>
+<li><b>Owner mode.</b> The lolo owner sees incoming orders and taps large buttons to accept them, mark them ready and switch dishes to sold out.</li>
+</ol>
+<p>Sign-in will use a phone number and a one-time text code, so users do not need to remember a password. For the CAPE Internal Assessment, which asks for a proposal that leads to a working digital solution (Caribbean Examinations Council, 2026), the group will design the app through sketches, wireframes and mock-ups, then build a clickable HTML prototype and test it with real users. A full public launch is outside the scope of the school project but will be costed in the final budget.</p>
+
+<h1 class="nonum" id="target-audience">Target Audience</h1>
+<aside class="mn">The audience is specific, local and split into segments with different needs. Avoid claiming that a product is for “all ages and genders”. Saying who it is <i>not</i> for shows judgement.</aside>
+<p>LoloGo has three groups of users, and each has different needs:</p>
+<ul>
+<li><b>Students and young workers (about 15 to 30).</b> They are phone-first, short on time and often have a fixed break. They need to order ahead and collect quickly.</li>
+<li><b>Visitors.</b> Cruise passengers and hotel guests want authentic local food but do not know where lolos are, when they open or what the dishes are. They need location, opening status and clear descriptions, ideally in more than one language, and they often prefer card payment.</li>
+<li><b>Lolo owners.</b> Small grill and johnny cake vendors want more orders without a longer line. They need an owner screen that is fast to use with busy hands, with no typing and no complicated settings.</li>
+</ul>
+<p>The app is not aimed at large restaurants, which already use delivery platforms. Older customers who prefer to queue and pay cash will still be served at the counter; LoloGo adds an option and does not replace walk-in service.</p>
+
+<h1 class="nonum" id="inspiration">Inspiration</h1>
+<aside class="mn">Personal inspiration is welcome, but a strong answer links it to a wider pattern and to evidence the group will gather. The quote is credited to the member who said it.</aside>
+<blockquote><p>“We kept missing johnny cakes before school because the line was too long.”</p><p class="small muted" style="font-style:normal">Candidate B, group member</p></blockquote>
+<p>The idea came from the group’s own mornings. On the way to school, the queue at a favourite lolo was often too long to reach the front before the bell, and by lunchtime the dish we wanted had sometimes sold out. When we talked about it in class, other students described the same experience, and one classmate whose family hosts visitors said that guests often ask where to find “real local food” but give up when they cannot find it.</p>
+<p>We noticed that the problem is not the food, which people love, but <i>information and access</i>. Customers cannot see what is available, when, or how to pay. Large delivery apps tend to focus on chain restaurants, not roadside grills. We wanted local vendors to benefit from the digital economy too. The creative design process, which moves from understanding users to testing ideas with them, suits this kind of everyday problem (Brown, 2008).</p>
+
+<h1 class="nonum" id="collection-of-data">Collection of Data</h1>
+<aside class="mn">This is the section that most often stays vague. A strong plan names each instrument, the sample, the dates, the ethics and how the results will be analysed, and it links every instrument to a question the group needs answered. The school’s sample listed “surveys” and “webinars” without saying what they would find out.</aside>
+<p>Before designing anything, the group needs evidence that the problem is real and that an app is the right solution. The research questions are: (1) How often do people buy from lolos, and what frustrates them? (2) Which features would make an ordering app worth using? (3) How do owners work at peak times, and what would stop them using an app? The group will use three methods (see the table below), so that what people <i>say</i> can be checked against what they <i>do</i>.</p>
+<div class="tbl" id="tbl-dataplan"><div class="figlabel"><b>Table 1.</b> <i>Data collection plan</i></div>
+<div class="tscroll"><table class="wide">
+<thead><tr><th>Method</th><th>Who and how many</th><th>When</th><th>What it will find out</th><th>Lead</th></tr></thead>
+<tbody>
+<tr><td>Online questionnaire (Google Forms, 12–15 closed and open questions)</td><td>Residents and visitors; target at least 60 responses</td><td>5–16 Oct 2025</td><td>Buying frequency, frustrations, wanted features, payment preference, willingness to pay for delivery</td><td>Candidate B</td></tr>
+<tr><td>Semi-structured interview</td><td>One or two lolo owners, about 20 minutes each</td><td>Week of 5 Oct 2025</td><td>The owner’s workflow, costs, experience of delivery apps, what “simple enough” means</td><td>Candidates A and B</td></tr>
+<tr><td>Structured observation</td><td>Two lolos at peak times, about 90 minutes each</td><td>10 and 16 Oct 2025</td><td>Queue length, timed waits, walk-aways, sold-out times, requests to pay by card</td><td>Candidate C</td></tr>
+</tbody></table></div>
+</div>
+<p><b>Sampling.</b> The questionnaire will be shared through school and family WhatsApp groups (convenience and snowball sampling). Because this would reach mostly students, the group will also place QR-code posters at the partner lolos to reach visitors and older customers.</p>
+<p><b>Ethics.</b> Taking part is voluntary and anonymous. The questionnaire will not ask for names. Respondents under 18 will need a signed parental consent letter. The interview will be recorded only with written consent, and owners and lolos will be given pseudonyms if they prefer. Observers will not record faces or names. All data will be stored in the school Google Drive and deleted three months after the 2026 results.</p>
+<p><b>Analysis.</b> Closed questions will be summarised as counts and percentages in Google Sheets and presented as pie charts, bar graphs and tables. Open answers and the interview will be grouped into themes. The findings will be used to write the problem statement and objectives, to rank the features in a product backlog, and later to test the prototype with at least five users (Nielsen, 2000).</p>
+<div class="cfoot">© 2026 Candidate A, Candidate B and Candidate C. All Rights Reserved</div></section>
+
+<section class="sheet">
+<h1 class="nonum" id="references">References</h1>
+<aside class="mn">APA 7 with hanging indents, and every source is cited in the text. Compare the school’s sample, which used shortened links and “Retrieved” dates without authors; this list names the authors and publishers.</aside>
+<div class="refs">
+<p>Brown, T. (2008). Design thinking. <i>Harvard Business Review, 86</i>(6), 84–92.</p>
+<p>Caribbean Examinations Council. (2026). <i>Caribbean Advanced Proficiency Examination: Digital media syllabus</i>.</p>
+<p>Nielsen, J. (2000, March 18). <i>Why you only need to test with 5 users</i>. Nielsen Norman Group. https://www.nngroup.com/articles/why-you-only-need-to-test-with-5-users/</p>
+<p>Palfrey, J., &amp; Gasser, U. (2008). <i>Born digital: Understanding the first generation of digital natives</i>. Basic Books.</p>
+</div>
+<div class="box link" style="margin-top:28px"><b>Closing note.</b> This is the early proposal. See the final IA for how it developed: <a href="lologo-sba.html">LoloGo Sample SBA (final Internal Assessment)</a>.</div>
+<div class="cfoot">© 2026 Candidate A, Candidate B and Candidate C. All Rights Reserved</div></section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var body = document.body, nb = document.getElementById('notesbtn');
+  function setNotes(on){
+    body.classList.toggle('notes-on', on);
+    nb.setAttribute('aria-pressed', on ? 'true' : 'false');
+    nb.firstChild.nodeValue = on ? 'Hide ' : 'Show ';
+    try { localStorage.setItem('lologo-sba-notes', on ? '1' : '0'); } catch (e) {}
+  }
+  nb.addEventListener('click', function(){ setNotes(!body.classList.contains('notes-on')); });
+  var saved = null; try { saved = localStorage.getItem('lologo-sba-notes'); } catch (e) {}
+  if (saved === '1') setNotes(true);
+  function countReport(){
+    var n = 0;
+    document.querySelectorAll('[data-count]').forEach(function(sec){
+      var c = sec.cloneNode(true);
+      c.querySelectorAll('.mn, figure, .tbl, table, h1, h2, h3, h4, .cfoot, .box.link').forEach(function(e){ e.remove(); });
+      var m = c.textContent.match(/[A-Za-z0-9\u00C0-\u024F][A-Za-z0-9\u00C0-\u024F'\u2019.,%$\/\u2013-]*/g);
+      n += m ? m.length : 0;
+    });
+    var el = document.getElementById('wc'); if (!el) return 0;
+    el.innerHTML = 'Report: <b>' + n.toLocaleString('en-GB') + '</b> words · 1,000–1,500 required (excludes diagrams, graphs, tables and bibliography)';
+    el.classList.toggle('over', n > 1500 || n < 1000);
+    el.setAttribute('data-words', n);
+    return n;
+  }
+  window.countReport = countReport; countReport();
+  document.getElementById('printbtn').addEventListener('click', function(){ window.print(); });
+  var tb = document.getElementById('tocbtn');
+  tb.addEventListener('click', function(){ var o = body.classList.toggle('toc-open'); tb.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+  var side = document.getElementById('side');
+  side.addEventListener('click', function(e){ if (e.target.closest('a')) { body.classList.remove('toc-open'); tb.setAttribute('aria-expanded', 'false'); } });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && body.classList.contains('toc-open')) { body.classList.remove('toc-open'); tb.setAttribute('aria-expanded','false'); tb.focus(); } });
+  if ('IntersectionObserver' in window){
+    var links = {}; side.querySelectorAll('a').forEach(function(a){ links[a.getAttribute('href').slice(1)] = a; });
+    var heads = Array.prototype.filter.call(document.querySelectorAll('main h1[id], main h2[id]'), function(h){ return links[h.id]; });
+    var cur = null;
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(en){ if (en.isIntersecting){ if (cur) cur.classList.remove('on'); cur = links[en.target.id]; cur.classList.add('on'); } });
+    }, {rootMargin: '-70px 0px -70% 0px'});
+    heads.forEach(function(h){ io.observe(h); });
+  }
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

@@ -1,0 +1,209 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Plate Power: The NCD Essay Mission</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+:root{--bg:#060D26;--surface:rgba(15,30,74,.9);--ink:#F1F4FF;--muted:#AEB9DD;--line:rgba(245,197,66,.25);--gold:#F5C542;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 600px at 80% -10%,#0B1A46,transparent 60%),#060D26;background-attachment:fixed;color:var(--ink);font:16.5px/1.65 "Atkinson Hyperlegible",Verdana,system-ui,sans-serif}
+main{max-width:880px;margin:0 auto;padding-block:70px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+article{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,34px);box-shadow:0 18px 40px -18px rgba(0,0,0,.85)}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4.5vw,2.4rem);color:#FFE38A;margin-top:0}
+h2{color:var(--gold);border-top:1px solid var(--line);padding-top:18px;margin-top:28px}
+a{color:#FFD766}
+.tw{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(245,197,66,.12)}
+li p{margin:.2em 0}
+[data-atom="mention"]{display:none}
+input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.credit{color:var(--muted);font-size:.85rem;text-align:center;margin-top:18px}
+</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body>
+<a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);border:1px solid rgba(245,197,66,.4)">← Back to course</a>
+<main><article><h1 id="communication-studies-assignment-an-expository-essay-on-non-communicable-diseases-for-parents">Communication Studies Assignment: An Expository Essay on Non-Communicable Diseases for Parents</h1>
+<p><time data-atom="date" datetime="2026-10-13">2026-10-13</time></p>
+<p>In this Communication Studies assignment, students write an expository essay that explains non-communicable diseases (NCDs) in children to an audience of parents, using credible evidence and a clear structure.</p>
+<p>CAPE Communication Studies</p>
+<h2 id="the-task">The task</h2>
+<p>Write an <strong>expository essay</strong> that explains non-communicable diseases (NCDs) in children to <strong>parents and guardians</strong>. An expository essay informs and explains. It does not tell a story or argue a side: its job is to make a topic clear, accurate and easy to follow.</p>
+<div class="tw"><table><thead><tr><th>Item</th><th>Requirement</th></tr></thead><tbody><tr><td>Topic</td><td>Non-communicable diseases in children: what they are, how common they are, why they happen, and how families can reduce the risk</td></tr><tr><td>Audience</td><td>Parents and guardians of children aged 5–17. Busy, caring, not medical experts, and easily made to feel blamed</td></tr><tr><td>Purpose</td><td>To inform: leave parents with a clear understanding and a few realistic actions</td></tr><tr><td>Length</td><td>700–900 words, plus a reference list</td></tr><tr><td>Form</td><td>Introduction with a thesis, three to five body paragraphs, conclusion. A title and subheadings are allowed</td></tr><tr><td>Evidence</td><td>At least five facts or statistics from credible sources, each named in the text</td></tr><tr><td>Referencing</td><td>A reference list with at least four credible sources, at least two of which you found yourself</td></tr></tbody></table></div>
+<p><strong>Communication Studies focus:</strong> you are being assessed on how well you match your <strong>audience, purpose, mode and register</strong>, not only on what you know about NCDs. Audience: parents. Purpose: to inform. Mode: expository writing. Register: formal but warm, in plain language. You will also justify your choices and evaluate how effective your essay is.</p>
+<p><strong>Your essay must explain</strong></p>
+<ul><li><p><strong>Definition:</strong> what an NCD is, in plain words, and why &quot;non-communicable&quot; matters.</p></li><li><p><strong>Examples and classification:</strong> at least four conditions, grouped in a way that helps the reader (for example by body system).</p></li><li><p><strong>Causes and risk factors:</strong> what raises a child&#39;s chances, separating what families can influence from what they cannot.</p></li><li><p><strong>Prevention:</strong> realistic steps for home, school and community.</p></li><li><p><strong>Statistics:</strong> facts that show how common NCDs are in children, worldwide and in the Caribbean.</p></li></ul>
+<p><strong>Expository writing rules</strong></p>
+<ul><li><p>Use a clear thesis in your introduction that previews your main points.</p></li><li><p>One main idea per paragraph, opened by a topic sentence.</p></li><li><p>Support each point with a fact, a statistic or a brief example, and name the source in the sentence.</p></li><li><p>Use a formal but warm tone, and plain language. Explain any technical term the first time you use it.</p></li><li><p>Do not blame parents. Some NCDs, such as type 1 diabetes and childhood cancers, are not caused by anything a family did.</p></li><li><p>Avoid persuasive pressure (&quot;you must&quot;), personal anecdotes as your main evidence, and unsourced claims.</p></li></ul>
+<h2 id="planning-guide">Planning guide</h2>
+<p>Use the facts below as a starting point. Open each linked source, confirm the figure yourself, and note the year it comes from.</p>
+<h3 id="facts-to-start-with">Facts to start with</h3>
+<div class="tw"><table><thead><tr><th>Topic</th><th>Fact</th><th>Source</th></tr></thead><tbody><tr><td>Definition</td><td>NCDs, also called chronic diseases, are not transmitted from person to person and are often long-lasting</td><td><a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF</a></td></tr><tr><td>Examples</td><td>WHO lists anaemia, asthma, cancers, diabetes, heart diseases, obesity, and injuries and accidents as common conditions in children</td><td><a target="_blank" rel="noopener" href="https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/prevention-of-noncommunicable-diseases">WHO</a></td></tr><tr><td>Mental health</td><td>Mental health conditions are the largest share of the NCD burden in adolescents; about 1 in 7 young people aged 10–19 live with one</td><td><a target="_blank" rel="noopener" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7734741/">Akseer et al., 2020</a>, <a target="_blank" rel="noopener" href="https://www.who.int/news-room/fact-sheets/detail/mental-health-of-adolescents">WHO</a></td></tr><tr><td>Burden</td><td>NCDs cause over half of the disability-affected life years among adolescents (2019) and about 1 in 5 adolescent deaths</td><td><a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF</a></td></tr><tr><td>Obesity, world</td><td>In 2025, 9.4% of children aged 5–19 (about 188 million) lived with obesity, more than the 9.2% who were underweight</td><td><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF via allAfrica</a></td></tr><tr><td>Obesity, Caribbean</td><td>1 in 3 children in the Caribbean is overweight or obese</td><td><a target="_blank" rel="noopener" href="https://www.ttt.live/?p=144537">CARPHA, 2026</a></td></tr><tr><td>Activity</td><td>81% of adolescents aged 11–17 did not meet the 60-minute daily activity guideline in 2016</td><td><a target="_blank" rel="noopener" href="https://pubmed.ncbi.nlm.nih.gov/31761562/">Guthold et al., 2020</a></td></tr><tr><td>Marketing</td><td>75% of 64,000 young people surveyed in 170 countries saw ads for sugary drinks, snacks or fast food in the past week</td><td><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF via allAfrica</a></td></tr><tr><td>Asthma</td><td>The most common chronic disease in children; tobacco smoke exposure is a risk factor</td><td><a target="_blank" rel="noopener" href="https://www.annalsofglobalhealth.org/en/articles/2416">Serebrisky and Wiznia, 2019</a></td></tr><tr><td>Type 1 diabetes</td><td>About 1.2 million children and adolescents under 20 live with it; it is not caused by lifestyle</td><td><a target="_blank" rel="noopener" href="https://lifeforachild.org/wp-content/uploads/2022/05/G.-D.-Ogle-S.-James-D.-Dabelea-et-al.-Global-estimates-of-incidence-of-type-1-diabetes-in-children-and-adolescents_Results-from-the-Inter-national-Diabetes-Federation-Atlas-10th-edition.pdf">IDF Diabetes Atlas, 10th edition</a></td></tr><tr><td>Prevention</td><td>Life-long health behaviours are shaped in childhood and adolescence, and schools have a responsibility to protect children&#39;s health</td><td><a target="_blank" rel="noopener" href="https://uniatf.who.int/publications/i/item/noncommunicable-diseases-what-ministries-of-education-need-to-know">WHO</a></td></tr></tbody></table></div>
+<h3 id="essay-plan">Essay plan</h3>
+<p>Complete this plan before you draft. Each row becomes one paragraph.</p>
+<div class="tw"><table><thead><tr><th>Paragraph</th><th>Main idea (topic sentence)</th><th>Evidence I will use</th><th>Source</th></tr></thead><tbody><tr><td>Introduction</td><td>Hook, definition of NCDs, thesis previewing your points</td><td></td><td></td></tr><tr><td>Body 1</td><td>What NCDs are and how they are classified</td><td></td><td></td></tr><tr><td>Body 2</td><td>How common they are in children</td><td></td><td></td></tr><tr><td>Body 3</td><td>Causes and risk factors, including what families cannot control</td><td></td><td></td></tr><tr><td>Body 4</td><td>Prevention at home, at school and in the community</td><td></td><td></td></tr><tr><td>Conclusion</td><td>Restate the thesis in new words, summarize, leave one clear takeaway</td><td></td><td></td></tr></tbody></table></div>
+<h3 id="thesis-statement-main-ideas-and-supporting-details">Thesis statement, main ideas and supporting details</h3>
+<p>Your essay <strong>must</strong> have a clear thesis statement, a main idea for every body paragraph, and supporting details for each main idea. When you submit, <strong>underline your thesis statement and highlight each topic sentence</strong>.</p>
+<p><strong>Thesis statement:</strong> one or two sentences at the end of your introduction that state the central point of the whole essay and preview the main ideas in the order you will explain them. In an expository essay it is a claim you can support with facts. It is not an opinion, a question, an announcement (&quot;I will talk about…&quot;) or a command to the reader.</p>
+<ul><li><p><strong>Weak:</strong> &quot;Non-communicable diseases are bad for children.&quot; (too vague, previews nothing)</p></li><li><p><strong>Weak:</strong> &quot;In this essay I will discuss NCDs.&quot; (an announcement, not a claim)</p></li><li><p><strong>Strong:</strong> &quot;Non-communicable diseases such as asthma, diabetes and obesity are becoming more common in children, but understanding what they are, what causes them and how to reduce the risk helps families take realistic steps to protect their children&#39;s health.&quot;</p></li></ul>
+<div class="tw"><table><thead><tr><th>Element</th><th>What it does</th><th>Where it goes</th></tr></thead><tbody><tr><td>Hook</td><td>Gains the reader&#39;s interest</td><td>Opening sentences</td></tr><tr><td>Thesis statement</td><td>States the central point and previews the main ideas</td><td>End of the introduction</td></tr><tr><td>Main idea</td><td>The one point a paragraph is about, stated in a topic sentence</td><td>First sentence of each body paragraph</td></tr><tr><td>Supporting details</td><td>Facts, statistics and examples that prove the main idea, with the source named</td><td>Middle of each body paragraph</td></tr><tr><td>Transitions</td><td>Link ideas within and between paragraphs</td><td>Start of sentences and paragraphs</td></tr><tr><td>Concluding sentence</td><td>Ties the paragraph back to its main idea</td><td>End of each body paragraph</td></tr><tr><td>Conclusion</td><td>Restates the thesis in new words, summarizes the main ideas, ends on a takeaway</td><td>Final paragraph</td></tr></tbody></table></div>
+<p><strong>Test your main ideas:</strong> read only your thesis and your topic sentences in order. They should tell the whole story of your essay in miniature. If a body paragraph has two main ideas, split it. If a topic sentence does not connect back to your thesis, revise one of them.</p>
+<h2 id="justification-evaluation-and-submission">Justification, evaluation and submission</h2>
+<h3 id="justification-and-evaluation-150200-words">Justification and evaluation (150–200 words)</h3>
+<p>After your essay, answer these questions in a short paragraph.</p>
+<ol><li><p>Audience, purpose and register: what choices of content, vocabulary and tone did you make for parents, and why?</p></li><li><p>Organization: why did you order your paragraphs as you did, and how does the structure help a busy parent follow your explanation?</p></li><li><p>Effectiveness: how well does your essay inform parents, which source did you trust most, and what one change would improve it?</p></li></ol>
+<h3 id="submission-checklist">Submission checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Title, thesis and an introduction that previews the main points</p></li><li data-checked="false"><p><input type="checkbox" disabled> 700–900 words</p></li><li data-checked="false"><p><input type="checkbox" disabled> Each body paragraph opens with a topic sentence</p></li><li data-checked="false"><p><input type="checkbox" disabled> At least five facts or statistics, each with its source named in the text</p></li><li data-checked="false"><p><input type="checkbox" disabled> Reference list with at least four credible sources, two found by me</p></li><li data-checked="false"><p><input type="checkbox" disabled> Technical terms explained in plain language</p></li><li data-checked="false"><p><input type="checkbox" disabled> No blame placed on parents</p></li><li data-checked="false"><p><input type="checkbox" disabled> Conclusion restates the thesis without adding new facts</p></li><li data-checked="false"><p><input type="checkbox" disabled> Proofread for spelling, grammar and punctuation</p></li><li data-checked="false"><p><input type="checkbox" disabled> Justification and evaluation attached</p></li></ul>
+<h2 id="rubric-40-marks">Rubric (40 marks)</h2>
+<div class="tw"><table><thead><tr><th>Criterion</th><th>Excellent</th><th>Proficient</th><th>Developing</th><th>Beginning</th></tr></thead><tbody><tr><td><strong>Content and accuracy</strong> (8)</td><td><strong>7–8:</strong> Explains definition, examples, classification, causes, risk factors and prevention thoroughly and correctly. Clearly separates preventable from non-preventable NCDs.</td><td><strong>5–6:</strong> Covers most elements accurately, with minor gaps or imprecision.</td><td><strong>3–4:</strong> Covers some elements. Contains inaccuracies or over-generalizations.</td><td><strong>0–2:</strong> Few elements covered, or largely inaccurate.</td></tr><tr><td><strong>Evidence and referencing</strong> (8)</td><td><strong>7–8:</strong> Five or more relevant, current facts or statistics, each with the source named in the text. Reference list has four or more credible sources, two found independently.</td><td><strong>5–6:</strong> Four or five facts, mostly sourced. Reference list is complete with minor errors.</td><td><strong>3–4:</strong> Fewer than four facts, or sources unclear or weak. Reference list incomplete.</td><td><strong>0–2:</strong> Little or no evidence. No reference list.</td></tr><tr><td><strong>Thesis and organization</strong> (8)</td><td><strong>7–8:</strong> Clear thesis that previews the main points. Logical order, one idea per paragraph, strong topic sentences and smooth transitions. Conclusion restates the thesis without new facts.</td><td><strong>5–6:</strong> Clear thesis and structure with minor weaknesses in transitions or topic sentences.</td><td><strong>3–4:</strong> Thesis is vague. Paragraphs mix ideas or the order is uneven.</td><td><strong>0–2:</strong> No thesis. Disorganized.</td></tr><tr><td><strong>Audience and tone</strong> (6)</td><td><strong>6:</strong> Written clearly for parents: plain language, technical terms explained, formal but warm, no blame and no pressure.</td><td><strong>4–5:</strong> Mostly suited to parents, with occasional jargon or a tone slip.</td><td><strong>2–3:</strong> Audience unclear, too technical or too casual.</td><td><strong>0–1:</strong> Little sign of a parent audience.</td></tr><tr><td><strong>Language and mechanics</strong> (6)</td><td><strong>6:</strong> Precise, varied, expository style. Spelling, grammar and punctuation virtually error-free. Word count met.</td><td><strong>4–5:</strong> Clear and controlled, with few errors that do not hinder meaning.</td><td><strong>2–3:</strong> Basic or repetitive language. Errors sometimes distract. Word count missed.</td><td><strong>0–1:</strong> Frequent errors impede understanding.</td></tr><tr><td><strong>Justification and evaluation</strong> (4)</td><td><strong>4:</strong> Justifies audience, purpose, register and organization with examples from the essay, and evaluates effectiveness with a specific, sensible revision.</td><td><strong>3:</strong> All questions answered, with some detail.</td><td><strong>2:</strong> Brief or general answers.</td><td><strong>0–1:</strong> Missing or incomplete.</td></tr><tr><td><strong>Total</strong></td><td><strong>36–40</strong></td><td><strong>28–35</strong></td><td><strong>16–27</strong></td><td><strong>0–15</strong></td></tr></tbody></table></div>
+<p><strong>Using the rubric:</strong> mark each criterion by choosing the band that best fits, then award a mark within it. Deduct up to 3 marks from Evidence and referencing if sources are not credible (for example, unsourced social media posts).</p>
+<h2 id="sources">Sources</h2>
+<p>Figures come from the research gathered for the earlier assignment in October 2026. Students should open each page and confirm the figure before quoting it.</p>
+<ul><li><p><a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF Data: Noncommunicable diseases</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/prevention-of-noncommunicable-diseases">WHO: Prevention of noncommunicable diseases (Child Health and Development)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://uniatf.who.int/publications/i/item/noncommunicable-diseases-what-ministries-of-education-need-to-know">WHO: Noncommunicable diseases: what ministries of education need to know</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.who.int/news-room/fact-sheets/detail/mental-health-of-adolescents">WHO: Mental health of adolescents</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7734741/">Akseer et al. (2020), Non-communicable diseases among adolescents, BMC Public Health</a></p></li><li><p><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF report coverage: obesity surpasses underweight (allAfrica, 10 September 2025)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.ttt.live/?p=144537">CARPHA: Champions urgent regional action to prevent childhood obesity (World Obesity Day 2026)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.iwnsvg.com/2021/03/04/obesity-in-caricom-highest-compared-to-the-world-carpha/">CARPHA: Obesity in CARICOM highest compared to the world (2021)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://pubmed.ncbi.nlm.nih.gov/31761562/">Guthold et al. (2020), Global trends in insufficient physical activity among adolescents, Lancet Child &amp; Adolescent Health</a></p></li><li><p><a target="_blank" rel="noopener" href="https://lifeforachild.org/wp-content/uploads/2022/05/G.-D.-Ogle-S.-James-D.-Dabelea-et-al.-Global-estimates-of-incidence-of-type-1-diabetes-in-children-and-adolescents_Results-from-the-Inter-national-Diabetes-Federation-Atlas-10th-edition.pdf">Ogle et al., Global estimates of incidence of type 1 diabetes in children and adolescents, IDF Atlas 10th edition</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.annalsofglobalhealth.org/en/articles/2416">Serebrisky and Wiznia (2019), Pediatric asthma: a global epidemic, Annals of Global Health</a></p></li></ul>
+</article><p class="credit">CAPE Communication Studies</p></main>
+<script>try{window.GameSave&&GameSave.register(['chk-'+location.pathname+'-*'])}catch(e){}
+document.querySelectorAll('input[type=checkbox][disabled]').forEach(function(c,i){c.disabled=false;var k='chk-'+location.pathname+'-'+i;try{c.checked=localStorage.getItem(k)==='1'}catch(e){}c.addEventListener('change',function(){try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});</script>
+</body></html>

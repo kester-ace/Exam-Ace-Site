@@ -1,0 +1,966 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+<title>Funnel Vision: Expository Essay Types and Introductions</title>
+<style>
+/* Colour plan: the funnel runs warm to cool, broad to narrow. Warm amber = the wide, attention-grabbing hook;
+   teal = the bridge that narrows the context; deep blue = the precise, calm thesis. Every colour carries an icon
+   and a label as well, and text on every fill passes WCAG AA contrast, so no meaning depends on colour alone.
+   The seven type colours follow the Okabe–Ito colour-blind-safe palette. */
+:root{--bg:#F3F6FB;--surface:#FFFFFF;--raise:#EAF0F8;--ink:#14213D;--soft:#55657E;--line:#D3DDEA;
+--hook:#F3A83B;--hook-ink:#2A1A00;--bridge:#1F7F75;--bridge-ink:#FFFFFF;--thesis:#2D4E9E;--thesis-ink:#FFFFFF;
+--good:#1C7C4E;--bad:#B9412E;--gold:#F2B33D;--focus:#7A4FD0;
+--t1:#E69F00;--t2:#56B4E9;--t3:#D55E00;--t4:#0072B2;--t5:#009E73;--t6:#CC79A7;--t7:#8C7B00;
+--font-d:Georgia,"Times New Roman",serif;--font-b:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1528;--surface:#13223D;--raise:#1A2C4D;--ink:#E8EEF8;--soft:#A3B3CB;--line:#2A3F63;--good:#4CC98C;--bad:#FF8A70;--thesis:#4A6FC9;--bridge:#23907F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1528;--surface:#13223D;--raise:#1A2C4D;--ink:#E8EEF8;--soft:#A3B3CB;--line:#2A3F63;--good:#4CC98C;--bad:#FF8A70;--thesis:#4A6FC9;--bridge:#23907F;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)!important;color:var(--ink)!important;font:400 16px/1.55 var(--font-b)!important;padding:0 0 90px}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.hero{background:linear-gradient(180deg,#F7C36A 0%,#F3A83B 22%,#1F7F75 62%,#2D4E9E 100%);color:#fff;padding:24px 16px 20px}
+.hero .in,.wrap{max-width:980px;margin:0 auto}
+.wrap{padding:0 16px}
+.hero h1{font:700 clamp(1.9rem,5vw,3rem)/1.05 var(--font-d);margin:0 0 6px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+.hero p{margin:0;max-width:62ch;color:#F2F7FF;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{background:rgba(10,20,51,.55);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.9rem}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:16px 18px;margin:16px 0}
+.card h2{font:700 1.45rem/1.2 var(--font-d);margin:0 0 8px}
+.card h3{margin:0 0 6px}
+.hint{color:var(--soft);font-size:.92rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:2px solid transparent;border-radius:999px;padding:9px 18px;font-weight:800;cursor:pointer;background:var(--raise)}
+.btn.gold{background:var(--gold);color:#1A1300}
+.btn.ghost{background:transparent;border-color:var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.lvl{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:16px;cursor:pointer}
+.lvl:hover{border-color:var(--gold)}
+.lvl.locked{cursor:default;opacity:.6}
+.lvl .ic{font-size:2rem}.lvl b{font-size:1.15rem}
+.tbadge{display:inline-block;background:#FFF2C9;color:#4A3400;border:1.5px solid #E2B63D;border-radius:999px;padding:3px 12px;font-weight:800;font-size:.85rem;margin-right:6px}
+.prog{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0 14px}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--hook),var(--bridge),var(--thesis))}
+/* Level 1: the question drops through the funnel into a pipe */
+.mouth{position:relative;margin:4px auto 0;max-width:720px;background:linear-gradient(180deg,var(--hook),#F7C36A);color:var(--hook-ink);clip-path:polygon(0 0,100% 0,82% 100%,18% 100%);padding:20px 22% 26px;text-align:center;min-height:150px;display:flex;align-items:center;justify-content:center}
+.mouth .q{font:700 clamp(1rem,2.6vw,1.2rem)/1.45 var(--font-d)}
+.spout{width:16%;max-width:110px;height:30px;margin:0 auto;background:linear-gradient(180deg,#F7C36A,var(--bridge));clip-path:polygon(0 0,100% 0,78% 100%,22% 100%)}
+.drop{animation:drop .7s ease-in forwards}
+@keyframes drop{0%{transform:none;opacity:1}100%{transform:translateY(60px) scale(.6);opacity:0}}
+.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:10px}
+.pipe{display:flex;gap:10px;align-items:center;text-align:left;background:var(--surface);border:2px solid var(--line);border-left:10px solid var(--c);border-radius:12px;padding:10px 12px;cursor:pointer;min-height:56px}
+.pipe:hover:not(:disabled):not(.wrong){border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--surface))}
+.pipe .e{font-size:1.4rem;flex:none}.pipe b{display:block;line-height:1.2}.pipe small{color:var(--soft)}
+.pipe.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--surface))}
+.pipe{position:relative}.pipe.wrong{border-color:var(--bad);border-style:dashed;opacity:.75}.pipe.wrong::after{content:'✗';position:absolute;right:10px;top:8px;color:var(--bad);font-weight:900}.pipe.right::after{content:'✓';position:absolute;right:10px;top:8px;color:var(--good);font-weight:900}
+.pipe.key{outline:3px dashed var(--good);outline-offset:2px}
+.fb{border-radius:14px;padding:12px 14px;margin-top:12px;border:2px solid var(--line);background:var(--raise)}
+.fb.ok{border-color:var(--good)}.fb.no{border-color:var(--bad)}
+.fb b.v{display:block;margin-bottom:2px}
+/* Level 2: build the introduction funnel */
+.task{border-left:5px solid var(--thesis);background:var(--raise);border-radius:0 12px 12px 0;padding:10px 14px;margin:6px 0 12px}
+.tray{display:grid;gap:8px;margin:8px 0 14px}
+.scard{text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;line-height:1.45}
+.scard.sel{border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 30%,transparent)}
+.scard .tag{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:0 6px;margin-right:6px;background:#FFF2C9;color:#4A3400}
+.funnel{display:flex;flex-direction:column;align-items:center;margin:4px 0}
+.layer{position:relative;width:100%;border:0;cursor:pointer;text-align:center;padding:14px 16% 16px;min-height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.layer .lab{font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:.78rem;display:flex;gap:6px;align-items:center}
+.layer .txt{font-size:.94rem;line-height:1.4;max-width:60ch}
+.layer .empty{opacity:.8;font-style:italic;font-size:.9rem}
+.layer.hook{background:var(--hook);color:var(--hook-ink);clip-path:polygon(0 0,100% 0,90% 100%,10% 100%)}
+.layer.bridge{width:80%;background:var(--bridge);color:var(--bridge-ink);clip-path:polygon(0 0,100% 0,87.5% 100%,12.5% 100%);padding-left:15%;padding-right:15%}
+.layer.thesis{width:60%;background:var(--thesis);color:var(--thesis-ink);clip-path:polygon(0 0,100% 0,83% 100%,17% 100%);padding-left:19%;padding-right:19%}
+.layer.armed{filter:brightness(1.08);box-shadow:inset 0 0 0 4px rgba(255,255,255,.7)}
+.layer.ok::after,.layer.no::after{position:absolute;right:calc(50% - 12px);top:-2px;font-weight:900;font-size:1.05rem;background:rgba(255,255,255,.92);color:#14213D;border-radius:0 0 10px 10px;padding:0 7px}
+.layer.ok::after{content:'✓'}.layer.no::after{content:'✗'}
+.tip-end{width:34%;height:26px;background:var(--thesis);clip-path:polygon(0 0,100% 0,62% 100%,38% 100%);opacity:.85}
+.out{margin:14px auto 0;max-width:620px;width:100%;border:2.5px dashed var(--soft);border-radius:14px;background:var(--surface);padding:10px 14px;cursor:pointer;text-align:center;min-height:64px}
+.out .lab{font-weight:800;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+.out.armed{border-color:var(--focus)}
+.out.ok{border-color:var(--good);border-style:solid}.out.no{border-color:var(--bad);border-style:solid}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.88rem;margin:6px 0}
+.legend span{display:flex;gap:6px;align-items:center}.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.why{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.why li{border-radius:12px;padding:9px 12px;border:1.5px solid var(--line);background:var(--surface)}
+.why li.ok{border-color:var(--good)}.why li.no{border-color:var(--bad)}
+.intro{border:2px solid var(--good);border-radius:14px;padding:12px 16px;background:var(--surface);line-height:1.7;font-family:var(--font-d)}
+.intro .h{background:color-mix(in srgb,var(--hook) 30%,transparent)}.intro .b{background:color-mix(in srgb,var(--bridge) 22%,transparent)}.intro .t{background:color-mix(in srgb,var(--thesis) 22%,transparent)}
+.big{font:800 2.4rem/1 var(--font-d);color:var(--gold)}
+.sound{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));z-index:50;background:rgba(10,20,51,.7);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:6px 10px;cursor:pointer}
+.mm{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:6px;overflow:hidden}.mm svg{display:block;width:100%;height:auto}
+.essay{display:grid;gap:8px}.ep{border:1.5px solid var(--line);border-left:6px solid var(--c,var(--line));border-radius:12px;padding:8px 14px;background:var(--surface)}
+.ep p{margin:4px 0 0;font-family:var(--font-d);line-height:1.7}.ep .pl{font-size:.75rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+.ep0{--c:var(--hook)}.ep1,.ep2,.ep3{--c:var(--thesis)}.ep4{--c:var(--good)}
+.bfun{margin-top:8px}
+.thesis-cap{margin:0 auto;max-width:520px;background:var(--thesis);color:#fff;border-radius:14px;padding:10px 14px;text-align:center;line-height:1.45;font-size:.94rem}
+.thesis-cap .lab{font-weight:800;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;margin-right:4px}
+.branch{position:relative;height:30px;max-width:760px;margin:0 auto}
+.branch i{position:absolute;top:0;width:3px;height:30px;background:var(--line)}
+.branch i:nth-child(1){left:16.6%;transform:skewX(48deg);transform-origin:top}.branch i:nth-child(2){left:50%}.branch i:nth-child(3){left:83.3%;transform:skewX(-48deg);transform-origin:top}
+.bcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bcol{display:flex;flex-direction:column;align-items:stretch}
+.bslot{border:0;border-radius:14px;padding:10px;min-height:86px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;position:relative}
+.bslot .lab{font-weight:800;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase}
+.bslot .txt{font-size:.9rem;line-height:1.35}.bslot .empty{font-style:italic;opacity:.8;font-size:.88rem}
+.bslot.bp{background:#3E63B8;color:#fff}.bslot.bd{background:#4B3F9E;color:#fff;border-radius:14px 14px 22px 22px}
+.bslot.armed{box-shadow:inset 0 0 0 4px rgba(255,255,255,.7)}
+.bslot.ok::after,.bslot.no::after{position:absolute;top:-2px;right:8px;background:rgba(255,255,255,.92);color:#14213D;font-weight:900;border-radius:0 0 8px 8px;padding:0 6px}
+.bslot.ok::after{content:'✓'}.bslot.no::after{content:'✗'}
+.vline{width:3px;height:14px;background:var(--line);margin:0 auto}
+.scard.bc-p{border-left:8px solid #3E63B8}.scard.bc-d{border-left:8px solid #4B3F9E}
+@media (max-width:560px){.bcols{grid-template-columns:1fr}.branch{display:none}.bcol{border-top:2px dashed var(--line);padding-top:8px}}
+.spout-org{margin:8px auto 0;max-width:720px;width:100%;border:2.5px solid #B7791F;border-radius:16px;padding:10px 14px;background:color-mix(in srgb,#F2B33D 9%,var(--surface))}
+.spout-org.ok{border-color:var(--good)}.spout-org.no{border-color:var(--bad)}
+.spout-org .lab{font-weight:800;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase}
+.schips{display:flex;flex-wrap:wrap;gap:6px}
+.schip{border:2px solid var(--line);border-left:7px solid var(--c);border-radius:999px;padding:6px 12px;background:var(--surface);cursor:pointer;font-weight:700;font-size:.88rem}
+.schip.on{border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 28%,transparent)}
+.schip.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--surface))}.schip.right::after{content:' ✓'}
+.schip.wrong{border-color:var(--bad);border-style:dashed}.schip.wrong::after{content:' ✗'}
+.schip.key{outline:3px dashed var(--good);outline-offset:2px}
+.dlg{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;border:1.5px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
+.btn.sm{padding:5px 12px;font-size:.88rem}
+.org{margin-top:14px;border:2px solid #B7791F;border-radius:14px;padding:10px 14px;background:color-mix(in srgb,#F2B33D 10%,var(--surface))}
+.judge{margin-top:14px;border:2.5px solid var(--gold);border-radius:16px;padding:14px 16px;background:color-mix(in srgb,var(--gold) 8%,var(--surface))}
+.jb{font-size:1.05rem;padding:11px 22px;border:2px solid var(--line);background:var(--surface)}.jb:hover{border-color:var(--gold)}
+.notes{margin:8px 0 0;padding-left:4px;list-style:none;display:grid;gap:5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0B1736;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.inp{width:100%;font:inherit;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}.ta{resize:vertical;line-height:1.5;margin-top:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mmgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:14px;align-items:start}.mmgrid>.card{margin:0}
+.mmside{position:sticky;top:10px}
+.fld{border:2px solid var(--line);border-left:8px solid var(--hl);border-radius:14px;padding:10px 12px;margin:0 0 10px;transition:border-color .3s,background .3s}
+.fld.cold{--hl:#3B6FD8}.fld.warm{--hl:#D98A0B;background:color-mix(in srgb,#F2A33A 7%,var(--surface))}.fld.hot{--hl:#C7361F;background:color-mix(in srgb,#D1432B 8%,var(--surface))}
+.hw{display:inline-block;border-radius:999px;padding:1px 10px;font-weight:800;font-size:.82rem;border:1.5px solid}
+.hw.cold{color:#1F4FB5;background:#E3ECFB;border-color:#3B6FD8}.hw.warm{color:#6B4200;background:#FDEBC8;border-color:#D98A0B}.hw.hot{color:#8E2210;background:#FAD4CC;border-color:#C7361F}
+.tipline{margin:6px 0 2px;font-size:.9rem;color:var(--soft)}
+.linkb{background:none;border:0;padding:0;color:var(--focus);font-weight:800;cursor:pointer;text-decoration:underline}
+.hintbox{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border-left:4px solid var(--gold);font-family:var(--font-d)}
+.meter{margin-top:6px}.therm{height:16px;border-radius:99px;background:linear-gradient(90deg,#3B6FD8,#F2A33A 55%,#C7361F);position:relative;overflow:hidden;margin:8px 0}
+.therm i{display:block;height:100%;margin-left:auto;background:var(--line);width:0}
+@media (max-width:860px){.mmgrid{grid-template-columns:1fr}.mmside{position:static}}
+@media (max-width:640px){.layer{padding:12px 13% 14px;min-height:84px}.layer.bridge{width:86%}.layer.thesis{width:72%;padding-left:16%;padding-right:16%}.mouth{padding:18px 18% 24px}.card{padding:14px}}
+@media (prefers-reduced-motion:reduce){.drop,.shake{animation:none}}
+</style>
+<button class="sound" id="snd" type="button" aria-pressed="true">🔊 Sound</button>
+<header class="hero"><div class="in">
+<h1>Funnel Vision</h1>
+<p>Level 1: route each essay question to its type of expository essay. Level 2: build the funnel from the hook down to the supporting details, see the full essay and judge whether it is strong or weak. Level 3: plan your own essay as a mind map that heats up as it gets more rigorous.</p>
+<div class="stats" id="stats"></div>
+</div></header>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+(function () {
+  'use strict';
+  function teacher() { return /*EDITION*/true; }
+  var ID = 'funnel', PAGE = 'Funnel Vision', KEY = 'funnel-v1';
+  try { if (window.GameSave && GameSave.register) GameSave.register([KEY]); } catch (e) { }
+
+  var TYPES = [
+    { id: 'def', n: 'Definition', e: '📖', c: 'var(--t1)', s: 'What is it?' },
+    { id: 'pro', n: 'Process', e: '🔢', c: 'var(--t2)', s: 'How does it happen?' },
+    { id: 'ce', n: 'Cause and effect', e: '🔗', c: 'var(--t3)', s: 'Why? What results?' },
+    { id: 'cc', n: 'Comparison and contrast', e: '⚖️', c: 'var(--t4)', s: 'How alike or different?' },
+    { id: 'cls', n: 'Classification', e: '🗂️', c: 'var(--t5)', s: 'What types are there?' },
+    { id: 'ill', n: 'Illustration', e: '🔍', c: 'var(--t6)', s: 'What does it look like?' },
+    { id: 'ps', n: 'Problem and solution', e: '🛠️', c: 'var(--t7)', s: 'How can it be fixed?' }
+  ];
+  var TBY = {}; TYPES.forEach(function (t) { TBY[t.id] = t; });
+  /* organisational strategy behind each type: its name and how it orders the body paragraphs */
+  var ORG = {
+    def: ['Definition', 'Term defined first, then one key feature per paragraph, with examples and what it is not'],
+    pro: ['Process (chronological order)', 'Stages in time order: first, next, then finally'],
+    ce: ['Cause and effect', 'One cause or effect per paragraph, from the most immediate to the most significant'],
+    cc: ['Comparison and contrast (point-by-point)', 'One criterion per paragraph, comparing both subjects each time'],
+    cls: ['Classification', 'One category per paragraph, all sorted on the same basis'],
+    ill: ['Illustration (example)', 'One extended example per paragraph, from the least to the most striking'],
+    ps: ['Problem and solution', 'The problem in the introduction, then one solution per paragraph']
+  };
+  var ORDERS = [['auto', 'Follow the strategy'], ['chron', 'Chronological (time order)'], ['imp', 'Order of importance (least to most)'], ['impd', 'Order of importance (most to least)'], ['simple', 'Simple to complex'], ['gen', 'General to specific'], ['spatial', 'Spatial (place by place)']];
+
+  var Q1 = [
+    { q: 'Explain what is meant by "code-switching" and how it appears in Caribbean speech.', a: 'def', why: '"What is meant by" asks you to define a term and show it in use: a definition essay.' },
+    { q: 'What is meant by "digital literacy"? Explain the term, using examples from school life.', a: 'def', why: 'The question names one term and asks what it means. The examples support the definition; they are not the main job.' },
+    { q: 'Outline the stages by which a bill becomes law in Barbados.', a: 'pro', why: '"Outline the stages" signals a process: steps in time order.' },
+    { q: 'Explain how a community in Sint Maarten prepares for a hurricane, from the first warning to the all-clear.', a: 'pro', why: '"Explain how… from… to…" describes a sequence over time: a process essay.' },
+    { q: 'Account for the rise in sargassum on Caribbean beaches since 2011.', a: 'ce', why: '"Account for" means give the reasons why something happened: causes, so cause and effect.' },
+    { q: 'Explain the consequences of brain drain for small island states.', a: 'ce', why: '"Consequences" are effects. The essay explains what results from brain drain.' },
+    { q: 'How does radio differ from social media as a source of emergency news?', a: 'cc', why: '"How does X differ from Y" sets two subjects side by side: comparison and contrast.' },
+    { q: 'Explain the similarities and differences between a formal email and a text message to a friend.', a: 'cc', why: '"Similarities and differences" between two subjects is the signal for comparison and contrast.' },
+    { q: 'Identify and explain the different types of noise that can disrupt communication.', a: 'cls', why: '"Different types of" asks you to sort the topic into categories: classification.' },
+    { q: 'Explain the kinds of language attitudes found in Caribbean communities.', a: 'cls', why: '"Kinds of" means categories. Each body paragraph explains one kind of attitude.' },
+    { q: 'Using examples, explain how Caribbean music carries social commentary.', a: 'ill', why: '"Using examples, explain" asks you to prove a general idea through specific examples: illustration.' },
+    { q: 'Using TWO advertisements you have seen, show how advertisers appeal to emotion.', a: 'ill', why: 'The essay is built on specific examples (two advertisements) that show a general point: illustration.' },
+    { q: 'Suggest ways in which secondary schools could reduce plastic waste.', a: 'ps', why: '"Suggest ways… reduce" names a problem and asks for workable solutions: problem and solution.' },
+    { q: 'Explain THREE measures that could reduce cyberbullying among teenagers.', a: 'ps', why: '"Measures that could reduce" means solutions to a problem. Explain how each would work, without campaigning.' }
+  ];
+
+  var ROLES = { hook: 'Hook', bridge: 'Bridge', thesis: 'Thesis', out: "Doesn't belong" };
+  var R2 = [
+    { type: 'ce', q: 'Explain THREE effects of sargassum on Caribbean coastlines.', cards: [
+      { r: 'hook', t: 'Each summer, beaches from Barbados to Sint Maarten vanish under a thick brown blanket.', why: 'A striking, broad image that grabs attention: the hook.' },
+      { r: 'bridge', t: 'This blanket is sargassum, a floating seaweed that has reached Caribbean shores in record amounts since 2011.', why: 'It names and defines the topic and gives context: the bridge narrows from image to subject.' },
+      { r: 'thesis', t: 'Sargassum affects coastlines in three ways: it deters tourists, entangles fishing gear and releases harmful gas as it rots.', why: 'Names the topic and previews three effects in order, with no opinion: the thesis.' },
+      { r: 'out', t: 'I think the government should be ashamed of how dirty our beaches are.', why: 'First person and an emotional opinion. An expository introduction stays objective.' }] },
+    { type: 'pro', q: 'Explain how a household prepares for hurricane season.', cards: [
+      { r: 'hook', t: 'In 2017, Hurricane Irma gave Sint Maarten residents only days to prepare for a Category 5 storm.', why: 'A real, dramatic fact that makes the topic urgent: the hook.' },
+      { r: 'bridge', t: 'Preparing a home is a process that begins long before a warning is issued and follows a clear order.', why: 'Moves from the event to the general subject and signals a process: the bridge.' },
+      { r: 'thesis', t: 'Preparation involves three stages: securing the home, stocking supplies and planning an evacuation route.', why: 'Previews three stages in time order: a process thesis.' },
+      { r: 'out', t: 'Next, buy at least four litres of water per person for each day of the storm.', why: 'A specific step with "Next": body-paragraph detail, too narrow for the introduction.' }] },
+    { type: 'cc', q: 'How does radio differ from social media as a source of emergency news?', cards: [
+      { r: 'hook', t: 'When the power fails during a storm, a battery radio may be the only voice a family hears.', why: 'A brief scene that pulls the reader in: the hook.' },
+      { r: 'bridge', t: 'Radio and social media are now the two main channels Caribbean people use for emergency news.', why: 'Introduces both subjects and why they matter: the bridge.' },
+      { r: 'thesis', t: 'Both channels inform the public quickly, but they differ in reach, speed and reliability.', why: 'States the comparison and previews three criteria: a comparison and contrast thesis.' },
+      { r: 'out', t: 'Social media is clearly better, so everyone should stop listening to the radio.', why: 'Picks a winner and urges action. That is argument, not exposition.' }] },
+    { type: 'cls', q: 'Explain the types of barriers to communication in the workplace.', cards: [
+      { r: 'hook', t: 'A single misunderstood email can cost a company its biggest client.', why: 'A sharp, broad statement about consequences: the hook.' },
+      { r: 'bridge', t: 'Such misunderstandings are caused by barriers: anything that interferes with a message between sender and receiver.', why: 'Defines the key term and links the hook to the topic: the bridge.' },
+      { r: 'thesis', t: 'Workplace barriers fall into three categories: physical, psychological and semantic.', why: '"Fall into three categories" previews the classes: a classification thesis.' },
+      { r: 'out', t: 'Semantic barriers are the worst type, and managers who use jargon are simply lazy.', why: 'A judgement and an insult. Classification explains each category; it does not rank or blame.' }] },
+    { type: 'def', q: 'Explain what is meant by "code-switching".', cards: [
+      { r: 'hook', t: 'Within one minute, a Trinidadian student may greet a teacher in Standard English and joke with a friend in Creole.', why: 'A familiar, vivid example that grabs attention: the hook.' },
+      { r: 'bridge', t: 'This shift between language varieties within a single conversation is known as code-switching.', why: 'Names and defines the term the hook illustrated: the bridge.' },
+      { r: 'thesis', t: 'Code-switching can be understood through its forms, its triggers and its functions.', why: 'Previews the three parts of the definition: the thesis.' },
+      { r: 'out', t: 'In conclusion, code-switching shows how rich our Caribbean languages are.', why: '"In conclusion" belongs at the end of the essay, not in the introduction.' }] },
+    { type: 'ps', q: 'Suggest ways in which schools could reduce plastic waste.', cards: [
+      { r: 'hook', t: 'A single school canteen can throw away hundreds of plastic bottles in one week.', why: 'A striking statistic that shows the size of the problem: the hook.' },
+      { r: 'bridge', t: 'Much of this waste ends up in landfills and the sea, where it harms marine life around the islands.', why: 'Explains why the problem matters: the bridge narrows towards solutions.' },
+      { r: 'thesis', t: 'Schools can reduce plastic waste through refill stations, a classroom recycling roster and reusable containers at the canteen.', why: 'Previews three solutions in order: a problem and solution thesis.' },
+      { r: 'out', t: 'Firstly, refill stations cost little to install and can be placed near every classroom.', why: '"Firstly" opens a body paragraph. It develops a point the thesis only previews.' }] }
+  ];
+
+  /* The full essay behind each funnel: the plan (mind map), the sample's body and conclusion, and whether the sample is strong or weak. */
+  var FULL = [
+    { strong: true,
+      mm: { hook: 'Beaches vanish under brown seaweed', bridge: 'Sargassum: record amounts since 2011', thesis: 'Three effects: tourists, fishing gear, harmful gas', pts: [['Deters tourists', 'Hotel cancellations in Barbados and Sint Maarten'], ['Entangles fishing gear', 'Clogged nets and propellers in Saint Lucia'], ['Releases harmful gas', 'Hydrogen sulphide irritates eyes and lungs']], concl: 'Restate · recap · economy, work and health' },
+      b: ['First, sargassum deters tourists, the main source of income for many islands. When thick mats pile up on beaches in Barbados and Sint Maarten, the sand becomes difficult to walk on and the smell drives visitors away, and hotels report cancellations during heavy influxes. Each lost booking reduces income for hotel workers, vendors and tour operators.',
+        'In addition, sargassum entangles fishing gear. Fishers in Saint Lucia report that dense mats clog their nets and wrap around boat propellers, so trips take longer and catches fall. As a result, fishing families earn less while spending more on repairs, which shows that the seaweed harms livelihoods at sea as well as on land.',
+        'Finally, sargassum releases harmful gas as it decomposes. Rotting mats give off hydrogen sulphide, which smells of rotten eggs and can irritate the eyes and lungs of people living near the shore. Consequently, nearby homes and schools may have to keep windows shut, turning a coastal problem into a public health concern.'],
+      c: 'In short, sargassum affects Caribbean coastlines by deterring tourists, damaging fishing gear and releasing harmful gas. Together, these effects show how one natural event reaches into the economy, daily work and public health.',
+      notes: ['The three body paragraphs follow the thesis in the same order: tourists, fishing gear, gas.', 'Each paragraph follows PEEL: a clear point, specific Caribbean evidence, an explanation of why it matters and a link back.', 'Transitions of sequence and consequence (First, In addition, As a result, Finally, Consequently) guide the reader.', 'Objective third person throughout: no "I", no "you" and no emotional opinion.', 'The conclusion restates, recaps and resonates without adding a new point, and the essay stays under 300 words.'] },
+    { strong: false,
+      mm: { hook: 'Hurricane Irma, 2017: days to prepare', bridge: 'Preparation is a process with a clear order', thesis: 'Three stages: secure, stock, plan the route', pts: [['Secure the home', 'Shutters, roof straps, a cleared yard'], ['Stock supplies', 'Water, food, batteries, first-aid kit'], ['Plan an evacuation route', 'Nearest shelter, meeting point, contacts']], concl: 'Restate · recap · safety in the next storm' },
+      b: ['First, you should stock supplies. Buy water, canned food, batteries and a first-aid kit. You will need them.',
+        'Next, secure the home. Put up shutters and clear the yard. This is very important.',
+        'Also, the government never does enough to help people after a storm, which is very unfair to poor families.'],
+      c: 'In conclusion, preparing for a hurricane is important. Families should also buy home insurance before the season starts.',
+      notes: ['The stages are out of order: the thesis promises securing the home first, but Body 1 jumps to supplies.', 'Second person ("you should", "you will") replaces the objective third person an expository essay needs.', 'The points are named but never explained: there is no evidence and no Explain step, so Content marks are lost.', 'Body 3 abandons the third stage (the evacuation route) and replaces it with an opinion about the government.', 'The conclusion adds a new point (insurance) instead of restating and recapping the three stages.'] },
+    { strong: true,
+      mm: { hook: 'A battery radio in a blackout', bridge: 'Radio and social media: two main channels', thesis: 'Both inform; they differ in reach, speed, reliability', pts: [['Reach', 'Radio works without power or data'], ['Speed', 'Posts shared in minutes; radio confirms first'], ['Reliability', 'Licensed stations check facts; rumours spread']], concl: 'Restate · recap · choose the right channel' },
+      b: ['First, the two channels differ in reach. A battery-powered radio works when electricity and internet service fail, as they often do during a hurricane, so it reaches remote districts and older listeners. Social media, by contrast, reaches only those with a charged phone and a data signal, so its reach shrinks just when news matters most.',
+        'Second, they differ in speed. A video of rising floodwater can be posted and shared thousands of times within minutes, whereas a radio station must gather, confirm and broadcast its report. Both can be fast, but social media spreads news most quickly, especially when residents themselves are the reporters.',
+        'Finally, the channels differ in reliability. A licensed radio station is accountable to regulators and checks information before broadcasting it. A viral post, however, may come from anyone, and false rumours, such as fake shelter closures, can spread as fast as the truth. As a result, radio reports are usually easier to trust.'],
+      c: 'Radio and social media both carry emergency news to Caribbean communities, yet they differ in reach, speed and reliability. Understanding these differences helps each household choose the right channel at the right moment.',
+      notes: ['The essay compares the two channels point by point on the three criteria named in the thesis, in the same order.', 'Comparison words (by contrast, whereas, however, both) make every similarity and difference explicit.', 'Each criterion is explained with a concrete storm-time example, so the points are developed, not just named.', 'It explains the differences without crowning a winner, so it stays expository rather than argumentative.', 'The conclusion restates the thesis in new words and ends with its wider significance.'] },
+    { strong: false,
+      mm: { hook: 'One misunderstood email can lose a client', bridge: 'Barriers interfere with a message', thesis: 'Three categories: physical, psychological, semantic', pts: [['Physical', 'Noise, distance, faulty equipment'], ['Psychological', 'Stress, fear, prejudice'], ['Semantic', 'Jargon, ambiguous words']], concl: 'Restate · recap · clearer workplaces' },
+      b: ['Physical barriers are things like noise. They are bad.',
+        'Psychological barriers include stress, fear and the noise from a loud printer, which make workers distracted.',
+        'Semantic barriers are the worst type of barrier, and managers who use jargon are lazy and should be retrained.'],
+      c: 'To sum up, there are many barriers. Technology barriers are also a big problem nowadays.',
+      notes: ['The categories overlap: noise appears under both physical and psychological barriers, which breaks the principle of classification.', 'Body 1 names a category without defining it, giving a workplace example or explaining its effect.', 'Body 3 ranks the categories ("the worst") and insults managers: opinion has replaced explanation.', 'There are no transitions and the register is informal ("They are bad", "lazy").', 'The conclusion introduces a new category (technology barriers) instead of recapping the three in the thesis.'] },
+    { strong: true,
+      mm: { hook: 'Standard English to the teacher, Creole to a friend', bridge: 'This shift is called code-switching', thesis: 'Understood through forms, triggers, functions', pts: [['Forms', 'Between sentences or within one sentence'], ['Triggers', 'Audience, topic, setting'], ['Functions', 'Solidarity, emphasis, humour, identity']], concl: 'Restate · recap · respect both varieties' },
+      b: ['First, code-switching takes different forms. A speaker may switch between sentences, answering a teacher in Standard English before turning to a friend in Creole, or within one sentence, as in "Miss, I finish the assignment, but di printer mash up." These patterns show that the shift is systematic rather than random.',
+        'Second, code-switching has clear triggers. A change of audience, topic or setting often prompts it: a student may use Standard English to address the principal but move to Creole when the talk turns to cricket or carnival. The switch therefore responds to the situation, not to a lack of vocabulary.',
+        'Finally, code-switching serves important functions. Speakers use it to show solidarity, add emphasis or humour and signal a shared Caribbean identity. For example, a radio host who slips into Creole for a punchline builds closeness with listeners, which shows that code-switching is a skill, not an error.'],
+      c: 'Code-switching, then, is the patterned movement between language varieties. Its forms, triggers and functions show that Caribbean speakers choose their language skilfully, and recognising this helps listeners respect both Creole and Standard English.',
+      notes: ['The definition is developed in the three parts the thesis promises: forms, triggers, functions.', 'Each paragraph gives a specific Caribbean example (a classroom, a lime, a radio host) and explains what it shows.', 'The essay explains the term objectively, in the third person, without arguing for or against Creole.', 'Transitions (First, Second, Finally, therefore, For example) make the organisation easy to follow.', 'The conclusion restates the definition and draws out its significance without a new point.'] },
+    { strong: false,
+      mm: { hook: 'Hundreds of bottles a week from one canteen', bridge: 'Waste reaches landfills and the sea', thesis: 'Refill stations, recycling roster, reusable containers', pts: [['Refill stations', 'Cheap; near every classroom'], ['Recycling roster', 'Classes take turns sorting waste'], ['Reusable containers', 'Canteen meals served without plastic']], concl: 'Restate · recap · cleaner schools and seas' },
+      b: ['Firstly, refill stations cost little to install and can be placed near every classroom. Students could fill their own bottles instead of buying new ones.',
+        'Reusable containers at the canteen are the most important solution of all.',
+        'Don\'t you care about our beautiful sea? We must act now, before it is too late! Every student must sign the petition today.'],
+      c: 'So join the fight against plastic! Together, we can win.',
+      notes: ['Body 1 starts well but stops before the Explain step: how much waste would refill stations remove, and why?', 'Body 2 skips the recycling roster promised second in the thesis and asserts a ranking ("most important") with no evidence.', 'Body 3 changes genre: a rhetorical question, "we must" and a call to action make it persuasive, not expository.', 'The tone becomes emotional and the point of view shifts to "you" and "we".', 'The conclusion is a slogan: it neither restates the thesis nor recaps the three solutions.'] }
+  ];
+
+  /* ---------- the funnel continued: topic sentences (in thesis order) and their supporting details ---------- */
+  function bIn(slot) { for (var k in L2.bplace) if (L2.bplace[k] === slot) return k; return null; }
+  function bCard(k) { return L2.bcards.filter(function (c) { return c.k === k; })[0]; }
+  function bodyHTML(R) {
+    var F = FULL[L2.r], showKey = teacher() && st.key, chk = L2.bchecked;
+    var h = '<h3 style="margin-top:18px">Down the funnel: topic sentences and supporting details</h3><p class="hint">The thesis is the narrowest point. From there the essay branches into three body paragraphs: each one opens with a <b>topic sentence</b> (the point, in the order the thesis promised) and is built on a <b>supporting detail</b> (the evidence that proves it).</p>';
+    var tray = L2.bcards.filter(function (c) { return !L2.bplace[c.k]; });
+    if (!chk) h += '<p class="hint">' + (tray.length ? 'Tap a card, then tap its place. Topic sentences go in the blue row, in thesis order; each supporting detail goes under the point it proves.' : 'All placed. Check the body of your funnel.') + '</p><div class="tray">' + tray.map(function (c) { return '<button type="button" class="scard bc-' + c.kind + (L2.bsel === c.k ? ' sel' : '') + '" data-act="bsel" data-k="' + c.k + '"><span class="tag">' + (c.kind === 'p' ? 'Topic sentence' : 'Supporting detail') + (showKey ? ' · Body ' + (c.i + 1) : '') + '</span>' + esc(c.t) + '</button>'; }).join('') + '</div>';
+    h += '<div class="bfun"><div class="thesis-cap"><span class="lab">🎯 Thesis</span> ' + esc(introOf(L2.r).thesis) + '</div><div class="branch" aria-hidden="true"><i></i><i></i><i></i></div><div class="bcols">';
+    [0, 1, 2].forEach(function (i) {
+      h += '<div class="bcol">';
+      ['p', 'd'].forEach(function (kind) {
+        var slot = kind + i, ck = bIn(slot), c = ck ? bCard(ck) : null, res = chk && c ? (c.k === slot ? ' ok' : ' no') : '';
+        h += '<button type="button" class="bslot ' + (kind === 'p' ? 'bp' : 'bd') + (L2.bsel && !chk ? ' armed' : '') + res + '" data-act="bslot" data-k="' + slot + '"' + (chk ? ' disabled' : '') + '><span class="lab">' + (kind === 'p' ? 'Body ' + (i + 1) + ' · topic sentence' : 'Supporting detail') + '</span>' + (c ? '<span class="txt">' + esc(c.t) + '</span>' : '<span class="empty">Empty</span>') + '</button>' + (kind === 'p' ? '<div class="vline" aria-hidden="true"></div>' : '');
+      });
+      h += '</div>';
+    });
+    h += '</div></div>';
+    if (!chk) h += '<div class="row" style="margin-top:12px"><button class="btn gold" data-act="bcheck"' + (Object.keys(L2.bplace).length < 6 ? ' disabled' : '') + '>Check the body</button><button class="btn ghost" data-act="bclear">Clear</button></div>';
+    else {
+      var g = L2.bcards.filter(function (c) { return L2.bplace[c.k] === c.k; }).length;
+      h += '<div class="fb ' + (g === 6 ? 'ok' : 'no') + '"><b class="v">' + g + ' / 6 placed correctly.</b>' + (g === 6 ? 'Every point follows the thesis order, and every detail proves its own point.' : 'The thesis promised this order: ' + F.mm.pts.map(function (p, i) { return (i + 1) + '. ' + esc(p[0]); }).join(' · ') + '. Each supporting detail must prove the point directly above it.') + '</div>';
+    }
+    return h;
+  }
+  function bslot(slot) {
+    if (L2.bchecked) return;
+    if (!L2.bsel) { var ck = bIn(slot); if (ck) { delete L2.bplace[ck]; tone('tap'); play2(); } return; }
+    var c = bCard(L2.bsel);
+    if (c.kind !== slot[0]) { toast(c.kind === 'p' ? 'Topic sentences go in the blue row.' : 'Supporting details go in the purple row, under a topic sentence.'); return; }
+    var prev = bIn(slot); if (prev) delete L2.bplace[prev];
+    L2.bplace[L2.bsel] = slot; L2.bsel = null; tone('tap'); play2();
+  }
+  function bcheck() {
+    if (Object.keys(L2.bplace).length < 6) return;
+    L2.bchecked = true; var g = L2.bcards.filter(function (c) { return L2.bplace[c.k] === c.k; }).length;
+    L2.score += g; L2.res[L2.r] = Object.assign({}, L2.res[L2.r] || {}, { bgot: g });
+    tone(g === 6 ? 'win' : g >= 3 ? 'ok' : 'no'); play2();
+    var f = document.querySelector('.bfun'); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  /* ---------- full structure: mind map, sample essay, strong-or-weak judgement, PDF ---------- */
+  var C = { hook: '#F3A83B', hookInk: '#2A1A00', bridge: '#1F7F75', thesis: '#2D4E9E', concl: '#1C7C4E', pt: '#EAF0F8', ptLine: '#2D4E9E', ev: '#FFFFFF', evLine: '#8FA3C4', ink: '#14213D', soft: '#55657E', line: '#9DB0CC' };
+  function xs(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function wrap(t, max) { var w = String(t).split(/\s+/), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > max && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; }
+  function box(cx, y, w, h, fill, stroke, ink, label, text, max) {
+    var lines = wrap(text, max || 30), s = '<rect x="' + (cx - w / 2) + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="12" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>';
+    s += '<text x="' + cx + '" y="' + (y + 16) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.5" font-weight="700" letter-spacing="1" fill="' + ink + '" opacity=".85">' + xs(label) + '</text>';
+    lines.forEach(function (l, i) { s += '<text x="' + cx + '" y="' + (y + 33 + i * 15) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="' + ink + '">' + xs(l) + '</text>'; });
+    return s;
+  }
+  function mapSVG(R, F) {
+    var m = F.mm, T = TBY[R.type], xsP = [130, 380, 630], s = '';
+    s += '<rect x="0" y="0" width="760" height="590" rx="18" fill="#FFFFFF"/>';
+    var ln = function (x1, y1, x2, y2, col) { return '<path d="M' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="' + (col || C.line) + '" stroke-width="2.5"/>'; };
+    s += ln(380, 70, 380, 92) + ln(380, 146, 380, 168) + ln(380, 236, 380, 248);
+    xsP.forEach(function (x) { s += ln(380, 292, x, 316, C.ptLine) + ln(x, 382, x, 406) + ln(x, 470, 380, 508, C.concl); });
+    s += box(380, 248, 600, 44, '#FFF4DA', '#B7791F', '#3A2A00', 'ORGANISATIONAL STRATEGY · ' + ORG[R.type][0].toUpperCase(), ORG[R.type][1], 84);
+    s += box(380, 16, 440, 54, C.hook, C.hook, C.hookInk, 'INTRODUCTION · HOOK', m.hook, 52);
+    s += box(380, 92, 400, 54, C.bridge, C.bridge, '#FFFFFF', 'BRIDGE', m.bridge, 48);
+    s += box(380, 168, 480, 68, C.thesis, C.thesis, '#FFFFFF', 'THESIS · ' + T.n.toUpperCase(), m.thesis, 56);
+    m.pts.forEach(function (p, i) {
+      s += box(xsP[i], 316, 220, 66, C.pt, C.ptLine, C.ink, 'BODY ' + (i + 1) + ' · POINT', p[0], 26);
+      s += box(xsP[i], 406, 220, 64, C.ev, C.evLine, C.ink, 'EVIDENCE + EXPLAIN', p[1], 28);
+    });
+    s += box(380, 508, 480, 56, C.concl, C.concl, '#FFFFFF', 'CONCLUSION · 3 Rs', m.concl, 56);
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 590" width="760" height="590" role="img" aria-label="Essay mind map: thesis, three points with evidence, and conclusion">' + s + '</svg>';
+  }
+  function funnelSVG(by, type) {
+    var W = 760, y = 10, s = '', bands = [['HOOK · BROAD', by.hook, C.hook, C.hookInk], ['BRIDGE · CONTEXT', by.bridge, C.bridge, '#FFFFFF'], ['THESIS · NARROW', by.thesis, C.thesis, '#FFFFFF']], top = W, step = 120;
+    bands.forEach(function (b, i) {
+      var bot = top - step, max = Math.round(top / 9.2) - 10, lines = wrap(b[1], max), h = 30 + lines.length * 17, x0 = (W - top) / 2, x1 = (W - bot) / 2;
+      s += '<polygon points="' + x0 + ',' + y + ' ' + (x0 + top) + ',' + y + ' ' + (x1 + bot) + ',' + (y + h) + ' ' + x1 + ',' + (y + h) + '" fill="' + b[2] + '"/>';
+      s += '<text x="380" y="' + (y + 17) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.5" font-weight="700" letter-spacing="1" fill="' + b[3] + '">' + b[0] + '</text>';
+      lines.forEach(function (l, k) { s += '<text x="380" y="' + (y + 35 + k * 17) + '" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="' + b[3] + '">' + xs(l) + '</text>'; });
+      y += h + 4; top = bot;
+    });
+    s += '<polygon points="' + ((W - top) / 2) + ',' + y + ' ' + ((W + top) / 2) + ',' + y + ' ' + (380 + 20) + ',' + (y + 22) + ' ' + (380 - 20) + ',' + (y + 22) + '" fill="' + C.thesis + '" opacity=".8"/>';
+    y += 30;
+    if (type) { s += '<rect x="90" y="' + y + '" width="580" height="50" rx="12" fill="#FFF4DA" stroke="#B7791F" stroke-width="2"/><text x="380" y="' + (y + 19) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="10.5" font-weight="700" letter-spacing="1" fill="#3A2A00">ORGANISATIONAL STRATEGY · ' + xs(ORG[type][0].toUpperCase()) + '</text><text x="380" y="' + (y + 37) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12.5" fill="#3A2A00">' + xs(ORG[type][1]) + '</text>'; y += 60; }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 ' + y + '" width="760" height="' + y + '">' + '<rect width="760" height="' + y + '" fill="#FFFFFF"/>' + s + '</svg>';
+  }
+  function introOf(r) { var by = {}; R2[r].cards.forEach(function (c) { by[c.r] = c.t; }); return by; }
+  function wc(t) { return String(t).split(/\s+/).filter(function (w) { return /[A-Za-z0-9]/.test(w); }).length; }
+  function essayParts(r) { var by = introOf(r), F = FULL[r]; return [['Introduction', by.hook + ' ' + by.bridge + ' ' + by.thesis], ['Body paragraph 1', F.b[0]], ['Body paragraph 2', F.b[1]], ['Body paragraph 3', F.b[2]], ['Conclusion', F.c]]; }
+  function fullHTML(R) {
+    var r = L2.r, F = FULL[r], parts = essayParts(r), tot = parts.reduce(function (a, p) { return a + wc(p[1]); }, 0), J = L2.judge;
+    var h = '<h3 style="margin-top:18px">The full essay structure</h3><p class="hint">A thesis is a promise: it sets up the three body paragraphs and the conclusion. This mind map shows the plan the thesis promises.</p><div class="mm">' + mapSVG(R, F) + '</div>';
+    var sigs = SIGW[R.type].split(', ').concat(['first', 'second', 'finally', 'in addition', 'as a result', 'consequently', 'however', 'for example', 'in short']).filter(function (w, i, a) { return a.indexOf(w) === i; }), body = parts.map(function (p) { return p[1]; }).join(' ').toLowerCase(), seen = sigs.filter(function (w) { return body.indexOf(w) > -1; });
+    h += '<div class="org"><b>🧭 Organisational strategy: ' + esc(ORG[R.type][0]) + '</b><p style="margin:4px 0">' + esc(ORG[R.type][1]) + '.</p><p class="hint" style="margin:0">Signal words to look for: ' + esc(SIGW[R.type]) + '. Found in this sample: ' + (seen.length ? seen.map(function (w) { return '<b>' + esc(w) + '</b>'; }).join(', ') : '<b>none</b> (a warning sign)') + '.</p></div>';
+    h += '<h3 style="margin-top:18px">The sample essay</h3><div class="essay">' + parts.map(function (p, i) { return '<div class="ep ep' + i + '"><span class="pl">' + p[0] + ' · ' + wc(p[1]) + ' words</span><p>' + esc(p[1]) + '</p></div>'; }).join('') + '<p class="hint" style="margin:6px 0 0">Total: ' + tot + ' words (Module 3 limit: 300)</p></div>';
+    if (!J) {
+      h += '<div class="judge"><b>Is this sample strong or weak?</b><p class="hint" style="margin:4px 0 10px">Compare the essay with the mind map. Check the thesis order, PEEL in every body paragraph, objective third person, transitions and a 3R conclusion with no new point.</p><div class="row"><button class="btn jb" data-act="judge" data-k="strong">💪 Strong</button><button class="btn jb" data-act="judge" data-k="weak">⚠️ Weak</button>' + (teacher() && st.key ? '<span class="tbadge">Key: ' + (F.strong ? 'Strong' : 'Weak') + '</span>' : '') + '</div></div>';
+    } else {
+      var right = (J === 'strong') === F.strong;
+      h += '<div class="fb ' + (right ? 'ok' : 'no') + '"><b class="v">' + (right ? 'Correct!' : 'Not quite.') + ' This sample is ' + (F.strong ? 'STRONG' : 'WEAK') + '.</b>' + (F.strong ? 'Here is what makes it strong:' : 'Here is what makes it weak, and what to fix:') + '<ul class="notes">' + F.notes.map(function (n) { return '<li>' + (F.strong ? '✓ ' : '✗ ') + esc(n) + '</li>'; }).join('') + '</ul></div>';
+      h += '<div class="row" style="margin-top:12px"><span class="dlg" role="group" aria-label="Download this round"><b>⬇ Download this round:</b><button class="btn ghost sm" data-act="pdf1">PDF</button><button class="btn ghost sm" data-act="img1" data-k="png">PNG</button><button class="btn ghost sm" data-act="img1" data-k="jpeg">JPEG</button></span><button class="btn gold" data-act="next2">' + (r + 1 < R2.length ? 'Next round →' : 'See my score') + '</button></div>';
+    }
+    return h;
+  }
+  function judge(k) {
+    if (!L2 || !L2.checked || L2.judge) return;
+    L2.judge = k; var right = (k === 'strong') === FULL[L2.r].strong; if (right) L2.score++;
+    L2.res[L2.r] = Object.assign({}, L2.res[L2.r] || {}, { judge: k, right: right });
+    tone(right ? 'ok' : 'no'); play2();
+    var f = document.querySelector('.judge, .notes'); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /* PDF: built in the page with jsPDF; falls back to the print dialog (Save as PDF) if the library cannot load */
+  function loadPDF(cb) {
+    if (window.jspdf && window.jspdf.jsPDF) return cb(window.jspdf.jsPDF);
+    var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = function () { cb(window.jspdf && window.jspdf.jsPDF); }; s.onerror = function () { cb(null); }; document.head.appendChild(s);
+  }
+  function svgPng(svg) {
+    return new Promise(function (res) {
+      var img = new Image(); img.onload = function () { var c = document.createElement('canvas'), k = 2; c.width = img.width * k; c.height = img.height * k; var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); res({ src: c.toDataURL('image/jpeg', 0.86), w: img.width, h: img.height }); };
+      img.onerror = function () { res(null); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+  }
+  function deliver(name, blob) {
+    try { if (window.parent && window.parent !== window) { parent.postMessage({ type: 'dm:file', filename: name, data: blob }, '*'); toast('Preparing ' + name); return; } } catch (e) { }
+    var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+  }
+
+  /* ---------- image downloads (PNG / JPEG): one sheet per round or per mind map ---------- */
+  function sheet(title, meta, blocks) {
+    var W = 800, P = 20, y = 0, out = '';
+    var txt = function (t, size, weight, col, font, maxc, lh, gap) { wrap(t, maxc).forEach(function (l) { y += lh; out += '<text x="' + P + '" y="' + y + '" font-family="' + (font || 'Arial,Helvetica,sans-serif') + '" font-size="' + size + '" font-weight="' + (weight || 400) + '" fill="' + (col || '#14213D') + '">' + xs(l) + '</text>'; }); y += gap || 0; };
+    out += '<rect width="' + W + '" height="16" fill="#2D4E9E"/><rect y="16" width="' + W + '" height="4" fill="#F3A83B"/>'; y = 30;
+    txt(title, 24, 700, '#14213D', null, 60, 30, 4);
+    meta.forEach(function (m) { txt(m, 13, 400, '#55657E', null, 118, 19, 0); }); y += 10;
+    blocks.forEach(function (b) {
+      if (b.h) { txt(b.h, 16, 700, '#2D4E9E', null, 80, 24, 6); return; }
+      if (b.svg) { var vb = /viewBox="0 0 (\d+) (\d+)"/.exec(b.svg), iw = +vb[1], ih = +vb[2], w = W - 2 * P, h = Math.round(ih * w / iw); out += b.svg.replace('<svg ', '<svg x="' + P + '" y="' + y + '" ').replace(/ width="\d+" height="\d+"/, ' width="' + w + '" height="' + h + '"'); y += h + 12; return; }
+      if (b.lab) txt(b.lab, 11, 700, '#55657E', null, 100, 17, 0);
+      if (b.p) txt(b.p, 14, 400, b.col || '#14213D', b.serif ? 'Georgia,Times New Roman,serif' : null, b.serif ? 112 : 108, b.serif ? 21 : 20, 10);
+    });
+    y += 24; out += '<text x="' + (W / 2) + '" y="' + y + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#7A8699">CAPE Communication Studies · Funnel Vision · Kester Small</text>'; y += 16;
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + y + '" width="' + W + '" height="' + y + '"><rect width="' + W + '" height="' + y + '" fill="#FFFFFF"/>' + out + '</svg>';
+  }
+  function roundSheet(r) {
+    var R = R2[r], F = FULL[r], res = (L2 && L2.res[r]) || {}, B = [];
+    B.push({ h: '1. The funnel' }, { svg: funnelSVG(introOf(r), R.type) });
+    if (res.got != null) B.push({ p: 'Funnel: ' + res.got + ' of 4 sentences placed correctly · strategy chosen: ' + (res.strat ? ORG[res.strat][0] + (res.sok ? ' (correct)' : ' (incorrect)') : '—') + (res.bgot != null ? ' · body: ' + res.bgot + ' of 6 correct' : '') + '.', col: '#55657E' });
+    B.push({ h: '2. The full essay structure' }, { svg: mapSVG(R, F) }, { h: '3. The sample essay' });
+    essayParts(r).forEach(function (p) { B.push({ lab: p[0].toUpperCase() + ' (' + wc(p[1]) + ' words)', p: p[1], serif: true }); });
+    B.push({ h: '4. Strong or weak?' });
+    if (res.judge) B.push({ p: 'Your judgement: ' + (res.judge === 'strong' ? 'Strong' : 'Weak') + (res.right ? ' (correct)' : ' (incorrect)'), col: res.right ? '#1C7C4E' : '#B9412E' });
+    B.push({ p: 'This sample is ' + (F.strong ? 'STRONG' : 'WEAK') + '.' });
+    F.notes.forEach(function (n) { B.push({ p: (F.strong ? '+ ' : 'x ') + n }); });
+    return sheet('Funnel Vision · Round ' + (r + 1) + ' of ' + R2.length, ['Essay question: ' + R.q, 'Type: ' + TBY[R.type].n + ' · Organisational strategy: ' + ORG[R.type][0] + ' (' + ORG[R.type][1] + ')'], B);
+  }
+  function mmSheet() {
+    var hh = heats(), B = [{ svg: makerSVG() }, { p: 'Colour key: blue = cold (empty or vague) · amber = warm (developing) · red = hot (specific and exam-ready)', col: '#55657E' }, { h: 'My plan, part by part' }];
+    FIELDS.forEach(function (F) { var x = hh[F[0]]; B.push({ lab: F[1].toUpperCase() + ' · ' + HEAT[x.lv].n.toUpperCase(), p: MM.f[F[0]] || '—', serif: true }, { p: 'Next step: ' + x.tip, col: '#55657E' }); });
+    return sheet('My Mind Map · Funnel Vision', ['Essay question: ' + MM.q, 'Type: ' + TBY[MM.type].n + ' · Organisational strategy: ' + ORG[MM.type][0] + ' · Rigour: ' + overall(hh) + ' / 20'], B);
+  }
+  function saveImage(svg, base, fmt) {
+    toast('Building your ' + fmt.toUpperCase() + '…');
+    var img = new Image();
+    img.onload = function () {
+      var k = 2, c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
+      var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function (b) { if (b) deliver(base + (fmt === 'png' ? '.png' : '.jpg'), b); else toast('That image could not be made here. Try PDF.'); }, fmt === 'png' ? 'image/png' : 'image/jpeg', 0.92);
+    };
+    img.onerror = function () { toast('That image could not be made here. Try PDF.'); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+  async function addRound(doc, r, first) {
+    var R = R2[r], F = FULL[r], T = TBY[R.type], res = (L2 && L2.res[r]) || {}, M = 16, Wd = 178, y = M;
+    if (!first) doc.addPage();
+    var need = function (h) { if (y + h > 280) { doc.addPage(); y = M; } };
+    var para = function (t, size, style, col, gap) { doc.setFont(style === 'serif' ? 'times' : 'helvetica', style === 'b' ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, col || [20, 33, 61]); var L = doc.splitTextToSize(t, Wd); L.forEach(function (l) { need(size * 0.45); doc.text(l, M, y); y += size * 0.45; }); y += gap == null ? 2 : gap; };
+    doc.setFillColor(45, 78, 158); doc.rect(0, 0, 210, 11, 'F'); doc.setFillColor(243, 168, 59); doc.rect(0, 11, 210, 2, 'F'); y = 22;
+    para('Funnel Vision · Round ' + (r + 1) + ' of ' + R2.length, 17, 'b', [20, 33, 61], 1);
+    para('Expository essay type: ' + T.n + '   ·   Organisational strategy: ' + ORG[R.type][0], 10.5, '', [85, 101, 126], 1);
+    para('How the body is ordered: ' + ORG[R.type][1] + '.', 10, '', [85, 101, 126], 3);
+    para('Essay question: ' + R.q, 11.5, 'b', [20, 33, 61], 4);
+    if (res.got != null) para('Funnel: ' + res.got + ' of 4 sentences placed correctly · strategy chosen: ' + (res.strat ? ORG[res.strat][0] + (res.sok ? ' (correct)' : ' (incorrect)') : '—') + (res.bgot != null ? ' · body funnel: ' + res.bgot + ' of 6 topic sentences and supporting details placed correctly' : '') + '.', 10, '', [85, 101, 126], 3);
+    para('1. The introduction funnel', 12.5, 'b', [45, 78, 158], 2);
+    var f = await svgPng(funnelSVG(introOf(r), R2[r].type)); if (f) { var fh = Wd * f.h / f.w; need(fh); doc.addImage(f.src, 'JPEG', M, y, Wd, fh); y += fh + 5; }
+    para('2. The full essay structure (mind map)', 12.5, 'b', [45, 78, 158], 2);
+    var m = await svgPng(mapSVG(R, F)); if (m) { var mh = Wd * m.h / m.w; need(mh); doc.addImage(m.src, 'JPEG', M, y, Wd, mh); y += mh + 5; }
+    doc.addPage(); y = M + 4;
+    para('3. The sample essay', 12.5, 'b', [45, 78, 158], 3);
+    essayParts(r).forEach(function (p) { para(p[0].toUpperCase() + ' (' + wc(p[1]) + ' words)', 9, 'b', [85, 101, 126], 1.5); para(p[1], 11.5, 'serif', [20, 33, 61], 4); });
+    para('Total: ' + essayParts(r).reduce(function (a, p) { return a + wc(p[1]); }, 0) + ' words (Module 3 limit: 300)', 9.5, '', [85, 101, 126], 5);
+    para('4. Strong or weak?', 12.5, 'b', [45, 78, 158], 2);
+    if (res.judge) para('Your judgement: ' + (res.judge === 'strong' ? 'Strong' : 'Weak') + (res.right ? ' (correct)' : ' (incorrect)'), 10.5, 'b', res.right ? [28, 124, 78] : [185, 65, 46], 2);
+    para('This sample is ' + (F.strong ? 'STRONG' : 'WEAK') + (F.strong ? '. What makes it strong:' : '. What makes it weak, and what to fix:'), 10.5, 'b', [20, 33, 61], 2);
+    F.notes.forEach(function (n) { para((F.strong ? '+  ' : 'x  ') + n, 10.5, '', [20, 33, 61], 1.5); });
+  }
+  function footer(doc) { var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(120, 130, 150); doc.text('CAPE Communication Studies · Funnel Vision · Kester Small', 105, 290, { align: 'center' }); doc.text(i + ' / ' + n, 194, 290, { align: 'right' }); } }
+  function makePDF(which) {
+    toast('Building your PDF…');
+    loadPDF(async function (J) {
+      var rounds = which === 'all' ? R2.map(function (_, i) { return i; }) : [L2.r];
+      if (!J) { printFallback(rounds); return; }
+      try {
+        var doc = new J({ unit: 'mm', format: 'a4' });
+        for (var i = 0; i < rounds.length; i++) await addRound(doc, rounds[i], i === 0);
+        footer(doc);
+        deliver(which === 'all' ? 'Funnel_Vision_All_Rounds.pdf' : 'Funnel_Vision_Round_' + (L2.r + 1) + '.pdf', doc.output('blob'));
+      } catch (e) { printFallback(rounds); }
+    });
+  }
+  function printFallback(rounds) {
+    var body = rounds.map(function (r) { var R = R2[r], F = FULL[r]; return '<h1>Funnel Vision · Round ' + (r + 1) + '</h1><p><b>Essay question:</b> ' + xs(R.q) + ' (' + xs(TBY[R.type].n) + ')</p>' + funnelSVG(introOf(r), R.type) + mapSVG(R, F) + essayParts(r).map(function (p) { return '<h3>' + p[0] + '</h3><p>' + xs(p[1]) + '</p>'; }).join('') + '<h3>This sample is ' + (F.strong ? 'strong' : 'weak') + '</h3><ul>' + F.notes.map(function (n) { return '<li>' + xs(n) + '</li>'; }).join('') + '</ul>'; }).join('<div style="page-break-after:always"></div>');
+    var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(fr);
+    var w = fr.contentWindow; w.document.open(); w.document.write('<html><head><title>Funnel Vision</title><style>body{font-family:Georgia,serif;color:#14213D;margin:18mm}svg{width:100%;height:auto;margin:6px 0}h1{font-family:Arial,sans-serif;color:#2D4E9E}</style></head><body>' + body + '<p style="text-align:center;color:#778;font:9pt Arial">CAPE Communication Studies · Kester Small</p></body></html>'); w.document.close();
+    setTimeout(function () { try { w.focus(); w.print(); } catch (e) { } setTimeout(function () { fr.remove(); }, 60000); }, 400);
+    toast('Choose "Save as PDF" in the print window.');
+  }
+  /* ---------- Level 3: Mind Map Maker (from the topic list or from scratch), with hints and a cold–warm–hot rigour meter ---------- */
+  var HEAT = [
+    { n: 'Cold', ic: '❄', fill: '#E3ECFB', line: '#3B6FD8', ink: '#14213D', css: 'cold' },
+    { n: 'Warm', ic: '☀', fill: '#FDEBC8', line: '#D98A0B', ink: '#2A1A00', css: 'warm' },
+    { n: 'Hot', ic: '🔥', fill: '#FAD4CC', line: '#C7361F', ink: '#3A0E06', css: 'hot' }
+  ];
+  var TH = {
+    def: { thesis: '[Term] can be understood through its [feature 1], its [feature 2] and its [feature 3].', point: 'One key feature of [term] is…', ev: 'For example, [a Caribbean case], which shows…', sig: /refers to|is defined as|\bmeans\b|known as|feature|form|understood|term|concept/i },
+    pro: { thesis: '[Process] involves three stages: [stage 1], [stage 2] and [stage 3].', point: 'The first stage is…', ev: 'This stage involves…, because…', sig: /stage|step|first|next|then|finally|process|involves|phase|procedure/i },
+    ce: { thesis: '[Topic] has three [causes / effects]: [1], [2] and [3].', point: 'One [cause / effect] is…', ev: 'Because…, …; as a result, …', sig: /because|as a result|leads? to|consequen|effect|affect|cause|result|impact|harm/i },
+    cc: { thesis: 'Both [A] and [B]…, but they differ in [criterion 1], [criterion 2] and [criterion 3].', point: '[A] and [B] differ in [criterion]…', ev: '[A]…, whereas [B]…', sig: /whereas|both|in contrast|similar|differ|unlike|while|compar/i },
+    cls: { thesis: '[Topic] falls into three categories: [1], [2] and [3].', point: 'The first category is [name], which…', ev: 'An example of this category is…', sig: /type|categor|kind|fall into|falls into|class|group|sort/i },
+    ill: { thesis: '[General idea], as [example 1], [example 2] and [example 3] show.', point: '[Example 1] shows that…', ev: 'For instance, …, which shows…', sig: /for example|for instance|such as|show|illustrat|example/i },
+    ps: { thesis: '[Problem] can be reduced through [solution 1], [solution 2] and [solution 3].', point: 'One solution is…', ev: 'This would work because…', sig: /solution|reduc|measure|would|could|prevent|tackle|improv|address/i }
+  };
+  var SIGW = { def: 'refers to, is defined as, means, known as', pro: 'first, next, then, stage, finally', ce: 'because, as a result, leads to, consequently', cc: 'both, whereas, in contrast, similarly', cls: 'types, categories, kinds, falls into', ill: 'for example, for instance, such as, shows', ps: 'solution, reduce, would, could' };
+  var GEN = {
+    hook: 'Start broad: a striking fact or number, a short question, or a brief Caribbean scene.',
+    bridge: 'Give context and define the key term: "This … is known as …" or "… refers to …".',
+    concl: 'In short, [restate the thesis in new words]. Together, [recap the three points]; [wider significance]. No new points.'
+  };
+  var OPINION = /\b(I|me|my|I think|I believe|you|your|should|must|best|worst|terrible|amazing|awful|lazy|ashamed)\b/;
+  var FIELDS = [['hook', 'Hook', 'Introduction · broad'], ['bridge', 'Bridge', 'Context and key term'], ['thesis', 'Thesis', 'Topic + three points in order'], ['p1', 'Body 1 · Point', 'Topic sentence'], ['e1', 'Body 1 · Evidence', 'Fact, example + explain'], ['p2', 'Body 2 · Point', 'Topic sentence'], ['e2', 'Body 2 · Evidence', 'Fact, example + explain'], ['p3', 'Body 3 · Point', 'Topic sentence'], ['e3', 'Body 3 · Evidence', 'Fact, example + explain'], ['concl', 'Conclusion', 'Restate · recap · resonate']];
+  var STOP = /^(the|a|an|and|or|of|in|on|to|for|with|its|their|is|are|be|by|as|at|from|that|this|three|ways|can|it|they|which|how|why|what|into|through)$/i;
+  var KW = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(function (w) { return w.length > 3 && !STOP.test(w); }); };
+  var MM = null;
+  function mmLoad() { try { var s = JSON.parse(localStorage.getItem(KEY + '-mm') || 'null'); if (s && s.f) return s; } catch (e) { } return null; }
+  function mmSave() { try { localStorage.setItem(KEY + '-mm', JSON.stringify(MM)); } catch (e) { } try { if (window.GameSave && GameSave.save) GameSave.save(); } catch (e) { } }
+  try { if (window.GameSave && GameSave.register) GameSave.register([KEY + '-mm']); } catch (e) { }
+
+  function heatOf(k) {
+    var f = MM.f, t = String(f[k] || '').trim(), w = wc(t), H = TH[MM.type] || TH.ce, num = /\d/.test(t), proper = /\s[A-Z][a-z]+/.test(' ' + t.replace(/^\S+/, '')), op = OPINION.test(t);
+    if (!t) return { lv: 0, tip: k === 'thesis' ? 'Empty. Name the topic and preview three points, in the order you will write them.' : 'Empty. ' + (GEN[k] || (k[0] === 'p' ? 'Write a topic sentence for this point.' : 'Add a specific fact or example, then explain it.')) };
+    if (op && k !== 'hook') return { lv: 0, tip: 'Opinion or "I/you" detected. Expository writing stays objective and in the third person.' };
+    if (k === 'hook') { if (w < 6) return { lv: 0, tip: 'Too short to grab attention. Aim for at least six words.' }; if ((num || /\?/.test(t) || proper) && w >= 9) return { lv: 2, tip: 'Hot: a specific, attention-grabbing opening.' }; return { lv: 1, tip: 'Warm. Make it sharper with a number, a place name or a short question.' }; }
+    if (k === 'bridge') { if (w < 7) return { lv: 0, tip: 'Add context: what is the topic, and why does it matter?' }; if (/\b(is|are|was) (a|an|the|known|called)|\b(is|are) [A-Za-z]+, (a|an) |refers to|known as|defined as|means\b/i.test(t) && w >= 11) return { lv: 2, tip: 'Hot: it names and explains the topic.' }; return { lv: 1, tip: 'Warm. Define the key term ("… is known as …", "… refers to …").' }; }
+    if (k === 'thesis') {
+      var three = (t.match(/,/g) || []).length >= 2 || (/:/.test(t) && /\band\b/.test(t)) || /three|3/.test(t);
+      if (w < 8) return { lv: 0, tip: 'Too short. Use the frame: ' + H.thesis };
+      if (three && w >= 12 && !H.sig.test(t)) return { lv: 1, tip: 'Warm. This reads like a different type of essay. Use the language of a ' + TBY[MM.type].n.toLowerCase() + ' essay (' + SIGW[MM.type] + '). Frame: ' + H.thesis };
+      if (three && w >= 12) return { lv: 2, tip: 'Hot: the thesis previews three points in the language of a ' + TBY[MM.type].n.toLowerCase() + ' essay, without taking a side.' };
+      return { lv: 1, tip: three ? 'Warm. Make each of the three points specific.' : 'Warm. Preview THREE points, separated by commas: ' + H.thesis };
+    }
+    if (k[0] === 'p') {
+      var tk = KW(f.thesis), hit = KW(t).some(function (x) { return tk.some(function (y) { return y.slice(0, 5) === x.slice(0, 5); }); });
+      if (w < 3) return { lv: 0, tip: 'Write a full topic sentence. Starter: ' + H.point };
+      if (hit && w >= 5) return { lv: 2, tip: 'Hot: this point matches the thesis.' };
+      return { lv: 1, tip: hit ? 'Warm. Expand it into a full topic sentence.' : 'Warm. Use a key word from your thesis so the point clearly follows it.' };
+    }
+    if (k[0] === 'e') {
+      var spec = num || proper || /["“]/.test(t) || /for example|for instance|such as/i.test(t), expl = /because|so |which|this (shows|means)|as a result|therefore|consequently/i.test(t);
+      if (w < 5) return { lv: 0, tip: 'Add a specific fact, statistic or example. Starter: ' + H.ev };
+      if (spec && expl && w >= 10) return { lv: 2, tip: 'Hot: specific evidence that is explained.' };
+      return { lv: 1, tip: !spec ? 'Warm. Make it specific: a number, a place, a named case or a short quotation.' : 'Warm. Now explain it: add "because…", "which shows…" or "as a result…".' };
+    }
+    if (k === 'concl') {
+      var pk = [].concat(KW(f.p1), KW(f.p2), KW(f.p3)), n = KW(t).filter(function (x) { return pk.some(function (y) { return y.slice(0, 5) === x.slice(0, 5); }); }).length;
+      if (w < 8) return { lv: 0, tip: 'Too short. ' + GEN.concl };
+      if (/\balso\b|another|in addition/i.test(t)) return { lv: 1, tip: 'Watch out: "also" or "another" suggests a new point. A conclusion only restates and recaps.' };
+      if (n >= 2 && w >= 14) return { lv: 2, tip: 'Hot: it recaps your points and closes with significance.' };
+      return { lv: 1, tip: 'Warm. Recap at least two of your points in new words, then add the wider significance.' };
+    }
+    return { lv: 0, tip: '' };
+  }
+  function heats() { var o = {}; FIELDS.forEach(function (F) { o[F[0]] = heatOf(F[0]); }); return o; }
+  function overall(h) { var s = 0; FIELDS.forEach(function (F) { s += h[F[0]].lv; }); return s; }
+  function mmBox(cx, y, w, hh, lab, txt, lv, max) {
+    var H = HEAT[lv]; return box(cx, y, w, hh, H.fill, H.line, H.ink, lab + ' · ' + H.n.toUpperCase(), txt || '(empty)', max);
+  }
+  function makerSVG() {
+    var f = MM.f, h = heats(), xsP = [130, 380, 630], s = '<rect x="0" y="0" width="760" height="590" rx="18" fill="#FFFFFF"/>', OD = ORDERS.filter(function (o) { return o[0] === (MM.order || 'auto'); })[0];
+    var ln = function (x1, y1, x2, y2) { return '<path d="M' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + y2 + '" fill="none" stroke="#9DB0CC" stroke-width="2.5"/>'; };
+    var cut = function (t, n) { t = String(t || '').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+    s += ln(380, 70, 380, 92) + ln(380, 146, 380, 168) + ln(380, 236, 380, 248);
+    xsP.forEach(function (x) { s += ln(380, 292, x, 316) + ln(x, 382, x, 406) + ln(x, 470, 380, 508); });
+    s += box(380, 248, 600, 44, '#FFF4DA', '#B7791F', '#3A2A00', 'ORGANISATIONAL STRATEGY · ' + ORG[MM.type][0].toUpperCase(), (!OD || OD[0] === 'auto') ? ORG[MM.type][1] : 'Points ordered: ' + OD[1], 84);
+    s += mmBox(380, 16, 440, 54, 'HOOK', cut(f.hook, 100), h.hook.lv, 56);
+    s += mmBox(380, 92, 400, 54, 'BRIDGE', cut(f.bridge, 90), h.bridge.lv, 52);
+    s += mmBox(380, 168, 480, 68, 'THESIS · ' + TBY[MM.type].n.toUpperCase(), cut(f.thesis, 160), h.thesis.lv, 62);
+    [1, 2, 3].forEach(function (i) { s += mmBox(xsP[i - 1], 316, 220, 66, 'BODY ' + i + ' POINT', cut(f['p' + i], 52), h['p' + i].lv, 28); s += mmBox(xsP[i - 1], 406, 220, 64, 'EVIDENCE', cut(f['e' + i], 52), h['e' + i].lv, 28); });
+    s += mmBox(380, 508, 480, 56, 'CONCLUSION', cut(f.concl, 110), h.concl.lv, 62);
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 590" width="760" height="590" role="img" aria-label="Your mind map, coloured by rigour">' + s + '</svg>';
+  }
+  function meterHTML(h) {
+    var sc = overall(h), pct = Math.round(sc / 20 * 100), lv = pct >= 75 ? 2 : pct >= 40 ? 1 : 0, H = HEAT[lv], hot = FIELDS.filter(function (F) { return h[F[0]].lv === 2; }).length;
+    return '<div class="meter"><div class="row" style="justify-content:space-between"><b>Rigour: <span class="hw ' + H.css + '">' + H.ic + ' ' + H.n + '</span></b><span class="hint">' + hot + ' of 10 parts hot · ' + sc + ' / 20</span></div><div class="therm" role="meter" aria-valuemin="0" aria-valuemax="20" aria-valuenow="' + sc + '" aria-label="Rigour"><i style="width:' + (100 - pct) + '%"></i></div><div class="legend"><span><i style="background:#3B6FD8"></i>❄ Cold: empty or vague</span><span><i style="background:#D98A0B"></i>☀ Warm: developing</span><span><i style="background:#C7361F"></i>🔥 Hot: specific and exam-ready</span></div></div>';
+  }
+  function l3menu() {
+    st.view = 'l3m';
+    var saved = mmLoad(), topics = Q1.map(function (q) { return { q: q.q, a: q.a }; }).concat(R2.map(function (r) { return { q: r.q, a: r.type }; }));
+    var h = tBar() + '<div class="card"><h2>Level 3 · Mind Map Maker</h2><p>Plan a full expository essay as a mind map. Every part heats up from <b class="hw cold">❄ cold</b> to <b class="hw warm">☀ warm</b> to <b class="hw hot">🔥 hot</b> as it becomes more specific and rigorous, with a hint for each step.</p>' + (saved ? '<div class="row"><button class="btn gold" data-act="mmresume">↩ Continue my map: ' + esc(saved.q.slice(0, 60)) + (saved.q.length > 60 ? '…' : '') + '</button></div>' : '') + '</div>';
+    h += '<div class="card"><h3>✏️ From scratch</h3><p class="hint">Type your own essay question, then choose the type of expository essay it needs.</p><label class="sr" for="mmq">Your essay question</label><input id="mmq" class="inp" placeholder="e.g. Explain THREE effects of social media on Caribbean teenagers." maxlength="220"><div class="pipes" style="margin-top:10px">' + TYPES.map(function (t) { return '<button type="button" class="pipe" style="--c:' + t.c + '" data-act="mmnew" data-k="' + t.id + '"><span class="e" aria-hidden="true">' + t.e + '</span><span><b>' + esc(t.n) + '</b><small>' + esc(t.s) + '</small></span></button>'; }).join('') + '</div><p class="hint" id="mmqerr"></p></div>';
+    h += '<div class="card"><h3>📋 From the topic list</h3><p class="hint">Choose a course question. Its type and hints load for you.</p>' + TYPES.map(function (t) { var L = topics.filter(function (x) { return x.a === t.id; }); return '<h4 style="margin:12px 0 6px">' + t.e + ' ' + esc(t.n) + '</h4><div class="tray">' + L.map(function (x) { return '<button type="button" class="scard" style="border-left:8px solid ' + t.c + '" data-act="mmtopic" data-q="' + esc(x.q) + '" data-k="' + t.id + '">' + esc(x.q) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>';
+    app.innerHTML = h; stats();
+  }
+  function mmStart(q, type) { MM = { q: q, type: type, f: {}, open: {} }; FIELDS.forEach(function (F) { MM.f[F[0]] = ''; }); mmSave(); l3edit(); window.scrollTo(0, 0); }
+  function fieldHTML(F, hh) {
+    var k = F[0], H = HEAT[hh.lv], TT = TH[MM.type], frame = k === 'thesis' ? TT.thesis : k[0] === 'p' ? TT.point : k[0] === 'e' ? TT.ev : GEN[k];
+    return '<div class="fld ' + H.css + '" id="fld-' + k + '"><div class="row" style="justify-content:space-between"><label for="mm-' + k + '"><b>' + F[1] + '</b> <span class="hint">' + F[2] + '</span></label><span class="hw ' + H.css + '" id="hw-' + k + '">' + H.ic + ' ' + H.n + '</span></div>' +
+      '<textarea id="mm-' + k + '" class="inp ta" data-mm="' + k + '" rows="' + (k === 'thesis' || k === 'concl' || k[0] === 'e' ? 3 : 2) + '" spellcheck="true">' + esc(MM.f[k] || '') + '</textarea>' +
+      '<p class="tipline" id="tip-' + k + '">' + esc(hh.tip) + '</p><button type="button" class="linkb" data-act="mmhint" data-k="' + k + '">💡 ' + (MM.open[k] ? 'Hide hint' : 'Show a hint') + '</button>' + (MM.open[k] ? '<p class="hintbox">' + esc(frame) + '</p>' : '') + '</div>';
+  }
+  function l3edit() {
+    st.view = 'l3e';
+    var hh = heats(), T = TBY[MM.type];
+    var h = tBar() + '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Mind Map Maker</h2><button class="btn ghost" data-act="go3">← Choose another question</button></div><div class="task"><b>Essay question:</b> ' + esc(MM.q) + '<br><span class="hint">Type: ' + T.e + ' ' + esc(T.n) + ' · signal words to use: ' + esc(SIGW[MM.type]) + '</span><br><span class="hint">🧭 Organisational strategy: <b>' + esc(ORG[MM.type][0]) + '</b>. ' + esc(ORG[MM.type][1]) + '.</span><div class="row" style="margin-top:8px"><label for="mmord"><b>Order my points:</b></label><select id="mmord" class="inp" style="width:auto;padding:6px 10px" data-mmord="1">' + ORDERS.map(function (o) { return '<option value="' + o[0] + '"' + ((MM.order || 'auto') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div><div id="meter">' + meterHTML(hh) + '</div></div>';
+    h += '<div class="mmgrid"><div class="card">' + FIELDS.map(function (F) { return fieldHTML(F, hh[F[0]]); }).join('') + '</div><div class="card mmside"><h3>Your mind map</h3><div class="mm" id="mmsvg">' + makerSVG() + '</div><div class="row" style="margin-top:10px"><span class="dlg" role="group" aria-label="Download my mind map"><b>⬇ Download:</b><button class="btn gold sm" data-act="mmpdf">PDF</button><button class="btn ghost sm" data-act="mmimg" data-k="png">PNG</button><button class="btn ghost sm" data-act="mmimg" data-k="jpeg">JPEG</button></span><button class="btn ghost" data-act="mmrate">✅ Save my rigour score</button><button class="btn ghost" data-act="mmclear">Clear</button></div></div></div>';
+    app.innerHTML = h; stats();
+  }
+  function mmInput(k, v) {
+    MM.f[k] = v; mmSave();
+    var hh = heats();
+    FIELDS.forEach(function (F) { var x = F[0], H = HEAT[hh[x].lv], el = document.getElementById('fld-' + x); if (!el) return; el.className = 'fld ' + H.css; var b = document.getElementById('hw-' + x); b.className = 'hw ' + H.css; b.textContent = H.ic + ' ' + H.n; document.getElementById('tip-' + x).textContent = hh[x].tip; });
+    document.getElementById('mmsvg').innerHTML = makerSVG(); document.getElementById('meter').innerHTML = meterHTML(hh);
+  }
+  document.addEventListener('input', function (e) { var t = e.target; if (t && t.dataset && t.dataset.mm && MM) mmInput(t.dataset.mm, t.value); });
+  document.addEventListener('change', function (e) { var t = e.target; if (t && t.dataset && t.dataset.mmord && MM) { MM.order = t.value; mmSave(); var m = document.getElementById('mmsvg'); if (m) m.innerHTML = makerSVG(); } });
+  function mmPDF() {
+    toast('Building your PDF…');
+    loadPDF(async function (J) {
+      var hh = heats(), T = TBY[MM.type];
+      if (!J) {
+        var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.appendChild(fr);
+        var w = fr.contentWindow; w.document.open(); w.document.write('<html><head><title>My mind map</title><style>body{font-family:Georgia,serif;margin:16mm;color:#14213D}svg{width:100%;height:auto}</style></head><body><h1>My mind map</h1><p><b>Essay question:</b> ' + xs(MM.q) + ' (' + xs(T.n) + ')</p>' + makerSVG() + FIELDS.map(function (F) { return '<p><b>' + F[1] + ' (' + HEAT[hh[F[0]].lv].n + '):</b> ' + xs(MM.f[F[0]] || '—') + '<br><i>' + xs(hh[F[0]].tip) + '</i></p>'; }).join('') + '<p style="text-align:center;color:#778;font:9pt Arial">CAPE Communication Studies · Kester Small</p></body></html>'); w.document.close();
+        setTimeout(function () { try { w.focus(); w.print(); } catch (e) { } setTimeout(function () { fr.remove(); }, 60000); }, 400); return;
+      }
+      var doc = new J({ unit: 'mm', format: 'a4' }), M = 16, Wd = 178, y = 22;
+      var need = function (h) { if (y + h > 280) { doc.addPage(); y = M; } };
+      var para = function (t, size, bold, col, gap) { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, col || [20, 33, 61]); doc.splitTextToSize(String(t), Wd).forEach(function (l) { need(size * 0.45); doc.text(l, M, y); y += size * 0.45; }); y += gap == null ? 2 : gap; };
+      doc.setFillColor(45, 78, 158); doc.rect(0, 0, 210, 11, 'F'); doc.setFillColor(243, 168, 59); doc.rect(0, 11, 210, 2, 'F');
+      para('My Mind Map · Funnel Vision', 17, true, null, 1); para('Essay question: ' + MM.q, 11.5, true, null, 1); para('Organisational strategy: ' + ORG[MM.type][0] + ((MM.order && MM.order !== 'auto') ? ' · points ordered: ' + ORDERS.filter(function (o) { return o[0] === MM.order; })[0][1] : ''), 10, false, [85, 101, 126], 1); para('Type: ' + T.n + '   ·   Rigour: ' + overall(hh) + ' / 20 (' + FIELDS.filter(function (F) { return hh[F[0]].lv === 2; }).length + ' of 10 parts hot)', 10, false, [85, 101, 126], 4);
+      var m = await svgPng(makerSVG()); if (m) { var mh = Wd * m.h / m.w; need(mh); doc.addImage(m.src, 'JPEG', M, y, Wd, mh); y += mh + 4; }
+      para('Colour key: blue = cold (empty or vague) · amber = warm (developing) · red = hot (specific and exam-ready)', 8.5, false, [85, 101, 126], 4);
+      doc.addPage(); y = M + 4; para('My plan, part by part', 13, true, [45, 78, 158], 3);
+      FIELDS.forEach(function (F) { var x = hh[F[0]], col = x.lv === 2 ? [199, 54, 31] : x.lv === 1 ? [168, 104, 8] : [59, 111, 216]; para(F[1] + ' · ' + HEAT[x.lv].n.toUpperCase(), 10, true, col, 1); para(MM.f[F[0]] || '—', 11, false, null, 1); para('Next step: ' + x.tip, 9, false, [85, 101, 126], 4); });
+      footer(doc); deliver('My_Mind_Map.pdf', doc.output('blob'));
+    });
+  }
+  var st = load();
+  function load() { var d = { best: { 1: 0, 2: 0 }, tun: {}, key: false, snd: true, view: 'home' }; try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') { d.best = s.best || d.best; d.tun = s.tun || {}; d.snd = s.snd !== false; } } catch (e) { } return d; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ best: st.best, tun: st.tun, snd: st.snd })); } catch (e) { } try { if (window.GameSave && GameSave.save) GameSave.save(); } catch (e) { } }
+  function unlocked(lv) { return lv === 1 || (st.best[1] || 0) >= 1 || !!(teacher() && st.tun[lv]); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var $ = function (s) { return document.querySelector(s); }, app = $('#app');
+
+  var AC = null;
+  function tone(kind) {
+    if (!st.snd) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      var now = AC.currentTime, N = kind === 'ok' ? [659.25, 987.77] : kind === 'no' ? [220, 196] : kind === 'win' ? [523.25, 659.25, 783.99, 1046.5] : [440];
+      N.forEach(function (f, i) { var o = AC.createOscillator(), g = AC.createGain(), t = now + i * 0.1; o.type = kind === 'no' ? 'sawtooth' : 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(kind === 'no' ? 0.05 : 0.14, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.45); });
+    } catch (e) { }
+  }
+  function sndBtn() { var b = $('#snd'); b.textContent = st.snd ? '🔊 Sound' : '🔇 Muted'; b.setAttribute('aria-pressed', st.snd ? 'true' : 'false'); }
+  $('#snd').addEventListener('click', function () { st.snd = !st.snd; save(); sndBtn(); });
+  function report(lv, score, max) {
+    var name = lv === 1 ? 'Level 1 · Type Sorter' : lv === 2 ? 'Level 2 · Build the Funnel' : 'Level 3 · Mind Map Maker';
+    try { parent.postMessage({ type: 'dm:result', kind: 'game', id: ID, title: PAGE + ': ' + name, module: 'all', score: score, max: max, pct: max ? Math.round(score / max * 100) : 0, level: String(lv) }, '*'); } catch (e) { }
+  }
+  function stats() {
+    $('#stats').innerHTML = '<span class="pill">Level 1 best: ' + (st.best[1] || 0) + ' / ' + Q1.length + '</span><span class="pill">Level 2 best: ' + (st.best[2] || 0) + ' / ' + (R2.length * 12) + '</span>';
+  }
+  function tBar() {
+    if (!teacher()) return '';
+    return '<div class="row" style="margin:12px 0 0"><span class="tbadge">👩🏾‍🏫 Teacher version</span><button class="btn gold" data-act="tunall">🔓 Unlock all levels</button><button class="btn ghost" data-act="tlock">🔒 Re-lock</button><button class="btn ghost" data-act="tkey">' + (st.key ? '🙈 Hide answer key' : '🔑 Show answer key') + '</button></div>';
+  }
+  function legend() { return '<div class="legend" aria-label="Colour key"><span><i style="background:var(--hook)"></i>Hook: broad, attention-grabbing</span><span><i style="background:var(--bridge)"></i>Bridge: context and key term</span><span><i style="background:var(--thesis)"></i>Thesis: narrow and precise</span></div>'; }
+
+  /* ---------- home ---------- */
+  function home() {
+    st.view = 'home';
+    var l2 = unlocked(2);
+    app.innerHTML = tBar() + '<div class="card"><h2>How to play</h2><p>An expository introduction works like a <b>funnel</b>: it starts <b>broad</b> with a hook, <b>narrows</b> through a bridge, and ends on a <b>precise thesis</b> that previews your points. The type of essay the question asks for decides what those points are.</p>' + legend() + '</div>' +
+      '<div class="levels">' +
+      '<button type="button" class="lvl" data-act="go1"><span class="ic">🔀</span><b>Level 1 · Type Sorter</b><span>Drop each essay question through the funnel into the right pipe: definition, process, cause and effect, comparison and contrast, classification, illustration, or problem and solution.</span><span class="hint">' + Q1.length + ' questions · best ' + (st.best[1] || 0) + ' / ' + Q1.length + '</span></button>' +
+      '<button type="button" class="lvl ' + (l2 ? '' : 'locked') + '" data-act="go2"' + (l2 ? '' : ' aria-disabled="true"') + '><span class="ic">' + (l2 ? '🏗️' : '🔒') + '</span><b>Level 2 · Build the Funnel</b><span>Place the hook, bridge and thesis in the funnel, choose the organisational strategy at its spout, continue down to topic sentences and supporting details, see the full essay and judge whether it is strong or weak.</span><span class="hint">' + (l2 ? R2.length + ' rounds · best ' + (st.best[2] || 0) + ' / ' + (R2.length * 12) : 'Score at least 1 in Level 1 to unlock') + '</span></button>' +
+      '<button type="button" class="lvl" data-act="go3"><span class="ic">🧠</span><b>Level 3 · Mind Map Maker</b><span>Plan a full essay as a mind map, from the topic list or from scratch. Hints guide every part, and each part heats up from cold to warm to hot as it becomes more rigorous.</span><span class="hint">Open to everyone · download as PDF</span></button>' +
+      '</div>';
+    stats();
+  }
+
+  /* ---------- Level 1 ---------- */
+  var L1 = null;
+  function start1() { L1 = { order: shuffle(Q1), i: 0, score: 0, tried: false, done: false, picked: null, wrong: [] }; play1(); }
+  function play1() {
+    st.view = 'l1';
+    var it = L1.order[L1.i], n = L1.order.length;
+    var h = tBar() + '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Level 1 · Type Sorter</h2><span class="hint">Question ' + (L1.i + 1) + ' of ' + n + ' · Score ' + L1.score + '</span></div><div class="prog"><i style="width:' + Math.round(L1.i / n * 100) + '%"></i></div>' +
+      '<p class="hint">Read the question, find its signal words, then choose the pipe for the type of expository essay (its organisational strategy) it wants.</p>' +
+      '<div class="mouth" id="mouth"><span class="q">' + esc(it.q) + '</span></div><div class="spout" aria-hidden="true"></div>' +
+      '<div class="pipes" role="group" aria-label="Types of expository essay">' + TYPES.map(function (t) {
+        var cls = ''; if (L1.done && t.id === it.a) cls = 'right'; else if (L1.wrong.indexOf(t.id) > -1) cls = 'wrong';
+        if (!L1.done && teacher() && st.key && t.id === it.a) cls += ' key';
+        return '<button type="button" class="pipe ' + cls + '" style="--c:' + t.c + '" data-act="pick" data-k="' + t.id + '"' + (L1.done ? ' disabled' : '') + '><span class="e" aria-hidden="true">' + t.e + '</span><span><b>' + esc(t.n) + '</b><small>' + esc(t.s) + '</small></span></button>';
+      }).join('') + '</div>';
+    if (L1.done) h += '<div class="fb ok"><b class="v">' + (L1.wrong.length ? 'Got there.' : 'Spot on!') + ' It is ' + esc(TBY[it.a].n.toLowerCase()) + '.</b>' + esc(it.why) + '<br><span class="hint">🧭 Organisational strategy: <b>' + esc(ORG[it.a][0]) + '</b>. ' + esc(ORG[it.a][1]) + '.</span></div><div class="row" style="margin-top:12px"><button class="btn gold" data-act="next1">' + (L1.i + 1 < n ? 'Next question →' : 'See my score') + '</button></div>';
+    else if (L1.wrong.length) h += '<div class="fb no"><b class="v">Not quite. Try another pipe.</b>Look again at the command word and the key noun: <i>why</i>, <i>how</i>, <i>types</i>, <i>differ</i>, <i>what is meant by</i>, <i>using examples</i>, <i>ways to reduce</i>.</div>';
+    h += '</div>';
+    app.innerHTML = h;
+  }
+  function pick1(k) {
+    if (!L1 || L1.done) return;
+    var it = L1.order[L1.i];
+    if (k === it.a) {
+      if (!L1.wrong.length) L1.score++;
+      tone('ok'); var m = $('#mouth .q'); if (m) m.classList.add('drop');
+      L1.done = true; setTimeout(play1, 450);
+    } else {
+      if (L1.wrong.indexOf(k) < 0) L1.wrong.push(k);
+      tone('no'); play1(); var mm = $('#mouth'); if (mm) mm.classList.add('shake');
+    }
+  }
+  function next1() {
+    if (L1.i + 1 < L1.order.length) { L1.i++; L1.done = false; L1.wrong = []; play1(); return; }
+    var n = L1.order.length; st.best[1] = Math.max(st.best[1] || 0, L1.score); save(); report(1, L1.score, n); tone('win');
+    app.innerHTML = tBar() + '<div class="card" style="text-align:center"><h2>Level 1 complete</h2><p class="big">' + L1.score + ' / ' + n + '</p><p>' + (L1.score === n ? 'Perfect routing. You can read a question like an examiner.' : L1.score >= n * 0.7 ? 'Strong work. Points count only on the first try, so check the signal words before you choose.' : 'Keep practising: circle the command word and the key noun first, then choose.') + '</p>' +
+      '<div class="row" style="justify-content:center"><button class="btn gold" data-act="go2">Go to Level 2 →</button><button class="btn ghost" data-act="go1">Play again</button><button class="btn ghost" data-act="home">Menu</button></div></div>';
+    stats();
+  }
+
+  /* ---------- Level 2 ---------- */
+  var L2 = null;
+  function start2() { L2 = { r: 0, score: 0, res: {} }; newRound(); }
+  function newRound() { var R = R2[L2.r]; L2.cards = shuffle(R.cards.map(function (c, i) { return Object.assign({ i: i }, c); })); L2.place = {}; L2.sel = null; L2.checked = false; L2.judge = null; L2.strat = null; L2.bodyOn = false; L2.bchecked = false; L2.bplace = {}; L2.bsel = null; L2.bcards = shuffle([0, 1, 2].map(function (i) { return { k: 'p' + i, kind: 'p', i: i, t: FULL[L2.r].mm.pts[i][0] }; }).concat([0, 1, 2].map(function (i) { return { k: 'd' + i, kind: 'd', i: i, t: FULL[L2.r].mm.pts[i][1] }; }))); play2(); }
+  function inSlot(slot) { for (var k in L2.place) if (L2.place[k] === slot) return +k; return -1; }
+  function play2() {
+    st.view = 'l2';
+    var R = R2[L2.r], n = R2.length, T = TBY[R.type], showKey = teacher() && st.key;
+    var h = tBar() + '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Level 2 · Build the Funnel</h2><span class="hint">Round ' + (L2.r + 1) + ' of ' + n + ' · Score ' + L2.score + '</span></div><div class="prog"><i style="width:' + Math.round(L2.r / n * 100) + '%"></i></div>' +
+      '<div class="task"><b>Essay question:</b> ' + esc(R.q) + (L2.checked ? '<br><span class="hint">Type: ' + T.e + ' ' + esc(T.n) + '</span>' : '') + '</div>';
+    var tray = L2.cards.filter(function (c) { return L2.place[c.i] == null; });
+    if (!L2.checked) {
+      h += '<p class="hint">' + (tray.length ? 'Tap a sentence, then tap the funnel layer (or the reject bin) where it belongs. Tap a placed sentence to send it back.' : 'All placed. Check your funnel, or tap a layer to take a sentence back.') + '</p>';
+      h += '<div class="tray">' + tray.map(function (c) { return '<button type="button" class="scard ' + (L2.sel === c.i ? 'sel' : '') + '" data-act="sel" data-k="' + c.i + '" aria-pressed="' + (L2.sel === c.i) + '">' + (showKey ? '<span class="tag">' + ROLES[c.r] + '</span>' : '') + esc(c.t) + '</button>'; }).join('') + '</div>';
+    }
+    h += legend() + '<div class="funnel">';
+    ['hook', 'bridge', 'thesis'].forEach(function (slot) {
+      var ci = inSlot(slot), c = ci > -1 ? L2.cards.filter(function (x) { return x.i === ci; })[0] : null;
+      var res = L2.checked && c ? (c.r === slot ? ' ok' : ' no') : '';
+      var ico = slot === 'hook' ? '🎣' : slot === 'bridge' ? '🌉' : '🎯';
+      h += '<button type="button" class="layer ' + slot + (L2.sel != null && !L2.checked ? ' armed' : '') + res + '" data-act="slot" data-k="' + slot + '"' + (L2.checked ? ' disabled' : '') + '><span class="lab"><span aria-hidden="true">' + ico + '</span>' + ROLES[slot] + (slot === 'hook' ? ' · broad' : slot === 'thesis' ? ' · narrow' : '') + '</span>' + (c ? '<span class="txt">' + esc(c.t) + '</span>' : '<span class="empty">Empty: place a sentence here</span>') + '</button>';
+    });
+    h += '<div class="tip-end" aria-hidden="true"></div>';
+    var sOK = L2.checked ? L2.strat === R.type : null;
+    h += '<div class="spout-org' + (sOK === true ? ' ok' : sOK === false ? ' no' : '') + '"><span class="lab">🧭 Organisational strategy · where the thesis leads the body</span><p class="hint" style="margin:2px 0 8px">Which strategy will organise the body paragraphs of this essay?</p><div class="schips" role="radiogroup" aria-label="Organisational strategy">' + TYPES.map(function (t) { var on = L2.strat === t.id, cls = (on ? ' on' : '') + (L2.checked && t.id === R.type ? ' right' : '') + (L2.checked && on && t.id !== R.type ? ' wrong' : '') + (!L2.checked && showKey && t.id === R.type ? ' key' : ''); return '<button type="button" class="schip' + cls + '" style="--c:' + t.c + '" role="radio" aria-checked="' + on + '" data-act="strat" data-k="' + t.id + '"' + (L2.checked ? ' disabled' : '') + '><span aria-hidden="true">' + t.e + '</span> ' + esc(ORG[t.id][0]) + '</button>'; }).join('') + '</div></div>';
+    var oi = inSlot('out'), oc = oi > -1 ? L2.cards.filter(function (x) { return x.i === oi; })[0] : null;
+    h += '<button type="button" class="out' + (L2.sel != null && !L2.checked ? ' armed' : '') + (L2.checked && oc ? (oc.r === 'out' ? ' ok' : ' no') : '') + '" data-act="slot" data-k="out"' + (L2.checked ? ' disabled' : '') + '><span class="lab">🗑️ Doesn\'t belong in the introduction</span><br>' + (oc ? esc(oc.t) : '<span class="hint">Empty</span>') + '</button></div>';
+    if (!L2.checked) {
+      h += '<div class="row" style="margin-top:14px"><button class="btn gold" data-act="check2"' + (Object.keys(L2.place).length < 4 || !L2.strat ? ' disabled' : '') + '>Check my funnel</button><button class="btn ghost" data-act="clear2">Clear</button></div>';
+    } else {
+      var got = L2.cards.filter(function (c) { return L2.place[c.i] === c.r; }).length + (sOK ? 1 : 0);
+      h += '<div class="fb ' + (got === 5 ? 'ok' : 'no') + '"><b class="v">' + got + ' / 5 correct.</b>' + (got === 5 ? 'A perfect funnel: broad, then narrower, then precise, leading into the right organisational strategy.' : 'Read why each part belongs where it does.') + '</div>';
+      h += '<ul class="why">' + ['hook', 'bridge', 'thesis', 'out'].map(function (r) { var c = L2.cards.filter(function (x) { return x.r === r; })[0], ok = L2.place[c.i] === r; return '<li class="' + (ok ? 'ok' : 'no') + '"><b>' + (ok ? '✓' : '✗') + ' ' + ROLES[r] + ':</b> ' + esc(c.why) + '</li>'; }).join('') + '<li class="' + (sOK ? 'ok' : 'no') + '"><b>' + (sOK ? '✓' : '✗') + ' Organisational strategy:</b> ' + esc(ORG[R.type][0]) + '. ' + esc(ORG[R.type][1]) + '.' + (sOK ? '' : ' You chose ' + esc(ORG[L2.strat][0]).toLowerCase() + '; the question\'s signal words (' + esc(SIGW[R.type]) + ') point to ' + esc(ORG[R.type][0]).toLowerCase() + '.') + '</li></ul>';
+      var by = {}; L2.cards.forEach(function (c) { by[c.r] = c.t; });
+      h += '<h3 style="margin-top:14px">The finished introduction</h3><p class="intro"><span class="h">' + esc(by.hook) + '</span> <span class="b">' + esc(by.bridge) + '</span> <span class="t">' + esc(by.thesis) + '</span></p>';
+      h += L2.bodyOn ? bodyHTML(R) + (L2.bchecked ? fullHTML(R) : '') : '<div class="row" style="margin-top:14px"><button class="btn gold" data-act="body2">Continue down the funnel: topic sentences and supporting details ↓</button></div>';
+    }
+    h += '</div>';
+    app.innerHTML = h;
+  }
+  function slot2(s) {
+    if (L2.checked) return;
+    if (L2.sel == null) { var ci = inSlot(s); if (ci > -1) { delete L2.place[ci]; tone('tap'); play2(); } return; }
+    var prev = inSlot(s); if (prev > -1) delete L2.place[prev];
+    L2.place[L2.sel] = s; L2.sel = null; tone('tap'); play2();
+  }
+  function check2() {
+    if (Object.keys(L2.place).length < 4 || !L2.strat) return;
+    L2.checked = true;
+    var got = L2.cards.filter(function (c) { return L2.place[c.i] === c.r; }).length, sok = L2.strat === R2[L2.r].type;
+    L2.res[L2.r] = { got: got, strat: L2.strat, sok: sok };
+    L2.score += got + (sok ? 1 : 0); got += sok ? 1 : 0; tone(got === 5 ? 'win' : got >= 3 ? 'ok' : 'no'); play2();
+    var f = document.querySelector('.fb'); if (f && f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function next2() {
+    if (L2.r + 1 < R2.length) { L2.r++; newRound(); window.scrollTo(0, 0); return; }
+    var max = R2.length * 12; st.best[2] = Math.max(st.best[2] || 0, L2.score); save(); report(2, L2.score, max); tone('win');
+    app.innerHTML = tBar() + '<div class="card" style="text-align:center"><h2>Level 2 complete</h2><p class="big">' + L2.score + ' / ' + max + '</p><p>' + (L2.score === max ? 'Every funnel built perfectly. Your introductions will narrow cleanly to a thesis.' : L2.score >= max * 0.7 ? 'Strong funnels. Watch for opinions and body-paragraph details sneaking into the introduction.' : 'Remember the order: a broad hook, a bridge that gives context, then a precise thesis that previews your points.') + '</p>' +
+      '<div class="row" style="justify-content:center"><button class="btn gold" data-act="pdfall">⬇ Download all six rounds (PDF)</button><button class="btn ghost" data-act="go3">Level 3: Mind Map Maker →</button><button class="btn ghost" data-act="go2">Play again</button><button class="btn ghost" data-act="go1">Level 1</button><button class="btn ghost" data-act="home">Menu</button></div></div>';
+    stats(); window.scrollTo(0, 0);
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-act]'); if (!b || b.disabled) return;
+    var a = b.dataset.act, k = b.dataset.k;
+    if (a === 'home') home();
+    else if (a === 'go1') { start1(); window.scrollTo(0, 0); }
+    else if (a === 'go2') { if (!unlocked(2)) return; start2(); window.scrollTo(0, 0); }
+    else if (a === 'pick') pick1(k);
+    else if (a === 'next1') { next1(); window.scrollTo(0, 0); }
+    else if (a === 'sel') { L2.sel = L2.sel === +k ? null : +k; tone('tap'); play2(); }
+    else if (a === 'slot') slot2(k);
+    else if (a === 'check2') check2();
+    else if (a === 'clear2') { L2.place = {}; L2.sel = null; play2(); }
+    else if (a === 'next2') next2();
+    else if (a === 'judge') judge(k);
+    else if (a === 'body2') { L2.bodyOn = true; tone('tap'); play2(); var bf = document.querySelector('.bfun'); if (bf && bf.scrollIntoView) bf.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    else if (a === 'bsel') { L2.bsel = L2.bsel === k ? null : k; tone('tap'); play2(); }
+    else if (a === 'bslot') bslot(k);
+    else if (a === 'bcheck') bcheck();
+    else if (a === 'bclear') { L2.bplace = {}; L2.bsel = null; play2(); }
+    else if (a === 'strat') { if (L2 && !L2.checked) { L2.strat = k; tone('tap'); play2(); } }
+    else if (a === 'pdf1') makePDF('one');
+    else if (a === 'img1') saveImage(roundSheet(L2.r), 'Funnel_Vision_Round_' + (L2.r + 1), k);
+    else if (a === 'mmimg') saveImage(mmSheet(), 'My_Mind_Map', k);
+    else if (a === 'pdfall') makePDF('all');
+    else if (a === 'go3') { l3menu(); window.scrollTo(0, 0); }
+    else if (a === 'mmresume') { MM = mmLoad(); if (MM) { MM.open = MM.open || {}; l3edit(); } }
+    else if (a === 'mmtopic') mmStart(b.dataset.q, k);
+    else if (a === 'mmnew') { var q = (document.getElementById('mmq') || {}).value || ''; if (q.trim().length < 12) { document.getElementById('mmqerr').textContent = 'Type your essay question first (at least a few words), then choose its type.'; document.getElementById('mmq').focus(); return; } mmStart(q.trim(), k); }
+    else if (a === 'mmhint') { MM.open[k] = !MM.open[k]; mmSave(); var el = document.getElementById('fld-' + k), hh = heatOf(k); if (el) { var tmp = document.createElement('div'); tmp.innerHTML = fieldHTML(FIELDS.filter(function (F) { return F[0] === k; })[0], hh); el.replaceWith(tmp.firstChild); } }
+    else if (a === 'mmpdf') mmPDF();
+    else if (a === 'mmrate') { var hs = heats(); report(3, overall(hs), 20); toast('Rigour score saved: ' + overall(hs) + ' / 20'); }
+    else if (a === 'mmclear') { if (confirm('Clear every part of this mind map?')) { FIELDS.forEach(function (F) { MM.f[F[0]] = ''; }); mmSave(); l3edit(); } }
+    else if (a === 'tunall' || a === 'tlock' || a === 'tkey') {
+      if (!teacher()) return;
+      if (a === 'tunall') st.tun[2] = 1; else if (a === 'tlock') st.tun = {}; else st.key = !st.key;
+      save();
+      if (st.view === 'l1' && L1) play1(); else if (st.view === 'l2' && L2) play2(); else if (st.view === 'l3e' && MM) l3edit(); else if (st.view === 'l3m') l3menu(); else home();
+    }
+  });
+  try { if (window.GameSave && GameSave.onReset) GameSave.onReset(function () { try { localStorage.removeItem(KEY); } catch (e) { } }); } catch (e) { }
+  sndBtn(); home();
+})();
+</script>
+</body></html>

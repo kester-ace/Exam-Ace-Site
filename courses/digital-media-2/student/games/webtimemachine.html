@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en-GB">
+<head><script>/* DME2 course bridge: inside the course, saves go through the course's save prompt and confirmations use a second tap */(function(){if(window.parent===window)return;var P=window.parent;function toast(m){try{P.postMessage({type:'dm2:toast',msg:m},'*')}catch(e){}}function send(a){var n=a.getAttribute('download')||'download.html',h=a.href;if(!h)return false;fetch(h).then(function(r){return r.blob()}).then(function(b){P.postMessage({type:'dm2:save',filename:n,blob:b},'*')}).catch(function(){toast('That file could not be prepared.')});return true}var oc=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.hasAttribute('download')&&send(this))return;return oc.apply(this,arguments)};document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[download]');if(a&&send(a))e.preventDefault()},true);var last={m:null,t:0};window.confirm=function(m){var now=Date.now();if(last.m===m&&now-last.t<6000){last={m:null,t:0};return true}last={m:m,t:now};toast((m||'Are you sure?')+' Tap again to confirm.');return false};window.alert=function(m){toast(String(m||''))};window.print=function(){toast('Printing is not available inside the course. Use the download or save button instead.')}})();</script>
+
+<meta charset="utf-8"><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Time Machine</title>
+<meta name="description" content="Web Time Machine: travel from the analogue era through Web 1.0 to Web 5.0, then bridge the digital divide on a Caribbean island. CAPE Digital Media Unit 2, Module 2. Kester Small">
+<style>
+/* Web Time Machine: a brass-and-amber time console over light paper panels. One light theme by design, matching the course games. */
+:root{
+  --bg:#eef1f7; --paper:#ffffff; --paper2:#f7f8fc; --ink:#14203a; --muted:#56607a; --line:#dde2ee; --line2:#c9d0e0;
+  --console:#121a33; --console2:#1c2750; --amber:#ffb22e; --amber2:#ffd27a; --teal:#0f7a6c; --blue:#2a5bd7; --violet:#7a4cc4;
+  --good:#1c7f45; --goodbg:#e3f4e8; --bad:#b8352a; --badbg:#fbe7e3; --focus:#ffb703;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:"Avenir Next","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --radius:14px; --shadow:0 6px 20px -12px rgba(20,32,58,.45);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);-webkit-text-size-adjust:100%}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-9999px;top:8px;background:var(--amber);color:#000;padding:8px 12px;border-radius:8px;z-index:50}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+button{font:inherit;cursor:pointer;color:inherit}
+h1,h2,h3{font-family:var(--display);line-height:1.2;margin:0}
+p{margin:.5em 0}
+
+/* Header console */
+header.top{background:radial-gradient(120% 140% at 10% 0%,#25346b 0%,var(--console) 55%);color:#e9edfb;border-bottom:4px solid var(--amber)}
+header.top .wrap{display:flex;gap:16px;align-items:center;justify-content:space-between;padding-top:14px;padding-bottom:14px;flex-wrap:wrap}
+.brand{display:flex;gap:12px;align-items:center}
+.brand svg{flex:none}
+.brand h1{font-size:1.45rem;letter-spacing:.01em}
+.brand p{margin:0;color:#b9c3e6;font-size:.88rem}
+.dial{font-family:var(--mono);background:#060a18;border:2px solid #3a4677;border-radius:10px;padding:6px 12px;color:var(--amber);box-shadow:inset 0 0 12px rgba(255,178,46,.18);min-width:220px}
+.dial small{display:block;color:#7f8bb8;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+.dial b{font-size:1.05rem;letter-spacing:.06em;text-shadow:0 0 8px rgba(255,178,46,.55)}
+nav.tabs{background:var(--console2)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:6px}
+nav.tabs button{background:transparent;border:0;color:#c8d0ef;padding:10px 14px;border-radius:10px 10px 0 0;font-weight:600;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--bg);color:var(--ink)}
+main{padding:18px 0 28px}
+.panel[hidden]{display:none}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--paper);border:2px solid var(--line2);border-radius:10px;padding:8px 14px;font-weight:600;min-height:44px}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.amber{background:var(--amber);border-color:#e09a12;color:#1b1300}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.kicker{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;background:#eef2ff;color:#2a3d8f;vertical-align:middle}
+.badge.em{background:#fff1d6;color:#7a4b00}
+.badge.sp{background:#f1e6ff;color:#5a2d99}
+.fb{border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--paper2);border:1px solid var(--line)}
+.fb.good{background:var(--goodbg);border-color:#a8dcb9}
+.fb.bad{background:var(--badbg);border-color:#efb7ad}
+.fb:empty{display:none}
+
+/* Era stepper */
+.eras{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
+.eras button{background:var(--paper);border:2px solid var(--line2);border-radius:12px;padding:8px 4px;font-size:.82rem;font-weight:700;line-height:1.2;min-height:56px}
+.eras button .yr{display:block;font-family:var(--mono);font-weight:500;font-size:.72rem;color:var(--muted)}
+.eras button[aria-current="step"]{border-color:var(--amber);background:#fff7e6;box-shadow:0 0 0 3px rgba(255,178,46,.3)}
+.eras button.done{border-color:#9fd3b2}
+.eras button[aria-disabled="true"]{background:#e7eaf2;color:#8a92a8}
+@media (max-width:640px){.eras{grid-template-columns:repeat(3,1fr)}}
+
+.roomgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.roomgrid{grid-template-columns:1fr}}
+.room svg{display:block;width:100%;height:auto;border-radius:12px}
+.art{cursor:pointer}
+.art .hit{fill:transparent;stroke:transparent;stroke-width:3}
+.art:hover .hit,.art:focus .hit{stroke:#ffb703;stroke-dasharray:7 5;fill:rgba(255,183,3,.10)}
+.art:focus{outline:none}
+.art.found .hit{stroke:#2e9e5b;stroke-dasharray:none}
+.art .tick{display:none}
+.art.found .tick{display:inline}
+.roomhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.roomhead h2{font-size:1.35rem}
+.defn{background:var(--paper2);border-left:4px solid var(--blue);padding:8px 12px;border-radius:0 10px 10px 0;margin:8px 0}
+.log h3{font-size:1rem;margin-bottom:6px}
+.log .fact{min-height:110px}
+.meter{height:10px;background:#e6e9f2;border-radius:99px;overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));width:0;transition:width .4s}
+.legendlist{margin:8px 0 0;padding-left:18px;font-size:.92rem}
+.legendlist li.got{color:var(--good)}
+
+/* Site builder */
+.sitegrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media (max-width:860px){.sitegrid{grid-template-columns:1fr}}
+.mock{border-radius:12px;overflow:hidden;border:1px solid var(--line2);min-height:220px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{background:var(--paper);border:2px solid var(--line2);border-radius:99px;padding:7px 12px;font-size:.9rem;text-align:left;min-height:40px}
+.chip[aria-pressed="true"]{background:#e8efff;border-color:var(--blue);font-weight:600}
+.chip[aria-pressed="true"]::before{content:"\2713  "}
+.chip.right{border-color:var(--good);background:var(--goodbg)}
+.chip.wrong{border-color:var(--bad);background:var(--badbg)}
+.chip.missed{border-style:dashed;border-color:var(--good)}
+
+/* Challenge */
+.chal{margin-top:16px;border:2px solid var(--amber);background:linear-gradient(180deg,#fffaf0,#fff)}
+.chal h3{font-size:1.1rem}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+@media (max-width:640px){.zones{grid-template-columns:1fr}}
+.zone{border:2px dashed var(--line2);border-radius:12px;padding:10px;min-height:120px;background:var(--paper2)}
+.zone.era{border-color:var(--amber);background:#fff7e6}
+.zone.over{background:#ffeec2}
+.zone h4{margin:0 0 6px;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tok{display:inline-block;margin:4px;background:#fff;border:2px solid var(--line2);border-radius:10px;padding:7px 10px;font-size:.9rem;min-height:40px;touch-action:manipulation}
+.tok[draggable="true"]{cursor:grab}
+.tok.right{border-color:var(--good);background:var(--goodbg)}
+.tok.wrong{border-color:var(--bad);background:var(--badbg)}
+.qopts{display:grid;gap:8px;margin-top:8px}
+.qopt{text-align:left;background:#fff;border:2px solid var(--line2);border-radius:10px;padding:10px 12px;min-height:44px}
+.qopt.right{border-color:var(--good);background:var(--goodbg)}
+.qopt.wrong{border-color:var(--bad);background:var(--badbg)}
+.unlock{margin-top:12px}
+
+/* Warp overlay */
+.warp{position:fixed;inset:0;background:radial-gradient(circle at 50% 50%,#fff 0,#ffd27a 12%,#25346b 45%,#060a18 80%);z-index:40;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-size:1.4rem;opacity:0;pointer-events:none}
+.warp.on{animation:warp 1s ease-in-out}
+@keyframes warp{0%{opacity:0;transform:scale(1.2)}35%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
+
+/* Bridge the Gap */
+.bgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.bgrid{grid-template-columns:1fr}}
+.map svg{display:block;width:100%;height:auto;border-radius:12px}
+.vil{cursor:pointer}
+.vil:focus{outline:none}
+.vil:focus .vring,.vil:hover .vring{stroke:#ffb703;stroke-width:4}
+.vil.sel .vring{stroke:#14203a;stroke-width:4}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.stat{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:1.25rem;font-family:var(--display)}
+.stat span{font-size:.75rem;color:var(--muted)}
+.acts{display:grid;gap:8px}
+.act{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;background:#fff;border:2px solid var(--line2);border-radius:10px;padding:8px 12px;min-height:48px}
+.act:hover:not([disabled]){border-color:var(--teal)}
+.act small{display:block;color:var(--muted);font-size:.8rem}
+.act .cost{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.act[disabled]{opacity:.55;cursor:not-allowed}
+.act.owned{background:var(--goodbg);border-color:#a8dcb9;opacity:1}
+.bcard{border-radius:14px;padding:14px;color:#fff;background:linear-gradient(135deg,#7a2e8f,#b8352a);box-shadow:var(--shadow)}
+.bcard.cost{background:linear-gradient(135deg,#8a5a00,#c98a0b)}
+.bcard.geography{background:linear-gradient(135deg,#1f5f3a,#2e9e5b)}
+.bcard.disability{background:linear-gradient(135deg,#2a3d8f,#5a6fd6)}
+.bcard.infrastructure{background:linear-gradient(135deg,#3b4262,#6b7290)}
+.bcard.hurricane{background:linear-gradient(135deg,#5b0f0f,#b8352a)}
+.bcard h3{font-size:1.1rem}
+.bcard .kicker{color:rgba(255,255,255,.8)}
+table.score{width:100%;border-collapse:collapse;font-size:.88rem}
+table.score th,table.score td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:right}
+table.score th:first-child,table.score td:first-child{text-align:left}
+.tablewrap{overflow-x:auto;max-width:100%}
+.big{font-size:2.2rem;font-weight:800;font-family:var(--display)}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pill{font-family:var(--mono);background:var(--console);color:var(--amber);border-radius:8px;padding:4px 10px;font-weight:700}
+
+/* Quiz */
+.quiz{max-width:760px;margin:0 auto}
+.prog{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:6px}
+
+/* Revision sheet */
+.sheet{max-width:900px;margin:0 auto}
+.sheet h2{font-size:1.5rem}
+.sheet h3{font-size:1.05rem;margin-top:14px}
+.sheet table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:620px}
+.sheet th,.sheet td{border:1px solid var(--line2);padding:6px;vertical-align:top;text-align:left}
+.sheet th{background:#eef2ff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.sheet ul{margin:4px 0;padding-left:20px}
+
+footer{background:var(--console);color:#c8d0ef;padding:14px 0;font-size:.9rem;text-align:center}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .pulse{animation:none!important}
+}
+.pulse{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+@media print{
+  header.top,nav.tabs,footer,.panel:not(#p-sheet),.noprint,.skip{display:none!important}
+  #p-sheet{display:block!important}
+  body{background:#fff;font-size:11pt}
+  .card{box-shadow:none;border:0;padding:0}
+  .sheet table{min-width:0;font-size:9pt}
+  .tablewrap{overflow:visible}
+  .two{grid-template-columns:1fr 1fr}
+}
+</style>
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="21" fill="#060a18" stroke="#ffb22e" stroke-width="3"/><path d="M15 11h16l-6 12 6 12H15l6-12z" fill="#ffd27a"/><path d="M19 33h8l-4-7z" fill="#ffb22e"/></svg>
+      <div><h1>Web Time Machine</h1><p>From the analogue era to Web 5.0, and across the digital divide</p></div>
+    </div>
+    <div class="dial" aria-live="polite"><small>Destination time</small><b id="dialTxt">1978 · ANALOGUE ERA</b></div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Game sections">
+  <div class="wrap" role="tablist">
+    <button role="tab" id="t-tm" aria-controls="p-tm" aria-selected="true">Time Machine</button>
+    <button role="tab" id="t-bg" aria-controls="p-bg" aria-selected="false" tabindex="-1">Bridge the Gap</button>
+    <button role="tab" id="t-qz" aria-controls="p-qz" aria-selected="false" tabindex="-1">Quick-fire quiz</button>
+    <button role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="false" tabindex="-1">Revision sheet</button>
+  </div>
+</nav>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+<div class="warp" id="warp" aria-hidden="true"><span id="warpTxt"></span></div>
+
+<main id="main" tabindex="-1">
+<div class="wrap">
+
+<!-- TIME MACHINE -->
+<section class="panel" id="p-tm" role="tabpanel" aria-labelledby="t-tm">
+  <div class="row" style="justify-content:space-between;margin-bottom:10px">
+    <p style="margin:0;max-width:70ch">Explore each era's room, collect its artefacts, rebuild the <b>Sea Grape Guest House</b> website for that era, then beat the challenge to charge the time circuits and travel on.</p>
+    <span class="pill" id="pts">0 chrono points</span>
+  </div>
+  <div class="eras" id="eras" role="list" aria-label="Eras"></div>
+  <div class="roomgrid">
+    <div class="card room">
+      <div class="roomhead">
+        <div><div class="kicker" id="eraKick"></div><h2 id="eraTitle"></h2></div>
+        <span id="eraBadge"></span>
+      </div>
+      <p class="defn" id="eraDef"></p>
+      <div id="roomSvg"></div>
+      <p class="kicker" style="margin-top:8px">Tap or press Enter on objects in the room to inspect them.</p>
+    </div>
+    <div class="card log">
+      <h3>Artefact log</h3>
+      <div class="meter" aria-hidden="true"><i id="artMeter"></i></div>
+      <p class="kicker" id="artCount" style="margin-top:6px"></p>
+      <div class="fact fb" id="artFact" role="status" aria-live="polite">Select an object in the room.</div>
+      <ul class="legendlist" id="artList"></ul>
+      <p style="margin-top:10px"><b>User's role:</b> <span id="eraRole"></span></p>
+    </div>
+  </div>
+
+  <div class="sitegrid">
+    <div class="card">
+      <div class="kicker">Build-a-website through the ages</div>
+      <h3 id="siteTitle" style="font-size:1.1rem;margin:4px 0 8px"></h3>
+      <div class="mock" id="siteMock"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:1.05rem">Which features belong to this era?</h3>
+      <p class="hint" style="margin:4px 0 0;color:var(--muted)">Select every feature the guest house could really have used in this era, then check.</p>
+      <div class="chips" id="siteChips" role="group" aria-label="Website features"></div>
+      <button class="btn primary" id="siteCheck">Check my website</button>
+      <div class="fb" id="siteFb" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="card chal" id="chal"></div>
+</section>
+
+<!-- BRIDGE THE GAP -->
+<section class="panel" id="p-bg" role="tabpanel" aria-labelledby="t-bg" hidden>
+  <div class="card" style="margin-bottom:16px">
+    <div class="bar" style="justify-content:space-between">
+      <div><div class="kicker">Connectivity simulation</div><h2 style="font-size:1.35rem">Bridge the Gap: Coralia (an island)</h2></div>
+      <div class="bar"><span class="pill" id="bRound">Round 1 of 5</span><span class="pill" id="bBudget">$500k</span><span class="pill" id="bPct">0% connected</span></div>
+    </div>
+    <p style="margin:8px 0 0;max-width:80ch">You are the island's digital inclusion officer. Spend your budget on solutions, village by village. A barrier card arrives each round, and hurricane season comes last. Your goal is the highest percentage of people who are <b>connected and included</b>.</p>
+  </div>
+  <div class="bgrid">
+    <div class="grid">
+      <div class="card map"><div id="mapSvg"></div>
+        <p class="kicker" style="margin-top:6px">Select a village on the map or in the list below. Tags: F fibre, T tower, S satellite, W Wi-Fi hub, D devices, L literacy classes.</p>
+        <div class="row" id="vilBtns" role="group" aria-label="Choose a village"></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1.05rem">Transparent scoring</h3>
+        <p style="margin:4px 0 8px;font-size:.92rem">Connected and included = <b>people</b> × <b>network</b> × <b>affordability</b> × <b>skills</b> × <b>inclusion</b>. Inclusion = 0.85 + 0.15 × accessibility (about 15% of people have a disability).</p>
+        <div class="tablewrap"><table class="score" id="scoreTbl"></table></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div id="bCard"></div>
+      <div class="card" id="vilPanel"></div>
+      <div class="card">
+        <h3 style="font-size:1.05rem">Island-wide</h3>
+        <div class="acts" id="islandActs"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn amber" id="endRound">End round</button>
+          <button class="btn" id="restartBG">Restart</button>
+        </div>
+        <div class="fb" id="bFb" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="debrief" hidden style="margin-top:16px"></div>
+</section>
+
+<!-- QUIZ -->
+<section class="panel" id="p-qz" role="tabpanel" aria-labelledby="t-qz" hidden>
+  <div class="card quiz" id="quiz"></div>
+</section>
+
+<!-- REVISION SHEET -->
+<section class="panel" id="p-sheet" role="tabpanel" aria-labelledby="t-sheet" hidden>
+  <div class="card sheet">
+    <div class="row noprint" style="justify-content:flex-end"><button class="btn primary" id="printBtn">Print revision sheet</button></div>
+    <h2>Evolution of the Web: revision sheet</h2>
+    <p style="color:var(--muted);margin-top:2px">CAPE Digital Media Unit 2 · Module 2 · Evolution of digital media · Name: ____________________</p>
+    <h3>1. From analogue to digital</h3>
+    <p><b>Analogue</b> media store information as continuous physical signals (vinyl grooves, magnetic tape, film, print). Copies lose quality; distribution is physical or broadcast. <b>Digital</b> media store information as binary numbers: perfect copies, easy editing, compression and instant global sharing.</p>
+    <p><b>Timeline:</b> 1970s analogue print, radio, TV, vinyl, cassette · 1980s PCs, CD, cable TV and satellite dishes on the islands · 1990s World Wide Web, dial-up, Web 1.0 · 2000s broadband, social media, smartphones, Web 2.0 · 2010s 4G, apps, streaming, cloud, data analytics, Web 3.0 · 2020s 5G, generative AI, IoT, Web 4.0 ideas · 2030+ Web 5.0 (emerging).</p>
+    <h3>2. The five Web generations</h3>
+    <div class="tablewrap"><table>
+      <tr><th>Generation</th><th>Definition</th><th>Key technologies</th><th>Example</th><th>User's role</th><th>Status</th></tr>
+      <tr><td><b>Web 1.0</b> Read-only</td><td>Static pages with no user interaction or content creation</td><td>HTML, hyperlinks, dial-up, email</td><td>A guest house page with a phone number</td><td>Reader</td><td>About 1991 to 2004</td></tr>
+      <tr><td><b>Web 2.0</b> Social</td><td>Interactive: social media, user-generated content, two-way communication</td><td>Broadband, AJAX, CMS, smartphones</td><td>Guest reviews; Instagram page</td><td>Participant (prosumer)</td><td>About 2004 onward</td></tr>
+      <tr><td><b>Web 3.0</b> Semantic</td><td>AI-based semantic web: personalised, intelligent, machine-readable (and decentralised)</td><td>AI, structured data, knowledge graphs, blockchain</td><td>AI assistant recommends a room</td><td>Co-creator</td><td>2010s onward, partly here</td></tr>
+      <tr><td><b>Web 4.0</b> Symbiotic</td><td>Intelligent connected systems integrating IoT, AI and real-time data</td><td>IoT, 5G, AI agents, AR, wearables</td><td>Smart room adjusts itself</td><td>Partner</td><td>Emerging</td></tr>
+      <tr><td><b>Web 5.0</b> Emotional</td><td>The sensory and emotional web: systems respond to emotions and sensory input</td><td>Emotion AI, biometrics, haptics, BCI</td><td>Welcome adapts to your mood</td><td>Emotional partner</td><td>Partly speculative</td></tr>
+    </table></div>
+    <h3>3. Enabling technologies</h3>
+    <ul>
+      <li><b>Broadband:</b> always-on, fast connections made video, streaming and cloud normal (made Web 2.0 possible).</li>
+      <li><b>Mobile devices:</b> a studio and broadcaster in every pocket; the Caribbean went "mobile first".</li>
+      <li><b>Data analytics:</b> evidence-based decisions and personalised feeds (drives Web 3.0).</li>
+      <li><b>AI in content creation:</b> generative media, automated editing, captions and translation; raises originality and deepfake concerns.</li>
+    </ul>
+    <h3>4. Accessibility and connectivity</h3>
+    <div class="two">
+      <div><b>Enablers</b><ul><li>Internet access: fibre, 4G/5G, community Wi-Fi</li><li>Lower device cost and subsidies</li><li>Digital literacy classes</li><li>Assistive technology: captions, alt text, screen readers</li><li>Resilience: buried fibre, redundant cables, satellite back-up</li></ul></div>
+      <div><b>Barriers</b><ul><li>Cost of devices and data</li><li>Geography: small islands, rural areas, offshore cays, few submarine cables</li><li>Disability: inaccessible sites and media</li><li>Infrastructure: power cuts, hurricane damage</li><li>Also: language, education, age, socio-economic status</li></ul></div>
+    </div>
+    <h3>5. Exam reminders</h3>
+    <ul>
+      <li>User-role chain: reader → participant → co-creator → partner.</li>
+      <li>Call Web 4.0 "emerging" and Web 5.0 "partly speculative".</li>
+      <li>Pair each barrier with the enabler that answers it, and give a Caribbean example.</li>
+    </ul>
+    <p style="color:var(--muted);font-size:.85rem;margin-top:12px">Web Time Machine · Digital Media Unit 2 · Kester Small</p>
+  </div>
+</section>
+
+</div>
+</main>
+<footer><div class="wrap">Web Time Machine · Digital Media Unit 2 · Kester Small</div></footer>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const live=msg=>{const l=$('#live');l.textContent='';setTimeout(()=>{l.textContent=msg},30)};
+const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- Tabs ---------------- */
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function showTab(t,focus){tabs.forEach(b=>{const on=b===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;document.getElementById(b.getAttribute('aria-controls')).hidden=!on});if(focus)t.focus()}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>showTab(t));t.addEventListener('keydown',e=>{let j=null;if(e.key==='ArrowRight')j=(i+1)%tabs.length;if(e.key==='ArrowLeft')j=(i-1+tabs.length)%tabs.length;if(e.key==='Home')j=0;if(e.key==='End')j=tabs.length-1;if(j!==null){e.preventDefault();showTab(tabs[j],true)}})});
+$('#printBtn').addEventListener('click',()=>window.print());
+
+/* ---------------- Room drawings ---------------- */
+const A=(id,label,x,y,w,h,body)=>`<g class="art" data-id="${id}" tabindex="0" role="button" aria-label="${esc(label)}"><rect class="hit" x="${x}" y="${y}" width="${w}" height="${h}" rx="10"/>${body}<g class="tick"><circle cx="${x+w-8}" cy="${y+8}" r="9" fill="#2e9e5b"/><path d="M${x+w-12} ${y+8}l3 3 6-6" stroke="#fff" stroke-width="2.4" fill="none"/></g></g>`;
+const T=(x,y,s,txt,fill,extra)=>`<text x="${x}" y="${y}" font-size="${s}" fill="${fill||'#14203a'}" font-family="system-ui,Segoe UI,Arial,sans-serif" ${extra||''}>${txt}</text>`;
+
+function room0(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A 1978 living room in the Caribbean"><rect width="640" height="360" fill="#7a4a24"/>`;
+ for(let i=0;i<17;i++)s+=`<rect x="${i*40}" y="0" width="3" height="270" fill="#673d1c"/>`;
+ s+=`<rect y="270" width="640" height="90" fill="#c4732a"/>`;for(let i=0;i<60;i++)s+=`<circle cx="${(i*53)%640}" cy="${280+(i*29)%75}" r="2" fill="#a95f1f"/>`;
+ s+=`<rect x="430" y="36" width="170" height="120" fill="#8fd3f0" stroke="#f1e3c8" stroke-width="7"/><rect x="433" y="118" width="164" height="35" fill="#2a8bc4"/><circle cx="560" cy="66" r="13" fill="#ffd34d"/><path d="M470 156 C474 120 480 100 486 86" stroke="#6b4a2a" stroke-width="5" fill="none"/><path d="M486 86 q-26 -6 -38 10 M486 86 q22 -14 40 -4 M486 86 q-6 -22 -24 -26 M486 86 q20 6 26 24" stroke="#2f8f3f" stroke-width="6" fill="none" stroke-linecap="round"/><line x1="515" y1="36" x2="515" y2="156" stroke="#f1e3c8" stroke-width="5"/>`;
+ s+=A('tv','CRT television',30,84,222,224,`<line x1="120" y1="150" x2="88" y2="96" stroke="#222" stroke-width="2.5"/><line x1="150" y1="150" x2="180" y2="96" stroke="#222" stroke-width="2.5"/><circle cx="88" cy="96" r="4" fill="#bbb"/><circle cx="180" cy="96" r="4" fill="#bbb"/><rect x="40" y="150" width="200" height="140" rx="10" fill="#5b3518" stroke="#3e230e" stroke-width="3"/><rect x="56" y="166" width="136" height="104" rx="22" fill="#33453d" stroke="#1d1d1d" stroke-width="5"/><path d="M70 180 q30 -8 60 0" stroke="#7fa596" stroke-width="5" fill="none" opacity=".6"/><circle cx="214" cy="188" r="9" fill="#d7c39a"/><circle cx="214" cy="216" r="9" fill="#d7c39a"/>${[0,1,2,3].map(i=>`<rect x="203" y="${236+i*8}" width="22" height="3" fill="#2a1608"/>`).join('')}<rect x="56" y="290" width="12" height="14" fill="#3e230e"/><rect x="212" y="290" width="12" height="14" fill="#3e230e"/>`);
+ s+=`<rect x="270" y="112" width="130" height="8" fill="#4a2a12"/>`;
+ s+=A('radio','Transistor radio',276,40,118,76,`<line x1="370" y1="70" x2="392" y2="44" stroke="#999" stroke-width="2"/><rect x="284" y="68" width="96" height="44" rx="8" fill="#d8cfb6" stroke="#8c836c" stroke-width="2"/><circle cx="308" cy="90" r="14" fill="#6b6555"/>${[0,1,2].map(i=>`<circle cx="308" cy="90" r="${4+i*4}" fill="none" stroke="#8c836c"/>`).join('')}<rect x="330" y="80" width="40" height="10" rx="3" fill="#f5eedb" stroke="#8c836c"/><line x1="346" y1="80" x2="346" y2="90" stroke="#c62"/><circle cx="360" cy="102" r="4" fill="#6b6555"/>`);
+ s+=`<rect x="270" y="222" width="126" height="8" fill="#4a2a12"/><rect x="278" y="230" width="6" height="50" fill="#4a2a12"/><rect x="382" y="230" width="6" height="50" fill="#4a2a12"/>`;
+ s+=A('vinyl','Record player',266,160,134,66,`<rect x="276" y="186" width="114" height="36" rx="4" fill="#3b2a1e"/><ellipse cx="322" cy="188" rx="40" ry="11" fill="#111"/><ellipse cx="322" cy="188" rx="26" ry="7" fill="none" stroke="#333"/><ellipse cx="322" cy="188" rx="8" ry="3" fill="#d9513a"/><path d="M378 178 L366 186 L340 190" stroke="#bbb" stroke-width="3" fill="none"/><circle cx="378" cy="178" r="4" fill="#ddd"/>`);
+ s+=`<rect x="400" y="252" width="222" height="10" fill="#4a2a12"/><rect x="410" y="262" width="7" height="40" fill="#4a2a12"/><rect x="604" y="262" width="7" height="40" fill="#4a2a12"/>`;
+ s+=A('paper','Newspaper',404,214,90,40,`<path d="M410 250 L420 222 L488 222 L478 250 Z" fill="#f2efe6" stroke="#bdb6a3"/>${T(424,233,7.5,'ISLAND NEWS','#222','font-weight="800"')}${[0,1,2].map(i=>`<line x1="${420-i*2}" y1="${238+i*4}" x2="${474-i*2}" y2="${238+i*4}" stroke="#999"/>`).join('')}`);
+ s+=A('anach','A shiny rectangle on the table',498,206,34,48,`<rect x="504" y="214" width="22" height="36" rx="4" fill="#111" stroke="#555"/><rect x="507" y="219" width="16" height="26" rx="2" fill="#5ab0ff"/><rect x="509" y="222" width="5" height="5" fill="#ffd34d"/><rect x="516" y="222" width="5" height="5" fill="#ff6b6b"/><rect x="509" y="229" width="5" height="5" fill="#7be07b"/>`);
+ s+=A('phone','Rotary telephone',538,206,74,48,`<path d="M548 250 L554 228 L596 228 L602 250 Z" fill="#c8322b"/><path d="M546 228 q29 -22 58 0" stroke="#a82822" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="575" cy="239" r="9" fill="#f2efe6"/><circle cx="575" cy="239" r="3" fill="#c8322b"/>`);
+ return s+`</svg>`}
+
+function room1(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A 1998 computer desk"><rect width="640" height="360" fill="#e8e2cf"/><rect y="262" width="640" height="98" fill="#9c8f73"/>`;
+ s+=`<rect x="470" y="30" width="80" height="70" fill="#fff" stroke="#b9b29e"/>${T(486,48,10,'JUNE','#b8352a','font-weight="700"')}${T(484,78,22,'1998','#14203a','font-weight="800"')}`;
+ s+=`<rect x="20" y="250" width="600" height="14" fill="#b48a5a"/><rect x="34" y="264" width="10" height="90" fill="#8d6a43"/><rect x="596" y="264" width="10" height="90" fill="#8d6a43"/>`;
+ s+=`<rect x="146" y="56" width="268" height="186" rx="14" fill="#d9d2bd" stroke="#b5ad95" stroke-width="2"/><rect x="250" y="236" width="60" height="16" fill="#cfc7b0"/><rect x="164" y="74" width="232" height="152" fill="#c0c0c0"/><rect x="164" y="74" width="232" height="13" fill="#000080"/>${T(170,84,8,'Sea Grape Guest House - Web Browser 3.0','#fff')}<rect x="168" y="91" width="224" height="132" fill="#fff"/>`;
+ s+=A('page','Static web page with hyperlinks',166,90,152,96,`${T(174,106,11,'Welcome to Sea Grape!','#000','font-family="Times New Roman,serif" font-weight="700"')}<line x1="174" y1="112" x2="300" y2="112" stroke="#888"/>${['Our rooms','Rates','How to find us','Links'].map((t,i)=>T(178,126+i*13,9.5,t,'#0000ee','text-decoration="underline" font-family="Times New Roman,serif"')).join('')}<rect x="174" y="172" width="120" height="10" fill="#ffd400"/>${[0,1,2,3,4,5,6,7].map(i=>`<path d="M${176+i*15} 182 l8 -10 h5 l-8 10z" fill="#111"/>`).join('')}`);
+ s+=A('counter','Visitor hit counter and guestbook',318,150,76,40,`${T(322,162,7.5,'Visitors:','#000','font-family="Times New Roman,serif"')}<rect x="322" y="166" width="66" height="16" fill="#000"/>${T(326,178,11,'000127','#39ff14','font-family="Courier New,monospace" font-weight="700"')}`);
+ s+=A('email','Email me link',320,96,74,48,`<rect x="330" y="104" width="34" height="22" fill="#fff" stroke="#000"/><path d="M330 104 l17 12 l17 -12" fill="none" stroke="#000"/>${T(326,138,9,'Email us!','#0000ee','text-decoration="underline" font-family="Times New Roman,serif"')}`);
+ s+=`<rect x="190" y="254" width="180" height="14" rx="3" fill="#e2dccb" stroke="#b5ad95"/>`;
+ s+=A('modem','Dial-up modem',430,206,116,50,`<rect x="440" y="224" width="96" height="26" rx="4" fill="#d9d2bd" stroke="#b5ad95"/>${[0,1,2,3,4].map(i=>`<circle cx="${452+i*12}" cy="237" r="3" fill="${i%2?'#39ff14':'#ff3b3b'}" class="pulse"/>`).join('')}${T(442,220,9,'56k','#14203a','font-weight="700"')}`);
+ s+=`<path d="M546 238 q30 0 40 -60 t30 -40" stroke="#555" stroke-width="2" fill="none"/>`;
+ s+=A('cdrom','CD-ROM encyclopaedia',40,180,100,72,`<rect x="52" y="196" width="76" height="52" fill="#dfe6ee" stroke="#8e9aaa"/><circle cx="90" cy="222" r="20" fill="#c9d4e0" stroke="#fff" stroke-width="2"/><circle cx="90" cy="222" r="5" fill="#fff"/>${T(56,208,8,'ENCYCLOPAEDIA','#14203a','font-weight="700"')}`);
+ s+=`<rect x="560" y="140" width="56" height="110" rx="4" fill="#d9d2bd" stroke="#b5ad95"/><rect x="568" y="156" width="40" height="5" fill="#8f8873"/><rect x="568" y="170" width="40" height="5" fill="#8f8873"/>`;
+ return s+`</svg>`}
+
+function room2(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A glossy 2010 media room"><defs><linearGradient id="g2a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8f3ff"/><stop offset="1" stop-color="#ffffff"/></linearGradient><linearGradient id="g2b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5aa9ff"/><stop offset=".5" stop-color="#2f7de0"/><stop offset=".5" stop-color="#1f66c8"/><stop offset="1" stop-color="#2f7de0"/></linearGradient><linearGradient id="g2c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ae66e"/><stop offset=".5" stop-color="#5cc23a"/><stop offset=".5" stop-color="#47a828"/><stop offset="1" stop-color="#5cc23a"/></linearGradient><linearGradient id="g2d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a7a"/><stop offset=".5" stop-color="#e52d2d"/><stop offset="1" stop-color="#c41818"/></linearGradient></defs><rect width="640" height="360" fill="url(#g2a)"/><rect y="290" width="640" height="70" fill="#eaf6fb"/><ellipse cx="320" cy="300" rx="200" ry="10" fill="#cfe7f2"/>`;
+ s+=`<path d="M560 40 l10 22 24 3 -18 16 5 24 -21 -12 -21 12 5 -24 -18 -16 24 -3z" fill="#ff9f1c"/>${T(556,78,11,'BETA','#fff','font-weight="800"')}`;
+ s+=A('feed','Social media feed with likes and comments',160,40,300,232,`<rect x="168" y="48" width="284" height="184" rx="12" fill="#222"/><rect x="178" y="58" width="264" height="164" fill="#fff"/><rect x="178" y="58" width="264" height="24" fill="url(#g2b)"/>${T(186,75,12,'SeaGrape Social','#fff','font-weight="800"')}<circle cx="196" cy="102" r="10" fill="#ffb4a2"/>${T(212,100,9,'Ana posted a photo','#14203a','font-weight="700"')}${T(212,112,8,'Best breakfast in Grand Anse!','#56607a')}<rect x="190" y="120" width="120" height="56" rx="6" fill="#7ec8e3"/><path d="M190 176 l40 -30 30 20 20 -12 30 22z" fill="#2a8bc4"/><circle cx="290" cy="134" r="8" fill="#ffd34d"/><rect x="320" y="122" width="54" height="20" rx="10" fill="url(#g2c)"/>${T(332,136,10,'Like','#fff','font-weight="700"')}<rect x="380" y="122" width="54" height="20" rx="10" fill="#eef2f7" stroke="#c9d0e0"/>${T(386,136,9.5,'Share','#14203a','font-weight="700"')}${T(322,160,8.5,'32 comments','#2f7de0')}${T(322,172,8.5,'12 shares','#2f7de0')}<rect x="190" y="186" width="244" height="26" rx="6" fill="#f2f6fb"/>${T(198,203,8.5,'Kai: Booking for Carnival!','#14203a')}<path d="M140 248 h340 l20 24 h-380z" fill="#c9ced8"/><rect x="120" y="270" width="380" height="6" rx="3" fill="#aab1bf"/>`);
+ s+=A('video','Video-sharing site',26,64,124,96,`<rect x="34" y="72" width="108" height="78" rx="10" fill="#fff" stroke="#c9d0e0"/><rect x="42" y="80" width="92" height="50" rx="6" fill="#222"/><path d="M80 94 l18 11 -18 11z" fill="url(#g2d)"/>${T(44,143,8.5,'1.2M views','#56607a')}`);
+ s+=A('wiki','Wiki and blog',26,180,124,90,`<rect x="34" y="188" width="108" height="74" rx="10" fill="#fff" stroke="#c9d0e0"/>${T(44,210,18,'W','#14203a','font-family="Times New Roman,serif" font-weight="700"')}${T(70,206,8,'Island tips','#14203a','font-weight="700"')}${[0,1,2].map(i=>`<rect x="44" y="${220+i*10}" width="${86-i*14}" height="4" fill="#c9d0e0"/>`).join('')}<rect x="104" y="244" width="30" height="12" rx="6" fill="url(#g2b)"/>${T(110,253,7.5,'Edit','#fff','font-weight="700"')}`);
+ s+=A('phone','Smartphone with apps',474,96,82,150,`<rect x="484" y="104" width="62" height="118" rx="12" fill="#111"/><rect x="489" y="114" width="52" height="94" fill="#1b2a44"/>${[0,1,2,3,4,5,6,7,8].map(i=>`<rect x="${493+(i%3)*16}" y="${119+Math.floor(i/3)*16}" width="12" height="12" rx="3" fill="${['#ff5f57','#ffbd2e','#28c840','#3b8fe0','#a76cf0','#ff7ab6','#26c6da','#ff9f1c','#7be07b'][i]}"/>`).join('')}<circle cx="515" cy="214" r="4" fill="#333"/>`);
+ s+=A('router','Wi-Fi broadband router',550,214,84,70,`<rect x="560" y="256" width="66" height="20" rx="5" fill="#fff" stroke="#9aa3bf"/><line x1="572" y1="256" x2="566" y2="232" stroke="#9aa3bf" stroke-width="3"/><line x1="614" y1="256" x2="620" y2="232" stroke="#9aa3bf" stroke-width="3"/><path d="M582 240 q11 -10 22 0 M576 232 q17 -16 34 0" stroke="#2f7de0" stroke-width="2.5" fill="none"/><circle cx="572" cy="266" r="3" fill="#28c840"/><circle cx="582" cy="266" r="3" fill="#28c840"/>`);
+ s+=`<path d="M472 54 h70 a8 8 0 0 1 8 8 v18 a8 8 0 0 1 -8 8 h-50 l-12 10 v-10 h-8 a8 8 0 0 1 -8 -8 v-18 a8 8 0 0 1 8 -8z" fill="#fff" stroke="#c9d0e0"/>${T(476,74,9,'Great view!','#2f7de0','font-weight="700"')}`;
+ return s+`</svg>`}
+
+function room3(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A clean 2023 AI assistant interface"><rect width="640" height="360" fill="#f5f7fb"/><circle cx="560" cy="40" r="120" fill="#eaf0ff"/><circle cx="60" cy="330" r="110" fill="#eafaf6"/>`;
+ s+=`<rect x="128" y="30" width="388" height="292" rx="20" fill="#fff" stroke="#e1e5ef" stroke-width="2"/>${T(150,58,12,'Assistant','#14203a','font-weight="700"')}<circle cx="494" cy="54" r="6" fill="#d7dcea"/>`;
+ s+=A('assistant','AI assistant that understands everyday language',140,66,364,146,`<rect x="250" y="74" width="244" height="40" rx="14" fill="#2a5bd7"/>${T(262,90,9.5,'Quiet room near the beach,','#fff')}${T(262,104,9.5,'under $150, in March?','#fff')}<path d="M152 132 l5 -10 5 10 10 5 -10 5 -5 10 -5 -10 -10 -5z" fill="#7a4cc4"/><rect x="176" y="122" width="300" height="82" rx="14" fill="#f2f4fa"/>${T(188,140,9.5,'I found 3 matches. Best fit:','#14203a')}<rect x="188" y="148" width="276" height="46" rx="10" fill="#fff" stroke="#e1e5ef"/>${T(198,166,10,'Sea Grape Guest House','#14203a','font-weight="700"')}${T(198,182,9,'Sea view · $120 a night · rated 4.7','#56607a')}`);
+ s+=A('recs','Personalised recommendations',140,218,364,96,`${T(152,236,9,'Because you liked quiet beaches','#56607a','font-weight="600"')}${[0,1,2].map(i=>`<rect x="${152+i*116}" y="244" width="106" height="62" rx="12" fill="${['#e3f4ef','#eef2ff','#fff3df'][i]}"/><circle cx="${172+i*116}" cy="264" r="9" fill="${['#178f78','#2a5bd7','#c98a0b'][i]}"/>${T(158+i*116,292,9,['Snorkel trip','Sunset sail','Local lunch'][i],'#14203a','font-weight="600"')}`).join('')}`);
+ s+=A('graph','Knowledge graph of linked data',10,60,112,170,`<line x1="64" y1="92" x2="34" y2="150" stroke="#9aa3bf"/><line x1="64" y1="92" x2="96" y2="150" stroke="#9aa3bf"/><line x1="34" y1="150" x2="64" y2="206" stroke="#9aa3bf"/><line x1="96" y1="150" x2="64" y2="206" stroke="#9aa3bf"/>${[[64,92,'Guest house','#2a5bd7'],[34,150,'Beach','#178f78'],[96,150,'Price','#c98a0b'],[64,206,'Grand Anse','#7a4cc4']].map(n=>`<circle cx="${n[0]}" cy="${n[1]}" r="11" fill="${n[3]}"/>${T(n[0]-28,n[1]+22,8,n[2],'#14203a','font-weight="600"')}`).join('')}`);
+ s+=A('schema','Structured data tag',522,48,112,96,`<rect x="530" y="58" width="96" height="78" rx="10" fill="#14203a"/>${T(538,78,8,'"@type":','#ffb22e','font-family="Courier New,monospace"')}${T(546,92,8,'"Hotel",','#7be07b','font-family="Courier New,monospace"')}${T(538,108,8,'"price":','#ffb22e','font-family="Courier New,monospace"')}${T(546,122,8,'"120 USD"','#7be07b','font-family="Courier New,monospace"')}`);
+ s+=A('wallet','Blockchain wallet',522,190,112,104,`${[0,1,2].map(i=>`<rect x="${532+i*32}" y="${210+(i%2)*14}" width="26" height="26" rx="4" fill="${['#2a5bd7','#7a4cc4','#178f78'][i]}"/>`).join('')}<line x1="558" y1="226" x2="564" y2="230" stroke="#14203a" stroke-width="2"/><line x1="590" y1="234" x2="596" y2="230" stroke="#14203a" stroke-width="2"/>${T(530,272,9,'Decentralised','#14203a','font-weight="700"')}${T(530,284,8.5,'ledger','#56607a')}`);
+ return s+`</svg>`}
+
+function room4(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A smart, connected room in the 2030s"><rect width="640" height="360" fill="#0d1b2a"/><rect y="280" width="640" height="80" fill="#13263a"/>`;
+ s+=`<rect x="400" y="30" width="210" height="130" rx="6" fill="#071322" stroke="#2a4a6a" stroke-width="4"/><circle cx="440" cy="62" r="2" fill="#fff"/><circle cx="520" cy="50" r="1.6" fill="#fff"/><circle cx="580" cy="74" r="2" fill="#fff"/><rect x="404" y="120" width="202" height="36" fill="#0b3550"/>`;
+ const hub=[320,160];const link=(x,y)=>`<line x1="${hub[0]}" y1="${hub[1]}" x2="${x}" y2="${y}" stroke="#34e0ff" stroke-width="1.5" stroke-dasharray="4 5" opacity=".7"/>`;
+ s+=link(110,92)+link(120,232)+link(500,128)+link(470,250)+link(250,250);
+ s+=`<circle cx="${hub[0]}" cy="${hub[1]}" r="10" fill="#34e0ff" class="pulse"/><circle cx="${hub[0]}" cy="${hub[1]}" r="18" fill="none" stroke="#34e0ff" opacity=".5"/>`;
+ s+=A('agent','Smart speaker AI agent',70,150,100,110,`<rect x="100" y="182" width="40" height="64" rx="18" fill="#1f3550" stroke="#34e0ff"/><ellipse cx="120" cy="184" rx="20" ry="5" fill="#34e0ff" class="pulse"/>${T(76,170,9,'"Taxi moved"','#9fefff','font-weight="600"')}`);
+ s+=A('thermo','Smart thermostat',70,48,90,90,`<circle cx="110" cy="92" r="30" fill="#14304a" stroke="#34e0ff" stroke-width="3"/>${T(94,98,16,'24°','#fff','font-weight="700"')}${T(92,114,7.5,'ECO MODE','#9fefff')}`);
+ s+=A('buoy','Sea sensor buoy sending real-time data',440,84,120,76,`<path d="M486 140 l14 -28 14 28z" fill="#ff9f1c"/><rect x="497" y="100" width="6" height="14" fill="#ccc"/><path d="M488 96 q12 -12 24 0 M482 88 q18 -18 36 0" stroke="#34e0ff" stroke-width="2" fill="none" class="pulse"/>${T(448,152,8,'Water 28°C · waves low','#9fefff')}`);
+ s+=`<rect x="200" y="262" width="330" height="10" fill="#2a4a6a"/>`;
+ s+=A('watch','Smartwatch wearable',212,200,84,64,`<rect x="238" y="214" width="34" height="40" rx="9" fill="#111" stroke="#34e0ff"/><rect x="246" y="206" width="18" height="8" fill="#333"/><rect x="246" y="254" width="18" height="8" fill="#333"/><path d="M242 236 h6 l3 -8 4 14 3 -6 h10" stroke="#ff5f8a" stroke-width="2" fill="none"/>`);
+ s+=A('ar','Augmented-reality glasses',420,196,110,70,`<rect x="426" y="202" width="96" height="22" rx="6" fill="#123" stroke="#34e0ff"/>${T(432,217,8,'Taxi 15:20 · on time','#9fefff')}<circle cx="452" cy="246" r="12" fill="none" stroke="#9fb6cc" stroke-width="4"/><circle cx="490" cy="246" r="12" fill="none" stroke="#9fb6cc" stroke-width="4"/><line x1="464" y1="246" x2="478" y2="246" stroke="#9fb6cc" stroke-width="3"/>`);
+ s+=A('anach','A boxy machine with paper',552,204,84,76,`<rect x="560" y="234" width="70" height="34" rx="4" fill="#d9d2bd"/><rect x="572" y="212" width="46" height="26" fill="#fff" stroke="#999"/>${[0,1,2].map(i=>`<line x1="576" y1="${219+i*6}" x2="612" y2="${219+i*6}" stroke="#bbb"/>`).join('')}<rect x="566" y="244" width="24" height="16" fill="#8f8873"/>`);
+ s+=`<rect x="208" y="272" width="8" height="40" fill="#2a4a6a"/><rect x="514" y="272" width="8" height="40" fill="#2a4a6a"/><circle cx="320" cy="20" r="8" fill="#ffe08a" class="pulse"/>`;
+ return s+`</svg>`}
+
+function room5(){let s=`<svg viewBox="0 0 640 360" role="group" aria-label="A sensory, emotion-aware space in the future"><defs><radialGradient id="g5a" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#ffd6ec"/><stop offset=".5" stop-color="#b06ab3"/><stop offset="1" stop-color="#2b1055"/></radialGradient><radialGradient id="g5b"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="640" height="360" fill="url(#g5a)"/>`;
+ for(let i=0;i<4;i++)s+=`<path d="M0 ${250+i*22} C160 ${220+i*22} 320 ${290+i*22} 640 ${240+i*22}" stroke="#fff" stroke-opacity="${.18+i*.06}" stroke-width="2" fill="none"/>`;
+ s+=A('aura','Emotion-aware interface',220,40,200,250,`<circle cx="320" cy="140" r="96" fill="url(#g5b)" class="pulse"/><circle cx="320" cy="140" r="70" fill="none" stroke="#fff" stroke-opacity=".6" stroke-dasharray="3 6"/><circle cx="320" cy="118" r="30" fill="#2b1055" opacity=".85"/><path d="M262 250 q0 -70 58 -70 q58 0 58 70z" fill="#2b1055" opacity=".85"/><rect x="282" y="56" width="76" height="20" rx="10" fill="#fff" fill-opacity=".85"/>${T(296,70,10,'mood: calm','#5a2d99','font-weight="700"')}`);
+ s+=A('bci','Brain-computer headband',284,82,72,30,`<path d="M290 104 q30 -26 60 0" stroke="#9fefff" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="320" cy="92" r="4" fill="#34e0ff"/>`);
+ s+=A('band','Biometric wristband',420,170,110,90,`<rect x="440" y="196" width="70" height="36" rx="18" fill="#fff" fill-opacity=".9"/><path d="M450 214 h10 l5 -10 6 20 5 -12 h22" stroke="#e5397a" stroke-width="2.5" fill="none"/>${T(444,250,9,'heart rate · stress','#fff','font-weight="600"')}`);
+ s+=A('glove','Haptic glove',100,170,110,110,`<path d="M130 266 v-46 q0 -8 7 -8 v-26 q0 -7 7 -7 q7 0 7 7 v20 v-30 q0 -7 7 -7 q7 0 7 7 v30 v-24 q0 -7 7 -7 q7 0 7 7 v28 l8 -10 q7 -6 12 0 q4 6 -2 14 l-20 32 v20z" fill="#fff" fill-opacity=".9" stroke="#7a4cc4" stroke-width="2"/>${[0,1,2].map(i=>`<circle cx="${144+i*14}" cy="196" r="3" fill="#34e0ff"/>`).join('')}${T(118,282,9,'feel the texture','#fff','font-weight="600"')}`);
+ s+=A('consent','Consent and privacy controls',480,40,130,100,`<path d="M545 52 l40 14 v24 q0 30 -40 44 q-40 -14 -40 -44 v-24z" fill="#fff" fill-opacity=".9" stroke="#5a2d99" stroke-width="2"/><rect x="533" y="84" width="24" height="20" rx="3" fill="#5a2d99"/><path d="M538 84 v-6 a7 7 0 0 1 14 0 v6" stroke="#5a2d99" stroke-width="3" fill="none"/>${T(500,152,9,'Emotion data: you decide','#fff','font-weight="700"')}`);
+ return s+`</svg>`}
+
+/* ---------------- Era data ---------------- */
+const ERAS=[
+{key:'Analogue era',short:'Analogue',dest:'1978',years:'Before about 1990',status:'',role:'Audience: you receive what broadcasters and publishers send.',
+ def:'<b>Analogue media</b> store information as continuous physical signals: grooves in vinyl, magnetic tape, film and ink on paper. A few broadcasters and publishers send; everyone else receives.',
+ draw:room0,
+ arts:{tv:['CRT television','A cathode-ray tube TV picked up analogue broadcast signals through an aerial. Programmes came at fixed times chosen by the station. On many Caribbean islands, cable TV and satellite dishes in the 1980s brought overseas channels into homes.'],
+  radio:['Transistor radio','Radio was the fastest way to reach Caribbean audiences: news, music, call-in shows and hurricane warnings. It still matters when power and the Internet fail.'],
+  vinyl:['Record player','Vinyl stores sound as a continuous groove, an analogue copy of the sound wave. Each copy of a copy loses quality, unlike a digital file.'],
+  paper:['Newspaper','Print is one-to-many and one-way. A reader could only reply by writing a letter to the editor and waiting days for it to appear.'],
+  phone:['Rotary telephone','A landline carried your voice as an analogue electrical signal over copper wire. The same copper lines later carried dial-up Internet.']},
+ anach:['Smartphone','A smartphone! These only became mainstream after 2007. It does not belong in 1978.'],
+ site:{title:'Sea Grape Guest House, 1980s style (no website yet)',
+  mock:`<div style="background:#f6efdc;padding:16px;font-family:Georgia,serif;color:#3b2a16;min-height:220px"><div style="border:3px double #8b5a2b;padding:12px;text-align:center"><div style="font-size:.75rem;letter-spacing:.2em">PRINTED BROCHURE</div><div style="font-size:1.35rem;font-weight:700;margin:4px 0">SEA GRAPE GUEST HOUSE</div><div>Grand Anse · Grenada</div><div style="margin:8px 0">Clean rooms · Ocean breeze · Home cooking</div><div style="font-size:.9rem">To book: telephone, write or send a fax.<br>Look for us in the telephone directory.</div></div><p style="font-size:.85rem;margin-top:10px">Radio: "Sea Grape, your home by the bay!" (morning show advert)</p></div>`,
+  feats:[['A printed brochure at the airport',1],['An advert in the telephone directory',1],['Bookings by telephone, letter or fax',1],['A radio advert on the morning show',1],['Online guest reviews',0],['A booking chatbot',0],['An email newsletter',0],['An Instagram page',0]]},
+ ch:{type:'spot',title:'Spot the anachronism',prompt:'One object in this 1978 room does not belong to the analogue era. Start the challenge, then select it.'}},
+{key:'Web 1.0',short:'Web 1.0',dest:'1998',years:'About 1991 to 2004',status:'',role:'Reader: you can only read what the webmaster publishes.',
+ def:'<b>Web 1.0, the read-only web:</b> static pages with no user interaction or content creation.',
+ draw:room1,
+ arts:{page:['Static HTML page','A Web 1.0 page was a static HTML file. It changed only when the webmaster edited and re-uploaded it. Blue underlined hyperlinks were the main way to move around.'],
+  counter:['Hit counter','A visitor counter and a guestbook were about the only "interaction". Visitors could not post content to the page itself.'],
+  email:['Email link','To contact the business you clicked "Email us!" and waited for a reply. Communication was still mostly one-way.'],
+  modem:['Dial-up modem','A 56 kbps modem screeched as it dialled in over the phone line. A 4 MB song took around ten minutes, and nobody could use the phone while you were online.'],
+  cdrom:['CD-ROM encyclopaedia','Big media such as encyclopaedias, games and video clips came on CD-ROM because dial-up was too slow to download them.']},
+ site:{title:'Sea Grape Guest House, 1998 website',
+  mock:`<div style="background:#c0c0c0;padding:4px;min-height:220px"><div style="background:#000080;color:#fff;font:12px Arial;padding:2px 6px">Sea Grape Guest House - Welcome</div><div style="background:#fff;padding:12px;font-family:'Times New Roman',serif;color:#000;text-align:center"><div style="font-size:1.4rem;font-weight:700">Welcome to Sea Grape Guest House!</div><hr><p><a style="color:#0000ee;text-decoration:underline">Our rooms</a> | <a style="color:#0000ee;text-decoration:underline">Rates</a> | <a style="color:#0000ee;text-decoration:underline">How to find us</a></p><div style="background:repeating-linear-gradient(45deg,#ffd400 0 10px,#111 10px 20px);color:#fff;font-weight:700;padding:3px">&nbsp;</div><p style="margin:6px 0">This page is under construction!</p><p>You are visitor <span style="background:#000;color:#39ff14;font-family:monospace;padding:1px 4px">000127</span></p><p><a style="color:#0000ee;text-decoration:underline">Email us!</a></p></div></div>`,
+  feats:[['A static "Welcome" page with a few photos',1],['Blue underlined hyperlinks',1],['An email address for enquiries',1],['A visitor hit counter',1],['Guests upload their own photos',0],['Personalised offers for each visitor',0],['An HD video tour',0],['Smart-lock check-in by phone',0]]},
+ ch:{type:'drag',title:'Load the 1998 toolkit',prompt:'Drag (or select) only the technologies that belong in Web 1.0 into the era box, then check.',
+  toks:[['HTML pages',1],['Hyperlinks',1],['Dial-up modem',1],['Email',1],['Web directory',1],['Like button',0],['Smart speaker',0],['HD video streaming',0],['AI chatbot',0]]}},
+{key:'Web 2.0',short:'Web 2.0',dest:'2010',years:'About 2004 onward',status:'',role:'Participant (prosumer): you create, comment and share as well as read.',
+ def:'<b>Web 2.0, the interactive web:</b> social media, user-generated content and two-way communication.',
+ draw:room2,
+ arts:{feed:['Social feed','Likes, comments and shares turned readers into participants. Content was often created by users, not the business: Ana\'s breakfast photo is free marketing for the guest house.'],
+  video:['Video sharing','Video-sharing sites (YouTube launched in 2005) let anyone become a broadcaster. Broadband made watching video online normal.'],
+  wiki:['Wiki and blog','Wikis let many people write one page together; blogs and content management systems let anyone publish without knowing HTML.'],
+  phone:['Smartphone','From 2007 smartphones and app stores put the social web in every pocket. Many Caribbean users went online by phone first.'],
+  router:['Broadband router','Always-on broadband and Wi-Fi replaced dial-up, making uploads, streaming and video calls possible.']},
+ site:{title:'Sea Grape Guest House, 2010 website',
+  mock:`<div style="font-family:Verdana,Arial,sans-serif;min-height:220px;background:#fff"><div style="background:linear-gradient(#5aa9ff,#2f7de0 50%,#1f66c8 50%,#2f7de0);color:#fff;padding:12px 14px;font-weight:700;font-size:1.1rem;text-shadow:0 1px 0 rgba(0,0,0,.3)">Sea Grape Guest House <span style="float:right;background:linear-gradient(#9ae66e,#47a828);border-radius:14px;padding:3px 12px;font-size:.85rem">Book now</span></div><div style="padding:10px 14px;color:#14203a"><p style="margin:4px 0"><b style="color:#e5a000">★★★★★</b> "Loved the breakfast!" Ana</p><p style="margin:4px 0"><b style="color:#e5a000">★★★★☆</b> "Great view of the bay." Kai</p><p style="margin:6px 0"><span style="background:#3b5998;color:#fff;border-radius:4px;padding:2px 6px;font-size:.8rem">Share</span> <span style="background:#1da1f2;color:#fff;border-radius:4px;padding:2px 6px;font-size:.8rem">Post</span> <span style="font-size:.8rem;color:#56607a">32 comments</span></p><p style="margin:6px 0;font-size:.9rem"><b>Our blog:</b> 5 island tips for Carnival week</p></div></div>`,
+  feats:[['Guest reviews and star ratings',1],['A social media page with comments',1],['An online booking form',1],['Share buttons',1],['A blog of island tips',1],['An AI agent that rebooks your taxi',0],['A welcome that reads your mood',0],['Bookings by fax only',0]]},
+ ch:{type:'quiz',title:'Identify the user\'s role',prompt:'Answer all three correctly to charge the time circuits.',
+  qs:[['In Web 2.0, what is the user\'s role?',['A reader of static pages only','A participant (prosumer) who creates and shares','A partner working with AI agents','An audience waiting for a scheduled broadcast'],1,'Web 2.0 users produce and consume content: prosumers.'],
+   ['Which change BEST marks the move from Web 1.0 to Web 2.0?',['Faster dial-up modems','From static pages to user-generated, two-way content','Systems that read emotions','Printed directories go online'],1,'Participation and user-generated content define Web 2.0.'],
+   ['Which technology let web pages update without reloading, so sites felt like apps?',['AJAX and JavaScript','Fax machines','Vinyl records','Hit counters'],0,'AJAX lets a page fetch new data in the background, so comments and likes appear instantly.']]}},
+{key:'Web 3.0',short:'Web 3.0',dest:'2023',years:'2010s onward, partly here',status:'ph',role:'Co-creator: your data and behaviour shape what the system shows and makes.',
+ def:'<b>Web 3.0, the AI-based semantic web:</b> personalised, intelligent and machine-readable content. It is also called the Semantic and Decentralised Web.',
+ draw:room3,
+ arts:{assistant:['AI assistant','The assistant understands meaning: "quiet", "near the beach" and "under $150" become search conditions. This is natural language processing.'],
+  recs:['Personalised recommendations','Recommendation algorithms use your past behaviour to personalise what you see. Helpful, but they can trap you in a filter bubble.'],
+  graph:['Knowledge graph','Linked data connects things by meaning: this guest house IS IN Grand Anse, which IS NEAR a beach. Machines can reason across these links.'],
+  schema:['Structured data','Tags such as "@type": "Hotel" and "price" make content machine-readable, so search engines and AI can compare it with other guest houses.'],
+  wallet:['Blockchain ledger','The "decentralised" side of Web 3.0: a shared ledger copied across many computers records ownership or payments without one central company.']},
+ site:{title:'Sea Grape Guest House, 2023 website',
+  mock:`<div style="font-family:system-ui,Segoe UI,sans-serif;background:#fff;color:#14203a;padding:14px;min-height:220px"><div style="font-weight:700;font-size:1.05rem">Sea Grape</div><div style="margin:8px 0;background:#f2f4fa;border-radius:12px;padding:10px">Welcome back, Kai. Your favourite sea-view room is free on 14 to 18 March.</div><div style="border:1px solid #e1e5ef;border-radius:99px;padding:8px 14px;color:#56607a">Ask Sea Grape anything… e.g. "Is breakfast vegetarian?"</div><div style="margin-top:10px;font-size:.85rem;color:#56607a">Shown in search assistants as: <b style="color:#14203a">Sea Grape Guest House · $120 · 4.7 rating · 2 min to beach</b></div></div>`,
+  feats:[['An AI assistant that answers guests\' questions',1],['Personalised offers based on past stays',1],['Structured data so search assistants show price and rating',1],['Voice search ("Hey, find me a guest house…")',1],['Payment by blockchain wallet',1],['A visitor hit counter',0],['A haptic preview of the bed',0],['A printed brochure only',0]]},
+ ch:{type:'drag',title:'Load the semantic toolkit',prompt:'Drag (or select) only the Web 3.0 technologies into the era box, then check.',
+  toks:[['Structured data (schema markup)',1],['Natural-language AI assistant',1],['Personalised recommendations',1],['Knowledge graph',1],['Blockchain ledger',1],['Guestbook',0],['Dial-up modem',0],['Emotion-reading wristband',0],['Fax booking',0]]}},
+{key:'Web 4.0',short:'Web 4.0',dest:'2032',years:'Emerging',status:'em',role:'Partner: you and intelligent systems share tasks and decisions.',
+ def:'<b>Web 4.0, the symbiotic web:</b> intelligent connected systems integrating IoT, AI and real-time data for seamless digital environments. <i>Emerging: parts exist today.</i>',
+ draw:room4,
+ arts:{agent:['AI agent in a smart speaker','An AI agent acts on your behalf: it sees the ferry is late and moves your taxi. You set the goal; it handles the steps.'],
+  thermo:['Smart thermostat','An IoT device: sensors notice the room is empty and switch to eco mode, saving energy without being asked.'],
+  buoy:['Sensor buoy','Real-time data from sea sensors can feed a public map, a fishing app and a hurricane early-warning system at the same moment.'],
+  watch:['Smartwatch','Wearables collect health and location data and connect you to the system wherever you go.'],
+  ar:['AR glasses','Augmented reality lays digital labels over the real world, so the web moves off the screen and into your surroundings.']},
+ anach:['Fax machine','A fax machine! It sends scanned paper over a phone line, technology of the analogue and early digital era. It does not belong in a Web 4.0 smart room.'],
+ site:{title:'Sea Grape Guest House, early 2030s (emerging)',
+  mock:`<div style="font-family:system-ui,Segoe UI,sans-serif;background:#0d1b2a;color:#e6f7ff;padding:14px;min-height:220px"><div style="font-weight:700;color:#34e0ff">Sea Grape · Room 4</div><ul style="margin:8px 0;padding-left:18px;line-height:1.8"><li>Door unlocked with your phone</li><li>You left the room: air conditioning set to eco</li><li>Flight delayed: airport taxi moved to 15:20</li><li>Beach sensor: water 28°C, waves low</li></ul><div style="font-size:.85rem;color:#9fb6cc">Works on your watch, your car screen and by voice.</div></div>`,
+  feats:[['Your phone unlocks the room door',1],['Sensors adjust the air conditioning and lights',1],['An AI agent moves your taxi when your flight is delayed',1],['Live beach and weather data from sensors',1],['A guestbook page',0],['Bookings by fax',0],['A welcome that reads your emotions',0],['Static pages only',0]]},
+ ch:{type:'spot',title:'Spot the anachronism',prompt:'One object in this smart room belongs to a much earlier era. Start the challenge, then select it.'}},
+{key:'Web 5.0',short:'Web 5.0',dest:'2040',years:'Partly speculative',status:'sp',role:'Emotional partner: the system responds to how you feel, not only what you type.',
+ def:'<b>Web 5.0, the sensory and emotional web:</b> systems that respond to human emotions and sensory input. Also called the Emotional / Unseen Web. <i>Partly speculative.</i>',
+ draw:room5,
+ arts:{aura:['Emotion-aware interface','Affective computing (emotion AI) estimates mood from voice, face or text and adapts the experience. It can misread people, especially across cultures and disabilities.'],
+  bci:['Brain-computer headband','Brain-computer interfaces are mainly in research and medical use today. They are part of the speculative "unseen" web.'],
+  band:['Biometric wristband','Body signals such as heart rate can suggest stress. This is deeply personal data.'],
+  glove:['Haptic glove','Haptics create a sense of touch, so a sensory web could let you "feel" a fabric or a texture.'],
+  consent:['Consent controls','The big ethical question: who owns your emotional data? Users must give consent, see what is collected and be able to switch it off.']},
+ site:{title:'Sea Grape Guest House, 2040s (speculative)',
+  mock:`<div style="font-family:system-ui,Segoe UI,sans-serif;background:linear-gradient(135deg,#2b1055,#b06ab3);color:#fff;padding:16px;min-height:220px"><div style="font-size:1.15rem;font-weight:700">Welcome, Kai</div><p>You seem tired after your flight. A quiet check-in is ready, the room lighting is soft and the sea sounds are on.</p><p style="background:rgba(255,255,255,.18);border-radius:10px;padding:8px">Touch preview: feel the cotton sheets through your haptic glove.</p><p style="font-size:.85rem">Emotion sensing: <b>ON</b> · <u>Turn off</u> · <u>See my data</u></p></div>`,
+  feats:[['A welcome that adapts to the guest\'s mood (with consent)',1],['A calm mode when stress is detected',1],['A haptic preview of the room',1],['Clear consent controls for emotional data',1],['A visitor hit counter',0],['An advert in the telephone directory',0],['Bookings by fax',0],['A guestbook page',0]]},
+ ch:{type:'quiz',title:'Identify the user\'s role',prompt:'Answer all three correctly to complete your journey.',
+  qs:[['What is the user\'s role in the emotional web?',['A reader','A participant posting comments','A partner at an emotional level: the system responds to feelings','A webmaster'],2,'In Web 5.0 the user is an emotional partner.'],
+   ['Which feature separates Web 5.0 from Web 4.0?',['It responds to emotions and sensory input','It uses IoT sensors','It uses hyperlinks','It allows comments'],0,'Web 4.0 connects things; Web 5.0 responds to feelings and senses.'],
+   ['What is the biggest ethical concern about Web 5.0?',['Pages load too slowly','Privacy and consent over emotional and biometric data','Too few hyperlinks','The cost of fax paper'],1,'Emotional and biometric data are deeply personal and could be used to manipulate.']]}}
+];
+
+/* ---------------- Time Machine state ---------------- */
+const TM={era:0,unlocked:0,found:ERAS.map(()=>new Set()),siteDone:ERAS.map(()=>false),chDone:ERAS.map(()=>false),chTries:ERAS.map(()=>0),pts:0,spotMode:false,qi:0,drag:null};
+function addPts(n){TM.pts+=n;$('#pts').textContent=TM.pts+' chrono points'}
+
+function renderEras(){const el=$('#eras');el.innerHTML=ERAS.map((e,i)=>{const lock=i>TM.unlocked;return `<div role="listitem"><button type="button" data-i="${i}" ${i===TM.era?'aria-current="step"':''} aria-disabled="${lock}" class="${TM.chDone[i]?'done':''}" style="width:100%">${lock?'🔒 ':TM.chDone[i]?'✓ ':''}${esc(e.short)}<span class="yr">${esc(e.dest)}</span><span class="sr">${lock?' (locked)':TM.chDone[i]?' (complete)':''}</span></button></div>`}).join('');
+ el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i;if(i>TM.unlocked){live('That era is locked. Beat the current challenge to unlock it.');return}travel(i)}))}
+
+function travel(i){const e=ERAS[i];const go=()=>{TM.era=i;TM.spotMode=false;TM.qi=0;renderAll();$('#eraTitle').focus&&document.getElementById('eraTitle').focus()};
+ $('#dialTxt').textContent=e.dest+' · '+e.key.toUpperCase();
+ if(RM){go();live('Arrived: '+e.key+', '+e.dest);return}
+ const w=$('#warp');$('#warpTxt').textContent='Travelling to '+e.dest+'…';w.classList.remove('on');void w.offsetWidth;w.classList.add('on');setTimeout(()=>{go();live('Arrived: '+e.key+', '+e.dest)},450)}
+
+function renderRoom(){const e=ERAS[TM.era];$('#eraKick').textContent=e.dest+' · '+e.years;const h=$('#eraTitle');h.textContent=e.key;h.tabIndex=-1;
+ $('#eraBadge').innerHTML=e.status==='em'?'<span class="badge em">Emerging</span>':e.status==='sp'?'<span class="badge sp">Partly speculative</span>':e.status==='ph'?'<span class="badge">Partly here now</span>':'<span class="badge">'+(TM.era===0?'Before the web':'Historical')+'</span>';
+ $('#eraDef').innerHTML=e.def;$('#eraRole').textContent=e.role;$('#roomSvg').innerHTML=e.draw();
+ document.querySelectorAll('#roomSvg .art').forEach(g=>{if(TM.found[TM.era].has(g.dataset.id))g.classList.add('found');
+  const act=()=>artClick(g.dataset.id,g);g.addEventListener('click',act);g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();act()}})});
+ renderLog();$('#artFact').textContent='Select an object in the room.';$('#artFact').className='fact fb'}
+
+function renderLog(){const e=ERAS[TM.era];const ids=Object.keys(e.arts);const n=ids.filter(k=>TM.found[TM.era].has(k)).length;
+ $('#artMeter').style.width=(n/ids.length*100)+'%';$('#artCount').textContent=n+' of '+ids.length+' artefacts collected';
+ $('#artList').innerHTML=ids.map(k=>`<li class="${TM.found[TM.era].has(k)?'got':''}">${TM.found[TM.era].has(k)?'✓ '+esc(e.arts[k][0]):'Undiscovered artefact'}</li>`).join('')}
+
+function artClick(id,g){const e=ERAS[TM.era];const f=$('#artFact');
+ if(TM.spotMode){spotAnswer(id);return}
+ if(id==='anach'){f.className='fact fb';f.innerHTML='<b>Hmm…</b> Look closely at this one. Does it belong in '+esc(e.dest)+'? Use the challenge below to decide.';return}
+ const a=e.arts[id];if(!TM.found[TM.era].has(id)){TM.found[TM.era].add(id);addPts(2);g.classList.add('found')}
+ f.className='fact fb good';f.innerHTML='<b>'+esc(a[0])+'.</b> '+esc(a[1]);renderLog()}
+
+/* Site builder */
+function renderSite(){const e=ERAS[TM.era];$('#siteTitle').textContent=e.site.title;$('#siteMock').innerHTML=e.site.mock;$('#siteFb').textContent='';$('#siteFb').className='fb';
+ const order=e.site.feats.map((f,i)=>i);const seed=TM.era*7+3;order.sort((a,b)=>((a*seed+5)%11)-((b*seed+5)%11));
+ $('#siteChips').innerHTML=order.map(i=>`<button type="button" class="chip" aria-pressed="false" data-i="${i}">${esc(e.site.feats[i][0])}</button>`).join('');
+ document.querySelectorAll('#siteChips .chip').forEach(c=>c.addEventListener('click',()=>{c.setAttribute('aria-pressed',c.getAttribute('aria-pressed')!=='true');c.classList.remove('right','wrong','missed')}))}
+$('#siteCheck').addEventListener('click',()=>{const e=ERAS[TM.era];let right=0,tot=e.site.feats.length;const wrongs=[],missed=[];
+ document.querySelectorAll('#siteChips .chip').forEach(c=>{const f=e.site.feats[+c.dataset.i];const on=c.getAttribute('aria-pressed')==='true';c.classList.remove('right','wrong','missed');
+  if(on&&f[1]){right++;c.classList.add('right')}else if(!on&&!f[1]){right++}else if(on&&!f[1]){c.classList.add('wrong');wrongs.push(f[0])}else{c.classList.add('missed');missed.push(f[0])}});
+ if(!TM.siteDone[TM.era]){TM.siteDone[TM.era]=true;addPts(right)}
+ const fb=$('#siteFb');const ok=right===tot;fb.className='fb '+(ok?'good':'bad');
+ fb.innerHTML=ok?'<b>Perfect website for '+esc(e.dest)+'!</b> Every feature fits the era.':'<b>'+right+' of '+tot+' decisions right.</b> '+(wrongs.length?'Does not belong yet (or any more): '+esc(wrongs.join('; '))+'. ':'')+(missed.length?'Missed (dashed): '+esc(missed.join('; '))+'.':'')+' Adjust and check again.';
+ live(fb.textContent)});
+
+/* Challenges */
+function renderChal(){const e=ERAS[TM.era],c=e.ch,el=$('#chal'),done=TM.chDone[TM.era];
+ let h=`<div class="kicker">Challenge to unlock ${TM.era<5?esc(ERAS[TM.era+1].key):'the end of your journey'}</div><h3>${esc(c.title)}</h3><p>${esc(c.prompt)}</p>`;
+ if(c.type==='spot'){h+=`<button class="btn amber" id="spotBtn" ${done?'disabled':''}>${TM.spotMode?'Challenge on: select the object in the room':'Start the challenge'}</button>`}
+ if(c.type==='drag'){h+=`<div class="zones"><div class="zone" id="zTray" data-z="tray"><h4>Technology tray</h4><div class="toks"></div></div><div class="zone era" id="zEra" data-z="era"><h4>${esc(e.key)} (${esc(e.dest)})</h4><div class="toks"></div></div></div><div class="row" style="margin-top:10px"><button class="btn primary" id="dragCheck" ${done?'disabled':''}>Check the toolkit</button></div>`}
+ if(c.type==='quiz'){h+=`<div id="qBox"></div>`}
+ h+=`<div class="fb" id="chFb" role="status" aria-live="polite"></div><div class="unlock" id="unlockBox"></div>`;el.innerHTML=h;
+ if(c.type==='spot')$('#spotBtn').addEventListener('click',()=>{TM.spotMode=true;$('#spotBtn').textContent='Challenge on: select the object in the room';const fb=$('#chFb');fb.className='fb';fb.textContent='Challenge on. Select the object that does not belong.';live(fb.textContent);const first=document.querySelector('#roomSvg .art');first&&first.focus()});
+ if(c.type==='drag')setupDrag(c,done);
+ if(c.type==='quiz')renderQ();
+ if(done)showUnlock()}
+
+function spotAnswer(id){const e=ERAS[TM.era];const fb=$('#chFb');TM.chTries[TM.era]++;
+ if(id==='anach'){TM.spotMode=false;fb.className='fb good';fb.innerHTML='<b>Anachronism found!</b> '+esc(e.anach[1]);const g=document.querySelector('#roomSvg .art[data-id=anach]');g&&g.classList.add('found');passChal()}
+ else{const a=e.arts[id];fb.className='fb bad';fb.innerHTML='<b>'+esc(a[0])+'</b> really does belong in '+esc(e.dest)+'. Keep looking.'}
+ live(fb.textContent)}
+
+function setupDrag(c,done){const tray=$('#zTray .toks'),era=$('#zEra .toks');
+ const order=c.toks.map((t,i)=>i).sort((a,b)=>((a*5+TM.era)%9)-((b*5+TM.era)%9));
+ order.forEach(i=>{const b=document.createElement('button');b.type='button';b.className='tok';b.textContent=c.toks[i][0];b.dataset.i=i;b.draggable=!done;b.setAttribute('aria-label',c.toks[i][0]+': in the tray. Select to move into the era.');
+  if(done&&c.toks[i][1]){era.appendChild(b);b.classList.add('right')}else tray.appendChild(b);
+  b.addEventListener('click',()=>{if(TM.chDone[TM.era])return;moveTok(b,b.parentElement===tray?era:tray)});
+  b.addEventListener('dragstart',ev=>{TM.drag=b;ev.dataTransfer.setData('text/plain',i);ev.dataTransfer.effectAllowed='move'})});
+ [['#zTray',tray],['#zEra',era]].forEach(([z,box])=>{const zone=$(z);zone.addEventListener('dragover',ev=>{ev.preventDefault();zone.classList.add('over')});zone.addEventListener('dragleave',()=>zone.classList.remove('over'));zone.addEventListener('drop',ev=>{ev.preventDefault();zone.classList.remove('over');if(TM.drag&&!TM.chDone[TM.era])moveTok(TM.drag,box);TM.drag=null})});
+ const chk=$('#dragCheck');chk&&chk.addEventListener('click',()=>{const inEra=[...era.children].map(b=>+b.dataset.i);let wrong=[],missing=[];
+  [...document.querySelectorAll('#chal .tok')].forEach(b=>b.classList.remove('right','wrong'));
+  c.toks.forEach((t,i)=>{const b=document.querySelector('#chal .tok[data-i="'+i+'"]');const inside=inEra.includes(i);if(inside&&t[1])b.classList.add('right');if(inside&&!t[1]){b.classList.add('wrong');wrong.push(t[0])}if(!inside&&t[1])missing.push(t[0])});
+  TM.chTries[TM.era]++;const fb=$('#chFb');
+  if(!wrong.length&&!missing.length){fb.className='fb good';fb.innerHTML='<b>Toolkit loaded!</b> Every technology belongs in '+esc(ERAS[TM.era].key)+'.';passChal()}
+  else{fb.className='fb bad';fb.innerHTML=(wrong.length?'<b>Wrong era:</b> '+esc(wrong.join(', '))+'. ':'')+(missing.length?'<b>Still missing:</b> '+missing.length+' technolog'+(missing.length>1?'ies':'y')+' from this era.':'')}
+  live(fb.textContent)})}
+function moveTok(b,box){box.appendChild(b);b.classList.remove('right','wrong');const inEra=box.parentElement.id==='zEra';b.setAttribute('aria-label',b.textContent+(inEra?': in the era box. Select to move back to the tray.':': in the tray. Select to move into the era.'));live(b.textContent+(inEra?' moved into the era.':' moved back to the tray.'));b.focus()}
+
+function renderQ(){const c=ERAS[TM.era].ch,box=$('#qBox');if(TM.chDone[TM.era]){box.innerHTML='<p><b>All three answered.</b></p>';return}
+ const q=c.qs[TM.qi];box.innerHTML=`<p class="kicker">Question ${TM.qi+1} of ${c.qs.length}</p><p><b>${esc(q[0])}</b></p><div class="qopts">${q[1].map((o,i)=>`<button type="button" class="qopt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+ box.querySelectorAll('.qopt').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i,fb=$('#chFb');TM.chTries[TM.era]++;
+  if(i===q[2]){b.classList.add('right');fb.className='fb good';fb.innerHTML='<b>Correct.</b> '+esc(q[3]);box.querySelectorAll('.qopt').forEach(x=>x.disabled=true);
+   if(TM.qi<c.qs.length-1){const n=document.createElement('button');n.className='btn primary';n.style.marginTop='10px';n.textContent='Next question';n.addEventListener('click',()=>{TM.qi++;fb.textContent='';fb.className='fb';renderQ();const f=box.querySelector('.qopt');f&&f.focus()});box.appendChild(n);n.focus()}
+   else passChal()}
+  else{b.classList.add('wrong');b.disabled=true;fb.className='fb bad';fb.innerHTML='<b>Not quite.</b> Try another answer.'}
+  live(fb.textContent)}))}
+
+function passChal(){const i=TM.era;if(!TM.chDone[i]){TM.chDone[i]=true;const extra=ERAS[i].ch.type==='quiz'?3:1;addPts(TM.chTries[i]<=extra?10:5);if(i<5)TM.unlocked=Math.max(TM.unlocked,i+1);renderEras()}
+ const sp=$('#spotBtn');if(sp)sp.disabled=true;const dc=$('#dragCheck');if(dc)dc.disabled=true;showUnlock()}
+function showUnlock(){const i=TM.era,box=$('#unlockBox');
+ if(i<5){box.innerHTML=`<button class="btn amber" id="goNext">Time circuits charged: travel to ${esc(ERAS[i+1].key)} (${esc(ERAS[i+1].dest)})</button>`;$('#goNext').addEventListener('click',()=>travel(i+1))}
+ else{const all=TM.chDone.every(Boolean);box.innerHTML=`<div class="fb good"><b>Journey ${all?'complete':'nearly complete'}!</b> You travelled from the analogue era to Web 5.0 and scored <b>${TM.pts}</b> chrono points. Notice how the user moved from audience to reader, participant, co-creator and partner. But a more powerful web leaves the unconnected further behind.</div><button class="btn amber" id="goBridge" style="margin-top:10px">Next: Bridge the Gap</button>`;$('#goBridge').addEventListener('click',()=>showTab($('#t-bg'),true))}}
+
+function renderAll(){renderEras();renderRoom();renderSite();renderChal()}
+
+/* ---------------- Bridge the Gap ---------------- */
+const VBASE=[
+ {id:'port',name:'Port Coral',pop:9000,x:150,y:240,base:.9,baseTower:true,aff:.7,sk:.8,tc:.95,note:'The capital: an existing tower and some cable.'},
+ {id:'bay',name:'Bay Village',pop:4000,x:300,y:300,base:.7,baseTower:true,aff:.6,sk:.7,tc:.9,note:'A fishing and tourism village with patchy signal.'},
+ {id:'wind',name:'Windward',pop:3000,x:505,y:200,base:.4,baseTower:true,aff:.5,sk:.6,tc:.85,note:'A rural east-coast farming area with one weak tower.'},
+ {id:'hill',name:'Hilltop',pop:2500,x:330,y:165,base:.2,baseTower:false,aff:.5,sk:.55,tc:.75,note:'Interior mountains; many older residents.'},
+ {id:'salt',name:'Salt Pond',pop:1500,x:445,y:300,base:.1,baseTower:false,aff:.4,sk:.5,tc:.8,note:'A remote southern village at the end of a long road.'},
+ {id:'cay',name:'Little Cay',pop:800,x:585,y:338,base:0,baseTower:false,aff:.45,sk:.6,tc:.7,note:'An offshore cay: fibre needs a short submarine cable.'}
+];
+const TOTALPOP=VBASE.reduce((a,v)=>a+v.pop,0);
+const ACTS=[
+ {k:'fibre',name:'Lay fibre',cost:v=>v.id==='cay'?500:300,eff:'Network to 100%; buried, so it survives storms',en:'Internet access (fibre)'},
+ {k:'tower',name:'Build or upgrade a cell tower',cost:()=>150,eff:v=>'Network up to '+Math.round(towerCov(v)*100)+'%; vulnerable to hurricanes',en:'Internet access (mobile towers)'},
+ {k:'sat',name:'Satellite terminal',cost:()=>120,eff:'Network at least 80%; independent of towers',en:'Internet access (satellite back-up)'},
+ {k:'wifi',name:'Solar community Wi-Fi hub',cost:()=>50,eff:'+30 points network, +15 points affordability (free access)',en:'Public Wi-Fi'},
+ {k:'dev',name:'Subsidised devices',cost:()=>80,eff:'+25 points affordability',en:'Lower-cost devices'},
+ {k:'lit',name:'Digital literacy classes',cost:()=>40,eff:'+30 points skills',en:'Digital literacy'}
+];
+const CARDS={
+ cost:{type:'cost',kicker:'Barrier: cost',title:'Data prices rise',text:'A new tax pushes up the price of mobile data. Affordability falls by 10 points in every village. Subsidised devices and free community Wi-Fi help to cancel it out.'},
+ geography:{type:'geography',kicker:'Barrier: geography',title:'Hills and sea get in the way',text:'Engineers find that Hilltop\'s steep valleys block signals: a tower there now reaches only 55%. Little Cay can only get fibre through a submarine cable. Satellite or fibre avoids the terrain problem.'},
+ disability:{type:'disability',kicker:'Barrier: disability',title:'The new e-services portal fails screen readers',text:'About 15% of residents have a disability. The government\'s new videos have no captions and its site cannot be read by screen readers, so accessibility falls to 10% until accessibility features are funded.'},
+ infrastructure:{type:'infrastructure',kicker:'Barrier: infrastructure',title:'Power cuts in the east',text:'An ageing power line causes daily cuts in Windward and Salt Pond. Their network falls by 20% unless they have fibre, a satellite terminal or a solar-powered Wi-Fi hub.'},
+ hurricane:{type:'hurricane',kicker:'Barrier: infrastructure (hurricane)',title:'Category 4 hurricane',text:''}
+};
+let B;
+function newBG(){const order=['cost','geography','disability','infrastructure'];for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+ B={round:1,budget:500,spent:0,vs:VBASE.map(v=>Object.assign({},v,{fibre:false,tower:false,sat:false,wifi:false,dev:false,lit:false,down:false})),access:false,flags:{},deck:order.concat(['hurricane']),log:[],used:{},sel:'port',over:false,hitVillage:null};
+ $('#debrief').hidden=true;B.startPct=totalPct();drawCard();renderBG()}
+function towerCov(v){return v.id==='hill'&&B.flags.geography?.55:v.tc}
+function cov(v){let c=v.base;if(v.down&&v.baseTower)c=.05;if(v.tower&&!v.down)c=Math.max(c,towerCov(v));if(v.sat)c=Math.max(c,.8);if(v.fibre)c=1;
+ if(B.flags.infrastructure&&(v.id==='wind'||v.id==='salt')&&!v.fibre&&!v.sat&&!v.wifi)c*=.8;if(v.wifi)c=Math.min(1,c+.3);return c}
+const clamp=x=>Math.max(0,Math.min(1,x));
+function aff(v){return clamp(v.aff+(v.dev?.25:0)+(v.wifi?.15:0)-(B.flags.cost?.1:0))}
+function skl(v){return clamp(v.sk+(v.lit?.3:0))}
+function accessVal(){return B.access?1:(B.flags.disability?.1:.3)}
+function incl(){return .85+.15*accessVal()}
+function connected(v){return v.pop*cov(v)*aff(v)*skl(v)*incl()}
+function totalPct(){return B.vs.reduce((a,v)=>a+connected(v),0)/TOTALPOP*100}
+const pc=x=>Math.round(x*100)+'%';
+const fmt=n=>Math.round(n).toLocaleString('en-GB');
+
+function drawCard(){const k=B.deck[B.round-1];B.flags[k]=true;const c=Object.assign({},CARDS[k]);
+ if(k==='hurricane'){const cand=B.vs.filter(v=>!v.fibre&&(v.tower||v.baseTower));cand.sort((a,b)=>b.pop-a.pop);const hit=cand[0];
+  if(hit){hit.down=true;B.hitVillage=hit.id;c.text='The storm knocks out the cell tower serving '+hit.name+' ('+fmt(hit.pop)+' people). Fibre is buried and satellite does not need the tower, so they keep working. You can repair the tower for $100k or add back-up.'}
+  else c.text='The storm hits, but every tower-dependent village is on fibre. Your network survives! Buried fibre is the most resilient infrastructure.'}
+ B.card=c;B.log.push(k)}
+
+function renderMap(){let s=`<svg viewBox="0 0 640 400" role="group" aria-label="Map of the island of Coralia with six villages"><defs><pattern id="sea" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#bfe6f5"/><path d="M0 12 q6 -5 12 0 t12 0" stroke="#a5d8ec" fill="none"/></pattern></defs><rect width="640" height="400" fill="url(#sea)"/>`;
+ s+=`<path d="M0 238 L60 240" stroke="#14203a" stroke-width="3" stroke-dasharray="8 5"/><text x="6" y="262" font-size="10" fill="#14203a" font-family="system-ui,sans-serif" font-weight="700">Submarine</text><text x="6" y="274" font-size="10" fill="#14203a" font-family="system-ui,sans-serif" font-weight="700">cable</text>`;
+ s+=`<path d="M60 240 C55 160 150 105 260 105 C365 95 475 108 545 155 C595 195 568 262 520 302 C480 345 380 352 300 346 C200 340 75 322 60 240Z" fill="#cfe8b0" stroke="#7aa35a" stroke-width="3"/><ellipse cx="585" cy="342" rx="34" ry="18" fill="#cfe8b0" stroke="#7aa35a" stroke-width="3"/>`;
+ s+=`<path d="M270 190 l30 -50 30 50z M310 185 l26 -44 26 44z M350 192 l22 -36 22 36z" fill="#9cc27a" stroke="#6d944f"/>`;
+ B.vs.forEach(v=>{if(v.fibre){const p=v.id==='cay'?`M150 240 C300 330 480 360 585 338`:`M150 240 L${v.x} ${v.y}`;s+=`<path d="${p}" stroke="#e07a1f" stroke-width="3.5" fill="none" ${v.id==='cay'?'stroke-dasharray="6 4"':''}/>`}});
+ B.vs.forEach(v=>{const r=10+Math.sqrt(v.pop)/9;const p=connected(v)/v.pop;const col=p>=.75?'#1c7f45':p>=.5?'#7aa80f':p>=.25?'#e0a325':'#b8352a';
+  const tags=[['fibre','F'],['tower','T'],['sat','S'],['wifi','W'],['dev','D'],['lit','L']].filter(t=>v[t[0]]);
+  s+=`<g class="vil ${B.sel===v.id?'sel':''}" data-v="${v.id}" tabindex="0" role="button" aria-label="${esc(v.name)}, ${fmt(v.pop)} people, ${Math.round(p*100)}% connected and included${v.down?', tower down':''}"><circle class="vring" cx="${v.x}" cy="${v.y}" r="${r}" fill="${col}" stroke="#fff" stroke-width="3"/><text x="${v.x}" y="${v.y+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">${Math.round(p*100)}%</text><text x="${v.x}" y="${v.y-r-6}" text-anchor="middle" font-size="12" font-weight="700" fill="#14203a" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(v.name)}</text>`;
+  tags.forEach((t,j)=>{const tx=v.x-((tags.length-1)*9)+j*18,ty=v.y+r+12;s+=`<rect x="${tx-8}" y="${ty-8}" width="16" height="15" rx="4" fill="#14203a"/><text x="${tx}" y="${ty+3.5}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#ffd27a" font-family="system-ui,sans-serif">${t[1]}</text>`;
+   if(t[0]==='tower'&&v.down)s+=`<path d="M${tx-7} ${ty-7}l14 14M${tx+7} ${ty-7}l-14 14" stroke="#ff4d4d" stroke-width="2.5"/>`});
+  if(v.down&&!v.tower){s+=`<text x="${v.x+r+4}" y="${v.y+4}" font-size="10" font-weight="800" fill="#b8352a" font-family="system-ui,sans-serif">tower down</text>`}
+  s+=`</g>`});
+ s+=`<g font-family="system-ui,sans-serif" font-size="10"><rect x="384" y="10" width="248" height="46" rx="8" fill="#fff" fill-opacity=".92"/>${[['#b8352a','<25%'],['#e0a325','25–49%'],['#7aa80f','50–74%'],['#1c7f45','75%+']].map((l,i)=>`<circle cx="${398+i*60}" cy="26" r="6" fill="${l[0]}"/><text x="${407+i*60}" y="30" fill="#14203a">${l[1]}</text>`).join('')}<text x="394" y="48" fill="#56607a">Circle size = population; % = included</text></g>`;
+ $('#mapSvg').innerHTML=s+`</svg>`;
+ document.querySelectorAll('.vil').forEach(g=>{const f=()=>{B.sel=g.dataset.v;renderBG();const n=document.querySelector('.vil[data-v="'+B.sel+'"]');n&&n.focus()};g.addEventListener('click',f);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})})}
+
+function buy(k){const v=B.vs.find(x=>x.id===B.sel);let cost,label;
+ if(k==='repair'){cost=100;label='Repair the tower'}else if(k==='access'){cost=100;label='Accessibility features'}else{const a=ACTS.find(x=>x.k===k);cost=a.cost(v);label=a.name}
+ if(B.over)return;if(cost>B.budget){fb('Not enough budget for '+label+' ($'+cost+'k). End the round to receive more funds.','bad');return}
+ const before=totalPct();B.budget-=cost;B.spent+=cost;
+ if(k==='repair'){v.down=false}else if(k==='access'){B.access=true}else{v[k]=true}
+ B.used[k]=(B.used[k]||0)+1;const after=totalPct();
+ fb(label+(k==='access'?' island-wide':' in '+v.name)+' for $'+cost+'k. Island connected and included: '+before.toFixed(1)+'% → '+after.toFixed(1)+'%.','good');renderBG()}
+function fb(t,c){const f=$('#bFb');f.className='fb '+(c||'');f.textContent=t;live(t)}
+
+function renderBG(){$('#bRound').textContent=B.over?'Finished':'Round '+B.round+' of 5';$('#bBudget').textContent='$'+B.budget+'k budget';$('#bPct').textContent=totalPct().toFixed(1)+'% connected';
+ renderMap();
+ $('#vilBtns').innerHTML=B.vs.map(v=>`<button type="button" class="btn" data-v="${v.id}" aria-pressed="${B.sel===v.id}" style="${B.sel===v.id?'border-color:#14203a;background:#eef2ff':''}">${esc(v.name)}</button>`).join('');
+ document.querySelectorAll('#vilBtns button').forEach(b=>b.addEventListener('click',()=>{B.sel=b.dataset.v;renderBG()}));
+ const c=B.card;$('#bCard').innerHTML=`<div class="bcard ${c.type}" role="region" aria-label="Barrier card"><div class="kicker">Round ${B.round} · ${esc(c.kicker)}</div><h3>${esc(c.title)}</h3><p style="margin:6px 0 0">${esc(c.text)}</p></div>`;
+ const v=B.vs.find(x=>x.id===B.sel);
+ let h=`<div class="kicker">Selected village</div><h3 style="font-size:1.15rem">${esc(v.name)} · ${fmt(v.pop)} people</h3><p style="margin:4px 0;font-size:.92rem;color:var(--muted)">${esc(v.note)}</p>
+ <div class="stats"><div class="stat"><b>${pc(cov(v))}</b><span>Network</span></div><div class="stat"><b>${pc(aff(v))}</b><span>Affordability</span></div><div class="stat"><b>${pc(skl(v))}</b><span>Skills</span></div></div>
+ <p style="margin:0 0 8px"><b>${fmt(connected(v))}</b> of ${fmt(v.pop)} connected and included (${pc(connected(v)/v.pop)})${v.down?' · <b style="color:var(--bad)">tower down</b>':''}</p><div class="acts">`;
+ ACTS.forEach(a=>{const own=v[a.k];const cost=a.cost(v);const eff=typeof a.eff==='function'?a.eff(v):a.eff;const dis=own||B.over||cost>B.budget;
+  h+=`<button type="button" class="act ${own?'owned':''}" data-k="${a.k}" ${dis?'disabled':''}><span>${own?'✓ ':''}${esc(a.name)}<small>${esc(eff)}</small></span><span class="cost">${own?'Done':'$'+cost+'k'}</span></button>`});
+ if(v.down)h+=`<button type="button" class="act" data-k="repair" ${B.over||B.budget<100?'disabled':''}><span>Repair the storm-damaged tower<small>Restores the tower's coverage</small></span><span class="cost">$100k</span></button>`;
+ $('#vilPanel').innerHTML=h+`</div>`;
+ document.querySelectorAll('#vilPanel .act').forEach(b=>b.addEventListener('click',()=>buy(b.dataset.k)));
+ $('#islandActs').innerHTML=`<button type="button" class="act ${B.access?'owned':''}" data-k="access" ${B.access||B.over||B.budget<100?'disabled':''}><span>${B.access?'✓ ':''}Accessibility features<small>Captions, transcripts, alt text and screen-reader-friendly government sites: accessibility to 100%</small></span><span class="cost">${B.access?'Done':'$100k'}</span></button>`;
+ $('#islandActs .act').addEventListener('click',()=>buy('access'));
+ $('#endRound').textContent=B.round<5?'End round '+B.round:'Finish and see debrief';$('#endRound').disabled=B.over;
+ let t=`<thead><tr><th scope="col">Village</th><th scope="col">People</th><th scope="col">Network</th><th scope="col">Afford.</th><th scope="col">Skills</th><th scope="col">Incl.</th><th scope="col">Included</th></tr></thead><tbody>`;
+ B.vs.forEach(v=>{t+=`<tr><td>${esc(v.name)}</td><td>${fmt(v.pop)}</td><td>${cov(v).toFixed(2)}</td><td>${aff(v).toFixed(2)}</td><td>${skl(v).toFixed(2)}</td><td>${incl().toFixed(3)}</td><td><b>${fmt(connected(v))}</b></td></tr>`});
+ const tot=B.vs.reduce((a,v)=>a+connected(v),0);t+=`<tr><td><b>Island</b></td><td>${fmt(TOTALPOP)}</td><td colspan="4" style="text-align:right">Accessibility ${pc(accessVal())}</td><td><b>${fmt(tot)} (${(tot/TOTALPOP*100).toFixed(1)}%)</b></td></tr></tbody>`;
+ $('#scoreTbl').innerHTML=t}
+
+$('#endRound').addEventListener('click',()=>{if(B.over)return;if(B.round<5){B.round++;B.budget+=200;drawCard();fb('Round '+B.round+': +$200k added. New barrier card: '+B.card.title+'. '+B.card.text,'');renderBG()}else finishBG()});
+$('#restartBG').addEventListener('click',()=>{newBG();fb('New game started. Round 1.','')});
+
+function rating(p){return p>=75?['Gold','An inclusive, resilient island.']:p>=62?['Silver','Strong progress, with gaps left.']:p>=50?['Bronze','More people online, but many still excluded.']:['Keep trying','The divide is still wide.']}
+function finishBG(quiet){B.over=true;renderBG();const p=totalPct(),r=rating(p);
+ let lostNet=0,lostCost=0,lostSkill=0,lostIncl=0;B.vs.forEach(v=>{const c=cov(v),a=aff(v),s=skl(v);lostNet+=v.pop*(1-c);lostCost+=v.pop*c*(1-a);lostSkill+=v.pop*c*a*(1-s);lostIncl+=v.pop*c*a*s*(1-incl())});
+ const ENS=[['fibre','Internet access through fibre'],['tower','Mobile coverage from cell towers'],['sat','Satellite back-up'],['wifi','Public and community Wi-Fi'],['dev','Lower-cost, subsidised devices'],['lit','Digital literacy'],['access','Assistive technology and accessible design'],['repair','Repairing infrastructure after a disaster']];
+ const BAR={cost:['Cost','Data and devices cost too much for low-income households.','Subsidised devices and free Wi-Fi',['dev','wifi']],geography:['Geography','Hills, distance and the sea make networks expensive to build.','Fibre, satellite and submarine links',['fibre','sat']],disability:['Disability','Media without captions and sites that screen readers cannot read exclude people.','Accessibility features',['access']],infrastructure:['Infrastructure','Power cuts and ageing networks.','Fibre, satellite and solar Wi-Fi',['fibre','sat','wifi']],hurricane:['Infrastructure: hurricane','A storm can knock out towers for weeks.','Buried fibre, satellite back-up and repair',['fibre','sat','repair']]};
+ let h=`<div class="kicker">Debrief</div><h2 style="font-size:1.4rem">Coralia: ${p.toFixed(1)}% connected and included</h2><p class="big" aria-hidden="true">${r[0]}</p><p><b>${r[0]}:</b> ${r[1]} You started at ${B.startPct.toFixed(1)}% and spent $${B.spent}k. (Gold 75%+, Silver 62%+, Bronze 50%+.)</p>
+ <h3 style="font-size:1.05rem;margin-top:12px">Who is still excluded, and why?</h3><div class="tablewrap"><table class="score"><tr><th>Reason</th><th>People</th></tr><tr><td>No usable network (infrastructure, geography)</td><td>${fmt(lostNet)}</td></tr><tr><td>Network, but cannot afford a device or data (cost)</td><td>${fmt(lostCost)}</td></tr><tr><td>Connected, but lack digital skills (education, age)</td><td>${fmt(lostSkill)}</td></tr><tr><td>Online, but content is not accessible (disability)</td><td>${fmt(lostIncl)}</td></tr></table></div>
+ <div class="two" style="margin-top:12px"><div><h3 style="font-size:1.05rem">Enablers you used</h3><ul>${ENS.map(e=>{const n=B.used[e[0]]||0;return `<li>${n?'✓':'✗'} <b>${esc(e[1])}</b>${n?' ×'+n:' (not used)'}</li>`}).join('')}</ul></div>
+ <div><h3 style="font-size:1.05rem">Barriers you faced</h3><ul>${B.log.map(k=>{const b=BAR[k];const met=b[3].some(x=>B.used[x]);return `<li><b>${esc(b[0])}:</b> ${esc(b[1])} Answer: ${esc(b[2])}. ${met?'<span style="color:var(--good)">You responded.</span>':'<span style="color:var(--bad)">Not addressed.</span>'}</li>`}).join('')}</ul></div></div>
+ <p class="fb" style="margin-top:12px"><b>Exam link:</b> access needs a network, an affordable device and data, the skills to use them and content designed for everyone. In a Paper 02 answer, name the barrier, explain its effect on a Caribbean audience, then give the enabler that reduces it.</p>
+ <div class="row" style="margin-top:10px"><button class="btn primary" id="playAgain">Play again</button><button class="btn" id="toQuiz">Take the quick-fire quiz</button></div>`;
+ const d=$('#debrief');d.innerHTML=h;d.hidden=false;d.tabIndex=-1;if(quiet!==true){d.focus();if(!RM)d.scrollIntoView({behavior:'smooth'});live('Debrief: '+p.toFixed(1)+' percent connected and included. Rating '+r[0])}
+ $('#playAgain').addEventListener('click',()=>{newBG();window.scrollTo(0,0)});$('#toQuiz').addEventListener('click',()=>showTab($('#t-qz'),true))}
+
+/* ---------------- Quiz ---------------- */
+const QZ=[
+ ['Which phrase BEST defines Web 1.0?',['The read-only web of static pages','The social web of user-generated content','The semantic web of machine-readable data','The emotional web'],0,'Web 1.0 was static and read-only: users could read but not create.'],
+ ['Which Web generation is defined by social media, user-generated content and two-way communication?',['Web 1.0','Web 2.0','Web 3.0','Web 4.0'],1,'Web 2.0 is the interactive, social web.'],
+ ['"Semantic" in "semantic web" refers to...',['speed','meaning','emotion','decoration'],1,'The semantic web tags data with meaning so machines can understand it.'],
+ ['Which Web generation is called "symbiotic"?',['Web 2.0','Web 3.0','Web 4.0','Web 5.0'],2,'Web 4.0: humans and intelligent connected systems work together.'],
+ ['Web 5.0 is best described as...',['the sensory and emotional web','the read-only web','the decentralised ledger web only','the dial-up web'],0,'Web 5.0 responds to human emotions and sensory input. It is partly speculative.'],
+ ['What is the correct order of the user\'s role from Web 1.0 to Web 4.0?',['Partner, co-creator, participant, reader','Reader, participant, co-creator, partner','Participant, reader, partner, co-creator','Reader, partner, participant, co-creator'],1,'Reader → participant → co-creator → partner.'],
+ ['Which enabler made watching video online normal and made Web 2.0 possible?',['Broadband','Fax','Vinyl','CD-ROM'],0,'Always-on, high-speed broadband carried rich media and uploads.'],
+ ['A Jamaican streaming app suggests shows based on what you watched last week. This is an example of...',['analogue broadcasting','personalisation using data analytics','a hit counter','haptics'],1,'Analytics and algorithms personalise content: a Web 3.0 feature.'],
+ ['Which of these is a BARRIER to access?',['Community Wi-Fi at the library','Captions on videos','A hurricane knocking out a cell tower','Digital literacy classes'],2,'Hurricane damage is an infrastructure barrier; the others are enablers.'],
+ ['Alt text on images mainly helps which group?',['Users of screen readers, such as blind users','Users on fibre broadband','Advertisers','Webmasters in 1998'],0,'Screen readers read alt text aloud, removing a disability barrier.'],
+ ['Why is relying on a single submarine cable risky for a small island?',['It makes websites static','One fault can cut or slow the whole island\'s connection','It prevents captions','It raises the price of vinyl'],1,'Without redundancy, one cable cut affects everyone: a geography and infrastructure barrier.'],
+ ['IoT sensors on a beach send live water-quality data to residents\' smartwatches. Which Web generation is this?',['Web 1.0','Web 2.0','Web 4.0','Web 5.0'],2,'IoT, AI and real-time data in connected systems: Web 4.0.'],
+ ['Which statement about Web 4.0 and Web 5.0 is MOST accurate?',['Both fully arrived in the 1990s','They are emerging and partly speculative, and definitions vary','They are the same as Web 1.0','They need no Internet connection'],1,'Describe them as emerging; writers define them differently.'],
+ ['Generative AI that drafts captions and a Spanish summary of a news video is an example of...',['AI in content creation','analogue editing','a web directory','a dial-up modem'],0,'AI-assisted production speeds up content creation; a human should still check it.'],
+ ['Web 3.0 is paired with the semantic web and...',['decentralisation (for example blockchain)','fax machines','vinyl records','hit counters'],0,'The syllabus calls Web 3.0 the Semantic and Decentralised Web.'],
+ ['Which is the BEST plan for a Grenada business whose customers pay for data by the day?',['A heavy site with HD video only','A lightweight, compressed WhatsApp catalogue while keeping phone orders','Close all phone lines','Only print adverts in 1978 style'],1,'Low-data, familiar channels with a non-digital back-up reduce the cost barrier.']
+];
+let Q={i:0,score:0,answered:false,first:true,streak:0,best:0};
+function renderQuiz(){const el=$('#quiz');if(Q.i>=QZ.length){const pct=Math.round(Q.score/QZ.length*100);el.innerHTML=`<div class="kicker">Quick-fire quiz complete</div><h2 style="font-size:1.4rem">You scored ${Q.score} out of ${QZ.length} (${pct}%)</h2><p>Best streak: ${Q.best} in a row. ${pct>=80?'Excellent: that is Grade One territory.':pct>=60?'Good. Revise the comparison table and try again.':'Use the revision sheet, then try again.'}</p><div class="row"><button class="btn primary" id="qzAgain">Try again</button><button class="btn" id="qzSheet">Open the revision sheet</button></div>`;
+  $('#qzAgain').addEventListener('click',()=>{Q={i:0,score:0,answered:false,first:true,streak:0,best:0};renderQuiz();el.querySelector('.qopt').focus()});$('#qzSheet').addEventListener('click',()=>showTab($('#t-sheet'),true));live('Quiz complete. '+Q.score+' out of '+QZ.length);return}
+ const q=QZ[Q.i];el.innerHTML=`<div class="prog"><span>Question ${Q.i+1} of ${QZ.length}</span><span>Score ${Q.score} · Streak ${Q.streak}</span></div><div class="meter" aria-hidden="true"><i style="width:${Q.i/QZ.length*100}%"></i></div><h2 style="font-size:1.2rem;margin-top:12px" id="qzQ">${esc(q[0])}</h2><div class="qopts">${q[1].map((o,i)=>`<button type="button" class="qopt" data-i="${i}">${String.fromCharCode(65+i)}. ${esc(o)}</button>`).join('')}</div><div class="fb" id="qzFb" role="status" aria-live="polite"></div><div class="row" style="margin-top:10px"><button class="btn primary" id="qzNext" hidden>Next</button></div>`;
+ el.querySelectorAll('.qopt').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i;const f=$('#qzFb');
+  if(i===q[2]){b.classList.add('right');if(Q.first){Q.score++;Q.streak++;Q.best=Math.max(Q.best,Q.streak)}f.className='fb good';f.innerHTML='<b>Correct.</b> '+esc(q[3]);el.querySelectorAll('.qopt').forEach(x=>x.disabled=true);const n=$('#qzNext');n.hidden=false;n.textContent=Q.i<QZ.length-1?'Next question':'See my score';n.focus()}
+  else{b.classList.add('wrong');b.disabled=true;Q.first=false;Q.streak=0;f.className='fb bad';f.innerHTML='<b>Not quite.</b> Try again: this one will not count towards your score.'}
+  live(f.textContent)}));
+ $('#qzNext').addEventListener('click',()=>{Q.i++;Q.first=true;renderQuiz();const f=el.querySelector('.qopt');f&&f.focus()})}
+
+/* ---------------- Init ---------------- */
+renderAll();newBG();renderQuiz();
+
+/* ---------------- GameSave: the journey (era, unlocked eras, artefacts, website picks, toolkit, challenges, chrono points),
+   the Bridge the Gap game, the quick-fire quiz and the open tab stay on this device ---------------- */
+(function(){
+ if(!window.GameSave)return;
+ const int=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b, num=v=>typeof v==='number'&&isFinite(v), obj=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+ const boolArr=a=>Array.isArray(a)&&a.length===ERAS.length&&a.every(x=>typeof x==='boolean');
+ function snap(){
+  const cur=TM.era,qOK=!!document.querySelector('#qBox .qopt.right');
+  return {v:1,tab:(tabs.find(t=>t.getAttribute('aria-selected')==='true')||tabs[0]).id,
+   tm:{era:TM.era,unlocked:TM.unlocked,found:TM.found.map(s=>Array.from(s)),siteDone:TM.siteDone.slice(),chDone:TM.chDone.slice(),chTries:TM.chTries.slice(),pts:TM.pts,
+    qi:TM.qi+(qOK&&!TM.chDone[cur]?1:0),
+    site:[...document.querySelectorAll('#siteChips .chip[aria-pressed="true"]')].map(c=>+c.dataset.i),
+    tray:TM.chDone[cur]?[]:[...document.querySelectorAll('#zEra .tok')].map(b=>+b.dataset.i)},
+   B:B,
+   quiz:Object.assign({},Q,document.querySelector('#quiz .qopt.right')&&Q.i<QZ.length?{i:Q.i+1,first:true}:{})};
+ }
+ function restoreTM(t){
+  if(!obj(t)||!int(t.unlocked,0,ERAS.length-1)||!int(t.era,0,t.unlocked)||!Array.isArray(t.found)||t.found.length!==ERAS.length||!boolArr(t.siteDone)||!boolArr(t.chDone)||
+   !Array.isArray(t.chTries)||t.chTries.length!==ERAS.length||!t.chTries.every(x=>int(x,0,1e6))||!int(t.pts,0,1e6))return;
+  TM.era=t.era;TM.unlocked=t.unlocked;TM.spotMode=false;
+  TM.found=ERAS.map((e,i)=>new Set((Array.isArray(t.found[i])?t.found[i]:[]).filter(k=>typeof k==='string'&&e.arts[k])));
+  TM.siteDone=t.siteDone.slice();TM.chDone=t.chDone.slice();TM.chTries=t.chTries.slice();TM.pts=t.pts;
+  const ch=ERAS[TM.era].ch;TM.qi=ch.type==='quiz'&&int(t.qi,0,ch.qs.length-1)?t.qi:0;
+  addPts(0);$('#dialTxt').textContent=ERAS[TM.era].dest+' · '+ERAS[TM.era].key.toUpperCase();
+  renderAll();
+  if(Array.isArray(t.site))t.site.forEach(i=>{const c=document.querySelector('#siteChips .chip[data-i="'+(+i)+'"]');if(c)c.setAttribute('aria-pressed','true')});
+  const box=document.querySelector('#zEra .toks');
+  if(box&&!TM.chDone[TM.era]&&Array.isArray(t.tray))t.tray.forEach(i=>{const b=document.querySelector('#zTray .tok[data-i="'+(+i)+'"]');if(b){box.appendChild(b);b.setAttribute('aria-label',b.textContent+': in the era box. Select to move back to the tray.')}});
+ }
+ function restoreB(s){
+  if(!obj(s)||!int(s.round,1,5)||!num(s.budget)||!num(s.spent)||!Array.isArray(s.vs)||s.vs.length!==VBASE.length||!obj(s.card)||typeof s.card.title!=='string'||typeof s.card.text!=='string'||!CARDS[s.card.type])return;
+  if(!Array.isArray(s.deck)||s.deck.length!==5||!s.deck.every(k=>CARDS[k])||!Array.isArray(s.log)||!s.log.every(k=>CARDS[k])||!obj(s.flags)||!obj(s.used))return;
+  const F=['fibre','tower','sat','wifi','dev','lit','down'];
+  const vs=VBASE.map((v,i)=>{const o=s.vs[i];if(!obj(o)||o.id!==v.id)return null;const x=Object.assign({},v);F.forEach(k=>{x[k]=o[k]===true});return x});
+  if(vs.some(v=>!v))return;
+  B={round:s.round,budget:s.budget,spent:s.spent,vs,access:s.access===true,flags:s.flags,deck:s.deck.slice(),log:s.log.slice(),used:s.used,sel:VBASE.some(v=>v.id===s.sel)?s.sel:'port',over:s.over===true,
+   hitVillage:typeof s.hitVillage==='string'?s.hitVillage:null,startPct:num(s.startPct)?s.startPct:totalPct(),
+   card:{type:s.card.type,kicker:String(s.card.kicker||''),title:s.card.title,text:s.card.text}};
+  $('#debrief').hidden=true;renderBG();if(B.over)finishBG(true);
+ }
+ function restoreQ(q){
+  if(!obj(q)||!int(q.i,0,QZ.length)||!int(q.score,0,QZ.length)||!int(q.streak,0,QZ.length)||!int(q.best,0,QZ.length))return;
+  Q={i:q.i,score:Math.min(q.score,q.i),answered:false,first:q.first!==false,streak:q.streak,best:q.best};renderQuiz();
+ }
+ GameSave.persist({key:'dm2.webtimemachine.save',get:snap,set:d=>{
+  if(!d||d.v!==1)return;
+  try{restoreTM(d.tm)}catch(e){}
+  try{restoreB(d.B)}catch(e){newBG()}
+  try{restoreQ(d.quiz)}catch(e){}
+  const t=tabs.find(x=>x.id===d.tab);if(t)showTab(t);
+ }});
+ const save=()=>{try{GameSave.save()}catch(e){}};
+ ['click','change','drop','keyup'].forEach(ev=>document.addEventListener(ev,()=>{setTimeout(save,0);setTimeout(save,600)},true));
+})();
+window.__wtm={TM,get B(){return B},ERAS,QZ,totalPct:()=>totalPct()};
+})();
+</script>
+</body>
+</html>

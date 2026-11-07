@@ -1,0 +1,1310 @@
+<!doctype html><html lang="en" data-gs-own><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a><title>Main Idea Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fredoka:wght@500;600;700&display=swap">
+<style>
+/* Layout: sea-band header, level map of three islands, one focused activity card at a time */
+/* Layout: night-sky quest — glassy navy cards over a twinkling starfield, gold as the light source */
+:root{
+  --bg:#060D26; --bg2:#0B1A46; --surface:rgba(15,30,74,.88); --ink:#F1F4FF; --muted:#AEB9DD; --line:rgba(245,197,66,.24);
+  --sea:#F5C542; --sea-ink:#0A1433; --coral:#E0A82E; --sun:#FFD766; --on-gold:#0A1433; --ok:#4FD18B; --bad:#FF7A6B;
+  --soft-sea:rgba(245,197,66,.14); --soft-sun:rgba(255,215,102,.16); --soft-coral:rgba(224,168,46,.16); --soft-ok:rgba(79,209,139,.16); --soft-bad:rgba(255,122,107,.17);
+  --glow:rgba(245,197,66,.45);
+  --shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 18px 40px -18px rgba(0,0,0,.85), 0 2px 0 rgba(0,0,0,.35);
+  --f-display:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Verdana","Segoe UI",system-ui,sans-serif;
+  --r:16px; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:radial-gradient(1100px 650px at 80% -10%,var(--bg2),transparent 60%),radial-gradient(800px 500px at -10% 110%,var(--bg2),transparent 55%),var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:2.2rem} h2{font-size:1.6rem} h3{font-size:1.2rem}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{background:linear-gradient(180deg,#0A1A4A,#071030);color:#FFE38A;position:relative;border-bottom:1px solid var(--line);box-shadow:0 10px 30px -12px rgba(0,0,0,.7);z-index:2}
+.top::after{content:none}
+.top-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand svg{flex:none}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.chip-top{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.92rem;white-space:nowrap}
+:root[data-theme="dark"] .chip-top{background:rgba(0,0,0,.18)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip-top{background:rgba(0,0,0,.18)}}
+main.wrap{padding-block:30px 24px;display:flex;flex-direction:column;gap:22px}
+.map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lvl{text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl.on{border-color:var(--sea);box-shadow:var(--shadow)}
+.lvl.shut{opacity:.6;cursor:not-allowed}
+.lvl-n{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.lvl-name{font-family:var(--f-display);font-weight:600;font-size:1.2rem}
+.lvl-tag{font-size:.85rem;color:var(--muted)}
+.lvl-prog{height:6px;border-radius:9px;background:var(--soft-sea);margin-top:8px;overflow:hidden}
+.lvl-prog i{display:block;height:100%;background:var(--sea);border-radius:9px;transition:width .4s}
+.lvl-meta{font-size:.8rem;color:var(--muted);margin-top:4px}
+@media (max-width:560px){.map{grid-template-columns:1fr}.lvl{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:10px}.lvl-prog{flex-basis:100%;order:5}.lvl-meta{order:6}}
+.stephead{display:flex;flex-direction:column;gap:8px}
+.crumbs{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);font-weight:700}
+.bar{height:10px;background:var(--surface);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sea),var(--sun));border-radius:99px;transition:width .4s}
+.card{background:var(--surface);border-radius:22px;box-shadow:var(--shadow);padding:clamp(18px,4vw,32px);display:flex;flex-direction:column;gap:16px;min-width:0}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.kicker{display:inline-block;font-size:.76rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:4px 11px;border-radius:99px;background:var(--soft-sea);color:var(--ink)}
+.k-game{background:var(--soft-sun)} .k-check{background:var(--soft-coral)} .k-write{background:var(--soft-ok)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{background:transparent;border:2px solid var(--line);border-radius:99px;padding:5px 12px;font-size:.88rem;font-weight:700}
+.tool:hover{border-color:var(--sea)}
+.poem-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.poem-head h3{margin:0!important}
+.listen{white-space:nowrap}
+.tool.dial-on{background:var(--soft-sun);border-color:var(--sun)}
+.easy-banner{background:var(--soft-sun);border-radius:12px;padding:10px 14px;font-size:.95rem}
+.passage{margin:0;background:var(--soft-sea);border-radius:14px;padding:16px 18px;font-size:1.02rem;max-width:68ch}
+.q{font-weight:700;font-size:1.08rem}
+.lead{max-width:66ch}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;transition:transform .12s,border-color .12s}
+.opt:hover{border-color:var(--sea);transform:translateY(-1px)}
+.opt.sel{border-color:var(--sea);background:var(--soft-sea)}
+.opt.right{border-color:var(--ok);background:var(--soft-ok)}
+.opt.wrongopt{border-color:var(--bad);background:var(--soft-bad)}
+.letter{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--bg);font-family:var(--f-display);font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:0;border-radius:14px;padding:11px 18px;font-weight:700;font-size:1rem}
+.btn.go{background:var(--sea);color:var(--sea-ink);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.btn.go:active{transform:translateY(2px);box-shadow:none}
+.btn.ghost{background:transparent;border:2px solid var(--line)}
+.btn.ghost:hover{border-color:var(--sea)}
+.btn.yes{background:var(--ok);color:var(--surface)}
+.btn.no{background:var(--sun);color:var(--on-gold)}
+.fb{border-radius:14px;padding:12px 16px}
+.fb.good{background:var(--soft-ok)} .fb.bad{background:var(--soft-bad)} .fb.warnbox{background:var(--soft-sun)}
+.warn{color:var(--bad);font-weight:700}
+.selfcheck{border:2px dashed var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.selfcheck p{font-weight:700}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.locked{font-weight:700;color:var(--muted);background:var(--surface);border:2px dashed var(--line);border-radius:14px;padding:10px 14px;font-size:.95rem}
+.unlocked-msg{background:var(--soft-ok);border-radius:14px;padding:10px 14px;font-weight:700}
+/* learn content */
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.trio{grid-template-columns:1fr}}
+.tcard{border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.t1{background:var(--soft-sea)} .t2{background:var(--soft-sun)} .t3{background:var(--soft-coral)}
+.lbl{font-size:.74rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.ex{font-style:italic}
+.tip{background:var(--bg);border-radius:14px;padding:12px 16px;max-width:70ch}
+.formula{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-display);font-weight:600}
+.formula span{background:var(--soft-sea);border-radius:10px;padding:6px 12px}
+.formula b{font-size:1.3rem;color:var(--muted)}
+.formula .ans{background:var(--soft-sun)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:.95rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-weight:600}
+.verbs{display:flex;flex-wrap:wrap;gap:8px}
+.verbs span{border:2px solid var(--line);border-radius:99px;padding:3px 12px;font-weight:700;font-size:.92rem}
+.poem{font-family:var(--f-body);background:var(--soft-sea);border-radius:16px;padding:18px 20px;line-height:1.7;max-width:62ch}
+.poem h3{margin-bottom:8px}
+.poem .ln{display:block}
+.poem .gap{display:block;height:.8em}
+details.poemfold summary{cursor:pointer;font-weight:700;color:var(--sea)}
+details.poemfold .poem{margin-top:10px}
+.pete{display:flex;flex-direction:column;gap:6px}
+.pete span{border-radius:10px;padding:8px 12px}
+.pp{background:var(--soft-sea)} .pt{background:var(--soft-sun)} .pe{background:var(--soft-coral)} .pf{background:var(--soft-ok)}
+.house{display:grid;gap:12px}
+.room{border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.room h3{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.room h3 small{font-family:var(--f-body);font-weight:400;font-size:.9rem;color:var(--muted)}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starters span{background:var(--bg);border-radius:8px;padding:3px 10px;font-size:.92rem}
+ul.clean{margin:0;padding-left:1.2em;display:grid;gap:4px}
+/* games */
+.mainbox{background:var(--soft-sun);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.mainbox svg{flex:none}
+.sort-list{display:grid;gap:10px}
+.sitem{border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sitem.wrong{border-color:var(--bad);background:var(--soft-bad)}
+.sitem.good{border-color:var(--ok)}
+.bins{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:.9rem;font-weight:700}
+.chip:hover{border-color:var(--sea)}
+.chip.sel{background:var(--sea);border-color:var(--sea);color:var(--sea-ink)}
+.pickpass{background:var(--soft-sea);border-radius:14px;padding:16px 18px;line-height:1.9;max-width:70ch}
+.ps{background:transparent;border:0;padding:1px 3px;border-radius:6px;text-align:left;display:inline;line-height:inherit}
+.ps:hover{background:var(--soft-sun)}
+.ps.sel{background:var(--sun);color:var(--on-gold)}
+.pickpass.poemmode .ps{display:block;width:100%;padding:3px 8px}
+.pickpass .gap{display:block;height:.7em}
+.olane{min-height:70px;border:2px dashed var(--sea);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.opool{display:flex;flex-direction:column;gap:8px}
+.blk{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.98rem}
+.blk:hover{border-color:var(--sea)}
+.blk.placed{background:var(--soft-sea);border-color:transparent}
+.pos{flex:none;width:26px;height:26px;border-radius:50%;background:var(--sea);color:var(--sea-ink);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.btag{flex:none;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--soft-sun);border-radius:6px;padding:2px 7px;margin-top:2px}
+.empty{color:var(--muted);font-style:italic;padding:8px}
+.hint{color:var(--muted);font-size:.95rem}
+.frame{background:var(--soft-sun);border-radius:14px;padding:12px 16px}
+.ta{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--surface);color:var(--ink);resize:vertical}
+.wc{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.wc.over{color:var(--bad);font-weight:700}
+.checklist{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:grid;gap:8px;margin:0}
+.checklist legend{font-weight:700;padding:0 6px}
+.checklist label{display:flex;gap:10px;align-items:flex-start}
+.checklist input{width:20px;height:20px;margin-top:3px;accent-color:var(--sea);flex:none}
+.model{background:var(--soft-ok);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.moods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.moods{grid-template-columns:1fr}}
+.mood{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:700}
+.mood .face{font-size:2.2rem;line-height:1}
+.mood:hover{border-color:var(--sea);transform:translateY(-2px)}
+.mood.sel{border-color:var(--sea);background:var(--soft-sea)}
+.recap{background:var(--bg);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.badge{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.medal{width:96px;height:96px;flex:none}
+.cert{border:3px double var(--sea);border-radius:18px;padding:24px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.cert .who{font-family:var(--f-display);font-size:2rem;font-weight:700;color:var(--sea)}
+.welcome h1{font-size:clamp(2rem,6vw,2.8rem)}
+.welcome input{font:inherit;border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--surface);color:var(--ink);min-width:0;flex:1 1 200px}
+.how{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.foot{padding-block:10px 40px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.foot button{background:none;border:0;text-decoration:underline;color:var(--muted);padding:0;font-size:.88rem}
+.modal{position:fixed;inset:0;background:rgba(8,24,28,.55);display:grid;place-items:center;z-index:30;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.mbox{background:var(--surface);border-radius:22px;max-width:560px;width:100%;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);max-height:100%;overflow:auto}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mstep{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mdots{display:flex;gap:6px}
+.mdots i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.mdots i.on{background:var(--sea)}
+.mbody{display:flex;flex-direction:column;gap:10px}
+.x{background:none;border:0;font-size:1.5rem;line-height:1;padding:4px 8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;z-index:40;max-width:calc(100% - 32px);text-align:center}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:35;width:100%;height:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+main.wrap,.foot{position:relative;z-index:1}
+.card,.lvl{border:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 40%),var(--surface)}
+.lvl.on{box-shadow:0 0 0 2px var(--sea),0 0 22px var(--glow)}
+h1,h2{background:linear-gradient(180deg,#FFFFFF 25%,#FFE38A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn.go{background:linear-gradient(180deg,#FFE58A,#F5C542 55%);box-shadow:0 4px 0 #A97A0E,0 8px 18px -6px var(--glow)!important}
+.btn.go:active{transform:translateY(3px);box-shadow:0 1px 0 #A97A0E!important}
+.opt,.chip,.blk,.mood,.tool,.ps{box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.opt:active,.chip:active,.blk:active,.mood:active,.tool:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+.bar,.lvl-prog{background:rgba(0,0,0,.35);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+.bar i,.lvl-prog i{background:linear-gradient(90deg,#B8860B,#F5C542 60%,#FFF0B3);box-shadow:0 0 12px var(--glow)}
+.ps.sel{color:#0A1433}
+.avs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.av{font-size:1.9rem;line-height:1;padding:10px 0;border-radius:14px;border:2px solid var(--line);background:rgba(255,255,255,.05);box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.av.sel{border-color:var(--sun);box-shadow:0 0 0 2px var(--sun),0 0 16px var(--glow)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="14" cy="14" r="9" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M21 21l8 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M10 14h8M14 10v8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      Main Idea Quest
+    </div>
+    <div class="stats"><span class="chip-top" id="who">Explorer</span><span class="chip-top"><span id="xp">0</span> XP</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav id="map" class="map" aria-label="Levels"></nav>
+  <section id="stage" aria-live="polite"></section>
+</main>
+
+<footer class="wrap foot">
+  <span>CAPE Communication Studies</span>
+  <span class="row"><button id="teacherBtn" type="button">Teacher: unlock all steps</button><button id="resetBtn" type="button">Reset my progress</button></span>
+</footer>
+
+<div id="modal" class="modal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mtitle" tabindex="-1">
+    <div class="mhead"><span class="kicker k-game" id="mtitle">Mini tutorial</span><button class="x" id="mclose" aria-label="Close">×</button></div>
+    <div class="mdots" id="mdots"></div>
+    <div class="mbody" id="mbody"></div>
+    <div class="row" id="mbtns"></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+/* ---------- Shared content ---------- */
+const POEM_TITLE = `Where the Mango Tree Stood`;
+const POEM = [
+  `Behind Grandma's house there was a mango tree,`,
+  `its arms stretched wide like it was hugging me.`,
+  `Each July it dropped its gold into the grass,`,
+  `and we raced barefoot, sticky juice our prize.`,
+  ``,
+  `The tree held our secrets, our swing, our shade.`,
+  `It listened when I cried. It never told.`,
+  `Grandpa fixed his fishing nets beneath its leaves,`,
+  `and every story ended "under the mango tree."`,
+  ``,
+  `Now there's a car park where the roots once drank the rain.`,
+  `Grey concrete, white lines, a sign that says NO STOPPING.`,
+  `The sun beats down. There is nowhere left to hide.`,
+  `Cars come and go. Nobody stays.`,
+  ``,
+  `They say it's progress. They say we need the space.`,
+  `But tell me, where will my children climb?`,
+  `And where will all the stories go`,
+  `when there's no tree left to end them under?`
+];
+function poemHTML(){
+  return `<div class="poem"><div class="poem-head"><h3>${POEM_TITLE}</h3><button type="button" class="tool listen" data-act="listen" data-clip="poem" aria-label="Listen to the poem">🔊 Listen</button></div>${POEM.map(l=>l===''?'<span class="gap"></span>':`<span class="ln">${l}</span>`).join('')}</div>`;
+}
+const POEM_FOLD = () => `<details class="poemfold"><summary>Show the poem again</summary>${poemHTML()}</details>`;
+const UMBRELLA = `<svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 26a23 20 0 0 1 46 0c-4-3-7-3-11.5 0-4.5-3-7-3-11.5 0-4.5-3-7-3-11.5 0C11 23 8 23 4 26z" fill="var(--coral)"/><path d="M27 6v34a5 5 0 0 1-10 0" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/></svg>`;
+
+/* ---------- Course ---------- */
+const COURSE = [
+{ id:'L1', name:'Explorer', level:'Beginner', blurb:'Topic, main idea and details',
+  recap:`<p><b>Topic</b> = what it's about, in 1–3 words.</p><p><b>Main idea</b> = the topic + the writer's point, in a full sentence.</p><p><b>Details</b> = the proof that sits under the main idea's umbrella.</p>`,
+  badge:'Explorer', skills:['Tell a topic from a main idea','Sort details under the main-idea umbrella','Find the "boss sentence" in a paragraph'],
+  steps:[
+  { type:'learn', title:'Meet the Big Three',
+    html:`<p class="lead">Every good piece of writing has three parts working together. Learn their names and you can take apart any text.</p>
+    <div class="trio">
+      <div class="tcard t1"><span class="lbl">Topic</span><p>What the text is about, in 1–3 words.</p><p class="ex">Phones at lunch</p></div>
+      <div class="tcard t2"><span class="lbl">Main idea</span><p>The topic + the writer's point about it. Always a full sentence.</p><p class="ex">Phones are making lunchtime quiet and less friendly.</p></div>
+      <div class="tcard t3"><span class="lbl">Details</span><p>The proof: facts, examples and little stories.</p><p class="ex">Four out of five people at my table were scrolling.</p></div>
+    </div>
+    <div class="mainbox">${UMBRELLA}<p><b>The umbrella trick.</b> Picture the main idea as an umbrella. Every detail should fit underneath it and stay dry. If a sentence is standing out in the rain, it doesn't belong to that main idea.</p></div>
+    <p class="tip"><b>Watch out:</b> most people stop at the topic. "Phones" is not a main idea. You need to say what the writer thinks <i>about</i> phones.</p>`,
+    tutor:[
+      {h:'The topic is short', p:`<p>Ask yourself: <b>"What is this mostly about?"</b> Answer in 1–3 words. That's the topic.</p><p class="ex">Example: <b>Carnival</b></p>`},
+      {h:'The main idea makes a point', p:`<p>Now ask: <b>"What is the writer saying about it?"</b> Put the topic and the point together in one sentence.</p><p class="ex">Carnival brings the whole island together.</p>`},
+      {h:'Details are the proof', p:`<p>Details answer <b>"How do I know?"</b></p><p class="ex">Families from Castries to Vieux Fort come out for the parade.</p>`}
+    ]},
+  { type:'mcq', title:'Spot the topic',
+    passage:`Every day at lunch, the canteen at our school goes quiet. It isn't because nobody is there. Almost every student is looking down at a phone. Friends sit side by side but send each other memes instead of talking. Some students don't even notice when the bell rings.`,
+    q:`What is the TOPIC of this paragraph?`,
+    options:[
+      {t:`Phones at lunch`, ok:true, fb:`Yes. Short, clear, and it's what the whole paragraph is about.`},
+      {t:`The school bell`, fb:`The bell is mentioned once, at the end. It's a detail, not the topic.`},
+      {t:`Memes`, fb:`Memes come up in one sentence only. The topic covers the whole paragraph.`},
+      {t:`Phones are making lunchtime at our school quiet and less social.`, fb:`Good thinking, but that's a full sentence with a point. That's the MAIN IDEA. A topic is just 1–3 words.`}
+    ],
+    easy:{ title:'Spot the word that keeps coming back',
+      passage:`Maya loves her phone. She uses her phone at lunch. Her phone is always in her hand.`,
+      q:`Which word shows up again and again?`,
+      options:[{t:`Phone`, ok:true, fb:`Yes! The word that keeps coming back is usually the topic.`},{t:`Lunch`, fb:`Lunch is only there once. Count again.`},{t:`Hand`, fb:`Hand is only there once. Which word appears three times?`}],
+      tutor:[{h:'Count the repeats', p:`<p>Read each sentence and look for a word you've already seen. Writers repeat the topic because it's what they're talking about.</p>`}]
+    },
+    tutor:[
+      {h:'Look for repeats', p:`<p>Which idea keeps coming back? In this paragraph: <i>phone</i>, <i>looking down</i>, <i>memes</i>, <i>not talking</i>. They are all about phones.</p>`},
+      {h:'Ask "mostly about"', p:`<p>Who or what is this <b>mostly</b> about? Not just one sentence, but all of them together.</p>`},
+      {h:'Keep it to 1–3 words', p:`<p>If your answer is a whole sentence, it's too big for a topic. Shrink it.</p>`}
+    ]},
+  { type:'mcq', title:'Now find the main idea',
+    passage:`Every day at lunch, the canteen at our school goes quiet. It isn't because nobody is there. Almost every student is looking down at a phone. Friends sit side by side but send each other memes instead of talking. Some students don't even notice when the bell rings.`,
+    q:`Which sentence is the MAIN IDEA? Remember: topic + the writer's point.`,
+    options:[
+      {t:`Phones.`, fb:`That's only the topic. What is the writer saying about phones?`},
+      {t:`Some students don't notice when the bell rings.`, fb:`That's one detail. Does it cover the friends, the memes and the quiet canteen too?`},
+      {t:`Phones are making lunchtime at our school quiet and less social.`, ok:true, fb:`Exactly. Topic (phones at lunch) + point (quiet and less social). Every detail fits under this umbrella.`},
+      {t:`Many Caribbean schools have a canteen.`, fb:`The paragraph never talks about other schools. This doesn't fit.`}
+    ],
+    easy:{ title:'Main idea, smaller version',
+      passage:`Maya uses her phone at lunch. She uses it in bed. She uses it on the bus.`,
+      q:`Which sentence covers ALL three details?`,
+      options:[{t:`Maya uses her phone all the time.`, ok:true, fb:`Yes. Lunch, bed and bus all fit under "all the time."`},{t:`Maya rides a bus.`, fb:`That's only one detail.`},{t:`Phone.`, fb:`That's just the topic. Add the point.`}],
+      tutor:[{h:'The umbrella test', p:`<p>Hold up each answer like an umbrella. Do lunch, bed AND bus all fit under it? Only the main idea covers everything.</p>`}]
+    },
+    tutor:[
+      {h:'Use the formula', p:`<div class="formula"><span>Topic</span><b>+</b><span>What's the point?</span><b>=</b><span class="ans">Main idea</span></div>`},
+      {h:'Do the umbrella test', p:`<p>Read each detail: quiet canteen, looking at phones, memes instead of talking, missing the bell. Does your answer cover <b>all</b> of them? If one is left in the rain, try another answer.</p>`},
+      {h:'Beware of these traps', p:`<ul class="clean"><li>A single word is a topic, not a main idea.</li><li>One detail is too small.</li><li>A sentence about something the text never mentions doesn't fit.</li></ul>`}
+    ]},
+  { type:'checkin', title:'Quick check-in' },
+  { type:'sort', game:true, title:'Umbrella Sort',
+    intro:`Mini game: decide where each sentence belongs. Tap one label for every card.`,
+    main:`Beach clean-ups help keep Barbados's beaches safe and beautiful.`,
+    bins:[`Supports it`,`Extra detail`,`Doesn't belong`],
+    items:[
+      {t:`Volunteers picked up 300 plastic bottles at Accra Beach in one morning.`, bin:0},
+      {t:`The clean-up started at 7:00 a.m. on a Saturday.`, bin:1},
+      {t:`Removing broken glass from the sand means fewer cut feet.`, bin:0},
+      {t:`My cousin's favourite food is johnnycakes.`, bin:2},
+      {t:`Clean sand gives sea turtles a safe place to lay their eggs.`, bin:0},
+      {t:`The volunteers wore matching blue T-shirts.`, bin:1},
+      {t:`New video games are getting more expensive.`, bin:2}
+    ],
+    win:`All seven sorted! You can tell proof from extra facts and from things that don't belong.`,
+    easy:{ title:'Umbrella Sort (dial-down)',
+      intro:`Only two choices this time: does the sentence fit under the umbrella or not?`,
+      main:`Our class beach clean-up was a big success.`,
+      bins:[`Fits under`,`Doesn't belong`],
+      items:[{t:`We filled twenty bags with rubbish.`, bin:0},{t:`The beach looked spotless when we left.`, bin:0},{t:`My dog is brown.`, bin:1}],
+      win:`Nice! Two sentences prove the clean-up was a success. The dog is a different topic.`,
+      tutor:[{h:'Ask one question', p:`<p>For each sentence ask: <b>"Does this show the clean-up was a success?"</b> Yes = fits under. No = doesn't belong.</p>`}]
+    },
+    tutor:[
+      {h:'Supports it', p:`<p>The sentence <b>proves</b> the main idea. Ask: does it show beaches becoming safer or more beautiful? 300 bottles removed: yes.</p>`},
+      {h:'Extra detail', p:`<p>True and on the same topic, but it doesn't prove anything. The start time and the T-shirt colour are about the clean-up, but they don't show the beach is safer.</p>`},
+      {h:"Doesn't belong", p:`<p>A different topic altogether. Johnnycakes and video games have nothing to do with beach clean-ups.</p>`}
+    ]},
+  { type:'pick', title:'Find the Boss Sentence',
+    intro:`Sometimes the writer tells you the main idea in one sentence. We call it the <b>topic sentence</b>, or the boss sentence. It isn't always first!`,
+    q:`Tap the boss sentence: the one all the others explain.`,
+    lines:[
+      `Last year, our school started a garden behind the science block.`,
+      `Students grow peppers, callaloo and pumpkins.`,
+      `The school garden has taught us more than any textbook could.`,
+      `We learned to test soil and measure plant growth in science.`,
+      `We worked out costs and profits when we sold vegetables at the school fair.`,
+      `We even learned patience, because pumpkins take months to grow!`
+    ],
+    correct:[2],
+    win:`That's the boss. Science, money and patience are all examples of what the garden taught. Notice it was in the middle, not the first sentence.`,
+    miss:`Not that one. Try the "because" test: put each sentence in front of "because…" and see which one the others explain.`,
+    easy:{ title:'Find the Boss Sentence (dial-down)',
+      intro:`Three short sentences. One is the boss.`,
+      q:`Tap the sentence the other two explain.`,
+      lines:[`Dogs make great pets.`,`They are loyal.`,`They love to play.`],
+      correct:[0], win:`Yes! "Loyal" and "love to play" are reasons dogs make great pets.`, miss:`That one is a reason. Which sentence is it a reason FOR?`,
+      tutor:[{h:'The "because" test', p:`<p>Try: "Dogs make great pets <b>because</b> they are loyal." That works, so "Dogs make great pets" is the boss.</p>`}]
+    },
+    tutor:[
+      {h:'Bosses give orders', p:`<p>The boss sentence is general. The other sentences are specific examples that obey it.</p>`},
+      {h:'The "because" test', p:`<p>Try: "The garden taught us more than any textbook <b>because</b> we learned to test soil…" It works! So the garden sentence is the boss.</p>`},
+      {h:'Check the middle', p:`<p>The first sentence often just sets the scene. Here, "Last year, our school started a garden" tells us <i>when</i>, not the point.</p>`}
+    ]},
+  { type:'finish' }
+  ]},
+
+{ id:'L2', name:'Detective', level:'Intermediate', blurb:'Hidden main ideas, summaries, structure and purpose',
+  recap:`<p><b>Implied main idea:</b> clue + clue + clue = the hidden point.</p><p><b>GIST:</b> say the big point in 20 words or fewer. Drop the small stuff.</p><p><b>Structure signals:</b> "as a result" = cause–effect; "one solution" = problem–solution; "however" = compare–contrast.</p><p><b>Purpose:</b> what the writer wants you to KNOW, FEEL or DO.</p>`,
+  badge:'Detective', skills:['Work out a main idea that is never stated','Summarise in 20 words or fewer','Use signal words to spot text structure','Match a text to its purpose'],
+  steps:[
+  { type:'learn', title:'When the main idea is hiding',
+    html:`<p class="lead">Sometimes the writer never says the main idea out loud. You have to be the detective and work it out from the clues.</p>
+    <div class="trio">
+      <div class="tcard t1"><span class="lbl">Stated</span><p>The writer gives you a boss sentence. You just have to find it.</p></div>
+      <div class="tcard t2"><span class="lbl">Implied</span><p>No boss sentence. The details all point to an idea the writer wants you to figure out.</p></div>
+      <div class="tcard t3"><span class="lbl">Your job</span><p>Collect the clues, see what they have in common, then write the main idea yourself.</p></div>
+    </div>
+    <p class="passage">Tiana's alarm didn't ring. She missed the bus. Her homework was still on the kitchen table. Then it started to pour, and she had no umbrella.</p>
+    <div class="formula"><span>No alarm</span><b>+</b><span>Missed bus</span><b>+</b><span>Forgot homework</span><b>+</b><span>Soaked</span><b>=</b><span class="ans">Tiana had a terrible morning.</span></div>
+    <p class="tip">The writer never says "terrible morning". You worked it out. That's an implied main idea.</p>`,
+    tutor:[
+      {h:'List the clues', p:`<p>Write down each detail in a few words: no alarm, missed bus, forgot homework, rain.</p>`},
+      {h:'Find what they share', p:`<p>Are they good things or bad things? Are they about a person, a place, a feeling? Here, they are all bad things that happened to Tiana in one morning.</p>`},
+      {h:'Write one sentence', p:`<p>Turn the shared thing into a sentence: <b>Tiana had a terrible morning.</b></p>`}
+    ]},
+  { type:'mcq', title:'Crack the case',
+    passage:`Grandpa Leroy wakes up at 5:00 every Saturday. By 6:00 he is out on his boat in Montego Bay with his lines in the water. He knows which fish bite after rain and which bite in the heat. When neighbours want fresh snapper, they don't go to the supermarket. They call Grandpa.`,
+    q:`The main idea is never stated. Which sentence is the IMPLIED main idea?`,
+    options:[
+      {t:`Grandpa Leroy wakes up early.`, fb:`That's only one clue. What about the fish knowledge and the neighbours calling him?`},
+      {t:`Grandpa Leroy is a skilled fisherman the neighbours trust.`, ok:true, fb:`Case closed! Early mornings + knowing the fish + neighbours calling him all add up to skill and trust.`},
+      {t:`Snapper is a kind of fish.`, fb:`True, but the paragraph isn't teaching you about fish types.`},
+      {t:`Supermarkets sell fish.`, fb:`The supermarket is mentioned only to show people prefer Grandpa. It's not the point.`}
+    ],
+    easy:{ title:'Crack the case (dial-down)',
+      passage:`Jada's mouth was watering. She could smell the johnnycakes frying. Her stomach growled loudly.`,
+      q:`What is the hidden idea?`,
+      options:[{t:`Jada is hungry.`, ok:true, fb:`Yes! Watering mouth + smell of food + growling stomach = hungry.`},{t:`Jada is tired.`, fb:`None of the clues are about sleep.`},{t:`Jada is at the beach.`, fb:`The clues don't mention the beach at all.`}],
+      tutor:[{h:'What do the clues share?', p:`<p>Mouth watering, smelling food, stomach growling. What feeling do all three point to?</p>`}]
+    },
+    tutor:[
+      {h:'Clue list', p:`<ul class="clean"><li>Wakes at 5:00 every Saturday</li><li>On the water by 6:00</li><li>Knows which fish bite when</li><li>Neighbours call him instead of the supermarket</li></ul>`},
+      {h:'What do they share?', p:`<p>The first three show he's <b>skilled and dedicated</b>. The last one shows people <b>trust</b> him.</p>`},
+      {h:'Pick the answer that covers ALL clues', p:`<p>"Wakes up early" only covers clue 1. Look for the answer big enough for all four.</p>`}
+    ]},
+  { type:'text', title:'GIST Challenge',
+    passage:`Hurricane season in the Caribbean runs from June to November, and families in Antigua have learned to prepare early. They buy water, canned food and batteries before a storm is announced, so they are not stuck in long lines. Many people check their shutters and clear their yards of anything the wind could pick up. Families also agree on a meeting place in case phones stop working. Preparing early keeps people calmer and safer when a storm finally comes.`,
+    prompt:`Summarise the whole paragraph in 20 words or fewer. Keep the big point, drop the small stuff.`,
+    min:6, max:20,
+    must:[{re:'hurrican|storm', msg:`Your summary needs the topic. Mention hurricanes or storms.`}],
+    checklist:[`I named the topic (hurricane preparation).`,`I included the writer's point (preparing early keeps families safer).`,`I left out small details like batteries, shutters and dates.`],
+    model:`Families in Antigua prepare early for hurricanes, stocking up and making plans, which keeps them calmer and safer. (18 words)`,
+    easy:{ title:'GIST Challenge (dial-down)',
+      prompt:`Fill in the frame below in 10 words or fewer. Write the whole sentence in the box.`,
+      frame:`Families prepare early for ______ so they stay ______.`,
+      min:5, max:10,
+      must:[{re:'hurrican|storm', msg:`Fill the first blank with what families prepare for: hurricanes or storms.`}],
+      checklist:[`I said what families prepare for.`,`I said why (how it helps them).`],
+      model:`Families prepare early for hurricanes so they stay safe. (9 words)`,
+      tutor:[{h:'Two blanks, two questions', p:`<p>Blank 1: <b>What</b> are they getting ready for? Blank 2: <b>How</b> does it help them? Look at the last sentence of the paragraph.</p>`}]
+    },
+    tutor:[
+      {h:'G is for "Get the topic"', p:`<p>What is the whole paragraph about? <b>Preparing for hurricanes.</b></p>`},
+      {h:'I-S-T: "Identify the Single Thought"', p:`<p>What is the writer's point? Look at the last sentence: preparing early keeps people <b>calmer and safer</b>.</p>`},
+      {h:'Cut the small stuff', p:`<p>Batteries, shutters, June to November: these are details. Leave them out or squash them into one word like "stocking up".</p>`},
+      {h:'Count and trim', p:`<p>Count your words. Over 20? Remove words like "very", "really", "that" and any examples.</p>`}
+    ]},
+  { type:'checkin', title:'Detective check-in' },
+  { type:'learn', title:'Structure is a road sign',
+    html:`<p class="lead">Writers organise their ideas in patterns. Signal words are road signs that tell you which pattern you're on, and where the main idea is likely to be.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Structure</th><th>Signal words</th><th>Where the main idea usually sits</th></tr></thead>
+      <tbody>
+      <tr><td><b>Problem–solution</b></td><td>problem, issue, one solution, to fix this, the answer is</td><td>In the solution, or the reason the problem matters</td></tr>
+      <tr><td><b>Cause–effect</b></td><td>because, so, as a result, therefore, this led to</td><td>In the link between the cause and its effect</td></tr>
+      <tr><td><b>Compare–contrast</b></td><td>both, similarly, however, unlike, on the other hand, while</td><td>In the big difference or big similarity</td></tr>
+      </tbody></table></div>
+    <p class="tip"><b>Detective habit:</b> circle the signal words first. They tell you what kind of thinking the writer is doing.</p>`,
+    tutor:[
+      {h:'Problem–solution', p:`<p>Something is wrong, and someone fixes it. "Our classroom is too hot. <b>One solution</b> is to plant shade trees."</p>`},
+      {h:'Cause–effect', p:`<p>One thing makes another thing happen. "It rained all night, <b>so</b> the road flooded."</p>`},
+      {h:'Compare–contrast', p:`<p>Two things side by side. "<b>Both</b> are sports, <b>however</b> cricket lasts longer."</p>`}
+    ]},
+  { type:'multi', game:true, title:'Signal Spotter',
+    intro:`Mini game: read each mini-text and pick its structure. Look for the signal words!`,
+    items:[
+      {text:`Students were arriving late because the bus route changed. As a result, many missed first period and their grades dropped.`, options:[`Problem–solution`,`Cause–effect`,`Compare–contrast`], answer:1},
+      {text:`Our classroom gets very hot in the afternoon. One solution is to plant shade trees outside the windows. Another fix is to install ceiling fans.`, options:[`Problem–solution`,`Cause–effect`,`Compare–contrast`], answer:0},
+      {text:`Both cricket and football are popular at our school. However, a cricket match can last for hours, while a football game is over in ninety minutes.`, options:[`Problem–solution`,`Cause–effect`,`Compare–contrast`], answer:2},
+      {text:`Plastic bags were washing up on our beaches and harming turtles. To fix this, many shops switched to paper and reusable bags.`, options:[`Problem–solution`,`Cause–effect`,`Compare–contrast`], answer:0}
+    ],
+    win:`Four for four! You read the road signs like a pro.`,
+    easy:{ title:'Signal Spotter (dial-down)',
+      intro:`Just one sentence. Find the signal word.`,
+      items:[{text:`I studied every night, so I passed my test.`, options:[`so`,`I`,`test`], answer:0},{text:`"So" is a signal for which structure?`, options:[`Cause–effect`,`Compare–contrast`], answer:0}],
+      win:`Yes! "So" shows that one thing (studying) caused another (passing).`,
+      tutor:[{h:'Signal words connect ideas', p:`<p>Look for the small word that joins the two halves of the sentence. It tells you how they're connected.</p>`}]
+    },
+    tutor:[
+      {h:'Circle first', p:`<p>Find words like <i>because, as a result, one solution, to fix this, both, however, while</i>.</p>`},
+      {h:'Match to the road sign', p:`<p><i>As a result</i> → cause–effect. <i>One solution / to fix this</i> → problem–solution. <i>Both / however / while</i> → compare–contrast.</p>`}
+    ]},
+  { type:'learn', title:'Why did they write it?',
+    html:`<p class="lead">Every writer has a reason. That reason is the <b>author's purpose</b>. It works together with the main idea:</p>
+    <div class="trio">
+      <div class="tcard t1"><span class="lbl">What</span><p>The main idea: what the writer is saying.</p></div>
+      <div class="tcard t2"><span class="lbl">Why</span><p>The purpose: what the writer wants you to know, feel or do.</p></div>
+      <div class="tcard t3"><span class="lbl">How</span><p>The techniques: the words and tricks they use to get there.</p></div>
+    </div>
+    <p>You may know <b>PIE</b>: persuade, inform, entertain. That's a good start. Detectives use sharper words:</p>
+    <div class="verbs"><span>warn</span><span>persuade</span><span>criticise</span><span>celebrate</span><span>instruct</span><span>explain</span><span>inform</span><span>entertain</span><span>make readers feel nostalgic</span><span>make readers question</span></div>
+    <p class="tip"><b>Detective habit:</b> ask "Who is this for?" and "What does the writer want that person to do, know or feel?" Strong words like DON'T, unfair or what a night! are big clues.</p>`,
+    tutor:[
+      {h:'Three questions', p:`<ul class="clean"><li>Does the writer want me to <b>do</b> something? (warn, persuade, instruct)</li><li>Does the writer want me to <b>know</b> something? (inform, explain)</li><li>Does the writer want me to <b>feel</b> something? (entertain, celebrate, criticise)</li></ul>`},
+      {h:'Follow the strong words', p:`<p>Capitals, exclamation marks and judging words (unfair, amazing, dangerous) show you the writer's attitude.</p>`}
+    ]},
+  { type:'multi', game:true, title:'Purpose Match',
+    intro:`Mini game: match each text to the writer's purpose.`,
+    items:[
+      {text:`DON'T WAIT for the storm! Stock up on water today. Every hour you delay puts your family at risk.`, options:[`To warn`,`To entertain`,`To celebrate`], answer:0},
+      {text:`The steel pan rang out, the costumes glittered, and the whole of Port of Spain danced until sunrise. What a night!`, options:[`To criticise`,`To celebrate`,`To instruct`], answer:1},
+      {text:`Step 1: Rinse the rice. Step 2: Add two cups of water. Step 3: Simmer for 15 minutes.`, options:[`To instruct`,`To warn`,`To persuade`], answer:0},
+      {text:`The new parking fees are unfair. Students who work part-time cannot afford them, and nobody asked for our opinion.`, options:[`To celebrate`,`To entertain`,`To criticise`], answer:2}
+    ],
+    win:`Perfect match! You looked past PIE to the writer's exact reason.`,
+    easy:{ title:'Purpose Match (dial-down)',
+      intro:`Back to PIE. Persuade, inform or entertain?`,
+      items:[
+        {text:`Buy Turbo sneakers! They make you jump higher than everyone else!`, options:[`Persuade`,`Inform`,`Entertain`], answer:0},
+        {text:`A shark can have more than 300 teeth in its mouth.`, options:[`Persuade`,`Inform`,`Entertain`], answer:1},
+        {text:`A goat walked into the bakery, put on an apron and started selling pastries.`, options:[`Persuade`,`Inform`,`Entertain`], answer:2}
+      ],
+      win:`Great! Once PIE feels easy, the sharper purposes are just more exact versions.`,
+      tutor:[{h:'PIE in one line each', p:`<ul class="clean"><li><b>Persuade:</b> wants you to buy, do or believe.</li><li><b>Inform:</b> gives you facts.</li><li><b>Entertain:</b> wants you to enjoy a story or laugh.</li></ul>`}]
+    },
+    tutor:[
+      {h:'Do, know or feel?', p:`<p>Warning texts tell you to <b>do</b> something to stay safe. Instructions tell you to <b>do</b> steps. Celebrations make you <b>feel</b> joy. Criticism makes you <b>feel</b> that something is wrong.</p>`},
+      {h:'Clue words', p:`<p>"DON'T WAIT… at risk" = warn. "What a night!" = celebrate. "Step 1" = instruct. "Unfair" = criticise.</p>`}
+    ]},
+  { type:'checkin', title:'Halfway-there check-in' },
+  { type:'finish' }
+  ]},
+
+{ id:'L3', name:'Pro', level:'Advanced', blurb:'Poetry, analysis sentences and the CAPE essay',
+  recap:`<p><b>What · Why · How:</b> main idea, purpose, techniques.</p><p><b>Analysis sentence:</b> Purpose → Technique → Evidence (short quote) → Effect on the reader.</p><p><b>CAPE essay:</b> Introduction (thesis) → Body paragraphs (PEEL, one technique each) → Conclusion (no new ideas).</p><p><b>Transitions</b> show the job: adding, contrasting, cause–effect, example, concluding.</p>`,
+  badge:'Pro', skills:['Find the main idea and purpose of a poem','Spot and explain a technique','Build an analysis sentence','Structure a CAPE-style essay with transitions'],
+  steps:[
+  { type:'learn', title:'Read the poem',
+    html:`<p class="lead">Read this poem twice. First, read for <b>feeling</b>: how does it make you feel? Second, read for <b>clues</b>: which words and lines create that feeling?</p>
+    ${poemHTML()}
+    <p class="tip"><b>Pro habit:</b> compare the beginning and the end. What has changed? That change usually points to the main idea.</p>`,
+    tutor:[
+      {h:'Stanza by stanza', p:`<ul class="clean"><li>Stanzas 1–2: happy memories of the tree.</li><li>Stanza 3: the tree is gone; a car park is there.</li><li>Stanza 4: the speaker questions "progress".</li></ul>`},
+      {h:'Feel first', p:`<p>Is the ending happy, sad, angry or worried? Your feeling is a clue to the purpose.</p>`}
+    ]},
+  { type:'mcq', title:'Main idea of the poem',
+    pre:POEM_FOLD,
+    q:`What is the main idea of "Where the Mango Tree Stood"?`,
+    options:[
+      {t:`Mangoes are ripe in July.`, fb:`That's a detail from line 3, not the point of the whole poem.`},
+      {t:`A loved mango tree was replaced by a car park, and the speaker grieves what was lost.`, ok:true, fb:`Yes. Topic (the mango tree) + point (its loss to a car park is a real loss).`},
+      {t:`Car parks are useful for shoppers.`, fb:`The poem questions this view. The speaker isn't celebrating the car park.`},
+      {t:`Grandpa liked to fish.`, fb:`That's one detail in stanza 2.`}
+    ],
+    easy:{ title:'What happened to the tree?',
+      q:`At the start, the tree is full of fruit and fun. In stanza 3, there's a car park. What happened?`,
+      options:[{t:`The tree was cut down to build a car park.`, ok:true, fb:`Right. That change from tree to car park is the heart of the poem.`},{t:`The tree grew taller.`, fb:`Look at stanza 3 again: "roots once drank the rain". Once means not any more.`},{t:`The tree moved to the beach.`, fb:`Trees can't move! What replaced it?`}],
+      tutor:[{h:'Beginning vs end', p:`<p>Beginning: tree, mangoes, swing, stories. End: concrete, cars, no shade. Something was lost.</p>`}]
+    },
+    tutor:[
+      {h:'Beginning vs end', p:`<p>At the start: a tree full of memories. At the end: grey concrete. The main idea is about that change.</p>`},
+      {h:'Add the point', p:`<p>Topic: the mango tree. Point: losing it to a car park feels like a real loss. Put them together.</p>`}
+    ]},
+  { type:'mcq', title:"The poet's purpose",
+    pre:POEM_FOLD,
+    q:`What is the poet's PURPOSE? Think about what the poet wants you to feel and think.`,
+    options:[
+      {t:`To give instructions on how to grow mangoes.`, fb:`There are no steps or instructions in the poem.`},
+      {t:`To advertise a new car park.`, fb:`The car park is described as grey and empty. That's not an advert!`},
+      {t:`To make readers feel the loss of nature and question whether "progress" is worth it.`, ok:true, fb:`Exactly. Look at the last stanza: "They say it's progress… But tell me…" The poet wants us to question it.`},
+      {t:`To tell a funny story about Grandma.`, fb:`The tone is sad and thoughtful, not funny.`}
+    ],
+    easy:{ title:'How does the speaker feel?',
+      q:`Read the last stanza. How does the speaker feel?`,
+      options:[{t:`Sad and worried about the future`, ok:true, fb:`Yes. And the poet wants YOU to feel that too. That's the purpose: to make readers feel the loss.`},{t:`Excited about the car park`, fb:`Look at "But tell me, where will my children climb?" Does that sound excited?`},{t:`Bored`, fb:`Bored people don't ask big questions. Read the last stanza again.`}],
+      tutor:[{h:'Feelings point to purpose', p:`<p>If the writer sounds sad, they usually want you to feel sad about the same thing.</p>`}]
+    },
+    tutor:[
+      {h:'Purpose = know, feel or do', p:`<p>This poem doesn't teach facts or give steps. It makes us <b>feel</b> and <b>think</b>.</p>`},
+      {h:'Check the last stanza', p:`<p>Writers often reveal their purpose at the end. "They say it's progress" + "But tell me…" = the poet is pushing back.</p>`}
+    ]},
+  { type:'pick', title:'Technique Hunt: personification',
+    intro:`<b>Personification</b> gives human actions or feelings to something that isn't human.`,
+    q:`Tap a line where the tree acts like a person. (There are two right answers.)`,
+    lines:POEM, poem:true, correct:[1,6],
+    win:`Got it! Trees can't hug or listen. The poet makes the tree seem like a family member, so losing it feels like losing a person.`,
+    miss:`Not that line. Look for a verb that only people (or animals) can really do.`,
+    easy:{ title:'Technique Hunt (dial-down)', type:'mcq',
+      q:`"It listened when I cried." Can a real tree listen?`,
+      options:[{t:`No. The poet is making the tree seem like a caring person.`, ok:true, fb:`Yes! That's personification: giving a human action (listening) to a tree.`},{t:`Yes, trees have ears.`, fb:`They don't! So why would the poet say it listened?`}],
+      tutor:[{h:'Human verbs', p:`<p>Listen, hug, cry, laugh, whisper: these are things people do. When a writer gives them to an object, that's personification.</p>`}]
+    },
+    tutor:[
+      {h:'Hunt for human verbs', p:`<p>Scan each line for things only people do: hug, listen, keep secrets.</p>`},
+      {h:'Two lines to find', p:`<p>One is in stanza 1 (the tree's arms) and one is in stanza 2 (what the tree does when the speaker cries).</p>`}
+    ]},
+  { type:'checkin', title:'Pro check-in' },
+  { type:'learn', title:'The analysis sentence',
+    html:`<p class="lead">In CAPE Communication Studies you don't just name the purpose. You prove it. Use four building blocks, in this order:</p>
+    <div class="pete">
+      <span class="pp"><b>Purpose (why):</b> The poet's purpose is to make readers question whether progress is worth losing nature.</span>
+      <span class="pt"><b>Technique (how):</b> This is achieved through a rhetorical question,</span>
+      <span class="pe"><b>Evidence (proof):</b> "where will my children climb?",</span>
+      <span class="pf"><b>Effect (so what):</b> which leaves the reader wondering what future generations will lose.</span>
+    </div>
+    <p class="tip"><b>Pro habit:</b> keep quotes short (a few words is enough), and always explain the effect on the reader. Naming a technique without its effect earns very little.</p>`,
+    tutor:[
+      {h:'Why → How → Proof → So what', p:`<p>Purpose answers <b>why</b>. Technique answers <b>how</b>. Evidence is the <b>proof</b> from the text. Effect answers <b>so what?</b></p>`},
+      {h:'Useful starters', p:`<ul class="clean"><li>The writer's purpose is to…</li><li>This is achieved through…</li><li>This is seen in the line "…"</li><li>This makes the reader…</li></ul>`}
+    ]},
+  { type:'order', game:true, title:'Sentence Builder',
+    intro:`Mini game: put the building blocks in the right order to make a top-level analysis sentence about contrast.`,
+    blocks:[
+      {t:`The poet's purpose is to make readers question whether progress is worth losing nature.`},
+      {t:`This is achieved through contrast,`},
+      {t:`as the "gold" mangoes of the past are replaced by "grey concrete, white lines."`},
+      {t:`This makes the reader feel the coldness of the car park and miss the warmth of the tree.`}
+    ],
+    win:`Built! Purpose → technique → evidence → effect. That's the shape examiners reward.`,
+    easy:{ title:'Sentence Builder (dial-down)',
+      intro:`Three blocks, and each one has its label. Put them in order: Purpose, Technique, Evidence.`,
+      blocks:[{t:`The poet wants us to feel sad about losing the tree.`, tag:'Purpose'},{t:`The poet uses personification:`, tag:'Technique'},{t:`the tree "listened when I cried."`, tag:'Evidence'}],
+      win:`Yes! Why, then how, then proof.`,
+      tutor:[{h:'Follow the labels', p:`<p>Always start with <b>why</b> (purpose), then <b>how</b> (technique), then the <b>proof</b> (evidence).</p>`}]
+    },
+    tutor:[
+      {h:'Start with why', p:`<p>Which block names the purpose? It usually starts "The poet's purpose is…"</p>`},
+      {h:'Then how and proof', p:`<p>Next, the block that names the technique ("This is achieved through…"), then the quote.</p>`},
+      {h:'End with so what', p:`<p>The effect on the reader always comes last. Look for "This makes the reader…"</p>`}
+    ]},
+  { type:'learn', title:'The CAPE essay blueprint',
+    html:`<p class="lead">In CAPE Communication Studies you'll often read a passage and write an essay about the writer's main point, purpose and the strategies used. Build it like a house.</p>
+    <div class="house">
+      <div class="room"><h3>1. Introduction <small>the foundation</small></h3>
+        <ul class="clean"><li>Name the text and what kind of text it is.</li><li>State the main idea in one sentence.</li><li>State the purpose and preview 2–3 techniques. This is your thesis.</li></ul>
+        <div class="starters"><span>In the poem "…", the poet…</span><span>The writer's purpose is to…</span><span>This is achieved through…, … and ….</span></div></div>
+      <div class="room"><h3>2. Body paragraphs <small>the walls, one technique each</small></h3>
+        <p><b>PEEL:</b> <b>P</b>oint (name the technique) · <b>E</b>vidence (short quote) · <b>E</b>xplain (effect on the reader) · <b>L</b>ink (back to the purpose).</p>
+        <div class="starters"><span>Firstly, the writer uses…</span><span>This is seen in "…"</span><span>This makes the reader…</span><span>This supports the purpose by…</span></div></div>
+      <div class="room"><h3>3. Conclusion <small>the roof</small></h3>
+        <ul class="clean"><li>Restate the purpose in new words.</li><li>Say how the techniques work together.</li><li>Give a final judgement: how effective is the piece? No new ideas.</li></ul>
+        <div class="starters"><span>In conclusion,…</span><span>Overall, the techniques work together to…</span><span>The writer is effective because…</span></div></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Job</th><th>Transitional words and phrases</th></tr></thead>
+      <tbody>
+        <tr><td>Ordering</td><td>Firstly, Secondly, Finally</td></tr>
+        <tr><td>Adding</td><td>Furthermore, In addition, Moreover</td></tr>
+        <tr><td>Contrasting</td><td>However, On the other hand, Nevertheless</td></tr>
+        <tr><td>Cause and effect</td><td>As a result, Therefore, Consequently</td></tr>
+        <tr><td>Giving examples</td><td>For example, For instance, This is seen in</td></tr>
+        <tr><td>Concluding</td><td>In conclusion, Overall, Ultimately</td></tr>
+      </tbody></table></div>
+    <p class="tip"><b>Exam habits:</b> write in the present tense ("the poet uses"), keep quotes short, call them "the writer" or "the poet", and avoid slang.</p>`,
+    tutor:[
+      {h:'Foundation', p:`<p>The introduction tells the reader <b>what</b> the text says and <b>why</b>, and lists the techniques you will discuss.</p>`},
+      {h:'Walls', p:`<p>Each body paragraph proves <b>one</b> technique with PEEL. Use Firstly, Furthermore, Finally to move between them.</p>`},
+      {h:'Roof', p:`<p>The conclusion wraps up. It never brings in a new technique or quote.</p>`}
+    ]},
+  { type:'order', game:true, title:'Essay Builder',
+    intro:`Mini game: these five paragraphs make a full essay on the poem, but they've been shuffled. Put them in order. The transition words are your clues!`,
+    blocks:[
+      {t:`In the poem "Where the Mango Tree Stood," the speaker remembers a family mango tree that was cut down to make a car park. The poet's purpose is to make readers question whether progress is worth losing nature and memories. This is achieved through personification, contrast and a rhetorical question.`},
+      {t:`Firstly, the poet uses personification to turn the tree into a member of the family. The tree "listened when I cried," which makes it seem like a trusted friend. As a result, the reader feels its loss as if a person has died.`},
+      {t:`Furthermore, contrast shows exactly what has been lost. The golden mangoes and cool shade are replaced by "grey concrete, white lines." This sharp change makes the car park feel cold and empty.`},
+      {t:`Finally, the poem ends with a rhetorical question: "where will my children climb?" The reader is left without an answer, which pushes them to think about what future generations will miss.`},
+      {t:`In conclusion, personification, contrast and questioning work together to make the reader mourn the tree. Overall, the poet is effective because the reader finishes the poem doubting that this kind of "progress" is worth it.`}
+    ],
+    win:`Essay built! Introduction → Firstly → Furthermore → Finally → In conclusion. Transitions hold the whole house together.`,
+    easy:{ title:'Essay Builder (dial-down)',
+      intro:`Just three blocks, with labels. Beginning, middle, end.`,
+      blocks:[
+        {t:`The poem is about a mango tree that was cut down. The poet wants us to feel sad about losing nature.`, tag:'Beginning'},
+        {t:`The poet makes the tree seem like a friend: it "listened when I cried."`, tag:'Middle'},
+        {t:`In conclusion, the poem makes us miss the tree and think about what we lose.`, tag:'End'}
+      ],
+      win:`Yes! Every essay has a beginning, a middle and an end.`,
+      tutor:[{h:'Beginning, middle, end', p:`<p>The beginning tells what the poem is about. The middle gives proof. The end starts with "In conclusion".</p>`}]
+    },
+    tutor:[
+      {h:'Find the introduction', p:`<p>It names the poem and states the purpose. It does not start with a transition word.</p>`},
+      {h:'Follow the order words', p:`<p>Firstly → Furthermore → Finally. These go in the middle.</p>`},
+      {h:'Find the roof', p:`<p>"In conclusion" always goes last.</p>`}
+    ]},
+  { type:'checkin', title:'Essay check-in' },
+  { type:'sort', game:true, title:'Transition Toolbox',
+    intro:`Mini game: every transition has a job. Put each one in the right toolbox.`,
+    main:`Transitions are the glue between your sentences and paragraphs.`,
+    bins:[`Adding`,`Contrasting`,`Cause & effect`,`Example`,`Concluding`],
+    items:[
+      {t:`However`, bin:1},{t:`For example`, bin:3},{t:`Furthermore`, bin:0},{t:`Therefore`, bin:2},{t:`In conclusion`, bin:4},
+      {t:`On the other hand`, bin:1},{t:`In addition`, bin:0},{t:`For instance`, bin:3},{t:`As a result`, bin:2},{t:`Overall`, bin:4}
+    ],
+    win:`Toolbox sorted! You now have ten transitions ready for your essays.`,
+    easy:{ title:'Transition Toolbox (dial-down)',
+      intro:`Just two toolboxes: adding more, or turning the other way.`,
+      main:`Some transitions add; some contrast.`,
+      bins:[`Adding`,`Contrasting`],
+      items:[{t:`Also`, bin:0},{t:`However`, bin:1},{t:`In addition`, bin:0},{t:`But`, bin:1}],
+      win:`Nice! "Also" and "In addition" add. "However" and "but" turn the other way.`,
+      tutor:[{h:'Same way or other way?', p:`<p>Adding words keep going in the same direction. Contrasting words turn around, like a U-turn.</p>`}]
+    },
+    tutor:[
+      {h:'Think about the job', p:`<ul class="clean"><li><b>Adding:</b> more of the same idea.</li><li><b>Contrasting:</b> a U-turn to a different idea.</li><li><b>Cause & effect:</b> one thing leads to another.</li><li><b>Example:</b> here's the proof.</li><li><b>Concluding:</b> wrapping up.</li></ul>`}
+    ]},
+  { type:'multi', title:'Fill the gap',
+    intro:`Choose the transition that fits each gap.`,
+    items:[
+      {text:`The tree gave the family shade. ______, it held their memories.`, options:[`Furthermore`,`However`,`For example`], answer:0},
+      {text:`Some people call the car park progress. ______, the speaker sees it as a loss.`, options:[`Therefore`,`However`,`In addition`], answer:1},
+      {text:`The tree was cut down. ______, there is nowhere to hide from the sun.`, options:[`For instance`,`Similarly`,`As a result`], answer:2}
+    ],
+    win:`All three fit perfectly. That's smooth writing.`,
+    easy:{ title:'Fill the gap (dial-down)',
+      intro:`One gap. Which word fits?`,
+      items:[{text:`It was raining, ______ I took an umbrella.`, options:[`so`,`but`,`also`], answer:0}],
+      win:`Yes! The rain caused you to take the umbrella, so we use "so".`,
+      tutor:[{h:'Read it out loud', p:`<p>Try each word in the gap and read the sentence aloud. Which one makes sense?</p>`}]
+    },
+    tutor:[
+      {h:'Compare the two halves', p:`<p>Read both sentences. Do they go the <b>same way</b> (adding), the <b>opposite way</b> (contrasting), or does one <b>cause</b> the other?</p>`},
+      {h:'Try each one', p:`<p>"The tree was cut down. <b>As a result</b>, there is nowhere to hide." Cutting it down caused the lack of shade.</p>`}
+    ]},
+  { type:'text', title:'Write your thesis',
+    pre:POEM_FOLD,
+    prompt:`Write the thesis for your own essay on the poem. Use the frame to help you.`,
+    frame:`In the poem "Where the Mango Tree Stood," the poet's purpose is to ______. This is achieved through ______, ______ and ______.`,
+    min:15, max:60,
+    must:[
+      {re:'purpose|aims|wants', msg:`State the purpose. Try starting with "The poet's purpose is to…"`},
+      {re:'personif|contrast|question|imagery|repetition|simile|capital', msg:`Name at least one technique, such as personification, contrast or rhetorical question.`}
+    ],
+    checklist:[`I named the poem.`,`I used a strong purpose verb (make readers question, criticise, warn…).`,`I named two or three techniques.`,`My writing is formal, with no slang.`],
+    model:`In the poem "Where the Mango Tree Stood," the poet's purpose is to make readers question whether progress is worth the loss of nature and family memories. This is achieved through personification, contrast and a powerful rhetorical question.`,
+    easy:{ title:'Write your thesis (dial-down)',
+      prompt:`Fill in the frame and write the whole sentence in the box.`,
+      frame:`The poet wants us to feel ______ because ______.`,
+      min:8, max:30,
+      must:[{re:'feel', msg:`Use the word "feel" and name a feeling.`}],
+      checklist:[`I named a feeling.`,`I gave a reason from the poem.`],
+      model:`The poet wants us to feel sad because the mango tree that held the family's memories was replaced by a car park.`,
+      tutor:[{h:'Feeling + reason', p:`<p>Blank 1: how did the last stanza make you feel? Blank 2: what happened in the poem to cause that feeling?</p>`}]
+    },
+    tutor:[
+      {h:'Purpose first', p:`<p>Finish "The poet's purpose is to…" with a strong verb: make readers question, make readers feel, criticise.</p>`},
+      {h:'Pick your techniques', p:`<p>You've already found them: personification (the tree listens), contrast (gold vs grey) and a rhetorical question (where will my children climb?).</p>`},
+      {h:'Join them with "and"', p:`<p>"This is achieved through personification, contrast and a rhetorical question."</p>`}
+    ]},
+  { type:'finish' }
+  ]}
+];
+
+/* ---------- State ---------- */
+const LS = 'mainIdeaQuest.v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(LS)) }catch(e){ return null } }
+var gsOff = false, gsT = 0;
+function gsSave(){ if(gsOff || !window.GameSave) return; try{ window.GameSave.save(); }catch(e){} }
+function gsLater(){ clearTimeout(gsT); gsT = setTimeout(gsSave, 800); }
+function save(){ if(gsOff) return; try{ localStorage.setItem(LS, JSON.stringify(S)) }catch(e){} }
+let S = Object.assign({name:'', skipName:false, xp:0, done:{}, easy:{}, lvl:0, step:0, teacher:false, celebrated:{}}, load()||{});
+const TEACHER_EDITION = /*EDITION*/true; S.teacher = TEACHER_EDITION;
+if (!TEACHER_EDITION) { const tb = document.getElementById('teacherBtn'); if (tb) tb.remove(); }
+const ATTEMPTS = {};
+let T;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const keyOf = (l,i) => COURSE[l].id + '-' + i;
+const key = () => keyOf(S.lvl, S.step);
+const step = () => COURSE[S.lvl].steps[S.step];
+const isEasy = () => !!(S.easy[key()] && step().easy);
+function variant(){ const st = step(); return isEasy() ? Object.assign({type:st.type, pre:st.pre}, st.easy) : st; }
+const INTERACTIVE = ['mcq','multi','sort','pick','order','text'];
+function levelComplete(l){ return COURSE[l].steps.every((s,i)=> s.type==='finish' || S.done[keyOf(l,i)]); }
+function levelOpen(l){ return l===0 || S.teacher || levelComplete(l-1); }
+function doneCount(l){ return COURSE[l].steps.filter((s,i)=>S.done[keyOf(l,i)]).length; }
+function shuffle(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} if(b.every((x,i)=>x===a[i]) && b.length>1){ [b[0],b[1]]=[b[1],b[0]]; } return b; }
+function wordCount(t){ return t.trim() ? t.trim().split(/\s+/).length : 0; }
+function resetT(){
+  const v = variant();
+  T = {answer:null, submitted:false, correct:false, msg:'', warn:'', picks:{}, order:[], text:'', checks:{}, note:'', wrong:[], mood:null};
+  if(v.type==='order') T.pool = shuffle(v.blocks.map((_,i)=>i));
+}
+
+/* ---------- Rendering ---------- */
+function render(){ renderTop(); renderMap(); renderStep(); }
+function renderTop(){ $('#who').textContent = (S.avatar ? S.avatar + ' ' : '') + (S.name || 'Explorer'); $('#xp').textContent = S.xp; }
+function renderMap(){
+  $('#map').innerHTML = COURSE.map((L,l)=>{
+    const open = levelOpen(l), n = doneCount(l), t = L.steps.length;
+    return `<button type="button" class="lvl ${l===S.lvl?'on':''} ${open?'':'shut'}" data-act="goto-level" data-l="${l}" ${open?'':'aria-disabled="true"'}>
+      <span class="lvl-n">Level ${l+1}</span><span class="lvl-name">${L.name}</span><span class="lvl-tag">${L.level} · ${L.blurb}</span>
+      <span class="lvl-prog"><i style="width:${n/t*100}%"></i></span>
+      <span class="lvl-meta">${open ? `${n} of ${t} steps done` : `Locked: finish Level ${l} first`}</span></button>`;
+  }).join('');
+}
+function kickerOf(st){
+  if(st.type==='learn') return ['Learn',''];
+  if(st.type==='checkin') return ['Check-in','k-check'];
+  if(st.type==='text') return ['Write it','k-write'];
+  if(st.type==='finish') return ['Level complete','k-game'];
+  if(st.game) return ['Mini game','k-game'];
+  return ['Practice',''];
+}
+function renderStep(){
+  const stage = $('#stage');
+  if(!S.name && !S.skipName){ stage.innerHTML = welcomeHTML(); return; }
+  const L = COURSE[S.lvl], st = step(), v = variant(), k = key(), done = !!S.done[k], total = L.steps.length;
+  const [kick, kcls] = kickerOf(st);
+  let h = `<div class="stephead"><div class="crumbs"><span>Level ${S.lvl+1} · ${L.name}</span><span>Step ${S.step+1} of ${total}</span></div><div class="bar"><i style="width:${(S.step+1)/total*100}%"></i></div></div>`;
+  h += `<article class="card">`;
+  h += `<div class="card-top"><span class="kicker ${kcls}">${kick}</span><span class="tools">`;
+  if(st.type!=='checkin' && st.type!=='finish') h += `<button type="button" class="tool listen" data-act="listen" data-clip="${key()}${isEasy()?'-easy':''}" aria-label="Listen to this screen">🔊 Listen</button>`;
+  if(INTERACTIVE.includes(st.type) || st.type==='learn') h += `<button type="button" class="tool" data-act="tutor">Mini tutorial</button>`;
+  if(st.easy) h += `<button type="button" class="tool ${isEasy()?'dial-on':''}" data-act="dial" aria-pressed="${isEasy()}">${isEasy()?'Back to regular':'Dial it down'}</button>`;
+  h += `</span></div>`;
+  if(isEasy()) h += `<div class="easy-banner"><b>Dial-down mode.</b> Same idea, smaller steps. Press "Back to regular" whenever you're ready.</div>`;
+  if(st.type!=='finish') h += `<h2>${v.title || st.title}</h2>`;
+  if(ATTEMPTS[k]>=2 && !done && st.easy && !isEasy()) h += `<div class="fb warnbox">This one is tricky, and that's fine. Want to try a simpler version first? <button type="button" class="tool" data-act="dial">Dial it down</button></div>`;
+  h += bodyHTML(st, v, done);
+  h += `</article>`;
+  if(st.type!=='finish'){
+    h += `<div class="nav">${S.step>0?`<button type="button" class="btn ghost" data-act="back">← Back</button>`:'<span></span>'}`;
+    h += done ? `<button type="button" class="btn go" data-act="next">Next →</button>` : `<span class="locked">🔒 Next unlocks when you finish this step</span>`;
+    h += `</div>`;
+  }
+  stage.innerHTML = h;
+}
+function welcomeHTML(){
+  return `<article class="card welcome">
+    <span class="kicker k-game">Welcome</span>
+    <h1>Read like a detective.</h1>
+    <p class="lead">In this quest you'll learn to find the <b>main idea</b> (what the writer is saying), the <b>purpose</b> (why they wrote it) and the <b>techniques</b> (how they did it). Then you'll use all three to build a CAPE-style essay.</p>
+    <ul class="how">
+      <li>Three levels: <b>Explorer</b>, <b>Detective</b> and <b>Pro</b>.</li>
+      <li>Finish each step to unlock the next one.</li>
+      <li>Stuck? Press <b>Dial it down</b> for an easier version of the same activity.</li>
+      <li>Press <b>Mini tutorial</b> any time for a quick explanation.</li>
+    </ul>
+    <label for="nm"><b>What's your first name?</b></label>
+    <div class="row"><input id="nm" maxlength="30" autocomplete="given-name" placeholder="Type your name"><button type="button" class="btn go" data-act="start">Start Level 1</button></div>
+    <p><b>Choose your avatar</b></p><div class="avs">${['🦜','🐢','🐬','🦉','🌴','🎤','📚','🚀','🦩','🦁','🪐','🌟'].map(a=>`<button type="button" class="av ${S.avatar===a?'sel':''}" data-act="avatar" data-a="${a}" aria-pressed="${S.avatar===a}">${a}</button>`).join('')}</div>
+    <button type="button" class="tool" data-act="skipname" style="align-self:flex-start">Skip for now</button>
+  </article>`;
+}
+function bodyHTML(st, v, done){
+  let h = '';
+  if(v.intro) h += `<p class="lead">${v.intro}</p>`;
+  if(v.pre) h += v.pre();
+  switch(v.type){
+    case 'learn': h += v.html; if(!done) h += `<div class="selfcheck"><p>Do you understand this?</p><div class="row"><button type="button" class="btn yes" data-act="learn-yes">Yes, I've got it</button><button type="button" class="btn no" data-act="learn-no">Not yet, explain it again</button></div></div>`; else h += `<p class="unlocked-msg">You've unlocked this step.</p>`; return h;
+    case 'checkin': return h + checkinHTML(done);
+    case 'finish': return finishHTML();
+    case 'mcq': h += mcqHTML(v); break;
+    case 'multi': h += multiHTML(v); break;
+    case 'sort': h += sortHTML(v); break;
+    case 'pick': h += pickHTML(v); break;
+    case 'order': h += orderHTML(v); break;
+    case 'text': h += textHTML(v); break;
+  }
+  if(!T.submitted) h += `<div class="row"><button type="button" class="btn go" data-act="submit">Check my answer</button></div>`;
+  if(T.warn && !T.submitted) h += `<p class="warn">${T.warn}</p>`;
+  h += feedbackHTML(v, done);
+  return h;
+}
+function mcqHTML(v){
+  let h = v.passage ? `<blockquote class="passage">${v.passage}</blockquote>` : '';
+  h += `<p class="q">${v.q}</p><div class="opts">`;
+  h += v.options.map((o,i)=>{
+    let c = T.answer===i ? 'sel' : '';
+    if(T.submitted && T.answer===i) c = o.ok ? 'right' : 'wrongopt';
+    return `<button type="button" class="opt ${c}" data-act="opt" data-i="${i}" aria-pressed="${T.answer===i}"><span class="letter">${'ABCD'[i]}</span><span>${o.t}</span></button>`;
+  }).join('');
+  return h + `</div>`;
+}
+function multiHTML(v){
+  return `<div class="sort-list">${v.items.map((it,i)=>`<div class="sitem ${T.wrong.includes(i)?'wrong':''} ${T.submitted&&T.correct?'good':''}"><p>${it.text}</p><div class="bins">${it.options.map((o,oi)=>`<button type="button" class="chip ${T.picks[i]===oi?'sel':''}" data-act="mpick" data-i="${i}" data-o="${oi}" aria-pressed="${T.picks[i]===oi}">${o}</button>`).join('')}</div></div>`).join('')}</div>`;
+}
+function sortHTML(v){
+  let h = `<div class="mainbox">${UMBRELLA}<div><span class="lbl">Main idea</span><p><b>${v.main}</b></p></div></div>`;
+  h += `<div class="sort-list">${v.items.map((it,i)=>`<div class="sitem ${T.wrong.includes(i)?'wrong':''} ${T.submitted&&T.correct?'good':''}"><p>${it.t}</p><div class="bins">${v.bins.map((b,bi)=>`<button type="button" class="chip ${T.picks[i]===bi?'sel':''}" data-act="sbin" data-i="${i}" data-b="${bi}" aria-pressed="${T.picks[i]===bi}">${b}</button>`).join('')}</div></div>`).join('')}</div>`;
+  return h;
+}
+function pickHTML(v){
+  let h = `<p class="q">${v.q}</p><div class="pickpass ${v.poem?'poemmode':''}">`;
+  if(v.poem) h += `<h3 style="margin-bottom:6px">${POEM_TITLE}</h3>`;
+  h += v.lines.map((ln,i)=> ln==='' ? '<span class="gap"></span>' : `<button type="button" class="ps ${T.answer===i?'sel':''}" data-act="pick" data-i="${i}" aria-pressed="${T.answer===i}">${ln}</button>`).join(v.poem?'':' ');
+  return h + `</div>`;
+}
+function blockHTML(b){ return `${b.tag?`<span class="btag">${b.tag}</span>`:''}<span>${b.t}</span>`; }
+function orderHTML(v){
+  let h = `<p class="hint">Tap the blocks in the right order. Tap a placed block to send it back.</p>`;
+  h += `<div class="olane" aria-label="Your order">${T.order.length ? T.order.map((b,pos)=>`<button type="button" class="blk placed" data-act="orem" data-pos="${pos}"><span class="pos">${pos+1}</span>${blockHTML(v.blocks[b])}</button>`).join('') : '<p class="empty">Your answer builds here.</p>'}</div>`;
+  const left = T.pool.filter(b=>!T.order.includes(b));
+  if(left.length) h += `<div class="opool">${left.map(b=>`<button type="button" class="blk" data-act="oadd" data-b="${b}">${blockHTML(v.blocks[b])}</button>`).join('')}</div>`;
+  return h;
+}
+function textHTML(v){
+  const wc = wordCount(T.text);
+  let h = v.passage ? `<blockquote class="passage">${v.passage}</blockquote>` : '';
+  h += `<p class="q">${v.prompt}</p>`;
+  if(v.frame) h += `<div class="frame"><span class="lbl">Sentence frame</span><p>${v.frame}</p></div>`;
+  h += `<label for="ta-${key()}" class="sr">Your answer</label><textarea id="ta-${key()}" class="ta" rows="4" data-ta ${T.submitted&&T.correct?'readonly':''}>${esc(T.text)}</textarea>`;
+  h += `<div class="wc ${wc>v.max?'over':''}" id="wc"><span id="wcn">${wc}</span> words · aim for ${v.min}–${v.max}</div>`;
+  h += `<fieldset class="checklist"><legend>Tick each box once your answer does it</legend>${v.checklist.map((c,i)=>`<label><input type="checkbox" id="chk-${key()}-${i}" data-chk="${i}" ${T.checks[i]?'checked':''}> <span>${c}</span></label>`).join('')}</fieldset>`;
+  return h;
+}
+function feedbackHTML(v, done){
+  if(!T.submitted) return '';
+  let h = `<div class="fb ${T.correct?'good':'bad'}"><b>${T.correct?'Correct!':'Not quite yet.'}</b> ${T.msg}</div>`;
+  if(v.type==='text' && T.correct) h += `<div class="model"><span class="lbl">Model answer to compare</span><p>${v.model}</p></div>`;
+  if(done){ h += `<p class="unlocked-msg">Step unlocked. Press Next when you're ready.</p>`; return h; }
+  if(T.note==='checker') h += `<div class="fb warnbox">The answer checker says this isn't right yet, so the next step stays locked. Have another look, or open the mini tutorial.</div>`;
+  h += `<div class="selfcheck"><p>Be honest: did you get this step right?</p><div class="row"><button type="button" class="btn yes" data-act="self-yes">Yes, I got it</button><button type="button" class="btn no" data-act="self-no">No, I need help</button></div></div>`;
+  if(!T.correct) h += `<div class="row"><button type="button" class="btn ghost" data-act="retry">Try again</button>${step().easy&&!isEasy()?'<button type="button" class="btn ghost" data-act="dial">Dial it down</button>':''}</div>`;
+  return h;
+}
+function checkinHTML(done){
+  const L = COURSE[S.lvl];
+  const moods = [['great','😎',"I've got this"],['okay','🙂','Mostly okay'],['stuck','😕',"I'm struggling"]];
+  let h = `<p class="lead">How are you feeling about Level ${S.lvl+1} so far?</p><div class="moods">${moods.map(m=>`<button type="button" class="mood ${T.mood===m[0]?'sel':''}" data-act="mood" data-m="${m[0]}" aria-pressed="${T.mood===m[0]}"><span class="face" aria-hidden="true">${m[1]}</span>${m[2]}</button>`).join('')}</div>`;
+  if(T.mood==='great') h += `<div class="fb good"><b>Love that confidence!</b> Keep going. The next step is unlocked.</div>`;
+  if(T.mood==='okay') h += `<div class="fb warnbox"><b>That's normal.</b> Remember, every activity has a <b>Dial it down</b> button and a <b>Mini tutorial</b>. Here's a quick recap:</div><div class="recap">${L.recap}</div>`;
+  if(T.mood==='stuck'){
+    const prev = prevEasyStep();
+    h += `<div class="fb warnbox"><b>Thanks for being honest.</b> Good learners say when they're stuck. Read this recap, then try the last activity again in an easier version.</div><div class="recap"><h3>Quick recap</h3>${L.recap}</div>`;
+    if(prev!=null) h += `<div class="row"><button type="button" class="btn go" data-act="redo-easy" data-i="${prev}">Redo "${L.steps[prev].title}" in dial-down mode</button></div>`;
+  }
+  return h;
+}
+function prevEasyStep(){ for(let i=S.step-1;i>=0;i--){ if(COURSE[S.lvl].steps[i].easy) return i; } return null; }
+const MEDAL_COLORS = ['var(--sea)','var(--sea)','var(--sea)'];
+function medal(l){ return `<svg class="medal" viewBox="0 0 96 96" aria-hidden="true"><path d="M30 4h14l8 30H38zM52 4h14L58 34H44z" fill="var(--coral)"/><circle cx="48" cy="58" r="32" fill="${MEDAL_COLORS[l]}"/><circle cx="48" cy="58" r="24" fill="none" stroke="var(--surface)" stroke-width="3" stroke-dasharray="4 4"/><text x="48" y="68" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="28" fill="var(--surface)">${l+1}</text></svg>`; }
+function finishHTML(){
+  const L = COURSE[S.lvl], last = S.lvl === COURSE.length-1;
+  let h = `<div class="badge">${medal(S.lvl)}<div><h2>${esc(S.name||'Explorer')}, you earned the ${L.badge} badge!</h2><p class="lead">Here's what you can do now:</p><ul class="clean">${L.skills.map(s=>`<li>${s}</li>`).join('')}</ul></div></div>`;
+  if(!last) h += `<div class="row"><button type="button" class="btn go" data-act="next-level">Start Level ${S.lvl+2}: ${COURSE[S.lvl+1].name} →</button><button type="button" class="btn ghost" data-act="back">← Back</button></div>`;
+  else {
+    const d = new Date().toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
+    h += `<div class="cert"><span class="lbl">Certificate of completion</span><p>This certifies that</p><p class="who">${esc(S.name||'Explorer')}</p><p>has completed <b>Main Idea Quest</b> at Explorer, Detective and Pro level, and can find the main idea, explain the author's purpose and structure a CAPE-style essay.</p><p class="hint">${d} · ${S.xp} XP</p></div><div class="row"><button type="button" class="btn ghost" data-act="back">← Back</button></div>`;
+  }
+  return h;
+}
+
+/* ---------- Checking ---------- */
+function check(v){
+  switch(v.type){
+    case 'mcq': { if(T.answer==null) return {need:'Pick an answer first.'}; const o=v.options[T.answer]; return {ok:!!o.ok, msg:o.fb}; }
+    case 'multi': {
+      if(Object.keys(T.picks).length < v.items.length) return {need:'Answer every card first.'};
+      T.wrong = v.items.map((it,i)=>T.picks[i]===it.answer?-1:i).filter(i=>i>=0);
+      return {ok:!T.wrong.length, msg: T.wrong.length ? `${v.items.length-T.wrong.length} of ${v.items.length} right. The cards in red need another look.` : v.win};
+    }
+    case 'sort': {
+      if(Object.keys(T.picks).length < v.items.length) return {need:'Give every card a label first.'};
+      T.wrong = v.items.map((it,i)=>T.picks[i]===it.bin?-1:i).filter(i=>i>=0);
+      return {ok:!T.wrong.length, msg: T.wrong.length ? `${v.items.length-T.wrong.length} of ${v.items.length} sorted correctly. Check the cards in red.` : v.win};
+    }
+    case 'pick': { if(T.answer==null) return {need:'Tap a sentence first.'}; const ok = v.correct.includes(T.answer); return {ok, msg: ok ? v.win : v.miss}; }
+    case 'order': {
+      if(T.order.length < v.blocks.length) return {need:'Place every block first.'};
+      const ok = T.order.every((b,i)=>b===i);
+      const right = T.order.filter((b,i)=>b===i).length;
+      return {ok, msg: ok ? v.win : `${right} of ${v.blocks.length} blocks are in the right spot. Tap blocks to send them back and rearrange.`};
+    }
+    case 'text': {
+      const wc = wordCount(T.text);
+      if(wc < v.min) return {need:`Write at least ${v.min} words. You have ${wc}.`};
+      if(wc > v.max) return {need:`Too long: ${wc} words. Cut it to ${v.max} or fewer.`};
+      for(const m of v.must){ if(!new RegExp(m.re,'i').test(T.text)) return {ok:false, msg:m.msg}; }
+      if(v.checklist.some((_,i)=>!T.checks[i])) return {need:'Tick each checklist box once your answer does that thing. If you can\'t tick one, improve your answer first.'};
+      return {ok:true, msg:`Well written. Compare yours with the model answer below.`};
+    }
+  }
+}
+function locked(){ return T.submitted && T.correct; }
+
+/* ---------- Actions ---------- */
+function complete(viaTutor){
+  const k = key();
+  if(!S.done[k]){ S.done[k] = true; const pts = (isEasy()||viaTutor) ? 5 : 10; S.xp += pts; toast(`Step unlocked! +${pts} XP`); }
+  save(); render();
+}
+function go(l,i){ stopNarration(); S.lvl=l; S.step=i; resetT(); save(); render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function firstOpenStep(l){ const st = COURSE[l].steps; for(let i=0;i<st.length;i++){ if(!S.done[keyOf(l,i)]) return i; } return st.length-1; }
+
+
+/* ---------- Starfield ---------- */
+(function(){ const c=document.getElementById('sky'); if(!c||!c.getContext) return; const x=c.getContext('2d'); let P=[],sh=null;
+  function init(){ const d=Math.min(2,devicePixelRatio||1); c.width=innerWidth*d; c.height=innerHeight*d; x.setTransform(d,0,0,d,0,0); P=Array.from({length:150},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.6+.3,a:Math.random()*6,t:Math.random()*.03+.005})); }
+  function draw(){ x.clearRect(0,0,innerWidth,innerHeight); P.forEach(p=>{p.a+=p.t; x.globalAlpha=.3+.7*Math.abs(Math.sin(p.a)); x.fillStyle='#fff'; x.beginPath(); x.arc(p.x,p.y,p.r,0,6.283); x.fill();});
+    if(!sh && Math.random()<.004) sh={x:Math.random()*innerWidth*.7,y:Math.random()*innerHeight*.3,l:0};
+    if(sh){ sh.l++; x.globalAlpha=1-sh.l/40; x.strokeStyle='#fff'; x.lineWidth=2; x.beginPath(); x.moveTo(sh.x+sh.l*9,sh.y+sh.l*4); x.lineTo(sh.x+sh.l*9-90,sh.y+sh.l*4-40); x.stroke(); if(sh.l>40) sh=null; }
+    x.globalAlpha=1; }
+  init(); addEventListener('resize',init);
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ draw(); return; }
+  (function loop(){ draw(); requestAnimationFrame(loop); })();
+})();
+
+/* ---------- Narration: recorded voice, browser voice as fallback ---------- */
+const AUDIO = window.MIQ_AUDIO || {};
+const NAR = { el:null, clip:null };
+function stopNarration(){
+  if(NAR.el){ try{ NAR.el.pause(); }catch(e){} NAR.el=null; }
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  NAR.clip=null; markListen();
+}
+function markListen(){ document.querySelectorAll('[data-act="listen"]').forEach(b=>{ const on=b.dataset.clip===NAR.clip; b.textContent = on ? '■ Stop' : '🔊 Listen'; b.classList.toggle('dial-on', on); }); }
+function speakFallback(btn){
+  if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){ toast('Audio is not available on this device.'); return; }
+  const box = btn.closest('.poem') || btn.closest('.card'); if(!box) return;
+  const c = box.cloneNode(true); c.querySelectorAll('.card-top,.tools,button,textarea,input,svg,.selfcheck,.row').forEach(n=>n.remove());
+  const u = new SpeechSynthesisUtterance((c.textContent||'').replace(/\s+/g,' ').trim()); u.lang='en-GB';
+  u.onend = u.onerror = ()=>{ if(NAR.clip===btn.dataset.clip){ NAR.clip=null; markListen(); } };
+  speechSynthesis.speak(u);
+}
+function listen(btn){
+  const id = btn.dataset.clip;
+  if(NAR.clip===id){ stopNarration(); return; }
+  stopNarration(); NAR.clip=id; markListen();
+  const src = AUDIO[id];
+  if(!src){ speakFallback(btn); return; }
+  const a = new Audio(src); NAR.el=a;
+  a.onended = ()=>{ if(NAR.el===a){ NAR.el=null; NAR.clip=null; markListen(); } };
+  a.onerror = ()=>{ if(NAR.el===a){ NAR.el=null; speakFallback(btn); } };
+  a.play().catch(()=>{ if(NAR.el===a){ NAR.el=null; speakFallback(btn); } });
+}
+
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  if(b.dataset.act==='listen'){ listen(b); return; }
+  const act = b.dataset.act, v = T ? variant() : null;
+  switch(act){
+    case 'start': { const n = ($('#nm').value||'').trim(); if(!n){ $('#nm').focus(); toast('Type your first name, or press Skip.'); return; } S.name = n.slice(0,30); save(); resetT(); render(); return; }
+    case 'avatar': S.avatar = b.dataset.a; save(); renderStep(); renderTop(); return;
+    case 'skipname': S.skipName = true; save(); resetT(); render(); return;
+    case 'goto-level': { const l = +b.dataset.l; if(!levelOpen(l)){ toast(`Finish Level ${l} to open this one.`); return; } go(l, firstOpenStep(l)); return; }
+    case 'tutor': openTutor(null); return;
+    case 'dial': { stopNarration(); const k=key(); S.easy[k] = !S.easy[k]; save(); resetT(); renderStep(); toast(S.easy[k] ? 'Dial-down mode on' : 'Back to the regular version'); return; }
+    case 'learn-yes': complete(false); return;
+    case 'learn-no': openTutor(()=>complete(true)); return;
+    case 'mood': T.mood = b.dataset.m; if(!S.done[key()]){ S.done[key()] = true; S.xp += 5; save(); } render(); return;
+    case 'redo-easy': { const i = +b.dataset.i; S.easy[keyOf(S.lvl,i)] = true; go(S.lvl, i); toast('Dial-down mode on'); return; }
+    case 'opt': if(locked()) return; T.answer = +b.dataset.i; T.submitted=false; T.note=''; T.warn=''; renderStep(); return;
+    case 'mpick': if(locked()) return; T.picks[+b.dataset.i] = +b.dataset.o; T.submitted=false; T.note=''; T.warn=''; T.wrong=T.wrong.filter(x=>x!==+b.dataset.i); renderStep(); return;
+    case 'sbin': if(locked()) return; T.picks[+b.dataset.i] = +b.dataset.b; T.submitted=false; T.note=''; T.warn=''; T.wrong=T.wrong.filter(x=>x!==+b.dataset.i); renderStep(); return;
+    case 'pick': if(locked()) return; T.answer = +b.dataset.i; T.submitted=false; T.note=''; T.warn=''; renderStep(); return;
+    case 'oadd': if(locked()) return; T.order.push(+b.dataset.b); T.submitted=false; T.note=''; T.warn=''; renderStep(); return;
+    case 'orem': if(locked()) return; T.order.splice(+b.dataset.pos,1); T.submitted=false; T.note=''; T.warn=''; renderStep(); return;
+    case 'submit': {
+      const r = check(v);
+      if(r.need){ T.warn = r.need; renderStep(); return; }
+      T.submitted = true; T.correct = r.ok; T.msg = r.msg; T.note=''; T.warn='';
+      if(!r.ok){ const k=key(); ATTEMPTS[k] = (ATTEMPTS[k]||0)+1; }
+      renderStep(); return;
+    }
+    case 'retry': { const keepPool = T.pool; resetT(); if(keepPool) T.pool = keepPool; renderStep(); return; }
+    case 'self-yes': if(T.correct) complete(false); else { T.note='checker'; renderStep(); } return;
+    case 'self-no': if(T.correct) openTutor(()=>complete(true)); else openTutor(()=>{ const p=T.pool; resetT(); if(p) T.pool=p; renderStep(); }); return;
+    case 'next': {
+      const L = COURSE[S.lvl]; if(S.step < L.steps.length-1) go(S.lvl, S.step+1); return;
+    }
+    case 'back': if(S.step>0) go(S.lvl, S.step-1); return;
+    case 'next-level': if(S.lvl < COURSE.length-1) go(S.lvl+1, firstOpenStep(S.lvl+1)); return;
+  }
+});
+document.addEventListener('input', e=>{
+  if(e.target.matches('[data-ta]')){
+    T.text = e.target.value; if(T.submitted && !T.correct){ T.submitted=false; } gsLater();
+    const v = variant(), wc = wordCount(T.text), el = $('#wc');
+    if(el){ $('#wcn').textContent = wc; el.classList.toggle('over', wc > v.max); }
+  }
+});
+document.addEventListener('change', e=>{
+  if(e.target.matches('[data-chk]')) { T.checks[+e.target.dataset.chk] = e.target.checked; gsSave(); }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && !$('#modal').hidden) closeModal(false);
+  if(e.key==='Enter' && e.target.id==='nm'){ e.preventDefault(); $('[data-act="start"]').click(); }
+});
+
+/* ---------- Mini tutorial ---------- */
+let tutorSlides=[], tutorI=0, tutorCb=null;
+function openTutor(cb){
+  const st = step(), v = variant();
+  tutorSlides = v.tutor || st.tutor || [{h:'Quick recap', p:COURSE[S.lvl].recap}];
+  tutorI = 0; tutorCb = cb; renderTutor();
+  $('#modal').hidden = false; $('.mbox').focus();
+}
+function renderTutor(){
+  const s = tutorSlides[tutorI], last = tutorI === tutorSlides.length-1;
+  $('#mdots').innerHTML = tutorSlides.map((_,i)=>`<i class="${i<=tutorI?'on':''}"></i>`).join('');
+  $('#mbody').innerHTML = `<p class="mstep">Tip ${tutorI+1} of ${tutorSlides.length}</p><h3>${s.h}</h3><div class="mbody">${s.p}</div>`;
+  $('#mbtns').innerHTML = `${tutorI>0?'<button type="button" class="btn ghost" id="mprev">← Back</button>':''}${last?`<button type="button" class="btn go" id="mdone">${tutorCb?'Got it, let me continue':'Got it'}</button>`:'<button type="button" class="btn go" id="mnext">Next tip →</button>'}`;
+}
+function closeModal(finish){ $('#modal').hidden = true; const cb = tutorCb; tutorCb = null; if(finish && cb) cb(); }
+$('#modal').addEventListener('click', e=>{
+  if(e.target.id==='mnext'){ tutorI++; renderTutor(); }
+  else if(e.target.id==='mprev'){ tutorI--; renderTutor(); }
+  else if(e.target.id==='mdone'){ closeModal(true); }
+  else if(e.target.id==='mclose' || e.target.id==='modal'){ closeModal(false); }
+});
+
+/* ---------- Toast + confetti ---------- */
+let toastTimer;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true, 2200); }
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c=$('#fx'), x=c.getContext('2d'), dpr=window.devicePixelRatio||1;
+  c.width=innerWidth*dpr; c.height=innerHeight*dpr; x.scale(dpr,dpr);
+  const cs=getComputedStyle(document.documentElement), cols=['--sea','--coral','--sun','--ok'].map(v=>cs.getPropertyValue(v).trim());
+  const P=Array.from({length:140},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*12,vy:Math.random()*-11-3,r:Math.random()*6+4,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6}));
+  let f=0; (function tick(){ x.clearRect(0,0,innerWidth,innerHeight); P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.a+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);x.restore();}); if(++f<120) requestAnimationFrame(tick); else x.clearRect(0,0,innerWidth,innerHeight); })();
+}
+
+/* ---------- Footer controls ---------- */
+let armTeacher=false, armReset=false;
+if (TEACHER_EDITION) $('#teacherBtn').addEventListener('click', ()=>{
+  if(S.teacher){ S.teacher=false; save(); $('#teacherBtn').textContent='Teacher: unlock all steps'; render(); toast('Teacher unlock turned off'); return; }
+  if(!armTeacher){ armTeacher=true; $('#teacherBtn').textContent='Tap again to unlock every level'; setTimeout(()=>{armTeacher=false; if(!S.teacher) $('#teacherBtn').textContent='Teacher: unlock all steps';},3000); return; }
+  S.teacher=true; COURSE.forEach((L,l)=>L.steps.forEach((s,i)=>S.done[keyOf(l,i)]=true)); save(); $('#teacherBtn').textContent='Teacher unlock is on (tap to turn off)'; render(); toast('All levels and steps unlocked');
+});
+$('#resetBtn').addEventListener('click', ()=>{
+  if(window.GameSave){ window.GameSave.startOver(); return; }
+  if(!armReset){ armReset=true; $('#resetBtn').textContent='Tap again to erase all progress'; setTimeout(()=>{armReset=false; $('#resetBtn').textContent='Reset my progress';},3000); return; }
+  S = {name:'', skipName:false, xp:0, done:{}, easy:{}, lvl:0, step:0, teacher:TEACHER_EDITION, celebrated:{}}; save(); armReset=false; $('#resetBtn').textContent='Reset my progress'; resetT(); render(); toast('Progress reset');
+});
+
+/* ---------- Finish-step celebration hook ---------- */
+const _renderStep = renderStep;
+renderStep = function(){
+  _renderStep(); markListen(); gsSave();
+  const st = step();
+  if(st.type==='finish' && (S.name || S.skipName)){
+    const k = key();
+    if(!S.done[k]){ S.done[k]=true; S.xp += 25; save(); renderTop(); renderMap(); }
+    if(!S.celebrated[k]){ S.celebrated[k]=true; save(); confetti(); toast(`${COURSE[S.lvl].badge} badge earned! +25 XP`); }
+  }
+};
+if(S.teacher && TEACHER_EDITION) $('#teacherBtn').textContent='Teacher unlock is on (tap to turn off)';
+if(!levelOpen(S.lvl)) { S.lvl=0; S.step=0; }
+resetT();
+/* ---------- Saved progress (GameSave): the work on the current step ---------- */
+function gsRestoreT(d){
+  if(!d || d.v!==1 || d.k!==key() || !d.T || typeof d.T!=='object' || !!d.easy!==isEasy()) return false;
+  const v = variant(), t = d.T, int = (x,lo,hi)=>Number.isInteger(x) && x>=lo && x<=hi, obj = o => o && typeof o==='object' && !Array.isArray(o) ? o : {};
+  const n = {answer:null, submitted:false, correct:false, msg:'', warn:'', picks:{}, order:[], text:'', checks:{}, note:'', wrong:[], mood:null};
+  if(v.type==='mcq' && int(t.answer,0,v.options.length-1)) n.answer = t.answer;
+  if(v.type==='pick' && int(t.answer,0,v.lines.length-1)) n.answer = t.answer;
+  if(v.type==='multi' || v.type==='sort'){
+    Object.keys(obj(t.picks)).forEach(k=>{ const i=+k, x=t.picks[k]; if(int(i,0,v.items.length-1) && int(x,0,(v.type==='sort' ? v.bins.length : v.items[i].options.length)-1)) n.picks[i]=x; });
+    n.wrong = Array.isArray(t.wrong) ? t.wrong.filter(i=>int(i,0,v.items.length-1)) : [];
+  }
+  if(v.type==='order'){
+    const m = v.blocks.length;
+    if(!Array.isArray(t.pool) || t.pool.length!==m || !t.pool.slice().sort((a,b)=>a-b).every((x,i)=>x===i)) return false;
+    n.pool = t.pool.slice(); n.order = Array.isArray(t.order) ? t.order.filter((b,i,a)=>int(b,0,m-1) && a.indexOf(b)===i) : [];
+  }
+  if(v.type==='text'){ n.text = typeof t.text==='string' ? t.text : ''; Object.keys(obj(t.checks)).forEach(k=>{ if(int(+k,0,v.checklist.length-1)) n.checks[k] = !!t.checks[k]; }); }
+  if(v.type==='checkin' && ['great','okay','stuck'].includes(t.mood)) n.mood = t.mood;
+  if(t.submitted===true && INTERACTIVE.includes(v.type)){ n.submitted = true; n.correct = t.correct===true; n.msg = typeof t.msg==='string' ? t.msg : ''; n.note = t.note==='checker' ? 'checker' : ''; }
+  else if(typeof t.warn==='string') n.warn = t.warn;
+  T = n; return true;
+}
+if(window.GameSave){
+  let gsData = null;
+  window.GameSave.register([LS]);
+  window.GameSave.onReset(()=>{ gsOff = true; clearTimeout(gsT); });
+  window.GameSave.persist({ key:'comm.mainidea.save', welcome:false, get:()=>({ v:1, k:key(), easy:isEasy(), T:T, att:ATTEMPTS }), set:d=>{ gsData = d; } });
+  try{
+    if(gsData && gsData.att && typeof gsData.att==='object') Object.keys(gsData.att).forEach(k=>{ const x = gsData.att[k]; if(Number.isInteger(x) && x>0 && x<1000) ATTEMPTS[k] = x; });
+    if(!gsRestoreT(gsData)) resetT();
+  }catch(e){ resetT(); }
+  if((S.name || S.skipName) && Object.keys(S.done).length) setTimeout(()=>{ try{ window.GameSave.toast('Welcome back! Your progress was restored.'); }catch(e){} }, 400);
+}
+render();
+</script>
+</body></html>

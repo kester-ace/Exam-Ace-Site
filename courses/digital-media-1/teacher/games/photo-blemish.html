@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" data-gs-own>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simple Blemish Removal in Photoshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,700;62..125,800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E3E5E8; --surface:#F8F9FA; --ink:#1C2024; --muted:#555D66; --line:#C6CBD1;
+  --accent:#2C66A6; --yes:#3D8743; --no:#A8343A; --help-bg:#FBEFEF; --tip-bg:#EAF1F8;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#24272B; --surface:#2F3338; --ink:#E9EBED; --muted:#A5ADB6; --line:#474D55;
+    --accent:#77AEE6; --yes:#6CBF72; --no:#E4747A; --help-bg:#3A2A2D; --tip-bg:#28374A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#24272B; --surface:#2F3338; --ink:#E9EBED; --muted:#A5ADB6; --line:#474D55;
+  --accent:#77AEE6; --yes:#6CBF72; --no:#E4747A; --help-bg:#3A2A2D; --tip-bg:#28374A;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.55 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding:2rem 1.25rem 3rem;display:grid;grid-template-columns:280px 1fr;gap:2.5rem;align-items:start}
+@media (max-width:820px){.wrap{grid-template-columns:1fr;gap:1.5rem;padding-top:1.25rem}}
+
+/* Sidebar */
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 1.5rem)}
+@media (max-width:820px){aside{position:static}}
+h1{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:2.35rem;line-height:1.02;margin:0 0 .6rem;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0 0 1.25rem;font-size:1rem}
+label.fld{display:block;font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+input[type=text]{width:100%;font:inherit;padding:.5rem .65rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.chart{margin-top:1.4rem;background:#1E1E1E;padding:10px;border-radius:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.patch{aspect-ratio:1;border:0;border-radius:3px;cursor:pointer;position:relative;background:#3A3A3A;color:#fff;font:700 .8rem var(--display);padding:0;transition:background-color .35s}
+.patch.done{background:var(--c)}
+.patch.flag{background:repeating-linear-gradient(45deg,var(--c) 0 5px,#3A3A3A 5px 10px)}
+.patch.current{outline:3px solid #fff;outline-offset:2px}
+.patch span{position:absolute;left:5px;top:3px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.chart-cap{font-size:.88rem;color:var(--muted);margin:.55rem 0 0}
+.legend{display:flex;gap:1rem;font-size:.82rem;color:var(--muted);margin-top:.4rem;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+
+/* Step */
+main{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1.75rem 1.75rem 1.5rem}
+@media (max-width:520px){.card{padding:1.25rem}}
+.where{font-size:.92rem;color:var(--muted);margin:0 0 .35rem}
+.stepnum{font-family:var(--display);font-stretch:62%;font-weight:800;font-size:4.2rem;line-height:.85;color:var(--c,var(--accent));float:right;margin:0 0 .5rem 1rem}
+h2{font-family:var(--display);font-stretch:88%;font-weight:700;font-size:1.7rem;line-height:1.15;margin:0 0 .9rem}
+ol.do{margin:0 0 1.1rem;padding-left:1.3rem;max-width:62ch}
+ol.do li{margin-bottom:.45rem}
+kbd{font:600 .85em var(--body);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 .35em;background:var(--bg)}
+.tip{background:var(--tip-bg);border-left:4px solid var(--accent);padding:.7rem .9rem;border-radius:0 6px 6px 0;margin:0 0 1.4rem;max-width:62ch;font-size:.98rem}
+.q{border-top:1px solid var(--line);padding-top:1.2rem;clear:both}
+.q p{font-weight:600;font-size:1.12rem;margin:0 0 .85rem;max-width:60ch}
+.btns{display:flex;gap:.7rem;flex-wrap:wrap}
+button.act{font:700 1rem var(--display);font-stretch:95%;padding:.7rem 1.5rem;border-radius:6px;border:2px solid transparent;cursor:pointer;min-width:7rem}
+.yes{background:var(--yes);color:#fff}
+.no{background:transparent;border-color:var(--no)!important;color:var(--no)}
+.ghost{background:transparent;border-color:var(--line)!important;color:var(--ink)}
+button:focus-visible,input:focus-visible,.patch:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.help{display:none;margin-top:1.1rem;background:var(--help-bg);border-radius:8px;padding:1rem 1.1rem}
+.help.show{display:block}
+.help h3{font-family:var(--display);font-size:1.05rem;margin:0 0 .5rem}
+.help ul{margin:0 0 1rem;padding-left:1.2rem;max-width:62ch}
+.help li{margin-bottom:.35rem}
+.status{margin-top:1rem;font-weight:600;min-height:1.5em}
+.nav{display:flex;justify-content:space-between;margin-top:1.1rem;gap:.7rem}
+.nav button{font:600 .95rem var(--body);background:none;border:0;color:var(--accent);cursor:pointer;padding:.4rem .2rem}
+.nav button:disabled{color:var(--muted);opacity:.5;cursor:default}
+
+/* Summary */
+.sum table{width:100%;border-collapse:collapse;font-size:.97rem}
+.sum th,.sum td{text-align:left;padding:.5rem .4rem;border-bottom:1px solid var(--line);vertical-align:top}
+.sum td.r{font-weight:700;white-space:nowrap}
+.tbl{overflow-x:auto}
+.big{font-family:var(--display);font-stretch:70%;font-weight:800;font-size:3rem;line-height:1;margin:.2rem 0 .8rem}
+textarea{width:100%;min-height:90px;font:inherit;padding:.6rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  aside .chart,.chart-cap,.legend,.btns,.nav,.noprint{display:none!important}
+  body{background:#fff;color:#000}.wrap{display:block}.card{border:0;padding:0}
+}
+
+/* Cover */
+.cover{min-height:100vh;min-height:100dvh;background:#1E1E1E;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(1.5rem,5vw,3.5rem)}
+.cover .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:620px}
+.cover .grid i{aspect-ratio:1.6;border-radius:2px;display:block}
+.cover .sub{font-family:var(--display);font-weight:700;font-size:1.2rem;color:#C9CED4;margin:2.5rem 0 .3rem}
+.cover .unit{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:clamp(3.2rem,11vw,5.5rem);line-height:.95;margin:0}
+.cover .uname{font-family:var(--display);font-stretch:88%;font-weight:800;font-size:clamp(2rem,6.5vw,3.3rem);line-height:1.05;margin:.2rem 0 1rem}
+.cover .bar{width:90px;height:5px;background:#E7C71F;margin-bottom:1.3rem}
+.cover .wb{font-family:var(--display);font-weight:700;font-size:1.25rem;margin:0 0 .25rem}
+.cover .topic{color:#C9CED4;margin:0 0 2rem}
+.cover .by{color:#8F979F;font-size:.9rem;margin:0}
+.cover .who{font-family:var(--display);font-weight:800;font-size:1.4rem;margin:.1rem 0 1.5rem}
+.cover .start{font:700 1.05rem var(--display);background:#E7C71F;color:#1E1E1E;border:0;border-radius:6px;padding:.8rem 1.8rem;cursor:pointer}
+.cover .start:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.hidden{display:none!important}
+.tocover{background:none;border:0;color:var(--accent);font:600 .9rem var(--body);cursor:pointer;padding:0;margin-top:1rem}
+@media print{.cover{min-height:auto;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cover .start{display:none}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<section class="cover" id="cover" aria-label="Cover">
+  <div class="grid" id="cgrid" aria-hidden="true"></div>
+  <div>
+    <p class="sub">CAPE Digital Media</p>
+    <p class="unit">Unit 1</p>
+    <h1 class="uname">Photo Editing Unit</h1>
+    <div class="bar"></div>
+    <p class="wb">Interactive Guided Practice and Exercise Workbook</p>
+    <p class="topic">Simple blemish removal in Photoshop</p>
+    <p class="who">Kester Small</p>
+    <button class="start" id="start">Start the workbook</button>
+  </div>
+</section>
+<div class="wrap hidden" id="app">
+  <aside>
+    <h2 style="font-family:var(--display);font-stretch:78%;font-weight:800;font-size:2.35rem;line-height:1.02;margin:0 0 .6rem">Simple blemish removal in Photoshop</h2>
+    <p class="lede">Remove a few temporary spots from a portrait — and keep the real person. Answer yes or no honestly — a no opens help for that step.</p>
+    <label class="fld" for="name">Your name</label>
+    <input type="text" id="name" autocomplete="name" placeholder="First and last name">
+    <div class="chart" id="chart" role="group" aria-label="Progress by step"></div>
+    <p class="chart-cap" id="cap">0 of 9 steps complete</p>
+    <div class="legend"><span><i style="background:#C15A63"></i>Done</span><span><i style="background:repeating-linear-gradient(45deg,#C15A63 0 3px,#3A3A3A 3px 6px)"></i>Needs teacher</span><span><i style="background:#3A3A3A"></i>Not yet</span></div>
+    <button class="tocover" id="tocover">Back to cover</button>
+  </aside>
+  <main id="main" aria-live="polite"></main>
+</div>
+
+<script>
+const C=["#735244","#C29682","#627A9D","#576C43","#8580B1","#67BDAA","#D67E2C","#505BA6","#C15A63","#5E3C6C","#9DBC40","#E0A32E","#383D96","#469449","#AF363C","#E7C71F"];
+
+const STEPS=[
+{t:"Get permission and open your portrait",w:"Photoshop › File › Open",
+ d:["Ask the classmate in your photo: <b>“Is it OK if I remove a few spots from this photo for class?”</b>","Download the portrait from the class Google Drive folder into your class folder.","In Photoshop, choose <b>File › Open</b> and select the portrait. If a RAW file opens in <b>Camera Raw</b> first, just click <b>Open</b>."],
+ tip:"The person in the photo gets the final say. If they don't want a change made, skip it — or choose a different portrait.",
+ q:"Is your portrait open in Photoshop, and has the person agreed to the edit?",
+ h:["Can't reach them today? Use a self-portrait or a practice portrait from your teacher.","Photo opened in Camera Raw and you're not sure what to do? Click <b>Open</b> at the bottom right — that sends it into Photoshop.","Face too small or blurry? Pick a closer, sharper shot. Blemish removal needs detail."]},
+{t:"Make a new layer called Retouch",w:"Layers panel (Window › Layers)",
+ d:["In the <b>Layers</b> panel, click the <b>+</b> (Create a new layer) icon at the bottom.","Double-click the new layer's name and type <b>Retouch</b>. Press <b>Enter</b>.","Keep the <b>Retouch</b> layer selected (highlighted) for the next steps."],
+ tip:"Working on an empty layer means your original photo is never touched. You can hide, lower or delete your fixes at any time.",
+ q:"Can you see a layer called Retouch above the Background layer?",
+ h:["Can't see the Layers panel? Go to <b>Window › Layers</b> or press <b>F7</b>.","New layer appeared below Background? Drag it up so it sits on top.","Renamed the wrong layer? Double-click the name again and fix it."]},
+{t:"Zoom in and plan your fixes",w:"View › 100% (Ctrl/Cmd + 1)",
+ d:["Press <b>Ctrl + 1</b> (Windows) or <b>Cmd + 1</b> (Mac) to zoom to 100%.","Hold the <b>Spacebar</b> and drag to move around the face.","<b>Remove</b> only temporary things: pimples, small scratches, stray hairs, lint.","<b>Keep</b> things that are part of the person: freckles, moles, birthmarks, scars, dimples, skin texture."],
+ tip:"Ask yourself: “Will this still be there next week?” If yes, leave it — unless the person asked you to remove it.",
+ q:"Have you decided which temporary spots you will remove?",
+ h:["Unsure about something? Leave it. Less editing is better than too much.","Write a quick list, e.g. “spot on chin, spot by left eyebrow.”","Ask your teacher to check your list before you start."]},
+{t:"Remove spots with the Spot Healing Brush",w:"Tools › Spot Healing Brush (J)",
+ d:["Press <b>J</b> or pick the <b>Spot Healing Brush</b> (a plaster with a dotted circle) from the toolbar.","In the options bar at the top, set Type to <b>Content-Aware</b> and tick <b>Sample All Layers</b>.","Make the brush just a little bigger than the spot using the <b>[</b> and <b>]</b> keys.","Check you're on the <b>Retouch</b> layer, then click once on each spot."],
+ tip:"One click per spot works best. Painting big areas makes skin look smudged.",
+ q:"Are the spots gone, without blurry smudges left behind?",
+ h:["Nothing happened when you clicked? <b>Sample All Layers</b> is probably unticked — tick it and try again.","Smudge or odd colour? Press <b>Ctrl/Cmd + Z</b> to undo and use a smaller brush.","Can't find the tool? Click and hold the plaster icon in the toolbar — it may be hidden behind the Healing Brush or Patch tool."]},
+{t:"Fix tricky spots with the Healing Brush",w:"Tools › Healing Brush (J)",
+ d:["Use this for spots near eyes, lips, eyebrows or the hairline, where the Spot Healing Brush guesses wrong.","Choose the <b>Healing Brush</b> (the plaster without the dotted circle). Set Sample to <b>Current & Below</b>.","Hold <b>Alt</b> (Windows) or <b>Option</b> (Mac) and click on clean skin nearby to pick a source.","Let go of the key and click on the spot."],
+ tip:"Pick source skin that matches in brightness and texture — right next to the spot is usually best.",
+ q:"Do your tricky spots now blend in with the skin around them?",
+ h:["Message says “Alt-click to define a source point”? You forgot to pick a source. Hold Alt/Option and click clean skin first.","Healed area too dark or too light? Undo and pick a source closer to the spot.","Skip any spot touching the eye itself — that's advanced work."]},
+{t:"Clean up stray hairs",w:"Tools › Spot Healing Brush (J)",
+ d:["Go back to the <b>Spot Healing Brush</b>.","Set the brush just wider than the hair.","Click and <b>drag</b> along the stray hair in one short stroke."],
+ tip:"Only remove single hairs crossing the face or background. Leave the hairstyle as it is — it's how the person chose to look.",
+ q:"Have the distracting stray hairs been removed?",
+ h:["Stroke looks messy? Undo and try a few short strokes instead of one long one.","Hair crosses an eye or eyebrow? Leave it.","Background turned blotchy? Undo and use a smaller brush."]},
+{t:"Check your work",w:"Layers panel",
+ d:["Click the <b>eye icon</b> beside the Retouch layer to hide and show your fixes.","Zoom out: <b>View › Fit on Screen</b> (<b>Ctrl/Cmd + 0</b>).","If the skin looks too perfect, lower the Retouch layer's <b>Opacity</b> to around 85–90%."],
+ tip:"Good retouching is invisible. If someone would notice the edit before they notice the person, dial it back.",
+ q:"When you switch the Retouch layer on and off, does the change look subtle and natural?",
+ h:["Nothing changes when you click the eye? Your fixes may be on the Background layer. Check you had Retouch selected — if not, redo the steps on the Retouch layer.","Missed a spot? Zoom back to 100% and fix it on the Retouch layer.","Opacity slider is at the top of the Layers panel, next to Blend Mode."]},
+{t:"Do the real-person test",w:"Before saving",
+ d:["Look at the whole photo at normal size.","Ask: <b>Does this still look exactly like them, on a good day?</b>","Show the person in the photo and ask if they're happy with it."],
+ tip:"Their opinion wins. If they want a spot put back, hide or erase that part of the Retouch layer.",
+ q:"Is the person in the photo happy that it still looks like them?",
+ h:["Want to bring back one area? Use the <b>Eraser</b> (<b>E</b>) on the Retouch layer over that spot.","Want to start over? Delete the Retouch layer, make a new one and try again.","Not sure? Ask a classmate to point out anything that looks edited."]},
+{t:"Save and export",w:"File › Save As / File › Export",
+ d:["Choose <b>File › Save As</b>, format <b>Photoshop (.PSD)</b>. Name it <b>Lastname_Firstname_Blemish</b>. This keeps your layers.","Then choose <b>File › Export › Export As</b>. Pick <b>JPG</b>, Quality about <b>80%</b>, and click Export.","Save the JPEG in your <b>Exports</b> folder with the same name."],
+ tip:"Hand in both files: the PSD shows your teacher your Retouch layer, and the JPEG is the finished photo. Only share it where the person agreed.",
+ q:"Have you saved both a PSD and a JPEG with the correct name?",
+ h:["Save As only offers JPEG? Use <b>File › Save a Copy</b> for the JPEG and <b>File › Save As</b> for the PSD.","Export As is greyed out? Use <b>File › Export › Save for Web (Legacy)</b> instead.","Can't find the files? Check the folder shown at the top of the save window."]}
+];
+
+const KEY="ps-blemish-v1";
+let S={cur:0,res:{},name:"",refl:""};
+try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s));}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+/* saved progress (GameSave): the workbook already keeps every answer on this device; Start over clears it */
+if(window.GameSave)GameSave.register([KEY]);
+
+const main=document.getElementById("main"),chart=document.getElementById("chart"),cap=document.getElementById("cap"),nameEl=document.getElementById("name");
+nameEl.value=S.name||"";
+nameEl.addEventListener("input",()=>{S.name=nameEl.value;save();});
+
+function drawChart(){
+  chart.innerHTML="";
+  STEPS.forEach((s,i)=>{
+    const b=document.createElement("button");
+    const r=S.res[i];
+    b.className="patch"+(r==="yes"?" done":r==="flag"?" flag":"")+(S.cur===i?" current":"");
+    b.style.setProperty("--c",C[i]);
+    b.innerHTML="<span>"+(i+1)+"</span>";
+    b.setAttribute("aria-label","Step "+(i+1)+": "+s.t+(r==="yes"?", done":r==="flag"?", needs teacher":", not yet done"));
+    b.onclick=()=>{S.cur=i;save();render();};
+    chart.appendChild(b);
+  });
+  const done=Object.values(S.res).filter(v=>v==="yes").length;
+  cap.textContent=done+" of "+STEPS.length+" steps complete";
+}
+
+function render(){
+  drawChart();
+  if(S.cur>=STEPS.length){return summary();}
+  const i=S.cur,s=STEPS[i],r=S.res[i];
+  main.innerHTML=`
+  <article class="card" style="--c:${C[i]}">
+    <div class="stepnum" aria-hidden="true">${i+1}</div>
+    <p class="where">Step ${i+1} of ${STEPS.length} · ${s.w}</p>
+    <h2>${s.t}</h2>
+    <ol class="do">${s.d.map(x=>"<li>"+x+"</li>").join("")}</ol>
+    <p class="tip">${s.tip}</p>
+    <div class="q">
+      <p>${s.q}</p>
+      <div class="btns">
+        <button class="act yes" id="y">Yes</button>
+        <button class="act no" id="n">No</button>
+      </div>
+      <div class="help" id="help">
+        <h3>Try this</h3>
+        <ul>${s.h.map(x=>"<li>"+x+"</li>").join("")}</ul>
+        <div class="btns">
+          <button class="act yes" id="y2">Fixed it — yes</button>
+          <button class="act ghost" id="f">Still stuck — flag for teacher</button>
+        </div>
+      </div>
+      <div class="status" id="st">${r==="yes"?"✓ Marked done.":r==="flag"?"⚑ Flagged for your teacher. You can keep going.":""}</div>
+    </div>
+    <div class="nav">
+      <button id="prev" ${i===0?"disabled":""}>Previous step</button>
+      <button id="skip">${i===STEPS.length-1?"See my summary":"Skip for now"}</button>
+    </div>
+  </article>`;
+  const next=()=>{S.cur=i+1;save();render();main.scrollIntoView({block:"start"});};
+  const yes=()=>{S.res[i]="yes";save();next();};
+  document.getElementById("y").onclick=yes;
+  document.getElementById("y2").onclick=yes;
+  document.getElementById("n").onclick=()=>{const h=document.getElementById("help");h.classList.add("show");h.querySelector("li").scrollIntoView({block:"nearest"});};
+  document.getElementById("f").onclick=()=>{S.res[i]="flag";save();next();};
+  document.getElementById("prev").onclick=()=>{S.cur=i-1;save();render();};
+  document.getElementById("skip").onclick=next;
+}
+
+function summary(){
+  const done=STEPS.filter((_,i)=>S.res[i]==="yes").length;
+  const today=new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  main.innerHTML=`
+  <article class="card sum">
+    <h2>Your editing checklist</h2>
+    <p class="where">${S.name?S.name.replace(/[<>&]/g,""):"Name not entered"} · ${today}</p>
+    <div class="big">${done} / ${STEPS.length}</div>
+    <div class="tbl"><table>
+      <thead><tr><th>Step</th><th>Result</th></tr></thead>
+      <tbody>${STEPS.map((s,i)=>{const r=S.res[i];return `<tr><td>${i+1}. ${s.t}</td><td class="r" style="color:${r==="yes"?"var(--yes)":r==="flag"?"var(--no)":"var(--muted)"}">${r==="yes"?"Yes":r==="flag"?"Needs teacher":"Skipped"}</td></tr>`}).join("")}</tbody>
+    </table></div>
+    <h3 style="font-family:var(--display);margin:1.5rem 0 .4rem">Reflection</h3>
+    <label class="fld" for="refl" style="font-weight:400;color:var(--muted)">Why is it useful to retouch on a separate layer?</label>
+    <textarea id="refl">${(S.refl||"").replace(/[<>&]/g,"")}</textarea>
+    <div class="btns" style="margin-top:1.2rem">
+      <button class="act yes" id="pr">Print or save as PDF</button>
+      <button class="act ghost" id="bk">Back to step 1</button>
+      <button class="act no" id="rs">Start over</button>
+    </div>
+  </article>`;
+  document.getElementById("refl").oninput=e=>{S.refl=e.target.value;save();};
+  document.getElementById("pr").onclick=()=>window.print();
+  document.getElementById("bk").onclick=()=>{S.cur=0;save();render();};
+  document.getElementById("rs").onclick=()=>{if(window.GameSave){GameSave.startOver();return;}if(confirm("Clear all your answers and start again?")){S={cur:0,res:{},name:S.name,refl:""};save();render();}};
+}
+render();
+const CG=[...C,"#BB5695","#0885A1","#F3F3F2","#C8C8C8","#A0A0A0","#7A7A79","#555555","#343434"].slice(0,24);
+document.getElementById("cgrid").innerHTML=CG.map(c=>'<i style="background:'+c+'"></i>').join("");
+const coverEl=document.getElementById("cover"),app=document.getElementById("app");
+function showApp(){coverEl.classList.add("hidden");app.classList.remove("hidden");S.started=true;save();window.scrollTo(0,0);}
+document.getElementById("start").onclick=showApp;
+document.getElementById("tocover").onclick=()=>{document.getElementById("start").textContent="Continue the workbook";app.classList.add("hidden");coverEl.classList.remove("hidden");window.scrollTo(0,0);};
+if(S.started){coverEl.classList.add("hidden");app.classList.remove("hidden");document.getElementById("start").textContent="Continue the workbook";}
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

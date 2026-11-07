@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Value Chain Tycoon</title>
+<meta name="description" content="Value Chain Tycoon: a digital media value chain game for CAPE Digital Media Unit 1, Module 2. Kester Small">
+<style>
+/* Value Chain Tycoon: a Caribbean market ledger. Deep sea header, sand paper panels, gold coin accents. One light theme by design. */
+:root{
+  --bg:#f4eee1; --paper:#fffdf8; --paper2:#fbf6ea; --ink:#13262d; --muted:#53656b; --line:#e0d5bd; --line2:#cfc2a4;
+  --sea:#0b4552; --sea2:#0f6475; --sea3:#13809a; --foam:#d9eef0;
+  --coral:#d9513a; --gold:#e0a325; --goldhi:#f6cf6a; --good:#1c7f45; --goodbg:#e3f4e8; --bad:#b8352a; --badbg:#fbe7e3;
+  --focus:#ffb703;
+  --s0:#7f4cc4; --s1:#d55a2f; --s2:#b9850f; --s3:#2a7fbd; --s4:#c43d74; --s5:#178f78; --s6:#3f8a25; --s7:#55657f;
+  --r-platform:#2a7fbd; --r-distributor:#6d55c9; --r-payment:#c98a0b; --r-marketing:#c43d74; --r-production:#d55a2f; --r-creator:#1c7f45;
+  --sans:ui-rounded,"SF Pro Rounded","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:"Avenir Next","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --radius:14px; --shadow:0 1px 0 rgba(255,255,255,.7) inset,0 6px 18px -10px rgba(19,38,45,.35);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;padding:0}
+body{background:var(--bg);background-image:radial-gradient(circle at 12% -10%,rgba(19,128,154,.10),transparent 40%),radial-gradient(circle at 100% 0,rgba(224,163,37,.12),transparent 35%);
+  color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:8px}
+[tabindex="-1"]:focus{outline:none}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px}
+.skip{position:absolute;left:8px;top:-60px;background:var(--gold);color:#000;padding:8px 12px;border-radius:8px;z-index:50;font-weight:700}
+.skip:focus{top:8px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+
+/* Header */
+header.top{background:linear-gradient(180deg,var(--sea),#08353f);color:#fff;border-bottom:3px solid var(--gold)}
+.brandrow{display:flex;align-items:center;gap:12px;padding:14px 0 10px}
+.brandrow svg{flex:none}
+.brand h1{font-family:var(--display);font-weight:800;letter-spacing:-.01em;margin:0;font-size:clamp(1.35rem,3.6vw,2rem);line-height:1.05}
+.brand h1 span{color:var(--goldhi)}
+.brand p{margin:3px 0 0;font-size:.85rem;color:#cfe6ea}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;padding:0 0 0;margin:0 -4px;-webkit-overflow-scrolling:touch}
+nav.tabs button{flex:none;background:transparent;border:0;color:#d4ecef;padding:10px 12px 11px;font-weight:700;font-size:.92rem;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:6px;white-space:nowrap}
+nav.tabs button:hover{color:#fff;background:rgba(255,255,255,.07)}
+nav.tabs button[aria-current="page"]{background:var(--bg);color:var(--sea)}
+nav.tabs .tick{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--goldhi)}
+main{padding:20px 0 30px}
+.view[hidden]{display:none}
+.view{animation:fade .3s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+h2{font-family:var(--display);font-size:clamp(1.3rem,3vw,1.75rem);line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;margin:0 0 6px;line-height:1.25}
+p{margin:0 0 10px}
+.lede{color:var(--muted);max-width:68ch;margin-bottom:14px}
+.eyebrow{display:inline-block;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;font-weight:800;color:var(--sea2);margin-bottom:4px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card + .card{margin-top:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:minmax(0,1fr)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 16px;border-radius:12px;border:2px solid var(--sea);background:var(--sea);color:#fff;font-weight:800;text-decoration:none;line-height:1.2}
+.btn:hover{background:var(--sea2);border-color:var(--sea2)}
+.btn.ghost{background:transparent;color:var(--sea)}
+.btn.ghost:hover{background:var(--foam)}
+.btn.gold{background:var(--gold);border-color:#b98210;color:#1d1503}
+.btn.gold:hover{background:var(--goldhi)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:800;background:var(--foam);color:var(--sea)}
+.illus{display:inline-block;background:#fff3cf;border:1px dashed #c99a24;color:#6b4a00;border-radius:8px;font-size:.78rem;font-weight:700;padding:2px 8px}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.credit{font-size:.85rem;color:var(--muted);font-style:italic}
+.dot{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:6px;flex:none}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.fb{border-radius:12px;padding:10px 14px;margin-top:12px;font-weight:600;border:1px solid var(--line)}
+.fb.ok{background:var(--goodbg);border-color:#9ccfae;color:#114d2b}
+.fb.no{background:var(--badbg);border-color:#e9aaa0;color:#7a2017}
+.fb.info{background:var(--foam);border-color:#a9d3d9;color:#0b4552}
+.fb.toast{position:sticky;bottom:10px;z-index:4;box-shadow:0 10px 24px -12px rgba(0,0,0,.45)}
+.tip{border-left:4px solid var(--gold);background:#fff8e4;padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0 0;font-size:.95rem}
+
+/* Home */
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:center}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero h2{font-size:clamp(1.6rem,4.4vw,2.5rem)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+@media (max-width:860px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.tiles{grid-template-columns:minmax(0,1fr)}}
+.tile{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-height:120px;position:relative}
+.tile:hover{border-color:var(--sea3);transform:translateY(-1px)}
+.tile .num{font-family:var(--mono);font-size:.75rem;color:var(--sea2);font-weight:700}
+.tile strong{font-size:1.05rem}
+.tile span.d{font-size:.88rem;color:var(--muted)}
+.tile .done{position:absolute;top:12px;right:12px}
+
+/* Chain SVG */
+.chainsvg{display:block;width:100%;height:auto}
+.chainsvg .node{cursor:default}
+.chainsvg .node[role="button"]{cursor:pointer}
+.chainsvg .node[role="button"]:hover rect.box,.chainsvg .node[aria-pressed="true"] rect.box{stroke-width:4}
+.chainsvg .node:focus{outline:none}
+.chainsvg .node:focus-visible rect.box{stroke:var(--focus);stroke-width:5}
+.only-wide{display:block}.only-tall{display:none}
+@media (max-width:640px){.only-wide{display:none}.only-tall{display:block}}
+
+/* Learn */
+.learnnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots button{width:30px;height:30px;border-radius:50%;border:2px solid var(--line2);background:var(--paper);font-weight:800;font-size:.8rem;color:var(--muted);padding:0}
+.dots button[aria-current="step"]{background:var(--sea);border-color:var(--sea);color:#fff}
+.stagepanel{border-radius:12px;border:2px solid var(--line);padding:14px;margin-top:12px;background:var(--paper2)}
+.stagetable td:first-child{font-weight:800;white-space:nowrap}
+@media (max-width:640px){
+  .stack thead{display:none}
+  .stack tr{display:block;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:10px;background:var(--paper)}
+  .stack td{display:block;border:0;padding:3px 0}
+  .stack td[data-h]::before{content:attr(data-h) ": ";font-weight:800;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+  .stagetable td:first-child{white-space:normal}
+}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2);background:#fff;padding:3px 10px;font-size:.84rem;font-weight:600}
+.actor{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.actor .ic{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.8rem}
+.minibar{display:flex;height:26px;border-radius:7px;overflow:hidden;border:1px solid var(--line2);margin:6px 0 4px}
+.minibar span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:800;white-space:nowrap;overflow:hidden}
+
+/* Chain builder */
+.prodgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.prodgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:400px){.prodgrid{grid-template-columns:minmax(0,1fr)}}
+.prodbtn{text-align:left;border:2px solid var(--line);border-radius:14px;background:var(--paper);padding:12px;display:flex;gap:10px;align-items:flex-start;min-height:72px}
+.prodbtn:hover{border-color:var(--sea3)}
+.prodbtn[aria-pressed="true"]{border-color:var(--sea);background:var(--foam)}
+.prodbtn .em{font-size:1.6rem;line-height:1}
+.prodbtn small{display:block;color:var(--muted);font-size:.8rem}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.steps span{font-size:.8rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#ece4d1;color:var(--muted)}
+.steps span.on{background:var(--sea);color:#fff}
+.steps span.ok{background:var(--goodbg);color:var(--good)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:2px dashed var(--line2);border-radius:14px;background:var(--paper2);min-height:64px}
+.pool:empty::after{content:"All placed.";color:var(--muted);font-weight:700}
+.dcard{border:2px solid var(--line2);background:#fff;border-radius:12px;padding:9px 12px;text-align:left;font-size:.92rem;line-height:1.35;max-width:100%;box-shadow:0 2px 0 var(--line);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.pool .dcard{flex:1 1 230px}
+.pool.tokens .dcard{flex:0 1 auto;font-weight:700}
+.dcard:hover{border-color:var(--sea3)}
+.dcard[aria-pressed="true"]{border-color:var(--sea);background:var(--foam);box-shadow:0 0 0 3px rgba(15,100,117,.25)}
+.dcard.dragging{opacity:.35}
+.dragghost{position:fixed;z-index:100;pointer-events:none;transform:translate(-50%,-60%) rotate(-2deg);box-shadow:0 12px 30px -10px rgba(0,0,0,.45);max-width:280px;opacity:.95}
+.slots{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;counter-reset:s}
+@media (max-width:860px){.slots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.slots{grid-template-columns:minmax(0,1fr)}.slot{min-height:60px}.zone{min-height:72px}}
+.slot{width:100%;min-height:96px;border:2px dashed var(--line2);border-radius:14px;background:var(--paper);padding:10px;text-align:left;display:flex;flex-direction:column;gap:4px;position:relative}
+.slot .n{font-family:var(--mono);font-weight:800;font-size:.78rem;color:var(--muted)}
+.slot.filled{border-style:solid;background:#fff}
+.slot.filled .sname{font-weight:800}
+.slot.filled .stext{font-size:.85rem;color:var(--muted)}
+.slot.hot,.zone.hot{border-color:var(--sea);background:var(--foam)}
+.slot.ready,.zone.ready{border-color:var(--sea3)}
+.zones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+@media (max-width:860px){.zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.zones{grid-template-columns:minmax(0,1fr)}}
+.zone{border:2px solid var(--line2);border-radius:14px;background:var(--paper);padding:10px;text-align:left;min-height:110px;display:flex;flex-direction:column;gap:6px;width:100%}
+.zone .zh{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.92rem}
+.zone .placed{display:flex;flex-wrap:wrap;gap:4px}
+.zone .placed span{font-size:.78rem;background:var(--goodbg);color:#114d2b;border-radius:8px;padding:2px 8px;font-weight:700}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.pop{animation:pop .35s}
+@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.03)}100%{transform:none}}
+
+/* Tycoon */
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media (max-width:640px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--sea);color:#fff;border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-family:var(--mono);font-size:1.25rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#bfe0e5;font-weight:700}
+.stat.neg b{color:#ffb4a6}
+.qtrack{display:flex;gap:6px;margin:0 0 12px}
+.qtrack span{flex:1;height:8px;border-radius:4px;background:#e2d8c1}
+.qtrack span.on{background:var(--gold)}
+.qtrack span.done{background:var(--sea3)}
+.decision{border-left:6px solid var(--c,#888)}
+.decision .dh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.decision .dh .snum{width:26px;height:26px;border-radius:50%;background:var(--c);color:#fff;font-weight:800;display:grid;place-items:center;font-size:.8rem;flex:none}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.opt{position:relative;display:flex;flex-direction:column;gap:2px;border:2px solid var(--line);border-radius:12px;padding:10px 12px 10px 38px;background:#fff;cursor:pointer;min-height:64px}
+.opt input{position:absolute;left:12px;top:13px;width:18px;height:18px;accent-color:var(--sea);margin:0}
+.opt:hover{border-color:var(--sea3)}
+.opt:has(input:checked){border-color:var(--sea);background:var(--foam)}
+.opt:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.opt:has(input:disabled){opacity:.5;cursor:not-allowed}
+.opt b{font-size:.94rem;line-height:1.25}
+.opt .fx{font-family:var(--mono);font-size:.76rem;color:var(--sea2);font-weight:700}
+.opt .od{font-size:.82rem;color:var(--muted);line-height:1.35}
+.releasebar{position:sticky;bottom:0;z-index:5;margin-top:14px;background:var(--paper);border:1px solid var(--line2);border-radius:14px;padding:10px 14px;box-shadow:0 -8px 20px -14px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.modalback{position:fixed;inset:0;background:rgba(6,30,36,.6);z-index:60;display:grid;place-items:center;padding:16px}
+.modal{background:var(--paper);border-radius:18px;max-width:560px;width:100%;padding:20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);border-top:8px solid var(--c,#888);max-height:calc(100vh - 32px);overflow:auto}
+.modal .evopts{display:grid;gap:8px;margin-top:12px}
+.modal .evopts .btn{justify-content:flex-start;text-align:left;width:100%}
+.ledger td,.ledger th{padding:6px 6px;font-size:.9rem}
+.ledger tr.lt td{border-bottom:0;padding-bottom:0}.ledger tr.how td{padding-top:0}
+@media (max-width:640px){.ledger th,.ledger td{font-size:.74rem;padding:5px 3px}.ledger td.num,.ledger th.num{white-space:normal}}
+.ledger tr.tot td{font-weight:800;border-top:2px solid var(--ink)}
+.formula{font-family:var(--mono);font-size:.82rem;background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+.splitwrap{max-width:480px}
+.badge{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--goldhi),var(--gold) 55%,#a87510);color:#2a1d00;text-align:center;font-weight:900;font-family:var(--display);box-shadow:0 0 0 6px #fff3cf,0 0 0 8px #c99a24,0 14px 30px -12px rgba(0,0,0,.5);padding:14px;line-height:1.1}
+.badge small{font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.endtop{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.evlog{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.evlog li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-size:.9rem}
+
+/* Compare */
+.cmpgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:380px){.cmpgrid{gap:6px}}
+.chaincol{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.chaincol h3{font-size:.98rem}
+.flow{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:0}
+.flow li{position:relative;border:2px solid var(--line2);border-radius:10px;padding:6px 8px;background:#fff;font-size:.86rem;font-weight:700;line-height:1.25;margin-bottom:14px;transition:opacity .4s,transform .4s,background .4s}
+.flow li::after{content:"";position:absolute;left:50%;bottom:-14px;width:2px;height:12px;background:var(--line2)}
+.flow li:last-child{margin-bottom:0}
+.flow li:last-child::after{display:none}
+.flow li small{display:block;font-weight:600;color:var(--muted);font-size:.74rem}
+.flow li .tag{display:inline-block;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:6px;margin-top:3px;font-weight:800}
+.flow li.removed{opacity:.55;background:#f1ece2;border-style:dashed}
+.flow li.removed .nm{text-decoration:line-through}
+.flow li.removed .tag{background:#f3d5cf;color:#7a2017}
+.flow li.newmid{border-color:var(--coral);background:#fff3ef}
+.flow li.newmid .tag{background:var(--coral);color:#fff}
+.flow li.tool{border-color:var(--s5);background:#eaf7f3}
+.flow li.tool .tag{background:var(--s5);color:#fff}
+.flow li.direct{border-color:var(--good);background:var(--goodbg)}
+.flow li.direct .tag{background:var(--good);color:#fff}
+.flow li.enter{animation:pop .45s}
+.yearbox{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.year{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--sea);line-height:1}
+input[type=range]{width:100%;accent-color:var(--sea);height:32px}
+.ticks{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.keepmeter{height:16px;border-radius:8px;background:#e7dfcd;overflow:hidden;margin-top:4px}
+.keepmeter span{display:block;height:100%;background:var(--good);transition:width .4s}
+
+/* Quiz */
+.qopts{display:grid;gap:8px;margin-top:10px}
+.qopt{text-align:left;border:2px solid var(--line);border-radius:12px;background:#fff;padding:11px 14px;min-height:48px;font-weight:600}
+.qopt:hover:not([disabled]){border-color:var(--sea3)}
+.qopt.right{border-color:var(--good);background:var(--goodbg)}
+.qopt.wrong{border-color:var(--bad);background:var(--badbg)}
+.qopt[disabled]{cursor:default}
+.qprog{height:8px;border-radius:4px;background:#e2d8c1;overflow:hidden;margin:8px 0 12px}
+.qprog span{display:block;height:100%;background:var(--gold)}
+
+/* Sheet */
+.sheet{background:#fff;border:1px solid var(--line2);border-radius:6px;padding:26px;max-width:860px;margin:0 auto;box-shadow:var(--shadow)}
+.sheet h2{border-bottom:3px solid var(--sea);padding-bottom:6px}
+.sheet h3{margin-top:18px;color:var(--sea)}
+.fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:10px 0}
+@media (max-width:560px){.fields{grid-template-columns:1fr 1fr}.fields label:first-child{grid-column:1/-1}}
+.fields label,.refl label{display:block;font-size:.8rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.fields input{width:100%;border:0;border-bottom:2px solid var(--line2);padding:6px 2px;background:transparent}
+.refl{margin-top:14px}
+.refl .qtext{font-weight:700;margin:4px 0 6px;text-transform:none;letter-spacing:0;color:var(--ink);font-size:1rem}
+.refl textarea{width:100%;min-height:150px;border:2px solid var(--line2);border-radius:10px;padding:10px;background:repeating-linear-gradient(#fff 0 31px,#e6eef2 31px 32px);line-height:32px;resize:vertical}
+.printtext{display:none;white-space:pre-wrap}
+.decisions td,.decisions th{font-size:.84rem;padding:5px 6px}
+.marks{float:right;font-weight:800;color:var(--muted);font-size:.85rem}
+
+footer{border-top:1px solid var(--line2);padding:16px 0 26px;text-align:center;color:var(--muted);font-size:.88rem}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;font-size:11pt}
+  header.top,.noprint,.skip,#live{display:none!important}
+  main{padding:0}
+  .view{display:none!important}
+  #v-sheet{display:block!important;animation:none}
+  .sheet{border:0;box-shadow:none;padding:0;max-width:none}
+  .only-wide{display:block!important}.only-tall{display:none!important}
+  .refl textarea{display:none}
+  .printtext{display:block;border:1.5px solid #999;border-radius:8px;min-height:55mm;padding:8px;line-height:1.6}
+  .fields input{border-bottom:1px solid #999}
+  .avoid{break-inside:avoid}
+  footer{border-top:1px solid #999;padding-top:6px}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" fill="#e0a325" stroke="#f6cf6a" stroke-width="3"/>
+        <circle cx="24" cy="24" r="15" fill="none" stroke="#a87510" stroke-width="1.5" stroke-dasharray="2 3"/>
+        <g fill="none" stroke="#0b4552" stroke-width="3.2" stroke-linecap="round">
+          <rect x="10" y="20" width="14" height="8" rx="4"/><rect x="24" y="20" width="14" height="8" rx="4"/>
+        </g>
+      </svg>
+      <div class="brand">
+        <h1>Value Chain <span>Tycoon</span></h1>
+        <p>CAPE Digital Media · Unit 1 · Module 2: from idea to audience to income</p>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Game sections" id="tabs"></nav>
+  </div>
+</header>
+
+<main id="main" class="wrap" tabindex="-1">
+  <section class="view" id="v-home" aria-labelledby="h-home"></section>
+  <section class="view" id="v-learn" aria-labelledby="h-learn" hidden></section>
+  <section class="view" id="v-build" aria-labelledby="h-build" hidden></section>
+  <section class="view" id="v-tycoon" aria-labelledby="h-tycoon" hidden></section>
+  <section class="view" id="v-compare" aria-labelledby="h-compare" hidden></section>
+  <section class="view" id="v-quiz" aria-labelledby="h-quiz" hidden></section>
+  <section class="view" id="v-sheet" aria-labelledby="h-sheet" hidden></section>
+</main>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+<div id="modalroot"></div>
+<footer><div class="wrap">Value Chain Tycoon · Digital Media Unit 1 · Kester Small</div></footer>
+
+<script>
+(function(){
+'use strict';
+/* ================= Utilities ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmtInt = n => Math.round(n).toLocaleString('en-GB');
+const usd = (n, dp) => { const neg = n < 0; const v = Math.abs(n); const d = dp != null ? dp : (v < 100 ? 2 : 0);
+  return (neg ? '−' : '') + 'US$' + v.toLocaleString('en-GB',{minimumFractionDigits:d, maximumFractionDigits:d}); };
+const cost$ = n => n ? usd(n,0) : 'free';
+const pct = x => Math.round(x*100) + '%';
+function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+let liveT;
+function say(msg){ const l = $('#live'); l.textContent = ''; clearTimeout(liveT); liveT = setTimeout(()=>{ l.textContent = msg; }, 40); }
+function wrapText(t, max){ const words = String(t).split(/\s+/); const lines=[]; let cur='';
+  for (const w of words){ if ((cur+' '+w).trim().length > max && cur){ lines.push(cur); cur = w; } else cur = (cur+' '+w).trim(); }
+  if (cur) lines.push(cur); return lines; }
+
+/* ================= Persistence ================= */
+const KEY = 'vct:v1';
+if (window.GameSave) GameSave.register(['vct:*']);
+let S = { view:'home', learn:0, cb:{}, quizBest:null, run:null, lastRun:null, sheet:{name:'',cls:'',date:'',r1:'',r2:''}, compareYear:1990, seen:{} };
+try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); if (o && typeof o === 'object') S = Object.assign(S, o); } } catch(e){}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+
+/* ================= Content: stages ================= */
+const STAGES = [
+  {id:'concept', n:'Concept and ideation', short:'Concept', aspect:'Creation', col:'var(--s0)', hex:'#7f4cc4',
+   about:'having the idea and planning who it is for',
+   value:'Turns a spark into an idea with a clear audience, angle and format. The intellectual property (IP) is born here, so originality is value.',
+   actors:['Creators','Writers and songwriters','Researchers'], ex:'Lady Salt plans a road-march tune for Trinidad Carnival, aimed at the J’ouvert crowd.'},
+  {id:'production', n:'Creation and production', short:'Production', aspect:'Creation', col:'var(--s1)', hex:'#d55a2f',
+   about:'making the raw content: recording, filming, writing, drawing or coding',
+   value:'Turns the idea into a real asset. Skill, time and equipment raise its quality, and quality decides how far it will travel.',
+   actors:['Producers','Crew and performers','Developers','Equipment and software suppliers'], ex:'She records vocals over a riddim in a producer’s home studio in San Fernando.'},
+  {id:'post', n:'Post-production and packaging', short:'Packaging', aspect:'Packaging', col:'var(--s2)', hex:'#b9850f',
+   about:'editing, finishing and packaging it with art, captions, metadata and a price',
+   value:'Editing, mixing, captions, cover art, metadata, formats and pricing make the product ready for its market and easy to find.',
+   actors:['Editors','Mix and mastering engineers','Graphic designers'], ex:'The track is mixed and mastered; cover art, credits and metadata are added.'},
+  {id:'distribution', n:'Distribution', short:'Distribution', aspect:'Distribution', col:'var(--s3)', hex:'#2a7fbd',
+   about:'getting it to audiences through platforms, stores, aggregators or broadcast',
+   value:'Adds access and reach. Platforms, CDNs (content delivery networks), aggregators, app stores and broadcasters carry the product to audiences.',
+   actors:['Distributors','Platforms','Aggregators','Broadcasters','CDNs and hosting'], ex:'A digital distributor delivers the single to streaming services and a video platform.'},
+  {id:'marketing', n:'Marketing and promotion', short:'Marketing', aspect:'Distribution', col:'var(--s4)', hex:'#c43d74',
+   about:'helping people discover it',
+   value:'Wins attention so people actually find the product among millions of others: trailers, influencers, paid ads, press, playlists and search.',
+   actors:['Marketers','Influencers','Playlist curators','Press and PR'], ex:'Teaser clips, a dance challenge and pitches to Carnival playlists and radio DJs.'},
+  {id:'consumption', n:'Consumption and engagement', short:'Consumption', aspect:'Consumption', col:'var(--s5)', hex:'#178f78',
+   about:'audiences watching, playing, reading, listening, sharing and responding',
+   value:'Attention, loyalty and community are the value created. Shares and remixes carry the product further for free.',
+   actors:['Consumers and fans','Community moderators'], ex:'Fans stream it, jump to it on the road and post their own dance videos.'},
+  {id:'monetisation', n:'Monetisation', short:'Monetisation', aspect:'Consumption', col:'var(--s6)', hex:'#3f8a25',
+   about:'turning attention into money',
+   value:'Turns attention into income through ads, subscriptions, sales, licensing, sponsorship, merch, donations and revenue-share. Each route has middlemen who take a cut.',
+   actors:['Advertisers','Sponsors','Payment providers','Collecting societies'], ex:'Streaming royalties, a paid Carnival village show and T-shirt sales bring in money.'},
+  {id:'data', n:'Data and feedback loop', short:'Feedback', aspect:'Consumption', col:'var(--s7)', hex:'#55657f',
+   about:'using analytics and feedback to improve the next release',
+   value:'Analytics, comments and sales data feed back into the next idea, so each release is better targeted. This is what makes the digital chain a loop.',
+   actors:['Analytics tools','Platform dashboards','The creator, again'], ex:'Analytics show big listening in Brooklyn and Toronto, so the next single targets them.'}
+];
+
+/* ================= Chain SVG ================= */
+function chainSVG(opts){
+  opts = opts || {};
+  const notes = opts.notes || null, inter = !!opts.interactive, sel = opts.selected, tall = opts.layout === 'tall';
+  const title = opts.title || 'The digital media value chain';
+  const id = 'cs' + Math.random().toString(36).slice(2,7);
+  let out = '';
+  const nodeAttrs = i => inter ? ` role="button" tabindex="0" data-stage="${i}" aria-pressed="${sel===i}" aria-label="Stage ${i+1}: ${esc(STAGES[i].n)}. Show details."` : ` aria-hidden="true"`;
+  if (!tall){
+    const W=1000, H = notes ? 400 : 330, bw=210, bh = notes ? 140 : 110, gx=245, y1=30, y2 = notes ? 230 : 190, x0=40;
+    const pos = i => i < 4 ? {x:x0 + i*gx, y:y1} : {x:x0 + (7-i)*gx, y:y2};
+    out += `<svg class="chainsvg" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="${id}t ${id}d"><title id="${id}t">${esc(title)}</title><desc id="${id}d">Eight stages in a loop: ${STAGES.map((s,i)=>(i+1)+' '+s.n).join(', ')}, then the data and feedback loop returns to concept.</desc>`;
+    out += `<defs><marker id="${id}a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#53656b"/></marker></defs>`;
+    for (let i=0;i<3;i++){ const p=pos(i); out += `<line x1="${p.x+bw+4}" y1="${p.y+bh/2}" x2="${p.x+gx-6}" y2="${p.y+bh/2}" stroke="#53656b" stroke-width="3" marker-end="url(#${id}a)"/>`; }
+    { const p=pos(3); out += `<line x1="${p.x+bw/2}" y1="${p.y+bh+4}" x2="${p.x+bw/2}" y2="${y2-8}" stroke="#53656b" stroke-width="3" marker-end="url(#${id}a)"/>`; }
+    for (let i=4;i<7;i++){ const p=pos(i); out += `<line x1="${p.x-4}" y1="${p.y+bh/2}" x2="${p.x-gx+bw+8}" y2="${p.y+bh/2}" stroke="#53656b" stroke-width="3" marker-end="url(#${id}a)"/>`; }
+    { const p7=pos(7); out += `<path d="M${p7.x+bw/2} ${p7.y-4} L${p7.x+bw/2} ${y1+bh+8}" stroke="#55657f" stroke-width="3" stroke-dasharray="8 6" fill="none" marker-end="url(#${id}a)"/><text x="${p7.x+bw/2+16}" y="${(y1+bh+y2)/2+5}" font-size="15" font-weight="700" fill="#55657f" font-family="system-ui,sans-serif">feedback loop</text>`; }
+    STAGES.forEach((s,i)=>{ const p=pos(i);
+      out += `<g class="node"${nodeAttrs(i)}><rect class="box" x="${p.x}" y="${p.y}" width="${bw}" height="${bh}" rx="16" fill="#fff" stroke="${s.hex}" stroke-width="2.5"/>`+
+        `<rect x="${p.x}" y="${p.y}" width="${bw}" height="8" rx="4" fill="${s.hex}"/>`+
+        `<circle cx="${p.x+26}" cy="${p.y+38}" r="16" fill="${s.hex}"/><text x="${p.x+26}" y="${p.y+44}" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">${i+1}</text>`;
+      const nl = wrapText(s.n, 17);
+      nl.forEach((ln,k)=>{ out += `<text x="${p.x+50}" y="${p.y+34+k*20}" font-size="17" font-weight="800" fill="#13262d" font-family="system-ui,sans-serif">${esc(ln)}</text>`; });
+      if (notes && notes[i]){ const ls = wrapText(notes[i], 26).slice(0,4); ls.forEach((ln,k)=>{ out += `<text x="${p.x+14}" y="${p.y+76+k*17}" font-size="14" fill="#53656b" font-family="system-ui,sans-serif">${esc(ln)}</text>`; }); }
+      else { out += `<text x="${p.x+14}" y="${p.y+bh-16}" font-size="13" fill="#53656b" font-family="system-ui,sans-serif">Aspect: ${esc(s.aspect)}</text>`; }
+      out += `</g>`;
+    });
+    out += `</svg>`;
+  } else {
+    const W=360, bh = notes ? 92 : 64, gap = 22, x=48, bw=300, H = 16 + 8*(bh+gap);
+    out += `<svg class="chainsvg" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="${id}t ${id}d"><title id="${id}t">${esc(title)}</title><desc id="${id}d">Eight stages from top to bottom: ${STAGES.map((s,i)=>(i+1)+' '+s.n).join(', ')}, with a dashed feedback arrow returning to the top.</desc>`;
+    out += `<defs><marker id="${id}a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#53656b"/></marker></defs>`;
+    STAGES.forEach((s,i)=>{ const y = 10 + i*(bh+gap);
+      if (i<7) out += `<line x1="${x+bw/2}" y1="${y+bh+2}" x2="${x+bw/2}" y2="${y+bh+gap-4}" stroke="#53656b" stroke-width="2.5" marker-end="url(#${id}a)"/>`;
+      out += `<g class="node"${nodeAttrs(i)}><rect class="box" x="${x}" y="${y}" width="${bw}" height="${bh}" rx="12" fill="#fff" stroke="${s.hex}" stroke-width="2.5"/>`+
+        `<rect x="${x}" y="${y}" width="7" height="${bh}" rx="3" fill="${s.hex}"/>`+
+        `<circle cx="${x+28}" cy="${y+ (notes?26:bh/2)}" r="14" fill="${s.hex}"/><text x="${x+28}" y="${y+(notes?31:bh/2+5)}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">${i+1}</text>`+
+        `<text x="${x+50}" y="${y+(notes?31:bh/2-2)}" font-size="14.5" font-weight="800" fill="#13262d" font-family="system-ui,sans-serif">${esc(s.n)}</text>`;
+      if (notes && notes[i]){ wrapText(notes[i], 38).slice(0,3).forEach((ln,k)=>{ out += `<text x="${x+16}" y="${y+54+k*16}" font-size="13" fill="#53656b" font-family="system-ui,sans-serif">${esc(ln)}</text>`; }); }
+      else out += `<text x="${x+52}" y="${y+bh/2+16}" font-size="12.5" fill="#53656b" font-family="system-ui,sans-serif">Aspect: ${esc(s.aspect)}</text>`;
+      out += `</g>`;
+    });
+    out += `<path d="M${x-6} ${10+7*(bh+gap)+bh/2} H22 V${10+bh/2} H${x-8}" fill="none" stroke="#55657f" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#${id}a)"/>`;
+    out += `<text transform="translate(16 ${H/2}) rotate(-90)" text-anchor="middle" font-size="13" font-weight="700" fill="#55657f" font-family="system-ui,sans-serif">feedback loop</text>`;
+    out += `</svg>`;
+  }
+  return out;
+}
+function chainBoth(opts){ return `<div class="only-wide">${chainSVG(Object.assign({},opts,{layout:'wide'}))}</div><div class="only-tall">${chainSVG(Object.assign({},opts,{layout:'tall'}))}</div>`; }
+
+/* ================= Value split ================= */
+const RECIP = [
+  {k:'platform', n:'Platform', d:'stores, streaming and video platforms, ad networks, broadcasters', col:'#2a7fbd'},
+  {k:'distributor', n:'Distributor & agents', d:'distributors, aggregators, publishers, sales agents, collecting societies, hosting', col:'#6d55c9'},
+  {k:'payment', n:'Payment provider', d:'card, wallet and mobile-money processing fees', col:'#c98a0b'},
+  {k:'marketing', n:'Marketing & research', d:'influencers, paid ads, press, audience research', col:'#c43d74'},
+  {k:'production', n:'Production costs', d:'kit, crew, packaging, supplies for merch', col:'#d55a2f'},
+  {k:'creator', n:'Creator keeps', d:'profit left for the creator', col:'#1c7f45'}
+];
+function splitCents(L){
+  if (!L || L.gross <= 0) return null;
+  const out = {}; let sum = 0;
+  RECIP.forEach(r=>{ if (r.k === 'creator') return; const c = Math.round(L[r.k] / L.gross * 100); out[r.k] = c; sum += c; });
+  out.creator = 100 - sum;
+  return out;
+}
+function splitSVG(L, title){
+  const c = splitCents(L);
+  if (!c) return `<p class="fb info">No money came in, so there is nothing to split. The creator paid ${usd((L&&L.costs)||0)} in costs.</p>`;
+  const W=400, rowH=38, top=86, H = top + RECIP.length*rowH + (c.creator<0?52:34), lx=8, bx=176, bw=172;
+  const id='vs'+Math.random().toString(36).slice(2,7);
+  let s = `<svg class="chainsvg vsplit" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="${id}t ${id}d" data-cents='${JSON.stringify(c)}'><title id="${id}t">${esc(title||'Value split of every US$1')}</title>`+
+    `<desc id="${id}d">${RECIP.map(r=>r.n+' '+c[r.k]+' cents').join(', ')}. Total 100 cents.</desc>`;
+  s += `<text x="${lx}" y="20" font-size="15" font-weight="800" fill="#13262d" font-family="system-ui,sans-serif">Of every US$1 that fans and advertisers pay…</text>`;
+  // stacked strip
+  const sx=lx, sw=W-16, sy=32, sh=30;
+  if (c.creator >= 0){
+    let x = sx; RECIP.forEach(r=>{ const w = sw * c[r.k]/100; if (w<=0) return;
+      s += `<rect x="${x}" y="${sy}" width="${w}" height="${sh}" fill="${r.col}"/>`; if (w>24) s += `<text x="${x+w/2}" y="${sy+20}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#fff" font-family="system-ui,sans-serif">${c[r.k]}¢</text>`; x += w; });
+    s += `<rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="6" fill="none" stroke="#13262d" stroke-width="1.5"/>`;
+  } else {
+    const tot = 100 - c.creator; let x = sx; RECIP.forEach(r=>{ if (r.k==='creator') return; const w = sw * c[r.k]/tot; if (w<=0) return;
+      s += `<rect x="${x}" y="${sy}" width="${w}" height="${sh}" fill="${r.col}"/>`; x += w; });
+    const one = sw*100/tot; s += `<line x1="${sx+one}" y1="${sy-4}" x2="${sx+one}" y2="${sy+sh+4}" stroke="#b8352a" stroke-width="3"/><text x="${Math.min(sx+one+4, W-120)}" y="${sy+sh+16}" font-size="12" font-weight="800" fill="#b8352a" font-family="system-ui,sans-serif">US$1 earned ends here</text>`;
+  }
+  s += `<text x="${lx}" y="${top-6}" font-size="11.5" fill="#53656b" font-family="system-ui,sans-serif">Illustrative, not real rates.</text>`;
+  RECIP.forEach((r,i)=>{ const y = top + i*rowH; const v = c[r.k];
+    s += `<text x="${lx}" y="${y+21}" font-size="14" font-weight="${r.k==='creator'?800:600}" fill="#13262d" font-family="system-ui,sans-serif">${esc(r.n)}</text>`;
+    s += `<rect x="${bx}" y="${y+6}" width="${bw}" height="22" rx="5" fill="#efe8d8"/>`;
+    if (v >= 0) s += `<rect x="${bx}" y="${y+6}" width="${Math.max(0,bw*Math.min(v,100)/100)}" height="22" rx="5" fill="${r.col}"/>`;
+    else s += `<rect x="${bx}" y="${y+6}" width="${bw*Math.min(-v,100)/100}" height="22" rx="5" fill="#fbe7e3" stroke="#b8352a" stroke-width="2" stroke-dasharray="4 3"/>`;
+    s += `<text x="${W-4}" y="${y+22}" text-anchor="end" font-size="14" font-weight="800" fill="${v<0?'#b8352a':'#13262d'}" font-family="ui-monospace,Menlo,monospace">${v<0?'−'+(-v):v}¢</text>`;
+  });
+  s += `<text x="${lx}" y="${top+RECIP.length*rowH+22}" font-size="13" font-weight="800" fill="#13262d" font-family="system-ui,sans-serif">Total: ${RECIP.reduce((a,r)=>a+c[r.k],0)}¢ = US$1.00</text>${c.creator<0?`<text x="${lx}" y="${top+RECIP.length*rowH+42}" font-size="12.5" font-weight="700" fill="#b8352a" font-family="system-ui,sans-serif">Costs were bigger than income: a loss.</text>`:''}`;
+  return s + `</svg>`;
+}
+
+/* ================= Chain Builder content ================= */
+const CB = [
+ {id:'soca', em:'🎶', n:'Soca single', t:'“Jump an’ Wave” by Lady Salt (a Trinidadian artist)',
+  st:['Lady Salt hums a road-march hook about Trinidad Carnival and decides it is for the J’ouvert crowd.',
+      'She records her vocals over a riddim at a producer’s home studio in San Fernando.',
+      'The track is mixed and mastered; cover art, credits, lyrics and metadata are added.',
+      'A digital distributor delivers the single to streaming services, a video platform and a DJ pool.',
+      'Teaser clips, a dance challenge and pitches to Carnival playlists and radio DJs.',
+      'Fans stream it, jump to it on the road and post their own dance videos.',
+      'Streaming royalties, a paid Carnival village show and T-shirt sales bring in money.',
+      'Analytics show big listening in Brooklyn and Toronto, so the next single and tour target them.'],
+  tk:[['Lady Salt, the songwriter',0,'The creator who has the idea owns the concept stage.'],['Riddim producer',1,'The producer helps make the raw recording.'],
+      ['Mix and mastering engineer',2,'Mixing and mastering finish and polish the track.'],['Adding ISRC codes and credits',2,'Metadata is packaging: it makes the song identifiable and payable.'],
+      ['Digital distributor',3,'The distributor delivers the track to many platforms: a digital middleman.'],['Streaming platform',3,'The platform hosts the song and delivers it to listeners.'],
+      ['Playlist curator',4,'Curators help listeners discover the song.'],['Fans on the road',5,'Fans consume and engage with the song.'],
+      ['Collecting society',6,'Collecting societies gather performance royalties: money flows here.'],['Streaming dashboard',7,'Dashboards turn listening into data for the next release.']]},
+ {id:'film', em:'🎬', n:'Short film', t:'“Concordia 1648”, a short film about Sint Maarten history',
+  st:['A young director researches the 1648 Treaty of Concordia with local historians and pitches a 12-minute drama.',
+      'Actors in period costume are filmed at Fort Amsterdam by a small camera and sound crew.',
+      'The footage is edited, colour graded and scored, with English, Dutch and French subtitles and a poster.',
+      'The film plays at regional film festivals, then on a streaming service and a local TV channel.',
+      'A trailer, a press release, radio interviews and school screenings build interest.',
+      'Students, residents and the diaspora watch it, discuss it in class and share clips.',
+      'A broadcaster pays a licence fee, schools buy screening rights and fans rent it online.',
+      'Festival feedback and completion rates show viewers drift during the long battle scene, so the next film is tighter.'],
+  tk:[['Director and screenwriter',0,'The director shapes the idea and the script.'],['Research with local historians',0,'Research feeds the concept before any filming.'],
+      ['Camera and sound crew',1,'The crew captures the raw footage.'],['Actors in costume',1,'Performers are part of production.'],
+      ['Editor and colourist',2,'Editing and grading finish the film.'],['Subtitles in three languages',2,'Subtitles package the film for more markets.'],
+      ['Local TV channel',3,'A broadcaster distributes the film to viewers.'],['Trailer and press release',4,'These help audiences discover the film.'],
+      ['Students watching in class',5,'Audiences consume and discuss the film.'],['Licence fee from a broadcaster',6,'Licensing turns the film into income.'],
+      ['Completion-rate analytics',7,'Data on where viewers drop off feeds the next film.']]},
+ {id:'vlog', em:'🍲', n:'Food-vlog episode', t:'“Fish Fry Run” episode 12: ranking Oistins fish fry',
+  st:['The vlogger plans an episode ranking three Oistins fish-fry stalls, with a hook for visiting tourists.',
+      'She films the cooks, the food and her reactions on a phone with a gimbal and a clip-on mic.',
+      'The episode is cut to nine minutes with captions, music, a bright thumbnail and searchable tags.',
+      'It is uploaded to a video platform, with vertical cut-downs posted to short-video apps.',
+      'She collaborates with a tourism page and posts a teaser on the morning of release.',
+      'Viewers watch, comment with their favourite stall and share it in cruise-passenger groups.',
+      'Ad revenue-share, a sponsorship from a local hot-sauce brand and affiliate links bring in money.',
+      'Retention graphs show viewers skip the intro, so next week’s episode starts with the food.'],
+  tk:[['Vlogger planning the episode',0,'Planning the angle and audience is concept.'],['Filming the cooks at work',1,'Capturing footage is production.'],
+      ['Phone, gimbal and mic',1,'Equipment is used to produce the content.'],['Video editor',2,'Editing is post-production.'],
+      ['Thumbnail and tags',2,'Thumbnails and tags are packaging that help it be found.'],['Video platform',3,'The platform hosts and distributes the episode.'],
+      ['Short-video app',3,'Cut-downs are distributed on another platform.'],['Tourism page collaboration',4,'A partner page promotes the episode.'],
+      ['Viewers commenting',5,'Comments are engagement.'],['Hot-sauce sponsor',6,'A sponsor pays money: monetisation.'],
+      ['Retention analytics',7,'Retention data feeds back into the next episode.']]},
+ {id:'game', em:'🎮', n:'Mobile game', t:'“Iguana Dash”, a mobile endless-runner',
+  st:['Two students sketch a game where an iguana dashes along the Carenage in St. George’s, Grenada, dodging scooters.',
+      'A developer codes it in a game engine while an artist draws sprites and a musician makes a steel-pan loop.',
+      'Testers hunt bugs; the team adds an age rating, store screenshots, a description and translations.',
+      'The game is published on app stores, which host the downloads and deliver updates.',
+      'A gameplay trailer, gaming influencers and app-store keywords help players find it.',
+      'Players download it, compete for high scores and share clips of their best runs.',
+      'In-app purchases of iguana skins and rewarded ads earn money; the app store takes a commission.',
+      'Play data shows most players quit at level 3, so the team makes it fairer in the next update.'],
+  tk:[['Game designers',0,'Designers create the concept.'],['Developer coding the game',1,'Coding is production.'],['Pixel artist',1,'Drawing sprites is production.'],
+      ['QA testers',2,'Testing and finishing is part of packaging the product.'],['Store listing and age rating',2,'Listing, screenshots and ratings package the game for the store.'],
+      ['App store',3,'The app store distributes the game.'],['Gaming influencer',4,'Influencers promote the game.'],['Players chasing high scores',5,'Players consume and engage.'],
+      ['Advertisers paying for rewarded ads',6,'Advertisers pay for players’ attention.'],['Payment provider',6,'Payment providers process in-app purchases and take a fee.'],
+      ['Gameplay telemetry',7,'Play data feeds back into the next update.']]},
+ {id:'ebook', em:'📖', n:'E-book of folk tales', t:'“Tales from the Salt Pond”, local folk tales as an e-book',
+  st:['A teacher plans to collect the folk tales elders tell before the stories are lost.',
+      'She records the elders, writes up each tale, and an illustrator draws the stories.',
+      'An editor proofreads; the book is laid out as an EPUB with a cover, ISBN and keywords.',
+      'It goes on sale in online e-book stores, on her own website and through a library lending platform.',
+      'A launch at the library in The Valley, Anguilla, a newsletter and school visits spread the word.',
+      'Families read the tales at bedtime, schools use them in class and readers leave reviews.',
+      'E-book sales, library lending licences and signed print copies at the launch bring in money.',
+      'Reviews ask for audio versions, so the next edition includes the elders’ own voices.'],
+  tk:[['Teacher-author with the idea',0,'The author’s idea starts the chain.'],['Illustrator',1,'Illustrations are created in production.'],
+      ['Editor and proofreader',2,'Editing and proofreading finish the text.'],['Cover, ISBN and keywords',2,'These package the book for sale and search.'],
+      ['Online e-book store',3,'The store distributes the e-book.'],['Library lending platform',3,'An aggregator that bundles e-books for libraries: distribution.'],
+      ['Library book launch',4,'The launch promotes the book.'],['Families reading at bedtime',5,'Readers consume the book.'],
+      ['Payment provider fee on each sale',6,'Payment providers take a cut when money changes hands.'],['Reader reviews',7,'Reviews are feedback for the next edition.']]},
+ {id:'reel', em:'🏨', n:'Sponsored Instagram reel', t:'A sponsored reel for the “Eagle Beach Sands” hotel in Aruba',
+  st:['The hotel sends a brief and the creator pitches a “sunrise to sunset on the beach” idea for couples.',
+      'She films sunrise yoga, the pool and dinner on the jetty in vertical 4K.',
+      'The reel is cut to 30 seconds with licensed music, captions and a clear “Paid partnership” label.',
+      'It is posted on Instagram from her account and shared to the hotel’s account as a collaboration.',
+      'Hashtags, a location tag and the hotel paying to boost the reel push it to travellers.',
+      'Travellers watch, save it, tag friends and tap the booking link.',
+      'The hotel pays a sponsorship fee, plus a commission on bookings made through her link.',
+      'Insights show saves and link taps by country, which the creator uses to price her next deal.'],
+  tk:[['Hotel’s creative brief',0,'The brief sets the idea and the audience.'],['Videographer filming vertical',1,'Filming is production.'],
+      ['Editor adding licensed music',2,'Editing and music are post-production.'],['“Paid partnership” label',2,'Disclosure is part of packaging the reel honestly.'],
+      ['Instagram',3,'The platform distributes the reel.'],['Paid boost of the reel',4,'Paying to boost is promotion.'],
+      ['Travellers saving and sharing',5,'Saves and shares are engagement.'],['Sponsorship fee from the hotel',6,'The sponsor pays: monetisation.'],
+      ['Booking-link commission',6,'Affiliate commission is another income stream.'],['Reel insights',7,'Insights feed back into the next deal.']]}
+];
+
+/* ================= Tycoon model (all numbers illustrative) ================= */
+const CONCEPTS = [
+  {id:'trend', n:'Ride a trend', d:'Copy a sound or format that is trending now.', reach:1.3, loyal:0.85, orig:0.8, conv:1.0},
+  {id:'original', n:'Original Caribbean story', d:'Something only you can make, rooted in your island.', reach:0.95, loyal:1.2, orig:1.3, conv:1.0},
+  {id:'niche', n:'Diaspora niche', d:'Made for Caribbean people living abroad, who miss home.', reach:0.75, loyal:1.35, orig:1.1, conv:1.3}
+];
+const PROD = [
+  {id:'phone', n:'Phone and free apps', d:'Cheap and fast, but it looks and sounds home-made.', q:0.8, cost:30},
+  {id:'kit', n:'Prosumer kit', d:'Buy a good mic, camera or software once, then small upkeep.', q:1.1, cost:500, upkeep:50},
+  {id:'crew', n:'Hired crew', d:'Professionals for every role. Top quality, top cost.', q:1.45, cost:700}
+];
+const PACK = [
+  {id:'basic', n:'Quick edit', d:'Trim it and post it.', reach:1.0, fan:1.0, lic:1.0, cost:0},
+  {id:'polish', n:'Captions, thumbnail and metadata', d:'Accessible and findable in search.', reach:1.15, fan:1.05, lic:1.0, cost:40},
+  {id:'pro', n:'Pro finish and subtitles', d:'Colour, sound polish and Dutch, French and Spanish subtitles.', reach:1.3, fan:1.1, lic:1.25, cost:180}
+];
+const MKT = [
+  {id:'organic', n:'Organic social', d:'Post, reply and share yourself.', reach:1.0, loyal:1.05, cost:0},
+  {id:'influencer', n:'Influencer shout-out', d:'A Caribbean creator with a big following shares it.', reach:1.6, loyal:1.1, cost:300},
+  {id:'paid', n:'Paid ads', d:'Buy targeted ads on social platforms.', reach:2.1, loyal:0.9, cost:500},
+  {id:'press', n:'Press and radio', d:'Interviews, a press release and a launch event.', reach:1.3, loyal:1.2, cost:150}
+];
+const DATA = [
+  {id:'ignore', n:'Post and move on', d:'Do not look at the numbers.', cost:0, reach:1, conv:1},
+  {id:'analytics', n:'Study the free analytics', d:'Read your dashboards before planning the next release.', cost:0, reach:1.08, conv:1.05},
+  {id:'research', n:'Paid audience research', d:'A fan survey plus testing two thumbnails or hooks.', cost:120, reach:1.15, conv:1.2}
+];
+const MODELS = {
+  ads:{n:'Advertising and revenue-share', fan:false, d:'Advertisers pay per 1,000 views; the platform shares part with you.'},
+  sales:{n:'Sales and rentals', fan:true, d:'Fans pay to buy, download or rent.'},
+  subs:{n:'Memberships and subscriptions', fan:true, d:'Fans pay US$3 a month for extras.'},
+  merch:{n:'Merchandise', fan:true, d:'T-shirts and caps at US$20 (1.5% of fans buy); supplies cost 55%.'},
+  donations:{n:'Donations and tips', fan:true, d:'Fans tip about US$4.'},
+  sponsorship:{n:'Sponsorship', fan:false, d:'A brand pays US$12 per 1,000 views (needs 2,000+ views). Slightly fewer new fans.'},
+  licensing:{n:'Licensing', fan:false, d:'Others pay to use your content; an agent takes 20%. Needs prosumer quality or better.'}
+};
+const MODEL_ORDER = ['ads','sales','subs','merch','donations','sponsorship','licensing'];
+const CH_OWN = (o) => Object.assign({id:'own', n:'Own website', d:'Sell direct to fans: no platform cut, but few people find it.', reach:0.5, fanConv:1.6, flat:25, platType:false}, o);
+const CH_VIDEO = (o) => Object.assign({id:'video', n:'Big video platform (e.g. YouTube)', d:'Huge audience; the platform keeps ~45% of ad money.', reach:1.5, fanConv:1.0, flat:0, platType:true,
+  models:['ads','subs','donations','merch','sponsorship','licensing'], ads:{rpm:8, plat:0.45, label:'Ad revenue-share'}, subs:{plat:0.30}, donations:{plat:0.30}}, o);
+const TY = {
+  song:{em:'🎶', n:'Soca single', t:'“Jump an’ Wave”', who:'You are Lady Salt, an independent soca artist in Trinidad.', base:10000, scale:1, licBase:800, unit:'streams and views',
+    ch:[ CH_OWN({models:['sales','subs','merch','donations','sponsorship','licensing'], sales:{price:1.5, rate:0.05, plat:0, label:'Download sales'}}),
+         CH_VIDEO({}),
+         {id:'stream', n:'Spotify-style streaming via a distributor', d:'The platform keeps ~35%, the distributor ~10% (illustrative).', reach:1.25, fanConv:0.8, flat:10, platType:true, models:['ads','merch','sponsorship','licensing'], ads:{rpm:6, plat:0.35, dist:0.10, label:'Stream payouts'}},
+         {id:'licence', n:'Exclusive licence to a regional streaming platform', d:'A flat fee; they own the audience relationship.', reach:0.9, fanConv:0.5, flat:0, platType:false, licence:true, models:['merch','sponsorship','donations']},
+         {id:'radio', n:'Local radio and TV airplay', d:'Local loyalty; a collecting society takes ~15% of royalties.', reach:0.7, fanConv:1.3, flat:0, platType:false, models:['ads','merch','sponsorship','licensing','donations'], ads:{rpm:3, plat:0, dist:0.15, label:'Airplay royalties'}} ]},
+  film:{em:'🎬', n:'Short film', t:'“Concordia 1648”', who:'You are a young filmmaker telling Sint Maarten’s history.', base:7500, scale:1.3, licBase:1500, unit:'views',
+    ch:[ CH_OWN({models:['sales','subs','merch','donations','sponsorship','licensing'], sales:{price:4, rate:0.03, plat:0, label:'Rentals on own site'}}),
+         CH_VIDEO({ads:{rpm:7, plat:0.45, label:'Ad revenue-share'}}),
+         {id:'stream', n:'Rental stores via an aggregator', d:'Stores keep ~30%, the aggregator ~15% (illustrative).', reach:1.0, fanConv:0.8, flat:15, platType:true, models:['sales','merch','sponsorship','licensing'], sales:{price:4, rate:0.025, plat:0.30, dist:0.15, label:'Rentals'}},
+         {id:'licence', n:'Licence to a streaming platform', d:'A flat licence fee; you lose direct contact with viewers.', reach:1.0, fanConv:0.5, flat:0, platType:false, licence:true, models:['merch','sponsorship','donations']},
+         {id:'tv', n:'Local TV broadcast', d:'The broadcaster keeps ~50% of the ad money it sells around your film.', reach:0.8, fanConv:1.2, flat:0, platType:false, models:['ads','sponsorship','merch','donations'], ads:{rpm:3, plat:0.5, label:'Broadcaster ad share'}} ]},
+  vlog:{em:'🍲', n:'Food-vlog series', t:'“Fish Fry Run”', who:'You run a food vlog about Barbados’s fish fries and kitchens.', base:9000, scale:0.6, licBase:700, unit:'views',
+    ch:[ CH_OWN({models:['ads','subs','merch','donations','sponsorship'], ads:{rpm:2, plat:0.30, label:'Ad network on own site'}}),
+         CH_VIDEO({ads:{rpm:9, plat:0.45, label:'Ad revenue-share'}}),
+         {id:'short', n:'Short-video app (creator fund)', d:'Massive reach, tiny payouts: the app keeps ~50%.', reach:2.2, fanConv:0.6, flat:0, platType:true, models:['ads','sponsorship','merch','donations'], ads:{rpm:0.6, plat:0.5, label:'Creator-fund payouts'}, donations:{plat:0.5}},
+         {id:'licence', n:'Licence episodes to a regional food channel', d:'A flat fee for the season.', reach:0.9, fanConv:0.5, flat:0, platType:false, licence:true, models:['merch','sponsorship','donations']},
+         {id:'tv', n:'Segment on a local TV morning show', d:'Local fame, no direct payment.', reach:0.8, fanConv:1.2, flat:0, platType:false, models:['sponsorship','merch','licensing','donations']} ]},
+  game:{em:'🎮', n:'Mobile game', t:'“Iguana Dash”', who:'You and a friend are indie game developers in St. George’s, Grenada.', base:8500, scale:1.4, licBase:1500, unit:'plays',
+    ch:[ CH_OWN({n:'Web version on own site', models:['sales','ads','donations','merch','sponsorship'], sales:{price:2, rate:0.04, plat:0, label:'Full-game sales'}, ads:{rpm:3, plat:0.30, label:'Ad network'}, reach:0.3}),
+         {id:'store', n:'App stores (self-published)', d:'The store keeps ~30% of every purchase (illustrative).', reach:1.3, fanConv:1.0, flat:25, platType:true, models:['sales','ads','subs','merch','sponsorship','licensing'], sales:{price:2, rate:0.03, plat:0.30, label:'In-app purchases'}, ads:{rpm:10, plat:0.30, label:'Rewarded ads'}, subs:{plat:0.30}},
+         {id:'publisher', n:'App stores via a mobile publisher', d:'The publisher markets it but takes ~30% on top of the store.', reach:2.2, fanConv:0.9, flat:0, platType:true, models:['sales','ads','subs','merch','licensing'], sales:{price:2, rate:0.03, plat:0.30, dist:0.30, label:'In-app purchases'}, ads:{rpm:10, plat:0.30, dist:0.30, label:'Rewarded ads'}, subs:{plat:0.30, dist:0.30}},
+         {id:'licence', n:'Licence to a game-subscription service', d:'A flat fee to be in their catalogue.', reach:1.0, fanConv:0.5, flat:0, platType:false, licence:true, models:['merch','sponsorship','donations']},
+         {id:'portal', n:'Web game portal (aggregator)', d:'Lots of casual players; the portal keeps ~50% of ad money.', reach:1.6, fanConv:0.7, flat:0, platType:true, models:['ads','donations','merch','sponsorship','licensing'], ads:{rpm:4, plat:0.5, label:'Portal ad share'}} ]}
+};
+const START_CASH = 2000, PAY_RATE = 0.05;
+
+const EVENTS = {
+  piracy:{stage:3, n:'Piracy', text:(T,P)=>`A pirate site re-uploads ${P.t} for free, and it starts showing up in search results.`,
+    opts:[{t:'Send takedown notices and share the official link', fx:()=>({fanPaid:0.85, note:'Takedowns limited the damage: fan payments fell 15%.'})},
+          {t:'Ignore it', fx:()=>({fanPaid:0.65, reach:1.1, note:'Pirated copies spread your name a little, but fan payments fell 35%: value leaked out of the chain.'})}]},
+  algorithm:{stage:4, n:'Algorithm change', text:()=>`The big platforms change their recommendation algorithm: short vertical clips now get priority, and longer posts are shown to fewer people.`,
+    opts:[{t:'Cut vertical clips (US$60) and move fans to your mailing list', fx:(T,ch,CH)=>({prodCost:60, reach: CH.platType?0.9:1, fans:1.1, note: CH.platType?'You adapted: reach dipped only 10% and more people joined your own list.':'Your channel does not depend on the algorithm, and the clips won you extra fans.'})},
+          {t:'Carry on as before', fx:(T,ch,CH)=>({reach: CH.platType?0.6:1, note: CH.platType?'Platform dependence hurt: reach fell 40% overnight.':'Your channel does not depend on that algorithm, so nothing changed.'})}]},
+  remix:{stage:5, n:'A viral remix', text:(T,P)=>`A fan’s remix of ${P.t} goes viral across the region.`,
+    opts:[{t:'Share it and credit the remixer', fx:()=>({reach:1.8, fans:1.4, note:'Embracing participatory fans paid off: reach ×1.8 and many new fans.'})},
+          {t:'File a copyright takedown', fx:()=>({reach:1.0, fans:0.9, note:'You protected your IP, but the buzz died and some fans felt annoyed.'})}]},
+  licoffer:{stage:6, n:'Licensing offer', text:(T,P,ch)=>`CaribVision, a regional broadcaster, offers ${usd(licOfferValue(T,P,ch))} for 12 months of non-exclusive rights to show ${P.t}.`,
+    opts:[{t:'Accept the offer', fx:(T,ch,CH,P)=>({extra:[{label:'CaribVision licence', g:licOfferValue(T,P,ch), plat:0, dist:0, fan:false}], note:'Licensing added income with no platform cut, and you still own your work.'})},
+          {t:'Counter-offer: ask for 40% more', fx:(T,ch,CH,P)=>{ const C=byId(CONCEPTS,ch.concept), Q=byId(PROD,ch.prod).q;
+            if (C.orig>=1.1 && Q>=1.1) return {extra:[{label:'CaribVision licence (negotiated)', g:Math.round(licOfferValue(T,P,ch)*1.4), plat:0, dist:0, fan:false}], note:'Original, well-made content has bargaining power: they agreed to 40% more.'};
+            return {note:'They walked away. Without original, high-quality content you had little bargaining power.'}; }}]},
+  payfee:{stage:6, n:'Payment fees rise', text:()=>`Your payment provider raises its fee from 5% to 8% on every fan payment, for the rest of the year.`,
+    opts:[{t:'Accept the rise to 8%', fx:()=>({payRate:0.08, note:'Every fan payment now leaks 8% to the payment provider.'})},
+          {t:'Switch to a cheaper local provider (4%)', fx:()=>({payRate:0.04, fanPaid:0.9, note:'Lower fees from now on, but 10% of fans gave up at the unfamiliar checkout this quarter.'})}]},
+  fanfund:{stage:6, n:'Fan-funded campaign', text:()=>`Your fans keep asking how they can support the next release directly.`,
+    opts:[{t:'Run a fan-funding campaign (US$80 of rewards)', fx:(T)=>({prodCost:80, extra:[{label:'Fan-funding campaign', g:Math.round(T.fans*0.07*15), plat:0.08, dist:0, fan:true}], note:'Going direct to fans (disintermediation): the crowdfunding platform kept only 8%.'})},
+          {t:'Not now', fx:()=>({note:'You left the offer of direct fan support on the table.'})}]},
+  aiknock:{stage:0, n:'AI-generated knock-off', text:(T,P)=>`A cheap AI-generated copy of ${P.t}, with a near-identical title, floods search results.`,
+    opts:[{t:'Report it and post behind-the-scenes proof yours is the original', fx:(T,ch)=>({reach: ch.concept==='trend'?0.75:0.88, fans:1.1, note: ch.concept==='trend'?'Trend copies are easy to fake, so the knock-off still took a big bite.':'Your original story was hard to copy, and the proof won sympathy.'})},
+          {t:'Ignore it', fx:(T,ch)=>({reach: ch.concept==='trend'?0.5:0.72, note:'The knock-off captured attention that should have been yours.'})}]},
+  power:{stage:1, n:'Storm power cut', text:()=>`A hurricane-season storm knocks out power on the day you planned to record and film.`,
+    opts:[{t:'Rent a generator (US$150)', fx:()=>({prodCost:150, note:'Production stayed on schedule at extra cost.'})},
+          {t:'Delay the release by two weeks', fx:()=>({reach:0.8, note:'You missed your moment: reach fell 20%.'})}]}
+};
+const EVENT_IDS = Object.keys(EVENTS);
+function byId(a, id){ return a.find(x=>x.id===id) || a[0]; }
+function licOfferValue(T,P,ch){ return Math.round(P.licBase*0.8*byId(PROD,ch.prod).q); }
+function chanOf(P, id){ return byId(P.ch, id); }
+
+function newRun(pid){
+  let evs = shuffle(EVENT_IDS).slice(0,4);
+  if (evs[0]==='fanfund' || evs[0]==='payfee'){ const t = evs[0]; evs[0] = evs[1]; evs[1] = t; }
+  const P = TY[pid];
+  return { pid, q:1, phase:'choose', cash:START_CASH, fans:0, payRate:PAY_RATE, kitOwned:false, bonus:{reach:1, conv:1},
+    events:evs, history:[], pending:null,
+    ch:{concept:'original', prod:'phone', pack:'basic', chan:P.ch[1].id, mkt:'organic', mon:[P.ch[1].models[0]], data:'analytics'} };
+}
+
+function simulate(T, ch, evId, optIdx){
+  const P = TY[T.pid], C = byId(CONCEPTS,ch.concept), PR = byId(PROD,ch.prod), PK = byId(PACK,ch.pack), CH = chanOf(P,ch.chan), M = byId(MKT,ch.mkt), D = byId(DATA,ch.data);
+  const ev = evId ? EVENTS[evId] : null;
+  const fx = ev ? (ev.opts[optIdx].fx(T, ch, CH, P) || {}) : {};
+  const eR = fx.reach || 1, eF = fx.fans || 1, eP = fx.fanPaid || 1;
+  const payRate = fx.payRate != null ? fx.payRate : T.payRate;
+  const Q = PR.q;
+  const prodCost = Math.round((PR.id==='kit' ? (T.kitOwned ? PR.upkeep : PR.cost) : PR.cost) * P.scale);
+  const newViews = Math.round(P.base * C.reach * Q * PK.reach * CH.reach * M.reach * T.bonus.reach * eR);
+  const returning = Math.round(T.fans * 2);
+  const views = newViews + returning;
+  const mon = ch.mon.filter(m => CH.models.includes(m));
+  const sponsor = mon.includes('sponsorship');
+  const newFans = Math.round(newViews * 0.03 * Q * C.loyal * PK.fan * CH.fanConv * M.loyal * eF * (sponsor ? 0.95 : 1));
+  const fans = Math.round(T.fans * 0.9) + newFans;
+  const conv = C.conv * T.bonus.conv * eP;
+  const lines = [];
+  const add = (key, label, g, plat, dist, fan, supplies, how) => lines.push({key, label, g:Math.max(0,g), plat:plat||0, dist:dist||0, fan:!!fan, supplies:supplies||0, how});
+  mon.forEach(m=>{
+    if (m==='ads'){ const a = CH.ads; add('ads', a.label, views/1000*a.rpm, a.plat, a.dist, false, 0, `${fmtInt(views)} ${P.unit} ÷ 1,000 × US$${a.rpm} per 1,000`); }
+    if (m==='sales'){ const a = CH.sales; add('sales', a.label, views*a.rate*a.price*conv, a.plat, a.dist, true, 0, `${fmtInt(views)} × ${(a.rate*100).toFixed(1)}% buy × US$${a.price} × fan factor ${conv.toFixed(2)}`); }
+    if (m==='subs'){ const a = CH.subs || {}; add('subs', 'Memberships', fans*0.02*9*conv, a.plat, a.dist, true, 0, `${fmtInt(fans)} fans × 2% join × US$3 × 3 months × ${conv.toFixed(2)}`); }
+    if (m==='merch'){ add('merch', 'Merchandise', fans*0.015*20*conv, 0, 0, true, 0.55, `${fmtInt(fans)} fans × 1.5% buy × US$20 × ${conv.toFixed(2)} (supplies 55%)`); }
+    if (m==='donations'){ const a = CH.donations || {}; add('donations', 'Donations and tips', fans*0.04*4*conv, a.plat, 0, true, 0, `${fmtInt(fans)} fans × 4% tip × US$4 × ${conv.toFixed(2)}`); }
+    if (m==='sponsorship'){ add('sponsorship', 'Sponsorship', views>=2000 ? views/1000*12 : 0, 0, 0, false, 0, views>=2000 ? `${fmtInt(views)} ÷ 1,000 × US$12` : `Under 2,000 views: no sponsor signed`); }
+    if (m==='licensing'){ const ok = Q >= 1.0; add('licensing', 'Licensing', ok ? P.licBase*0.25*Q*C.orig*PK.lic : 0, 0, 0.20, false, 0, ok ? `US$${P.licBase} × 0.25 × quality ${Q} × originality ${C.orig} × packaging ${PK.lic}` : 'Phone quality: no licensee interested'); }
+  });
+  if (CH.licence){ const g = P.licBase * 0.5 * Q * C.orig * PK.lic * (1 + Math.min(T.fans,4000)/8000);
+    add('licfee', 'Licence fee (exclusive)', g, 0, 0.15, false, 0, `US$${P.licBase} × 0.5 × quality ${Q} × originality ${C.orig} × packaging ${PK.lic} × fan bonus ${(1+Math.min(T.fans,4000)/8000).toFixed(2)}`); }
+  (fx.extra||[]).forEach(x => add('extra', x.label, x.g, x.plat, x.dist, x.fan, 0, 'Event'));
+  const L = {gross:0, platform:0, distributor:CH.flat, payment:0, marketing:M.cost + D.cost, production:prodCost + PK.cost + (fx.prodCost||0)};
+  lines.forEach(l=>{ l.platAmt = l.g*l.plat; l.distAmt = l.g*l.dist; l.payAmt = l.fan ? l.g*payRate : 0; l.supAmt = l.g*l.supplies;
+    L.gross += l.g; L.platform += l.platAmt; L.distributor += l.distAmt; L.payment += l.payAmt; L.production += l.supAmt; });
+  L.costs = L.platform + L.distributor + L.payment + L.marketing + L.production;
+  L.creator = L.gross - L.costs;
+  const formula = [
+    `New ${P.unit} = base ${fmtInt(P.base)} × concept ${C.reach} × quality ${Q} × packaging ${PK.reach} × channel ${CH.reach} × marketing ${M.reach}` + (T.bonus.reach!==1?` × data ${T.bonus.reach}`:'') + (eR!==1?` × event ${eR}`:'') + ` = ${fmtInt(newViews)}`,
+    `Returning ${P.unit} = last quarter’s ${fmtInt(T.fans)} fans × 2 = ${fmtInt(returning)}`,
+    `New fans = ${fmtInt(newViews)} × 3% × quality ${Q} × concept ${C.loyal} × packaging ${PK.fan} × channel ${CH.fanConv} × marketing ${M.loyal}` + (eF!==1?` × event ${eF}`:'') + (sponsor?' × sponsorship 0.95':'') + ` = ${fmtInt(newFans)}`,
+    `Fans now = ${fmtInt(T.fans)} × 90% kept + ${fmtInt(newFans)} new = ${fmtInt(fans)}`
+  ].join('\n');
+  return {q:T.q, ch:JSON.parse(JSON.stringify(ch)), ev:evId, opt:optIdx, note:fx.note||'', newViews, returning, views, newFans, fans, lines, L, payRate, Q, prodCost, formula, nextBonus:{reach:D.reach, conv:D.conv}, kitBought: PR.id==='kit'};
+}
+
+function totals(run){
+  const t = {gross:0, platform:0, distributor:0, payment:0, marketing:0, production:0, creator:0, costs:0, views:0};
+  const byModel = {};
+  run.history.forEach(h=>{ ['gross','platform','distributor','payment','marketing','production','creator','costs'].forEach(k=> t[k] += h.L[k]); t.views += h.views;
+    h.lines.forEach(l=>{ const k = l.key==='licfee' || /licence/i.test(l.label) ? 'licensing' : l.key; byModel[k] = (byModel[k]||0) + l.g; }); });
+  t.fans = run.history.length ? run.history[run.history.length-1].fans : 0;
+  t.byModel = byModel;
+  return t;
+}
+function rating(t){
+  const sh = k => t.gross > 0 ? t[k]/t.gross : 0;
+  const lic = t.gross>0 ? (t.byModel.licensing||0)/t.gross : 0;
+  if (t.gross <= 0 || t.creator < 0) return {n:'Starving Artist', d:'Your costs were bigger than your income. Value was created, but you paid more to make and push it than the chain paid back.'};
+  if (sh('platform') >= 0.30) return {n:'Platform Dependent', d:'You reached people, but a large slice of every dollar stayed with the platforms. One rule change could wipe you out.'};
+  if (sh('creator') >= 0.45 && sh('platform') < 0.1 && t.fans >= 1000) return {n:'Indie Hero', d:'You built a real fan base and kept most of each dollar by going direct where it counted.'};
+  if (lic >= 0.4) return {n:'Licensing Dealmaker', d:'Most of your income came from licensing: you kept ownership and let others pay to use your work.'};
+  if (sh('marketing') >= 0.3) return {n:'Hype Machine', d:'Marketing swallowed a big share of every dollar. Attention was bought rather than earned.'};
+  return {n:'Balanced Pro', d:'A sensible mix: decent reach, several income streams and no single middleman taking too much.'};
+}
+function debrief(run){
+  const t = totals(run), P = TY[run.pid], hs = run.history, n = hs.length || 1;
+  const avg = f => hs.reduce((a,h)=>a+f(h),0)/n;
+  const boosts = [
+    {s:0, n:'Concept', v:avg(h=>byId(CONCEPTS,h.ch.concept).reach)},
+    {s:1, n:'Production', v:avg(h=>h.Q)},
+    {s:2, n:'Packaging', v:avg(h=>byId(PACK,h.ch.pack).reach)},
+    {s:3, n:'Distribution', v:avg(h=>chanOf(P,h.ch.chan).reach)},
+    {s:4, n:'Marketing', v:avg(h=>byId(MKT,h.ch.mkt).reach)}
+  ].sort((a,b)=>b.v-a.v);
+  const top = boosts[0];
+  const models = Object.entries(t.byModel).sort((a,b)=>b[1]-a[1]);
+  const leaks = RECIP.filter(r=>r.k!=='creator').map(r=>({r, v:t[r.k]})).sort((a,b)=>b.v-a.v);
+  const leakStage = {platform:'distribution', distributor:'distribution', payment:'monetisation', marketing:'marketing', production:'production'};
+  const rpm = t.views ? t.gross/t.views*1000 : 0;
+  const out = [];
+  out.push(`<b>Most value added:</b> ${top.n} (stage ${top.s+1}) multiplied your reach by ×${top.v.toFixed(2)} on average, more than any other stage. ` + (top.s===3 ? 'Distribution adds value by giving access to a big audience, but the platform charges for that access.' : top.s===4 ? 'Marketing adds value by winning attention, but you pay for it out of every dollar.' : top.s===1 ? 'Higher quality made people share and stay.' : top.s===2 ? 'Good packaging made your work easy to find and enjoy.' : 'Your idea itself carried the product.'));
+  if (models.length) out.push(`<b>Monetisation:</b> your biggest earner was ${esc(models[0][0]==='licensing'?'licensing':models[0][0]==='extra'?'event income (fan-funding or a deal)':MODELS[models[0][0]] ? MODELS[models[0][0]].n.toLowerCase() : models[0][0])} (${t.gross?pct(models[0][1]/t.gross):'0%'} of income). Overall, every 1,000 ${P.unit} earned you ${usd(rpm,2)} before costs.`);
+  if (leaks[0] && t.gross>0) out.push(`<b>Biggest leak:</b> ${leaks[0].r.n.toLowerCase()} took ${Math.round(leaks[0].v/t.gross*100)}¢ of every US$1, at the ${leakStage[leaks[0].r.k]} stage. ${leaks[0].r.k==='platform' ? 'This is reintermediation: the platform is the new middleman.' : leaks[0].r.k==='production' ? 'Production spending only pays off if the reach and income follow.' : leaks[0].r.k==='marketing' ? 'Paid attention is expensive: organic sharing and loyal fans cost less.' : leaks[0].r.k==='payment' ? 'Payment fees are small per sale but add up over every fan payment.' : 'Distributors and agents bring access, but each takes a percentage.'}`);
+  const dataQs = hs.filter(h=>h.ch.data!=='ignore').length;
+  out.push(`<b>Feedback loop:</b> you used your data in ${dataQs} of ${hs.length} quarters. ` + (dataQs>=3 ? 'Closing the loop kept boosting your next release.' : 'Using analytics every quarter would have raised the next quarter’s reach and conversion.'));
+  out.push(`<b>Keep more of the value:</b> build an own list or website for fan payments (disintermediation), use more than one platform so no single middleman controls you, license original work, and keep production costs in line with your audience.`);
+  return out;
+}
+
+/* ================= Navigation ================= */
+const VIEWS = [
+  {id:'home', n:'Home', ic:'⌂'}, {id:'learn', n:'Learn', ic:'①'}, {id:'build', n:'Chain Builder', ic:'②'}, {id:'tycoon', n:'Tycoon', ic:'③'},
+  {id:'compare', n:'Compare chains', ic:'④'}, {id:'quiz', n:'Quick-fire quiz', ic:'⑤'}, {id:'sheet', n:'Analysis sheet', ic:'⑥'}
+];
+function renderTabs(){
+  $('#tabs').innerHTML = VIEWS.map(v=>`<button type="button" data-go="${v.id}" ${S.view===v.id?'aria-current="page"':''}><span aria-hidden="true">${v.ic}</span>${esc(v.n)}${doneFor(v.id)?'<span class="tick" aria-label="(done)"></span>':''}</button>`).join('');
+}
+function doneFor(id){
+  if (id==='learn') return S.learn >= LEARN.length-1 && S.seen.learnEnd;
+  if (id==='build') return Object.keys(S.cb).filter(k=>S.cb[k] && S.cb[k].done).length >= 2;
+  if (id==='tycoon') return !!S.lastRun;
+  if (id==='compare') return !!S.seen.compare;
+  if (id==='quiz') return S.quizBest != null;
+  return false;
+}
+function go(id, focus){
+  if (!VIEWS.find(v=>v.id===id)) id = 'home';
+  S.view = id; save();
+  VIEWS.forEach(v=>{ $('#v-'+v.id).hidden = v.id !== id; });
+  renderTabs();
+  RENDER[id]();
+  if (focus !== false){ const h = $('#v-'+id+' h2'); if (h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); } window.scrollTo({top:0, behavior: RM?'auto':'smooth'}); }
+}
+
+/* ================= Home ================= */
+function renderHome(){
+  const cbDone = Object.keys(S.cb).filter(k=>S.cb[k] && S.cb[k].done).length;
+  const tiles = [
+    ['learn','01','Learn the chain','Eight stages, the actors at each one, value added, and the old linear chain versus the new networked one.', doneFor('learn')],
+    ['build','02','Chain Builder',`Put the chain in order for six Caribbean products, then place the actors and activities. ${cbDone}/6 done.`, cbDone>=2],
+    ['tycoon','03','Tycoon mode','Take a product from idea to income over four quarters. See who keeps each dollar.', !!S.lastRun],
+    ['compare','04','Compare the chains','Slide from 1990 to 2026 and watch the middlemen disappear and new ones appear.', doneFor('compare')],
+    ['quiz','05','Quick-fire quiz',`Sixteen questions on stages, value added and who earns.${S.quizBest!=null?' Best: '+S.quizBest+'/16.':''}`, S.quizBest!=null],
+    ['sheet','06','Value chain analysis','Your printable sheet with your chain, value split, decisions and two Paper 02 reflection questions.', false]
+  ];
+  $('#v-home').innerHTML = `
+  <div class="card hero">
+    <div>
+      <span class="eyebrow">Module 2 · Digital media and value chains</span>
+      <h2 id="h-home">From idea to income: who keeps each dollar?</h2>
+      <p class="lede">A song, a film, a vlog or a game passes through many hands before it earns a cent. Every stage adds value, and every middleman takes a share. Learn the chain, build it, then run your own Caribbean media business for a year.</p>
+      <div class="row"><button class="btn gold" data-go="learn">Start with Learn</button><button class="btn ghost" data-go="tycoon">Jump to Tycoon</button></div>
+      <p class="credit" style="margin-top:12px">Based on the Module 2 notes.</p>
+    </div>
+    <div aria-hidden="false">${miniCoinSVG()}</div>
+  </div>
+  <div class="tiles">${tiles.map(t=>`<button type="button" class="tile" data-go="${t[0]}"><span class="num">${t[1]}</span><strong>${esc(t[2])}</strong><span class="d">${esc(t[3])}</span>${t[4]?'<span class="done pill">Done</span>':''}</button>`).join('')}</div>`;
+}
+function miniCoinSVG(){
+  const segs = [['Platform',30,'#2a7fbd'],['Distributor',10,'#6d55c9'],['Payment',5,'#c98a0b'],['Marketing',10,'#c43d74'],['Production',10,'#d55a2f'],['Creator',35,'#1c7f45']];
+  let a = -Math.PI/2, s = `<svg viewBox="0 0 390 230" class="chainsvg" style="max-width:440px;margin:0 auto" role="img" aria-labelledby="hc1"><title id="hc1">Example: a US dollar split between platform 30 cents, distributor 10, payment 5, marketing 10, production 10 and creator 35 (illustrative).</title>`;
+  segs.forEach(g=>{ const a2 = a + g[1]/100*Math.PI*2; const x1=110+90*Math.cos(a), y1=110+90*Math.sin(a), x2=110+90*Math.cos(a2), y2=110+90*Math.sin(a2);
+    s += `<path d="M110 110 L${x1.toFixed(1)} ${y1.toFixed(1)} A90 90 0 ${g[1]>50?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}Z" fill="${g[2]}" stroke="#fff" stroke-width="2"/>`; a = a2; });
+  s += `<circle cx="110" cy="110" r="46" fill="#e0a325" stroke="#f6cf6a" stroke-width="4"/><text x="110" y="120" text-anchor="middle" font-size="30" font-weight="900" fill="#2a1d00" font-family="system-ui,sans-serif">US$1</text>`;
+  segs.forEach((g,i)=>{ s += `<rect x="226" y="${22+i*30}" width="14" height="14" rx="3" fill="${g[2]}"/><text x="246" y="${34+i*30}" font-size="13" fill="#13262d" font-family="system-ui,sans-serif" font-weight="${i===5?800:500}">${g[0]} ${g[1]}¢</text>`; });
+  return s + `<text x="226" y="214" font-size="11" fill="#53656b" font-family="system-ui,sans-serif">Illustrative, not real rates.</text></svg>`;
+}
+
+/* ================= Learn ================= */
+const ACTORS = [
+  ['Creators','CR',0,'Have the idea and make the original content; they own the IP.'],
+  ['Producers','PR',1,'Organise and fund production; recording, filming or coding.'],
+  ['Editors','ED',2,'Cut, polish, caption and package the content.'],
+  ['Distributors','DI',3,'Deliver content to many platforms or stores, for a fee or a percentage.'],
+  ['Platforms','PL',3,'Host content and deliver it to users at scale; often keep a share of income.'],
+  ['Advertisers','AD',6,'Fund the chain by paying for audience attention.'],
+  ['Payment providers','PA',6,'Move fans’ money (cards, wallets, mobile money) and take a small fee.'],
+  ['Consumers','CO',5,'Watch, read, play and listen, then share, comment and remix.']
+];
+const LEARN = [
+  {t:'What is a value chain?', h:()=>`
+    <p>The notes define the <b>value chain</b> as “the sequence of activities through which a product or service is created and delivered to the end user”. Digital media has transformed every link in this chain.</p>
+    <p>Here is the full digital media chain in eight stages. <b>Tap or press Enter on any stage</b> to see the value it adds and who works there.</p>
+    ${chainBoth({interactive:true, selected:S.learnStage})}
+    <div class="stagepanel" id="stagepanel" aria-live="polite">${stagePanel(S.learnStage)}</div>
+    <p class="tip"><b>The four key aspects.</b> The notes group the chain into <b>creation</b> (stages 1–2), <b>packaging</b> (stage 3), <b>distribution</b> (stages 4–5) and <b>consumption</b> (stages 6–8, where income and feedback are created). Use the four aspects for short answers and the eight stages when you need detail.</p>`},
+  {t:'Value added, stage by stage', h:()=>`
+    <p>“Value added” means what a stage makes the product worth that it was not worth before. Ask: <i>what can the product do now that it could not do before this stage?</i></p>
+    <div class="tablewrap"><table class="stack stagetable"><thead><tr><th>Stage</th><th>Value added</th><th>Who works here</th></tr></thead><tbody>
+    ${STAGES.map((s,i)=>`<tr><td data-h="Stage"><span class="dot" style="background:${s.hex}"></span>${i+1}. ${esc(s.n)}</td><td data-h="Value added">${esc(s.value)}</td><td data-h="Who">${esc(s.actors.join(', '))}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="tip"><b>Teacher’s tip:</b> in Paper 02, name the stage, then say what value it adds <i>for this product</i>. “Packaging adds value because subtitles let Dutch and French viewers enjoy the film” earns more than “packaging adds value”.</p>`},
+  {t:'The actors at each stage', h:()=>`
+    <p>A stakeholder is anyone with an interest in the chain. These eight actors appear in almost every digital media chain, from producer to end-user.</p>
+    <div class="grid2">${ACTORS.map(a=>`<div class="actor"><span class="ic" style="background:${STAGES[a[2]].hex}" aria-hidden="true">${a[1]}</span><div><b>${esc(a[0])}</b> <span class="pill" style="background:#f1ebdc;color:#53656b">${esc(STAGES[a[2]].short)}</span><br><span class="small">${esc(a[3])}</span></div></div>`).join('')}</div>
+    <p class="tip">The notes also name the <b>aggregator</b>, which “bundles and curates content for specific audiences”. An aggregator does not make content; it collects other people’s. It is the most commonly confused stakeholder.</p>`},
+  {t:'Follow the money: monetisation models', h:()=>`
+    <p>Monetisation turns attention into income. Each model has its own middlemen. All percentages in this game are <span class="illus">illustrative, not real rates</span>.</p>
+    <div class="tablewrap"><table class="stack"><thead><tr><th>Model</th><th>How it works</th><th>Who takes a cut</th></tr></thead><tbody>
+      <tr><td data-h="Model"><b>Advertising</b></td><td data-h="How">Advertisers pay for every 1,000 views or plays.</td><td data-h="Cut">The platform or ad network, e.g. “platform keeps ~30–45%”.</td></tr>
+      <tr><td data-h="Model"><b>Revenue-share</b></td><td data-h="How">A platform shares part of the ad or subscription money its users generate with creators.</td><td data-h="Cut">The platform sets the share and can change it.</td></tr>
+      <tr><td data-h="Model"><b>Subscriptions and memberships</b></td><td data-h="How">Fans pay monthly for extras or access.</td><td data-h="Cut">Platform (if hosted there) and the payment provider.</td></tr>
+      <tr><td data-h="Model"><b>Sales</b></td><td data-h="How">Fans buy, download or rent the product.</td><td data-h="Cut">Store or app store, distributor, payment provider.</td></tr>
+      <tr><td data-h="Model"><b>Licensing</b></td><td data-h="How">Another business pays to use your work, while you keep ownership.</td><td data-h="Cut">A sales agent or collecting society, if you use one.</td></tr>
+      <tr><td data-h="Model"><b>Sponsorship</b></td><td data-h="How">A brand pays you to feature it, with a clear “paid partnership” label.</td><td data-h="Cut">Sometimes a talent agency.</td></tr>
+      <tr><td data-h="Model"><b>Merchandise</b></td><td data-h="How">T-shirts, caps and prints sold to fans.</td><td data-h="Cut">Suppliers (cost of goods) and the payment provider.</td></tr>
+      <tr><td data-h="Model"><b>Donations and crowdfunding</b></td><td data-h="How">Fans tip or fund the next project directly.</td><td data-h="Cut">The tipping or crowdfunding platform and the payment provider.</td></tr>
+    </tbody></table></div>`},
+  {t:'Linear chain versus networked chain', h:()=>`
+    <p>Before digital, the chain was a <b>straight line</b> controlled by gatekeepers. Today it is a <b>network</b>: the creator can reach fans directly and through many platforms at once, and data flows back instantly.</p>
+    ${linearVsNetworkSVG()}
+    <div class="tablewrap"><table class="stack"><thead><tr><th>Before digital</th><th>After digital</th></tr></thead><tbody>
+      <tr><td data-h="Before">Linear, top-down production</td><td data-h="After">Anyone can create and distribute</td></tr>
+      <tr><td data-h="Before">High barriers to entry</td><td data-h="After">Low-cost global reach</td></tr>
+      <tr><td data-h="Before">Limited distribution channels</td><td data-h="After">Multiple simultaneous channels</td></tr>
+      <tr><td data-h="Before">Passive audiences</td><td data-h="After">Active, participatory audiences</td></tr>
+      <tr><td data-h="Before">Slow feedback loops</td><td data-h="After">Real-time analytics and iteration</td></tr>
+    </tbody></table></div>
+    <p class="credit">The five contrasts are from the Module 2 notes.</p>`},
+  {t:'Disintermediation and reintermediation', h:()=>`
+    <div class="grid2">
+      <div class="card" style="border-top:6px solid var(--good)"><h3>Disintermediation</h3><p>Middlemen are <b>removed</b>. The creator goes <b>direct to fans</b>.</p><ul class="small"><li>An author sells her e-book from her own website, not through a publisher.</li><li>A soca artist sells tickets and T-shirts to her mailing list.</li><li>A guest house in Hopkins, Belize, takes bookings by WhatsApp instead of a travel agent.</li></ul></div>
+      <div class="card" style="border-top:6px solid var(--coral)"><h3>Reintermediation</h3><p><b>New digital middlemen</b> appear, and they often take a share.</p><ul class="small"><li>Streaming platforms and digital distributors between an artist and listeners.</li><li>App stores that take a commission on every game purchase.</li><li>Playlist curators and algorithms that decide who gets discovered.</li></ul></div>
+    </div>
+    <p class="tip"><b>Teacher’s tip:</b> “impact” questions want both sides. Disintermediation gives the creator control and a bigger share; reintermediation gives reach, but the platform now takes a percentage and controls the rules.</p>`},
+  {t:'Who captures the value?', h:()=>`
+    <p>The same US$1 a fan spends on a soca single splits very differently depending on the route. <span class="illus">Illustrative, not real rates</span></p>
+    ${routeBar('1990s: CD through a record label', [['Record shop',33,'#2a7fbd'],['Distributor',15,'#6d55c9'],['Label',32,'#55657f'],['Pressing',8,'#d55a2f'],['Artist',12,'#1c7f45']])}
+    ${routeBar('2026: streaming through a digital distributor', [['Platform',35,'#2a7fbd'],['Distributor',10,'#6d55c9'],['Artist',55,'#1c7f45']])}
+    ${routeBar('2026: direct sale on the artist’s own website', [['Payment',5,'#c98a0b'],['Hosting',3,'#6d55c9'],['Artist',92,'#1c7f45']])}
+    <p>So why not sell everything direct? Because <b>far fewer people find</b> an artist’s own website. Platforms add value through <b>reach</b> and <b>network effects</b>; the more users they have, the more valuable they become. Smart creators mix both: platforms for discovery, direct channels for their most loyal fans.</p>
+    <div class="row" style="margin-top:12px"><button class="btn gold" data-go="build">Next: Chain Builder</button><button class="btn ghost" data-go="tycoon">Try Tycoon mode</button></div>`}
+];
+function routeBar(title, segs){
+  return `<div style="margin:12px 0"><b class="small">${esc(title)}</b><div class="minibar" role="img" aria-label="${esc(title)}: ${segs.map(s=>s[0]+' '+s[1]+' cents').join(', ')}">${segs.map(s=>`<span style="width:${s[1]}%;background:${s[2]}" title="${esc(s[0])} ${s[1]}¢">${s[1]>=8?esc(s[0])+' '+s[1]+'¢':''}</span>`).join('')}</div><span class="small muted">${segs.map(s=>esc(s[0])+' '+s[1]+'¢').join(' · ')}</span></div>`;
+}
+function stagePanel(i){
+  if (i == null || !STAGES[i]) return `<p class="muted" style="margin:0">Choose a stage above to read about it.</p>`;
+  const s = STAGES[i];
+  return `<h3><span class="dot" style="background:${s.hex}"></span>Stage ${i+1}: ${esc(s.n)} <span class="pill">Aspect: ${esc(s.aspect)}</span></h3>
+    <p><b>Value added:</b> ${esc(s.value)}</p>
+    <p><b>Actors:</b></p><div class="chips">${s.actors.map(a=>`<span class="chip">${esc(a)}</span>`).join('')}</div>
+    <p style="margin-top:8px" class="small"><b>Soca single example:</b> ${esc(s.ex)}</p>`;
+}
+function linearVsNetworkSVG(){
+  const t = 'font-family="system-ui,sans-serif"';
+  let s = `<svg class="chainsvg" viewBox="0 0 440 470" role="img" aria-labelledby="lvn1 lvn2" style="max-width:560px;margin:8px auto"><title id="lvn1">Traditional linear chain versus digital networked chain</title><desc id="lvn2">Top: artist, record label, pressing plant, distributor, shop and radio, fan in a single line. Bottom: the creator at the centre linked to platforms, a digital distributor, payment providers, advertisers and analytics, with a direct line to fans.</desc>`;
+  s += `<defs><marker id="lvA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#53656b"/></marker></defs>`;
+  s += `<text x="8" y="20" font-size="15" font-weight="800" fill="#13262d" ${t}>Traditional linear chain (1990s)</text>`;
+  const row1 = ['Artist','Record label','Pressing plant'], row2 = ['Fan','Shop and radio','Distributor'];
+  row1.forEach((n,i)=>{ const x = 8 + i*148; s += `<rect x="${x}" y="34" width="128" height="40" rx="9" fill="#fff" stroke="#55657f" stroke-width="2"/><text x="${x+64}" y="59" text-anchor="middle" font-size="14" font-weight="700" fill="#13262d" ${t}>${n}</text>`; if (i<2) s += `<line x1="${x+130}" y1="54" x2="${x+146}" y2="54" stroke="#53656b" stroke-width="2.5" marker-end="url(#lvA)"/>`; });
+  s += `<line x1="368" y1="76" x2="368" y2="96" stroke="#53656b" stroke-width="2.5" marker-end="url(#lvA)"/>`;
+  row2.forEach((n,i)=>{ const x = 8 + i*148; s += `<rect x="${x}" y="100" width="128" height="40" rx="9" fill="${i===0?'#e3f4e8':'#fff'}" stroke="${i===0?'#1c7f45':'#55657f'}" stroke-width="2"/><text x="${x+64}" y="125" text-anchor="middle" font-size="14" font-weight="700" fill="#13262d" ${t}>${n}</text>`; if (i>0) s += `<line x1="${x-2}" y1="120" x2="${x-18}" y2="120" stroke="#53656b" stroke-width="2.5" marker-end="url(#lvA)"/>`; });
+  s += `<text x="8" y="164" font-size="12.5" fill="#53656b" ${t}>Each gatekeeper must say yes; money and feedback take months.</text>`;
+  s += `<line x1="8" y1="180" x2="432" y2="180" stroke="#e0d5bd" stroke-width="2"/>`;
+  s += `<text x="8" y="204" font-size="15" font-weight="800" fill="#13262d" ${t}>Digital networked chain (2026)</text>`;
+  const cx=220, cy=330;
+  const nodes = [['Streaming and video platforms',110,236,true],['Digital distributor',330,236,true],['Payment providers',70,330,true],['Advertisers and sponsors',370,330,false],['Analytics',110,424,false],['Fans worldwide',330,424,false]];
+  nodes.forEach(n=>{ const fan = n[0].startsWith('Fans'); s += `<line x1="${cx}" y1="${cy}" x2="${n[1]}" y2="${n[2]}" stroke="${fan?'#1c7f45':'#9aa9ad'}" stroke-width="${fan?3.5:2}" ${fan?'stroke-dasharray="8 5"':''}/>`; });
+  s += `<line x1="110" y1="236" x2="330" y2="424" stroke="#c9b48a" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  nodes.forEach(n=>{ const fan = n[0].startsWith('Fans'); const w = 128; const lines = wrapText(n[0], 16);
+    s += `<rect x="${n[1]-w/2}" y="${n[2]-22}" width="${w}" height="44" rx="10" fill="${fan?'#e3f4e8':'#fff'}" stroke="${n[3]?'#d9513a':fan?'#1c7f45':'#55657f'}" stroke-width="${n[3]?2.5:2}"/>`;
+    lines.forEach((ln,k)=>{ s += `<text x="${n[1]}" y="${n[2]+5+(k-(lines.length-1)/2)*15}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#13262d" ${t}>${esc(ln)}</text>`; }); });
+  s += `<circle cx="${cx}" cy="${cy}" r="38" fill="#0b4552"/><text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" ${t}>Creator</text>`;
+  s += `<text x="${cx+64}" y="${cy+30}" font-size="11.5" font-weight="700" fill="#1c7f45" ${t}>direct to fans</text>`;
+  s += `<rect x="8" y="455" width="12" height="12" rx="2" fill="#fff" stroke="#d9513a" stroke-width="2.5"/><text x="26" y="465" font-size="11.5" fill="#53656b" ${t}>new digital middlemen (reintermediation)</text>`;
+  return s + `</svg>`;
+}
+function renderLearn(){
+  const i = Math.max(0, Math.min(S.learn||0, LEARN.length-1)); S.learn = i;
+  if (i === LEARN.length-1){ S.seen.learnEnd = true; save(); }
+  const c = LEARN[i];
+  $('#v-learn').innerHTML = `
+  <span class="eyebrow">Learn mode · Card ${i+1} of ${LEARN.length}</span>
+  <h2 id="h-learn">${esc(c.t)}</h2>
+  <p class="credit">Based on the Module 2 notes.</p>
+  <div class="learnnav noprint">
+    <button class="btn ghost" data-learn="${i-1}" ${i===0?'disabled':''} aria-label="Previous card">← Back</button>
+    <div class="dots" role="group" aria-label="Choose a card">${LEARN.map((x,k)=>`<button type="button" data-learn="${k}" ${k===i?'aria-current="step"':''} aria-label="Card ${k+1}: ${esc(x.t)}">${k+1}</button>`).join('')}</div>
+    <span class="spacer"></span>
+    <button class="btn" data-learn="${i+1}" ${i===LEARN.length-1?'disabled':''} aria-label="Next card">Next →</button>
+  </div>
+  <div class="card">${c.h()}</div>`;
+}
+
+/* ================= Chain Builder ================= */
+let CBS = null; // session state: {pid, step, order[], deck[], tokens[], placed{}, sel, mistakes}
+function startCB(pid){
+  const P = CB.find(p=>p.id===pid);
+  let deck = shuffle(P.st.map((t,i)=>i)); if (deck.every((v,i)=>v===i)) deck = deck.reverse();
+  CBS = {pid, step:1, order:Array(8).fill(null), deck, tokens:shuffle(P.tk.map((t,i)=>i)), placed:{}, sel:null, mistakes:0, msg:null};
+}
+function renderBuild(){
+  const v = $('#v-build');
+  const prodBtns = CB.map(p=>{ const d = S.cb[p.id] && S.cb[p.id].done; return `<button type="button" class="prodbtn" data-cbp="${p.id}" aria-pressed="${CBS && CBS.pid===p.id}"><span class="em" aria-hidden="true">${p.em}</span><span><b>${esc(p.n)}</b>${d?' <span class="pill">Done ★'+S.cb[p.id].stars+'</span>':''}<small>${esc(p.t)}</small></span></button>`; }).join('');
+  let body = '';
+  if (!CBS){ body = `<div class="fb info">Choose a product above to start building its value chain.</div>`; }
+  else {
+    const P = CB.find(p=>p.id===CBS.pid);
+    const steps = `<div class="steps" aria-label="Progress"><span class="${CBS.step===1?'on':'ok'}">Step 1: order the stages</span><span class="${CBS.step===2?'on':CBS.step>2?'ok':''}">Step 2: place actors and activities</span><span class="${CBS.step===3?'on':''}">Done</span></div>`;
+    const how = `<p class="small muted noprint"><b>How to play:</b> tap a card, then tap where it goes. With a mouse you can also drag. With a keyboard, press Tab to reach a card, Enter to pick it up, then Tab to a slot and Enter to place it. Esc drops the card.</p>`;
+    if (CBS.step === 1){
+      const pool = CBS.deck.filter(i=>!CBS.order.includes(i));
+      body = `${steps}<h3>${esc(P.t)}</h3><p>Each card describes one stage of this product’s chain. Put them in order, from idea (1) to feedback (8).</p>${how}
+        <div class="pool" role="group" aria-label="Activity cards to place">${pool.map(i=>`<button type="button" class="dcard" data-drag="card" data-i="${i}" aria-pressed="${CBS.sel===i}">${esc(P.st[i])}</button>`).join('')}</div>
+        <ol class="slots" aria-label="Stages 1 to 8">${CBS.order.map((ci,k)=> ci==null
+          ? `<li><button type="button" class="slot ${CBS.sel!=null?'ready':''}" data-drop="slot" data-k="${k}" aria-label="Slot ${k+1}, empty${CBS.sel!=null?'. Press to place the selected card here':''}"><span class="n">STAGE ${k+1}</span><span class="muted small">${k===0?'Starts with the idea':k===7?'Loops back to the start':'Empty'}</span></button></li>`
+          : `<li><div class="slot filled" style="border-color:${STAGES[k].hex}"><span class="n" style="color:${STAGES[k].hex}">STAGE ${k+1}</span><span class="sname">${esc(STAGES[k].n)}</span><span class="stext">${esc(P.st[ci])}</span></div></li>`).join('')}</ol>`;
+    } else if (CBS.step === 2){
+      const pool = CBS.tokens.filter(i=>CBS.placed[i]==null);
+      body = `${steps}<h3>${esc(P.t)}</h3><p>Now place each <b>actor or activity</b> on the stage where it adds value.</p>${how}
+        <div class="pool tokens" role="group" aria-label="Actors and activities to place">${pool.map(i=>`<button type="button" class="dcard" data-drag="token" data-i="${i}" aria-pressed="${CBS.sel===i}">${esc(P.tk[i][0])}</button>`).join('')}</div>
+        <div class="zones">${STAGES.map((s,k)=>{ const here = Object.keys(CBS.placed).filter(t=>CBS.placed[t]===k); return `<button type="button" class="zone ${CBS.sel!=null?'ready':''}" data-drop="zone" data-k="${k}" style="border-top:6px solid ${s.hex}" aria-label="Stage ${k+1}: ${esc(s.n)}. ${here.length} placed${CBS.sel!=null?'. Press to place the selected card here':''}"><span class="zh"><span class="dot" style="background:${s.hex}"></span>${k+1}. ${esc(s.short)}</span><span class="placed">${here.map(t=>`<span>${esc(P.tk[t][0])}</span>`).join('')}</span></button>`; }).join('')}</div>`;
+    } else {
+      const st = S.cb[P.id];
+      body = `${steps}<div class="card" style="border-top:6px solid var(--good)"><h3>Chain complete: ${esc(P.n)} ${'★'.repeat(st.stars)}${'☆'.repeat(3-st.stars)}</h3>
+        <p>You finished with ${CBS.mistakes} wrong placement${CBS.mistakes===1?'':'s'}. ${CBS.mistakes<=2?'Excellent: you know the chain.':CBS.mistakes<=6?'Good work. Look again at the stages that tripped you up.':'Keep practising: try another product.'}</p>
+        ${chainBoth({notes: STAGES.map((s,k)=>P.tk.filter(t=>t[1]===k).map(t=>t[0]).join(', ')), title:'Value chain for '+P.n})}
+        <div class="row" style="margin-top:12px">${nextCBButton(P.id)}<button class="btn ghost" data-cbp="${P.id}">Play this product again</button></div></div>`;
+    }
+    if (CBS.msg && CBS.step<3) body += `<div class="fb toast ${CBS.msg.ok?'ok':'no'}" role="status">${CBS.msg.html}</div>`;
+  }
+  const doneN = Object.keys(S.cb).filter(k=>S.cb[k] && S.cb[k].done).length;
+  v.innerHTML = `<span class="eyebrow">Chain Builder · ${doneN} of 6 products complete</span><h2 id="h-build">Build the value chain</h2>
+    <p class="lede">Pick a Caribbean product. First put its eight stages in order, then place the people and activities on the right stages. You get feedback on every placement.</p>
+    <div class="prodgrid" role="group" aria-label="Choose a product">${prodBtns}</div><div style="margin-top:14px" id="cbbody">${body}</div>`;
+}
+function nextCBButton(pid){
+  const nxt = CB.find(p=>!(S.cb[p.id] && S.cb[p.id].done) && p.id!==pid);
+  return nxt ? `<button class="btn gold" data-cbp="${nxt.id}">Next product: ${esc(nxt.n)}</button>` : `<button class="btn gold" data-go="tycoon">All done! Play Tycoon</button>`;
+}
+function cbSelect(i){
+  CBS.sel = (CBS.sel === i) ? null : i;
+  const P = CB.find(p=>p.id===CBS.pid);
+  renderBuild();
+  if (CBS.sel != null){ say(`Picked up: ${CBS.step===1?P.st[i]:P.tk[i][0]}. Now choose a ${CBS.step===1?'slot':'stage'}.`);
+    const first = $(CBS.step===1 ? '[data-drop="slot"]' : '[data-drop="zone"]'); if (first && document.activeElement && document.activeElement.tagName!=='BODY' && !isMouse) first.focus();
+    if (first && window.innerWidth<=640 && !isMouse) first.scrollIntoView({block:'center', behavior:RM?'auto':'smooth'}); }
+  else { const c = $(`[data-drag][data-i="${i}"]`); if (c) c.focus(); }
+}
+function cbPlace(k, iOverride){
+  const i = iOverride != null ? iOverride : CBS.sel; if (i == null) { say('Pick a card first.'); return; }
+  const P = CB.find(p=>p.id===CBS.pid);
+  let ok = false;
+  if (CBS.step === 1){
+    if (CBS.order[k] != null) return;
+    if (i === k){ CBS.order[k] = i; ok = true; CBS.msg = {ok:true, html:`Correct! Stage ${k+1} is <b>${esc(STAGES[k].n)}</b>: ${esc(STAGES[k].about)}.`}; }
+    else { CBS.mistakes++; CBS.msg = {ok:false, html:`Not stage ${k+1}. Stage ${k+1} is about ${esc(STAGES[k].about)}. Does this card fit? Try another slot.`}; }
+  } else {
+    const t = P.tk[i];
+    if (t[1] === k){ CBS.placed[i] = k; ok = true; CBS.msg = {ok:true, html:`Correct: <b>${esc(t[0])}</b> belongs in ${esc(STAGES[k].n)}. ${esc(t[2])}`}; }
+    else { CBS.mistakes++; CBS.msg = {ok:false, html:`Not ${esc(STAGES[k].n)}: that stage is about ${esc(STAGES[k].about)}. Where does <b>${esc(t[0])}</b> add value? Try again.`}; }
+  }
+  CBS.sel = ok ? null : i;
+  if (CBS.step === 1 && CBS.order.every(x=>x!=null)){ CBS.step = 2; CBS.msg = {ok:true, html:'All eight stages are in order. Step 2: place the actors and activities.'}; }
+  else if (CBS.step === 2 && P.tk.every((t,j)=>CBS.placed[j]!=null)){
+    CBS.step = 3; const stars = CBS.mistakes<=2?3:CBS.mistakes<=6?2:1; const prev = S.cb[P.id];
+    S.cb[P.id] = {done:true, stars: Math.max(stars, prev && prev.stars || 0), mistakes:CBS.mistakes}; save(); renderTabs();
+  }
+  renderBuild();
+  say((ok?'Correct. ':'Not quite. ') + (CBS.msg ? CBS.msg.html.replace(/<[^>]+>/g,'') : '') + (CBS.step===3?' Chain complete!':''));
+  if (!ok){ const z = $(`[data-drop][data-k="${k}"]`); if (z && !RM){ z.classList.add('shake'); } if (z) z.focus(); }
+  else { const next = $('[data-drag]') || $('#cbbody .btn'); if (next && !isMouse) next.focus();
+    if (window.innerWidth<=640 && !isMouse){ const pl = $('#cbbody .pool') || $('#cbbody .card'); if (pl) pl.scrollIntoView({block:'start', behavior:RM?'auto':'smooth'}); } }
+}
+
+/* Drag (mouse) */
+let drag = null, suppressClick = false, isMouse = false;
+document.addEventListener('pointerdown', e=>{
+  isMouse = e.pointerType === 'mouse';
+  const el = e.target.closest('[data-drag]'); if (!el || e.pointerType !== 'mouse' || e.button !== 0) return;
+  drag = {el, x:e.clientX, y:e.clientY, started:false, ghost:null, over:null};
+});
+document.addEventListener('pointermove', e=>{
+  if (!drag) return;
+  if (!drag.started){ if (Math.hypot(e.clientX-drag.x, e.clientY-drag.y) < 6) return;
+    drag.started = true; const g = drag.el.cloneNode(true); g.classList.add('dragghost'); g.removeAttribute('data-drag'); g.setAttribute('aria-hidden','true'); document.body.appendChild(g); drag.ghost = g; drag.el.classList.add('dragging');
+    $$('[data-drop]').forEach(z=>z.classList.add('ready')); }
+  drag.ghost.style.left = e.clientX+'px'; drag.ghost.style.top = e.clientY+'px';
+  const under = document.elementFromPoint(e.clientX, e.clientY); const z = under && under.closest('[data-drop]');
+  if (drag.over && drag.over !== z) drag.over.classList.remove('hot');
+  if (z){ z.classList.add('hot'); } drag.over = z;
+});
+document.addEventListener('pointerup', e=>{
+  if (!drag) return; const d = drag; drag = null;
+  if (!d.started) return;
+  suppressClick = true; setTimeout(()=>{ suppressClick = false; }, 50);
+  if (d.ghost) d.ghost.remove(); d.el.classList.remove('dragging');
+  const under = document.elementFromPoint(e.clientX, e.clientY); const z = under && under.closest('[data-drop]');
+  if (z && CBS){ cbPlace(+z.dataset.k, +d.el.dataset.i); } else { $$('[data-drop]').forEach(x=>x.classList.remove('ready','hot')); }
+});
+
+/* ================= Tycoon ================= */
+let TYV = {pick:null};
+function renderTycoon(){
+  const v = $('#v-tycoon'); const T = S.run;
+  if (!T){ v.innerHTML = tyStartHTML(); return; }
+  if (T.phase === 'end'){ v.innerHTML = tyEndHTML(T); return; }
+  if (T.phase === 'result'){ v.innerHTML = tyHud(T) + tyResultHTML(T, T.history[T.history.length-1]); return; }
+  v.innerHTML = tyHud(T) + tyChooseHTML(T);
+  if (T.phase === 'event') showEvent(T);
+}
+function tyStartHTML(){
+  return `<span class="eyebrow">Tycoon mode · the main game</span><h2 id="h-tycoon">Run your media business for a year</h2>
+  <p class="lede">Choose a product, then take it through the value chain for four quarters. Each quarter you choose at every stage, an event card shakes things up, and the Value Split shows who kept each dollar. You start with ${usd(START_CASH)} of savings.</p>
+  <p><span class="illus">All money, fees and rates are illustrative, not real rates.</span> Real platforms change their payouts often and do not publish one fixed rate.</p>
+  <div class="grid2" role="group" aria-label="Choose your product">${Object.entries(TY).map(([id,P])=>`<button type="button" class="prodbtn" data-tystart="${id}"><span class="em" aria-hidden="true">${P.em}</span><span><b>${esc(P.n)}: ${esc(P.t)}</b><small>${esc(P.who)}</small></span></button>`).join('')}</div>
+  ${S.lastRun?`<div class="fb info">Your last run: ${esc(TY[S.lastRun.pid].n)}, rated <b>${esc(S.lastRun.rating.n)}</b>, profit ${usd(S.lastRun.totals.creator)}. <button class="btn ghost" data-go="sheet" style="margin-left:6px">Open analysis sheet</button></div>`:''}`;
+}
+function tyHud(T){
+  const P = TY[T.pid]; const profit = T.history.reduce((a,h)=>a+h.L.creator,0);
+  return `<span class="eyebrow">Tycoon · ${esc(P.n)}: ${esc(P.t)}</span>
+  <h2 id="h-tycoon">${T.phase==='result'?'Quarter '+T.history[T.history.length-1].q+' results':'Quarter '+T.q+' of 4: plan your release'}</h2>
+  <div class="qtrack" aria-hidden="true">${[1,2,3,4].map(q=>`<span class="${q<T.q||(q===T.q&&T.phase==='result')?'done':q===T.q?'on':''}"></span>`).join('')}</div>
+  <div class="hud" role="group" aria-label="Business status">
+    <div class="stat ${T.cash<0?'neg':''}"><span>Cash</span><b>${usd(T.cash,0)}</b></div>
+    <div class="stat"><span>Fans</span><b>${fmtInt(T.fans)}</b></div>
+    <div class="stat ${profit<0?'neg':''}"><span>Profit so far</span><b>${usd(profit,0)}</b></div>
+    <div class="stat"><span>Payment fee</span><b>${Math.round(T.payRate*100)}%</b></div>
+  </div>`;
+}
+function optHTML(name, o, checked, fx, extraAttr){
+  return `<label class="opt"><input type="${name==='mon'?'checkbox':'radio'}" name="${name}" value="${o.id}" ${checked?'checked':''} ${extraAttr||''}><b>${esc(o.n)}</b><span class="fx">${fx}</span><span class="od">${esc(o.d)}</span></label>`;
+}
+function tyChooseHTML(T){
+  const P = TY[T.pid], ch = T.ch, CH = chanOf(P, ch.chan);
+  const dec = (i, title, inner, extra) => `<fieldset class="card decision" style="--c:${STAGES[i].hex};border-left-color:${STAGES[i].hex}"><legend class="sr">Stage ${i+1}: ${esc(STAGES[i].n)}</legend><div class="dh"><span class="snum">${i+1}</span><h3 style="margin:0">${esc(title)}</h3>${extra||''}</div>${inner}</fieldset>`;
+  const mons = MODEL_ORDER.filter(m=>CH.models.includes(m));
+  const monHTML = MODEL_ORDER.map(m=>{ const ok = CH.models.includes(m); const on = ch.mon.includes(m);
+    const lbl = m==='ads' && CH.ads ? CH.ads.label : m==='sales' && CH.sales ? CH.sales.label : MODELS[m].n;
+    let fx = '';
+    if (m==='ads' && CH.ads) fx = `US$${CH.ads.rpm} per 1,000 · platform ${pct(CH.ads.plat)}${CH.ads.dist?' · agent '+pct(CH.ads.dist):''}`;
+    else if (m==='sales' && CH.sales) fx = `US$${CH.sales.price} · ${(CH.sales.rate*100).toFixed(1)}% buy · platform ${pct(CH.sales.plat)}${CH.sales.dist?' · distributor '+pct(CH.sales.dist):''}`;
+    else if (m==='subs') fx = `fan-paid · platform ${pct((CH.subs&&CH.subs.plat)||0)}${CH.subs&&CH.subs.dist?' · publisher '+pct(CH.subs.dist):''}`;
+    else if (m==='donations') fx = `fan-paid · platform ${pct((CH.donations&&CH.donations.plat)||0)}`;
+    else if (m==='merch') fx = 'fan-paid · supplies 55%';
+    else if (m==='sponsorship') fx = 'US$12 per 1,000 views';
+    else if (m==='licensing') fx = 'agent 20%';
+    const dis = !ok ? 'disabled' : (!on && ch.mon.length>=3 ? 'disabled' : '');
+    return `<label class="opt"><input type="checkbox" name="mon" value="${m}" ${on&&ok?'checked':''} ${dis}><b>${esc(lbl)}</b><span class="fx">${ok?fx:'Not available on this channel'}</span><span class="od">${esc(MODELS[m].d)}</span></label>`; }).join('');
+  const kitCost = T.kitOwned ? PROD[1].upkeep : PROD[1].cost;
+  const cost = tyCost(T);
+  return `
+  ${T.q===1?`<p class="lede">${esc(P.who)} Make a choice at each stage, then release. Consumption (stage 6) is what your audience does, so it shows up in your results.</p>`:`<p class="lede">Your choices from last quarter are kept. Change anything you like. ${T.history.length?`Last quarter: ${fmtInt(T.history[T.history.length-1].views)} ${P.unit}, ${usd(T.history[T.history.length-1].L.creator)} profit.`:''}</p>`}
+  <form id="tyform" onsubmit="return false">
+  ${dec(0,'Concept: what is the idea?', `<div class="opts">${CONCEPTS.map(o=>optHTML('concept',o,ch.concept===o.id,`reach ×${o.reach} · loyalty ×${o.loyal} · originality ×${o.orig}`)).join('')}</div>`)}
+  ${dec(1,'Production quality', `<div class="opts">${PROD.map(o=>optHTML('prod',o,ch.prod===o.id,`quality ×${o.q} · ${cost$(Math.round((o.id==='kit'?kitCost:o.cost)*P.scale))}${o.id==='kit'&&T.kitOwned?' upkeep (owned)':''}`)).join('')}</div>`)}
+  ${dec(2,'Post-production and packaging', `<div class="opts">${PACK.map(o=>optHTML('pack',o,ch.pack===o.id,`reach ×${o.reach} · fans ×${o.fan} · ${cost$(o.cost)}`)).join('')}</div>`)}
+  ${dec(3,'Distribution: where will it live?', `<div class="opts">${P.ch.map(o=>optHTML('chan',o,ch.chan===o.id,`reach ×${o.reach} · fan bond ×${o.fanConv}${o.flat?' · fee '+cost$(o.flat):''}${o.licence?' · flat licence fee':''}`)).join('')}</div>`, CH.platType?'<span class="pill" style="background:#fde8e3;color:#7a2017">Platform: reintermediation</span>':CH.id==='own'?'<span class="pill" style="background:var(--goodbg);color:var(--good)">Direct: disintermediation</span>':'')}
+  ${dec(4,'Marketing and promotion', `<div class="opts">${MKT.map(o=>optHTML('mkt',o,ch.mkt===o.id,`reach ×${o.reach} · loyalty ×${o.loyal} · ${cost$(o.cost)}`)).join('')}</div>`)}
+  ${dec(6,'Monetisation mix (choose 1 to 3)', `<div class="opts" id="monopts">${monHTML}</div><p class="small muted" style="margin-top:8px">Fan-paid money also pays the payment provider ${Math.round(T.payRate*100)}% (illustrative).</p>`, `<span class="pill" id="moncount">${ch.mon.filter(m=>mons.includes(m)).length}/3 chosen</span>`)}
+  ${dec(7,'Data and feedback loop (affects next quarter)', `<div class="opts">${DATA.map(o=>optHTML('data',o,ch.data===o.id,`next quarter: reach ×${o.reach} · conversion ×${o.conv} · ${cost$(o.cost)}`)).join('')}</div>`)}
+  <details class="card"><summary><b>How the numbers work</b> (transparent formulas)</summary>${formulaHelp(P)}</details>
+  <div class="releasebar"><div><b>Spend this quarter:</b> <span class="mono" id="spend">${usd(cost,0)}</span><br><span class="small muted">Plus platform, distributor and payment cuts taken from income.</span></div><span class="spacer"></span>
+    <button type="button" class="btn gold" id="releaseBtn" data-release ${ch.mon.filter(m=>mons.includes(m)).length?'':'disabled'}>Release quarter ${T.q} →</button></div>
+  </form>`;
+}
+function tyCost(T){ const P = TY[T.pid], ch = T.ch; const PR = byId(PROD,ch.prod);
+  return Math.round((PR.id==='kit'?(T.kitOwned?PR.upkeep:PR.cost):PR.cost)*P.scale) + byId(PACK,ch.pack).cost + byId(MKT,ch.mkt).cost + byId(DATA,ch.data).cost + chanOf(P,ch.chan).flat; }
+function formulaHelp(P){
+  return `<div class="formula" style="margin-top:10px">New ${P.unit} = ${fmtInt(P.base)} (base) × concept × quality × packaging × channel × marketing × data bonus × event
+Returning ${P.unit} = last quarter's fans × 2
+New fans = new ${P.unit} × 3% × quality × concept loyalty × packaging × channel fan bond × marketing loyalty
+Fans = last quarter's fans × 90% + new fans
+
+Ads/streams  = ${P.unit} ÷ 1,000 × payout per 1,000 (platform keeps its %)
+Sales        = ${P.unit} × buy rate × price × fan factor
+Memberships  = fans × 2% × US$3 × 3 months × fan factor
+Merch        = fans × 1.5% × US$20 × fan factor (supplies 55%)
+Donations    = fans × 4% × US$4 × fan factor
+Sponsorship  = ${P.unit} ÷ 1,000 × US$12 (2,000+ only)
+Licensing    = US$${P.licBase} × 0.25 × quality × originality × packaging (agent 20%)
+Payment fee  = 5% of every fan payment (can change)
+
+Creator keeps = income − platform − distributor − payment − marketing − production</div>
+  <p class="small" style="margin-top:8px"><span class="illus">Illustrative, not real rates.</span> These numbers are simplified so you can see how the chain works. They are not the real payout rates of any platform.</p>`;
+}
+function readForm(){
+  const f = $('#tyform'); if (!f || !S.run) return;
+  const T = S.run, P = TY[T.pid];
+  const val = n => { const x = f.querySelector(`input[name="${n}"]:checked`); return x ? x.value : T.ch[n]; };
+  const prevChan = T.ch.chan;
+  T.ch.concept = val('concept'); T.ch.prod = val('prod'); T.ch.pack = val('pack'); T.ch.chan = val('chan'); T.ch.mkt = val('mkt'); T.ch.data = val('data');
+  const CH = chanOf(P, T.ch.chan);
+  T.ch.mon = $$('input[name="mon"]:checked', f).map(x=>x.value).filter(m=>CH.models.includes(m)).slice(0,3);
+  if (prevChan !== T.ch.chan){ if (!T.ch.mon.length) T.ch.mon = [CH.models[0]]; return 'rerender'; }
+}
+function showEvent(T){
+  const P = TY[T.pid], evId = T.events[T.q-1], ev = EVENTS[evId], s = STAGES[ev.stage];
+  $('#modalroot').innerHTML = `<div class="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="evh" aria-describedby="evd" style="--c:${s.hex}">
+    <span class="pill" style="background:${s.hex};color:#fff">Event card · Stage ${ev.stage+1}: ${esc(s.n)}</span>
+    <h2 id="evh" style="margin-top:8px">${esc(ev.n)}</h2><p id="evd">${esc(ev.text(T,P,T.ch))}</p>
+    <p class="small muted">This event hits the <b>${esc(s.short.toLowerCase())}</b> stage of your chain. How do you respond?</p>
+    <div class="evopts">${ev.opts.map((o,i)=>`<button type="button" class="btn ${i?'ghost':''}" data-evopt="${i}">${esc(o.t)}</button>`).join('')}</div></div></div>`;
+  const b = $('#modalroot [data-evopt]'); if (b) b.focus();
+  say('Event card: ' + ev.n + '. ' + ev.text(T,P,T.ch));
+}
+function trapModal(e){
+  const m = $('#modalroot .modal'); if (!m || e.key !== 'Tab') return;
+  const f = $$('button', m); const first = f[0], last = f[f.length-1];
+  if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+}
+function resolveEvent(optIdx){
+  const T = S.run; const evId = T.events[T.q-1];
+  const r = simulate(T, T.ch, evId, optIdx);
+  T.history.push(r);
+  T.fans = r.fans; T.cash += r.L.creator; T.payRate = r.payRate; T.bonus = r.nextBonus; if (r.kitBought) T.kitOwned = true;
+  T.phase = 'result'; $('#modalroot').innerHTML = ''; save(); renderTycoon();
+  const h = $('#v-tycoon h2'); if (h){ h.setAttribute('tabindex','-1'); h.focus(); }
+  say(`Quarter ${r.q} results: ${fmtInt(r.views)} ${TY[T.pid].unit}, ${fmtInt(r.fans)} fans, income ${usd(r.L.gross)}, creator keeps ${usd(r.L.creator)}.`);
+}
+function ledgerTable(r){
+  const rows = r.lines.map(l=>`<tr class="lt"><td>${esc(l.label)}</td><td class="num">${usd(l.g,2)}</td><td class="num">${l.platAmt?'−'+usd(l.platAmt,2):'–'}</td><td class="num">${l.distAmt?'−'+usd(l.distAmt,2):'–'}</td><td class="num">${l.payAmt?'−'+usd(l.payAmt,2):'–'}</td></tr><tr class="how"><td colspan="5"><span class="small muted mono">${esc(l.how)}</span></td></tr>`).join('');
+  return `<div class="tablewrap"><table class="ledger"><thead><tr><th>Income stream</th><th class="num">Paid in</th><th class="num">Platform</th><th class="num">Distrib.</th><th class="num">Payment</th></tr></thead><tbody>${rows || '<tr><td colspan="5">No income</td></tr>'}
+  <tr class="tot"><td>Total income</td><td class="num">${usd(r.L.gross,2)}</td><td class="num">−${usd(r.L.platform - 0,2)}</td><td class="num">−${usd(r.L.distributor,2)}</td><td class="num">−${usd(r.L.payment,2)}</td></tr></tbody></table></div>
+  <table class="ledger" style="margin-top:8px"><tbody>
+   <tr><td>Production (kit or crew ${usd(r.prodCost)}, packaging, merch supplies, event costs)</td><td class="num">−${usd(r.L.production,2)}</td></tr>
+   <tr><td>Marketing and research</td><td class="num">−${usd(r.L.marketing,2)}</td></tr>
+   <tr class="tot"><td>Creator keeps (profit)</td><td class="num" style="color:${r.L.creator<0?'var(--bad)':'var(--good)'}">${usd(r.L.creator,2)}</td></tr></tbody></table>
+  <p class="small muted">Distributor column includes any flat hosting or distributor fee. Illustrative, not real rates.</p>`;
+}
+function tyResultHTML(T, r){
+  const P = TY[T.pid], ev = EVENTS[r.ev];
+  return `<div class="grid2">
+   <div>
+    <div class="card" style="border-top:6px solid ${STAGES[ev.stage].hex}"><span class="pill" style="background:${STAGES[ev.stage].hex};color:#fff">Event · ${esc(STAGES[ev.stage].short)}</span><h3 style="margin-top:6px">${esc(ev.n)}: “${esc(ev.opts[r.opt].t)}”</h3><p style="margin:0">${esc(r.note)}</p></div>
+    <div class="card"><h3>Stage 6 · Consumption: your audience</h3><p><b class="mono">${fmtInt(r.views)}</b> ${P.unit} · <b class="mono">${fmtInt(r.newFans)}</b> new fans · <b class="mono">${fmtInt(r.fans)}</b> fans in total</p><div class="formula">${esc(r.formula)}</div></div>
+    <div class="card"><h3>Stage 7 · Monetisation: the ledger</h3>${ledgerTable(r)}</div>
+   </div>
+   <div>
+    <div class="card"><h3>Value Split: quarter ${r.q}</h3><p class="small muted">Where each dollar went this quarter. This is the key question in any value chain: <b>who captures the value?</b></p><div class="splitwrap">${splitSVG(r.L, 'Value split for quarter '+r.q)}</div>${splitExplain(r.L)}</div>
+    <div class="card"><h3>Stage 8 · Feedback loop</h3><p style="margin:0">${r.ch.data==='ignore'?'You ignored the data, so next quarter gets no boost.':`Your ${r.ch.data==='research'?'paid research':'analytics review'} gives next quarter reach ×${r.nextBonus.reach} and conversion ×${r.nextBonus.conv}.`}</p></div>
+    <div class="row" style="margin-top:14px"><button class="btn gold" data-tynext>${r.q<4?'Plan quarter '+(r.q+1)+' →':'See the end-of-year results →'}</button></div>
+   </div></div>`;
+}
+function splitExplain(L){
+  const c = splitCents(L); if (!c) return '';
+  const lead = RECIP.filter(r=>r.k!=='creator').sort((a,b)=>c[b.k]-c[a.k])[0];
+  return `<p class="small" style="margin-top:8px">${c.creator>=0?`You kept <b>${c.creator}¢</b> of every US$1.`:`You lost <b>${-c.creator}¢</b> on every US$1 earned.`} The biggest share outside your pocket went to <b>${esc(lead.n.toLowerCase())}</b> (${c[lead.k]}¢).</p>`;
+}
+function tyNext(){
+  const T = S.run;
+  if (T.q >= 4){ T.phase = 'end'; const t = totals(T); const rt = rating(t);
+    S.lastRun = {pid:T.pid, history:T.history, totals:t, rating:rt, debrief:debrief(T), date:new Date().toISOString()}; }
+  else { T.q++; T.phase = 'choose'; }
+  save(); renderTycoon(); renderTabs();
+  const h = $('#v-tycoon h2'); if (h){ h.setAttribute('tabindex','-1'); h.focus(); } window.scrollTo({top:0, behavior:RM?'auto':'smooth'});
+}
+function tyEndHTML(T){
+  const LR = S.lastRun, t = LR.totals, P = TY[T.pid], rt = LR.rating;
+  const share = t.gross>0 ? Math.round(t.creator/t.gross*100) : 0;
+  return `<span class="eyebrow">Tycoon · end of the year</span><h2 id="h-tycoon">${esc(P.n)}: ${esc(P.t)}, year in review</h2>
+  <div class="card endtop"><div class="badge" role="img" aria-label="Rating: ${esc(rt.n)}"><small>Your rating</small>${esc(rt.n)}</div>
+   <div style="flex:1;min-width:220px"><p style="font-size:1.05rem">${esc(rt.d)}</p>
+    <div class="hud" style="margin:0"><div class="stat ${t.creator<0?'neg':''}"><span>Profit</span><b>${usd(t.creator)}</b></div><div class="stat"><span>Audience (fans)</span><b>${fmtInt(t.fans)}</b></div><div class="stat"><span>Creator’s share</span><b>${share}%</b></div><div class="stat"><span>Total income</span><b>${usd(t.gross)}</b></div></div></div></div>
+  <div class="grid2" style="margin-top:14px">
+   <div class="card"><h3>Debrief</h3>${LR.debrief.map(p=>`<p>${p}</p>`).join('')}</div>
+   <div class="card"><h3>Value Split for the whole year</h3><div class="splitwrap">${splitSVG(t, 'Value split for the whole year')}</div>${splitExplain(t)}</div>
+  </div>
+  <div class="card"><h3>Your chain this year</h3>${chainBoth({notes:runNotes(LR), title:'Your value chain for '+P.n})}</div>
+  <div class="card"><h3>Quarter by quarter</h3>${decisionsTable(LR)}</div>
+  <div class="row" style="margin-top:14px"><button class="btn gold" data-go="sheet">Open the analysis sheet</button><button class="btn ghost" data-tyreset>Play again</button><button class="btn ghost" data-go="compare">Compare the chains</button></div>`;
+}
+function runNotes(LR){
+  const P = TY[LR.pid], hs = LR.history; const uniq = f => Array.from(new Set(hs.map(f))).join('; ');
+  const t = LR.totals;
+  return [ uniq(h=>byId(CONCEPTS,h.ch.concept).n), uniq(h=>byId(PROD,h.ch.prod).n), uniq(h=>byId(PACK,h.ch.pack).n), uniq(h=>chanOf(P,h.ch.chan).n),
+    uniq(h=>byId(MKT,h.ch.mkt).n), `${fmtInt(t.views)} ${P.unit}; ${fmtInt(t.fans)} fans`,
+    Object.keys(t.byModel).map(k=>({ads:'Ads',sales:'Sales',subs:'Memberships',merch:'Merch',donations:'Donations',sponsorship:'Sponsorship',licensing:'Licensing',extra:'Event deals'})[k]||k).join(', ') + ` · ${usd(t.gross)} in`, uniq(h=>byId(DATA,h.ch.data).n) ];
+}
+function decisionsTable(LR){
+  const P = TY[LR.pid];
+  return `<div class="tablewrap"><table class="decisions stack"><thead><tr><th>Q</th><th>Concept</th><th>Production</th><th>Distribution</th><th>Marketing</th><th>Monetisation</th><th>Event</th><th class="num">Fans</th><th class="num">Profit</th></tr></thead><tbody>
+  ${LR.history.map(h=>{ const CH = chanOf(P,h.ch.chan); return `<tr><td data-h="Quarter">${h.q}</td><td data-h="Concept">${esc(byId(CONCEPTS,h.ch.concept).n)}</td><td data-h="Production">${esc(byId(PROD,h.ch.prod).n)}; ${esc(byId(PACK,h.ch.pack).n.toLowerCase())}</td><td data-h="Distribution">${esc(CH.n)}</td><td data-h="Marketing">${esc(byId(MKT,h.ch.mkt).n)}</td><td data-h="Monetisation">${esc(h.lines.map(l=>l.label).join(', ')||'none')}</td><td data-h="Event">${esc(EVENTS[h.ev].n)}: ${esc(EVENTS[h.ev].opts[h.opt].t)}</td><td class="num" data-h="Fans">${fmtInt(h.fans)}</td><td class="num" data-h="Profit">${usd(h.L.creator)}</td></tr>`; }).join('')}
+  </tbody></table></div>`;
+}
+
+/* ================= Compare the chains ================= */
+const OLD_CHAIN = [
+  ['Artist','Writes and performs'],['A&R scout','Label talent spotter: the first gatekeeper'],['Record label','Funds, owns the master, controls release'],['Commercial studio','Expensive hourly studio time'],
+  ['Pressing plant','Makes CDs and cassettes'],['Physical distributor','Trucks and ships stock to shops'],['Radio and music TV','Gatekeepers of airplay'],['Record shop','Sells the physical copy'],['Fan','Buys the album']
+];
+const NEW_CHAIN = [
+  {n:'Artist', s:0, from:1990, to:9999, kind:'core', d:'Writes, performs, and now runs the business'},
+  {n:'A&R scout', s:0, from:1990, to:2010, kind:'old', d:'No longer needed to get released'},
+  {n:'Record label', s:1, from:1990, to:2012, kind:'old', d:'Indie artists release without one'},
+  {n:'Commercial studio', s:1, from:1990, to:2006, kind:'old', d:'Replaced by home recording'},
+  {n:'Home studio and software', s:1, from:2004, to:9999, kind:'tool', d:'Laptop, mic and apps'},
+  {n:'AI creative tools', s:2, from:2023, to:9999, kind:'tool', d:'Mastering, artwork and captions'},
+  {n:'Pressing plant', s:2, from:1990, to:2008, kind:'old', d:'No physical copies needed'},
+  {n:'Physical distributor', s:3, from:1990, to:2009, kind:'old', d:'No trucks: files travel online'},
+  {n:'Download store', s:3, from:2003, to:2016, kind:'new', d:'Paid downloads, later overtaken'},
+  {n:'Digital distributor', s:3, from:2005, to:9999, kind:'new', d:'Delivers tracks to many platforms'},
+  {n:'Streaming platforms', s:3, from:2008, to:9999, kind:'new', d:'Host and stream; keep a share'},
+  {n:'Social and short-video apps', s:4, from:2011, to:9999, kind:'new', d:'Where songs are discovered'},
+  {n:'Radio and music TV gatekeepers', s:4, from:1990, to:2014, kind:'old', d:'Still exist, but no longer the only route'},
+  {n:'Playlist curators and algorithms', s:4, from:2015, to:9999, kind:'new', d:'Decide who gets heard'},
+  {n:'Influencers', s:4, from:2016, to:9999, kind:'new', d:'Dance challenges and shout-outs'},
+  {n:'Record shop', s:5, from:1990, to:2011, kind:'old', d:'Few shops left'},
+  {n:'Direct-to-fan channels', s:5, from:2010, to:9999, kind:'direct', d:'Mailing list, website, WhatsApp'},
+  {n:'Payment providers and mobile money', s:6, from:2006, to:9999, kind:'new', d:'Process every fan payment'},
+  {n:'Fan-funding and memberships', s:6, from:2012, to:9999, kind:'new', d:'Fans fund the artist directly'},
+  {n:'Analytics dashboards', s:7, from:2012, to:9999, kind:'tool', d:'Real-time data on every listener'},
+  {n:'Fan', s:5, from:1990, to:9999, kind:'core', d:'Listens, shares, remixes and pays'}
+];
+const ERAS = [[1990,'CDs and cassettes: the label controls the chain.'],[2003,'Download stores arrive: no more pressing plants for many releases.'],[2008,'Streaming begins to grow; digital distributors connect indie artists to platforms.'],[2012,'Social video, fan-funding and analytics: artists go direct to fans.'],[2016,'Playlists, algorithms and influencers become the new gatekeepers.'],[2023,'AI tools enter production and packaging; platforms dominate discovery.']];
+const KEEP = [[1990,12],[2003,22],[2008,35],[2012,45],[2016,52],[2026,60]];
+function keepAt(y){ for (let i=0;i<KEEP.length-1;i++){ const a=KEEP[i], b=KEEP[i+1]; if (y<=b[0]) return Math.round(a[1] + (b[1]-a[1])*(y-a[0])/(b[0]-a[0])); } return KEEP[KEEP.length-1][1]; }
+function eraAt(y){ let e = ERAS[0]; ERAS.forEach(x=>{ if (y>=x[0]) e = x; }); return e[1]; }
+function renderCompare(){
+  const y = S.compareYear || 1990;
+  $('#v-compare').innerHTML = `<span class="eyebrow">Compare the chains</span><h2 id="h-compare">1990s record label versus a 2026 independent artist</h2>
+   <p class="lede">Drag the slider through time. Watch the old middlemen disappear (<b>disintermediation</b>) and new digital middlemen appear (<b>reintermediation</b>).</p>
+   <div class="card noprint">
+     <div class="yearbox"><span class="year" id="cmpYear">${y}</span><span id="cmpEra" style="flex:1;min-width:200px;font-weight:600">${esc(eraAt(y))}</span><button class="btn ghost" id="cmpPlay" type="button">▶ Play 1990 to 2026</button></div>
+     <label for="cmpSlider" class="sr">Year</label>
+     <input type="range" id="cmpSlider" min="1990" max="2026" step="1" value="${y}" aria-valuetext="${y}: ${esc(eraAt(y))}">
+     <div class="ticks" aria-hidden="true"><span>1990</span><span>2000</span><span>2010</span><span>2020</span><span>2026</span></div>
+   </div>
+   <div id="cmpBody">${compareBody(y)}</div>`;
+}
+function compareBody(y, prevY){
+  const act = NEW_CHAIN.filter(n=>n.from<=y);
+  const removed = act.filter(n=>n.to<=y).length, added = act.filter(n=>n.to>y && (n.kind==='new')).length;
+  const keep = keepAt(y);
+  return `<div class="cmpgrid">
+   <div class="chaincol"><h3>1990s record label chain</h3><p class="small muted" style="margin:0">Fixed reference</p>
+     <ol class="flow">${OLD_CHAIN.map(n=>`<li><span class="nm">${esc(n[0])}</span><small>${esc(n[1])}</small></li>`).join('')}</ol>
+     <p class="small" style="margin-top:10px"><b>Artist keeps</b> ~12¢ of each US$1</p><div class="keepmeter"><span style="width:12%"></span></div></div>
+   <div class="chaincol"><h3>Independent artist in <span class="mono">${y}</span></h3><p class="small muted" style="margin:0"><b>${removed}</b> removed · <b>${added}</b> new middlemen</p>
+     <ol class="flow" aria-live="polite">${act.map(n=>{ const gone = n.to<=y; const cls = gone?'removed':n.kind==='new'?'newmid':n.kind==='tool'?'tool':n.kind==='direct'?'direct':''; const isNew = prevY!=null && (n.from>prevY || (n.to<=y && n.to>prevY));
+       const tag = gone?'Disintermediated':n.kind==='new'?'New middleman':n.kind==='tool'?'New tool':n.kind==='direct'?'Direct to fans':'';
+       return `<li class="${cls}${isNew&&!RM?' enter':''}"><span class="nm">${esc(n.n)}</span><small>${esc(n.d)}</small>${tag?`<span class="tag">${tag}</span>`:''}</li>`; }).join('')}</ol>
+     <p class="small" style="margin-top:10px"><b>Artist keeps</b> ~${keep}¢ of each US$1 <span class="illus">illustrative</span></p><div class="keepmeter"><span style="width:${keep}%"></span></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>What changed by ${y}?</h3>${y<2003?'<p>The chain is long and linear. The artist needs the label’s money and approval at almost every step, and keeps a small royalty.</p>':`<p><b>Gone:</b> ${esc(NEW_CHAIN.filter(n=>n.to<=y).map(n=>n.n).join(', ')||'none yet')}.</p><p><b>New middlemen:</b> ${esc(NEW_CHAIN.filter(n=>n.kind==='new'&&n.from<=y&&n.to>y).map(n=>n.n).join(', ')||'none yet')}.</p><p class="small muted">The artist keeps a bigger share of each dollar, but each dollar is now spread across many tiny streams, and platforms control discovery. Disintermediation and reintermediation happen at the same time.</p>`}</div>`;
+}
+let cmpTimer = null, cmpPrev = null;
+function setYear(y){
+  const prev = S.compareYear; S.compareYear = y; S.seen.compare = true; save();
+  $('#cmpYear').textContent = y; $('#cmpEra').textContent = eraAt(y);
+  const sl = $('#cmpSlider'); sl.value = y; sl.setAttribute('aria-valuetext', y + ': ' + eraAt(y));
+  $('#cmpBody').innerHTML = compareBody(y, prev);
+  if (y===2026 || y===1990 || ERAS.some(e=>e[0]===y)) renderTabs();
+}
+
+/* ================= Quiz ================= */
+const QUIZ = [
+  ['Which stage adds captions, cover art and metadata?', ['Post-production and packaging','Distribution','Concept and ideation','Consumption'], 'Packaging makes the product ready for its market and easy to find.'],
+  ['An author sells her e-book from her own website instead of through a publisher. This is…', ['Disintermediation','Reintermediation','Aggregation','Licensing'], 'A middleman (the publisher) is removed: disintermediation.'],
+  ['A digital distributor delivers an indie artist’s songs to many streaming services. This is an example of…', ['Reintermediation: a new digital middleman','Disintermediation: a middleman removed','Piracy','Consumption'], 'The distributor is a new middleman between artist and platforms.'],
+  ['Which is the correct order of the digital media value chain?', ['Concept, production, packaging, distribution, marketing, consumption, monetisation, feedback','Concept, distribution, production, marketing, packaging, monetisation, consumption, feedback','Production, concept, marketing, packaging, distribution, feedback, consumption, monetisation','Marketing, concept, production, distribution, packaging, consumption, feedback, monetisation'], 'Make it, finish it, deliver it, promote it, then audiences consume, money comes in, and data feeds back.'],
+  ['Why is the digital value chain often drawn as a loop?', ['Data from consumption feeds back into the next creation','Content is always made twice','Platforms send money back to advertisers','Fans must buy the product again'], 'Analytics and comments return to the creator almost instantly and shape the next release.'],
+  ['Which actor funds the chain by paying for audience attention?', ['Advertiser','Editor','Aggregator','Collecting society'], 'Notes: the advertiser “funds the chain by paying for audience access”.'],
+  ['What is the main value added at the distribution stage?', ['Access and reach: getting the product to audiences','Writing the script','Adding a price tag','Counting the views'], 'Distribution carries the product to people through platforms, stores, CDNs and broadcast.'],
+  ['A hotel pays a creator to make a reel featuring its pool, labelled “Paid partnership”. Which monetisation model is this?', ['Sponsorship (brand partnership)','Licensing','Donations','Subscriptions'], 'A brand paying to be featured is sponsorship. The label makes it honest.'],
+  ['What does licensing mean?', ['Letting another business use your content for a fee while you keep ownership','Selling the copyright forever','Giving your content away free','Paying a platform to host your work'], 'Licensing grants permission to use the work; ownership stays with the creator.'],
+  ['A fan pays US$1 on an artist’s own website. The payment provider takes 5¢ and hosting costs 3¢. How much does the artist keep?', ['92¢','95¢','97¢','45¢'], '100 − 5 − 3 = 92¢. Going direct keeps most of the value, but fewer people find an own website.'],
+  ['When a game player buys a skin in an app, who earns at the monetisation stage?', ['The developer, the app store and the payment process all take a share','Only the developer','Only the advertiser','Only the player'], 'The app store keeps a commission and payment processing has a cost; the developer gets the rest.'],
+  ['A pirate site re-uploads a film for free. Where does value leak?', ['Fans consume without paying, so monetisation loses value','At the concept stage only','The production crew gets paid twice','Nowhere: piracy adds value'], 'Consumption happens, but the money never reaches the creator.'],
+  ['Why might a Caribbean creator use a big platform even though it keeps a large share?', ['Network effects give it a far bigger audience','It is required by law','Platforms never change their rules','It keeps no share at all'], 'Platforms add value through reach. More users attract more creators and advertisers, which attract more users.'],
+  ['Which of these is an aggregator?', ['An app that collects Caribbean news stories from many outlets into one feed','A singer recording a new song','A bank paying for an advert','A family watching a film'], 'Aggregators bundle and curate other people’s content; they do not make it.'],
+  ['What are the four key aspects of the value chain?', ['Creation, packaging, distribution, consumption','Idea, money, fans, data','Production, piracy, profit, platforms','Writing, editing, printing, selling'], 'The notes reduce the chain to creation, packaging, distribution and consumption.'],
+  ['A platform changes its algorithm and a vlogger’s views fall by 40% overnight. What does this show?', ['Platform dependence: a disruption in one player affects the whole chain','Disintermediation','A licensing deal','Better packaging'], 'Depending on one platform makes a creator vulnerable to its rule changes.']
+];
+let QZ = null;
+function startQuiz(){ QZ = {order:shuffle(QUIZ.map((q,i)=>i)), i:0, score:0, ans:null, opts:null}; QZ.opts = shuffle([0,1,2,3]); }
+function renderQuiz(){
+  const v = $('#v-quiz');
+  if (!QZ){ v.innerHTML = `<span class="eyebrow">Quick-fire quiz</span><h2 id="h-quiz">How well do you know the chain?</h2>
+    <p class="lede">${QUIZ.length} questions on stages, value added, disintermediation, monetisation models and who earns at each stage.${S.quizBest!=null?` Your best score: <b>${S.quizBest}/${QUIZ.length}</b>.`:''}</p><button class="btn gold" data-quizstart>Start the quiz</button>`; return; }
+  if (QZ.i >= QUIZ.length){
+    const best = Math.max(S.quizBest||0, QZ.score); S.quizBest = best; save(); renderTabs();
+    v.innerHTML = `<span class="eyebrow">Quick-fire quiz · finished</span><h2 id="h-quiz">You scored ${QZ.score} out of ${QUIZ.length}</h2>
+     <p class="lede">${QZ.score>=14?'Outstanding: you are ready for Paper 02.':QZ.score>=10?'Strong work. Revisit the cards you missed.':'Go back to Learn mode, then try again.'} Best score: ${best}/${QUIZ.length}.</p>
+     <div class="row"><button class="btn gold" data-quizstart>Try again</button><button class="btn ghost" data-go="learn">Review Learn mode</button></div>`; return; }
+  const qi = QZ.order[QZ.i], q = QUIZ[qi];
+  v.innerHTML = `<span class="eyebrow">Question ${QZ.i+1} of ${QUIZ.length} · Score ${QZ.score}</span><h2 id="h-quiz">${esc(q[0])}</h2>
+   <div class="qprog" aria-hidden="true"><span style="width:${QZ.i/QUIZ.length*100}%"></span></div>
+   <div class="qopts" role="group" aria-label="Answer options">${QZ.opts.map(oi=>{ let cls=''; if (QZ.ans!=null){ if (oi===0) cls='right'; else if (oi===QZ.ans) cls='wrong'; }
+     return `<button type="button" class="qopt ${cls}" data-qopt="${oi}" ${QZ.ans!=null?'disabled':''}>${esc(q[1][oi])}</button>`; }).join('')}</div>
+   ${QZ.ans!=null?`<div class="fb ${QZ.ans===0?'ok':'no'}" role="status">${QZ.ans===0?'Correct! ':'Not quite. The answer is: '+esc(q[1][0])+'. '}${esc(q[2])}</div><div class="row" style="margin-top:12px"><button class="btn gold" data-qnext>${QZ.i<QUIZ.length-1?'Next question →':'See my score'}</button></div>`:''}`;
+}
+
+/* ================= Analysis sheet ================= */
+function renderSheet(){
+  const LR = S.lastRun, sh = S.sheet;
+  const P = LR ? TY[LR.pid] : null;
+  $('#v-sheet').innerHTML = `
+  <div class="row noprint" style="margin-bottom:12px"><div><span class="eyebrow">Paper 02 structured-response practice</span></div><span class="spacer"></span><button class="btn gold" data-print>Print or save as PDF</button></div>
+  ${!LR?'<div class="fb info noprint">Play one full Tycoon run first: your chain, value split and decisions will appear on this sheet automatically. You can still write your reflections now. <button class="btn ghost" data-go="tycoon" style="margin-left:6px">Go to Tycoon</button></div>':''}
+  <article class="sheet">
+   <h2 id="h-sheet">Value chain analysis</h2>
+   <p class="small muted" style="margin:0">CAPE Digital Media Unit 1 · Module 2: Digital media and value chains</p>
+   <div class="fields">
+     <label>Name<input type="text" data-sheet="name" value="${esc(sh.name||'')}" autocomplete="name"></label>
+     <label>Class<input type="text" data-sheet="cls" value="${esc(sh.cls||'')}"></label>
+     <label>Date<input type="text" data-sheet="date" value="${esc(sh.date||new Date().toLocaleDateString('en-GB'))}"></label>
+   </div>
+   ${LR?`<p><b>Product:</b> ${esc(P.n)}, ${esc(P.t)} · <b>Rating:</b> ${esc(LR.rating.n)} · <b>Profit:</b> ${usd(LR.totals.creator)} · <b>Fans:</b> ${fmtInt(LR.totals.fans)} · <b>Creator’s share:</b> ${LR.totals.gross>0?Math.round(LR.totals.creator/LR.totals.gross*100):0}%</p>
+   <div class="avoid"><h3>1. My value chain</h3>${chainBoth({notes:runNotes(LR), title:'My value chain for '+P.n})}</div>
+   <div class="avoid grid2" style="align-items:start"><div><h3>2. Where each US$1 went</h3><div class="splitwrap">${splitSVG(LR.totals,'Value split for the year')}</div></div>
+     <div><h3>Totals for the year</h3><table class="ledger"><tbody>${RECIP.map(r=>`<tr><td><span class="dot" style="background:${r.col}"></span>${esc(r.n)}</td><td class="num">${usd(LR.totals[r.k],0)}</td></tr>`).join('')}<tr class="tot"><td>Total paid in</td><td class="num">${usd(LR.totals.gross,0)}</td></tr></tbody></table><p class="small muted">Illustrative, not real rates.</p></div></div>
+   <div class="avoid"><h3>3. My decisions</h3>${decisionsTable(LR)}</div>
+   <div class="avoid"><h3>4. Debrief</h3>${LR.debrief.map(p=>`<p class="small">${p}</p>`).join('')}</div>`:'<h3>1–4. Chain, value split and decisions</h3><p class="muted">(Complete a Tycoon run to fill this section.)</p>'}
+   <h3>5. Reflection</h3>
+   <div class="refl avoid"><label for="r1">(a) <span class="marks">[4 marks]</span><span class="qtext">Where in the chain did your product gain the most value, and why?</span></label>
+     <textarea id="r1" data-sheet="r1" placeholder="Name the stage, say what value it added for your product, and use evidence from your results.">${esc(sh.r1||'')}</textarea><div class="printtext">${esc(sh.r1||'')}</div></div>
+   <div class="refl avoid"><label for="r2">(b) <span class="marks">[4 marks]</span><span class="qtext">How could a Caribbean creator keep more of the value?</span></label>
+     <textarea id="r2" data-sheet="r2" placeholder="Give two ways, and explain each with a term such as disintermediation, licensing or platform dependence.">${esc(sh.r2||'')}</textarea><div class="printtext">${esc(sh.r2||'')}</div></div>
+   <p class="small muted" style="margin-top:12px"><b>Success criteria:</b> name the stage or strategy · explain the value added or kept · use a figure from your sheet · use correct terms (value added, disintermediation, reintermediation, monetisation).</p>
+   <p class="credit">Based on the Module 2 notes.</p>
+  </article>`;
+}
+
+/* ================= Events ================= */
+const RENDER = {home:renderHome, learn:renderLearn, build:renderBuild, tycoon:renderTycoon, compare:renderCompare, quiz:renderQuiz, sheet:renderSheet};
+document.addEventListener('click', e=>{
+  if (suppressClick){ e.preventDefault(); return; }
+  const t = e.target;
+  const g = t.closest('[data-go]'); if (g){ go(g.dataset.go); return; }
+  const l = t.closest('[data-learn]'); if (l && !l.disabled){ S.learn = +l.dataset.learn; save(); renderLearn(); renderTabs(); const h=$('#h-learn'); h.setAttribute('tabindex','-1'); h.focus(); return; }
+  const st = t.closest('[data-stage]'); if (st){ S.learnStage = +st.dataset.stage; save(); renderLearn(); const n = $(`#v-learn .${window.innerWidth<=640?'only-tall':'only-wide'} [data-stage="${S.learnStage}"]`); if (n) n.focus(); say(STAGES[S.learnStage].n + '. ' + STAGES[S.learnStage].value); return; }
+  const p = t.closest('[data-cbp]'); if (p){ startCB(p.dataset.cbp); renderBuild(); const h = $('#cbbody h3'); if (h){ h.setAttribute('tabindex','-1'); h.focus(); } say('Started ' + CB.find(x=>x.id===p.dataset.cbp).n + '. Step 1: order the stages.'); return; }
+  const dc = t.closest('[data-drag]'); if (dc && CBS){ cbSelect(+dc.dataset.i); return; }
+  const dz = t.closest('[data-drop]'); if (dz && CBS){ cbPlace(+dz.dataset.k); return; }
+  const ts = t.closest('[data-tystart]'); if (ts){ S.run = newRun(ts.dataset.tystart); save(); renderTycoon(); const h=$('#h-tycoon'); h.setAttribute('tabindex','-1'); h.focus(); return; }
+  if (t.closest('[data-release]')){ readForm(); if (!S.run.ch.mon.length){ say('Choose at least one monetisation model.'); return; } S.run.phase = 'event'; save(); showEvent(S.run); return; }
+  const eo = t.closest('[data-evopt]'); if (eo){ resolveEvent(+eo.dataset.evopt); return; }
+  if (t.closest('[data-tynext]')){ tyNext(); return; }
+  if (t.closest('[data-tyreset]')){ S.run = null; save(); renderTycoon(); return; }
+  if (t.closest('[data-quizstart]')){ startQuiz(); renderQuiz(); $('#h-quiz').setAttribute('tabindex','-1'); $('#h-quiz').focus(); return; }
+  const qo = t.closest('[data-qopt]'); if (qo && QZ && QZ.ans==null){ QZ.ans = +qo.dataset.qopt; if (QZ.ans===0) QZ.score++; renderQuiz(); say((QZ.ans===0?'Correct. ':'Not quite. ') + QUIZ[QZ.order[QZ.i]][2]); const n = $('[data-qnext]'); if (n) n.focus(); return; }
+  if (t.closest('[data-qnext]')){ QZ.i++; QZ.ans = null;if (QZ.i < QUIZ.length) QZ.opts = shuffle([0,1,2,3]); renderQuiz(); $('#h-quiz').setAttribute('tabindex','-1'); $('#h-quiz').focus(); return; }
+  if (t.closest('#cmpPlay')){ playCompare(); return; }
+  if (t.closest('[data-print]')){ window.print(); return; }
+});
+document.addEventListener('change', e=>{
+  if (e.target.closest('#tyform')){ const r = readForm(); save();
+    if (r === 'rerender'){ const name = e.target.name, val = e.target.value; renderTycoon(); const el = $(`#tyform input[name="${name}"][value="${val}"]`); if (el) el.focus(); say('Distribution changed. Monetisation options updated for this channel.'); return; }
+    const T = S.run, CH = chanOf(TY[T.pid], T.ch.chan);
+    $$('#monopts input').forEach(x=>{ const ok = CH.models.includes(x.value); x.disabled = !ok || (!x.checked && T.ch.mon.length>=3); });
+    $('#moncount').textContent = T.ch.mon.length + '/3 chosen'; $('#spend').textContent = usd(tyCost(T),0);
+    $('#releaseBtn').disabled = !T.ch.mon.length;
+    if (e.target.name==='mon' && T.ch.mon.length>=3) say('Three monetisation models chosen: that is the maximum.');
+  }
+});
+document.addEventListener('input', e=>{
+  if (e.target.id === 'cmpSlider'){ setYear(+e.target.value); return; }
+  const k = e.target.dataset && e.target.dataset.sheet; if (k){ S.sheet[k] = e.target.value; save(); const pt = e.target.parentElement.querySelector('.printtext'); if (pt) pt.textContent = e.target.value; }
+});
+document.addEventListener('keydown', e=>{
+  trapModal(e);
+  const el = e.target;
+  if ((e.key==='Enter' || e.key===' ') && el.getAttribute && el.getAttribute('role')==='button' && el.tagName!=='BUTTON'){ e.preventDefault(); el.dispatchEvent(new MouseEvent('click',{bubbles:true})); return; }
+  if (e.key==='Escape' && CBS && CBS.sel!=null){ const i = CBS.sel; CBS.sel = null; renderBuild(); const c = $(`[data-drag][data-i="${i}"]`); if (c) c.focus(); say('Card put back.'); return; }
+  if (S.view==='learn' && !e.target.closest('input,textarea') && (e.key==='ArrowRight' || e.key==='ArrowLeft') && !el.closest('[role="button"]')){
+    const n = S.learn + (e.key==='ArrowRight'?1:-1); if (n>=0 && n<LEARN.length){ S.learn = n; save(); renderLearn(); renderTabs(); $('#h-learn').setAttribute('tabindex','-1'); $('#h-learn').focus(); } }
+});
+document.addEventListener('keydown', e=>{ if (e.key==='Tab' || e.key==='Enter') isMouse = false; }, true);
+function playCompare(){
+  if (cmpTimer){ clearInterval(cmpTimer); cmpTimer = null; $('#cmpPlay').textContent = '▶ Play 1990 to 2026'; return; }
+  if (RM){ setYear(2026); return; }
+  let y = (S.compareYear>=2026) ? 1990 : S.compareYear; setYear(y);
+  $('#cmpPlay').textContent = '⏸ Pause';
+  cmpTimer = setInterval(()=>{ y++; if (y>2026){ clearInterval(cmpTimer); cmpTimer=null; const b=$('#cmpPlay'); if (b) b.textContent='▶ Play 1990 to 2026'; return; } if (!$('#cmpSlider')){ clearInterval(cmpTimer); cmpTimer=null; return; } setYear(y); }, 260);
+}
+
+/* Test hook: exposes the pure model for automated checks. */
+window.VCT = {CB, simulate, splitCents, totals, rating, TY, EVENTS, newRun, get state(){ return S; }};
+
+/* Restore an in-progress run's modal if needed and start */
+if (S.run && S.run.phase === 'event' && S.view !== 'tycoon') {}
+/* ---------- saved progress (GameSave): progress, the Tycoon run and the sheet were already kept; now the chain you are
+   building and the quiz in progress (same question order) also come back ---------- */
+if (window.GameSave){
+  let touched = false, gsT = 0;
+  GameSave.persist({ key: 'vct:save',
+    get: () => touched ? { v: 1, cbs: CBS, qz: QZ } : undefined,
+    set: d => {
+      if (!d || d.v !== 1) throw 0;
+      const c = d.cbs, P = c && CB.find(p => p.id === c.pid);
+      if (P && Array.isArray(c.order) && c.order.length === 8 && Array.isArray(c.deck) && Array.isArray(c.tokens) && c.placed && typeof c.placed === 'object' && [1, 2, 3].includes(c.step) && (c.step < 3 || (S.cb[P.id] && S.cb[P.id].done))){
+        CBS = Object.assign({}, c, { sel: null, mistakes: Math.max(0, c.mistakes | 0) });
+      }
+      const q = d.qz;
+      if (q && Array.isArray(q.order) && q.order.length === QUIZ.length && q.order.every(i => QUIZ[i]) && Array.isArray(q.opts) && q.opts.length === 4 && Number.isInteger(q.i) && q.i >= 0 && q.i <= QUIZ.length){
+        QZ = { order: q.order, i: q.i, score: Math.max(0, q.score | 0), ans: q.ans == null ? null : +q.ans, opts: q.opts };
+      }
+      touched = true;
+    } });
+  ['click', 'change', 'input', 'pointerup', 'keyup'].forEach(t => document.addEventListener(t, () => { touched = true; clearTimeout(gsT); gsT = setTimeout(() => GameSave.save(), 500); }, true));
+}
+go(S.view || 'home', false);
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

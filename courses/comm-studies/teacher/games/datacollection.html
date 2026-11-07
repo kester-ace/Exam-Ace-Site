@@ -1,0 +1,256 @@
+<!doctype html><html lang="en" data-gs-none><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Data Hunters</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+:root{--bg:#060D26;--surface:rgba(15,30,74,.9);--ink:#F1F4FF;--muted:#AEB9DD;--line:rgba(245,197,66,.25);--gold:#F5C542;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 600px at 80% -10%,#0B1A46,transparent 60%),#060D26;background-attachment:fixed;color:var(--ink);font:16.5px/1.65 "Atkinson Hyperlegible",Verdana,system-ui,sans-serif}
+main{max-width:880px;margin:0 auto;padding-block:70px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+article{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,34px);box-shadow:0 18px 40px -18px rgba(0,0,0,.85)}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4.5vw,2.4rem);color:#FFE38A;margin-top:0}
+h2{color:var(--gold);border-top:1px solid var(--line);padding-top:18px;margin-top:28px}
+a{color:#FFD766}
+.tw{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(245,197,66,.12)}
+li p{margin:.2em 0}
+[data-atom="mention"]{display:none}
+input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.credit{color:var(--muted);font-size:.85rem;text-align:center;margin-top:18px}
+</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body>
+<a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);border:1px solid rgba(245,197,66,.4)">← Back to course</a>
+<main><article><h1 id="data-collection-methods-and-instruments">Data Hunters</h1>
+<p><time data-atom="date" datetime="2026-10-13">2026-10-13</time></p>
+<p>CAPE Communication Studies, Module 1: Gathering, Organising and Processing Information. Objective 9: use the appropriate data collection methods and instruments for research purposes.</p>
+<h2 id="overview">Overview</h2>
+<p>Research only works when the data is gathered with a method that fits the question. Objective 9 asks you to choose and use the right <strong>method</strong> (the way data is collected) and the right <strong>instrument</strong> (the tool that records it).</p>
+<p><strong>Primary data</strong> is collected first-hand by the researcher. <strong>Secondary data</strong> already exists, such as reports or records. Five methods are covered in this objective:</p>
+<div class="tw"><table><thead><tr><th>Method</th><th>Instrument</th><th>Data type</th></tr></thead><tbody><tr><td>Interviews</td><td>Interview schedule</td><td>Primary</td></tr><tr><td>Focus groups</td><td>Focus group schedule</td><td>Primary</td></tr><tr><td>Surveys</td><td>Questionnaire</td><td>Primary</td></tr><tr><td>Observation</td><td>Observation schedule or checklist</td><td>Primary</td></tr><tr><td>Document analysis</td><td>Document analysis guide</td><td>Secondary</td></tr></tbody></table></div>
+<p><strong>Key terms</strong></p>
+<ul><li><p><strong>Respondent:</strong> a person who answers questions in a study.</p></li><li><p><strong>Sample:</strong> the group of people chosen to represent the whole population.</p></li><li><p><strong>Qualitative data:</strong> descriptive data in words, such as opinions and experiences.</p></li><li><p><strong>Quantitative data:</strong> numerical data that can be counted and measured.</p></li><li><p><strong>Bias:</strong> anything that pushes results away from the truth, such as a leading question.</p></li></ul>
+<h2 id="1-interviews">1. Interviews</h2>
+<p>An <strong>interview</strong> is a planned conversation in which the researcher asks questions and the respondent answers. It gives rich, detailed qualitative data because the researcher can probe and clarify.</p>
+<p><strong>Types by delivery</strong></p>
+<div class="tw"><table><thead><tr><th>Type</th><th>How it works</th><th>Best used when</th></tr></thead><tbody><tr><td>Face to face</td><td>Researcher and respondent meet in person</td><td>Detail and body language matter</td></tr><tr><td>Telephone</td><td>Questions asked by phone</td><td>Respondents are far apart or busy</td></tr><tr><td>Online</td><td>Video call or live chat, such as Teams or Zoom</td><td>Respondents are overseas or cannot travel</td></tr></tbody></table></div>
+<p><strong>Types by structure</strong></p>
+<ul><li><p><strong>Structured:</strong> the same fixed questions in the same order for every respondent. Easy to compare.</p></li><li><p><strong>Semi-structured:</strong> a set of main questions with freedom to probe further. The most common type in research.</p></li><li><p><strong>Unstructured:</strong> an open conversation guided by a topic only. Flexible but hard to compare.</p></li></ul>
+<p><strong>The interview schedule</strong></p>
+<p>The <strong>interview schedule</strong> is the written list of questions and prompts the interviewer follows. It usually contains:</p>
+<ol><li><p>Title, date, time, place and interviewer&#39;s name</p></li><li><p>Respondent&#39;s code or name (with consent)</p></li><li><p>A short introduction stating the purpose and promising confidentiality</p></li><li><p>Warm-up questions, then the main questions, then closing questions</p></li><li><p>Prompts and probes, such as &quot;Can you give an example?&quot;</p></li><li><p>Space to record answers or notes</p></li><li><p>A closing thank-you</p></li></ol>
+<p><strong>Strengths</strong></p>
+<ul><li><p>Detailed, in-depth answers</p></li><li><p>The interviewer can clarify and probe</p></li><li><p>High response rate compared with mailed questionnaires</p></li><li><p>Suitable for people who cannot read or write well</p></li></ul>
+<p><strong>Limitations</strong></p>
+<ul><li><p>Time-consuming and costly to conduct and transcribe</p></li><li><p>Interviewer bias, such as tone or reactions, can influence answers</p></li><li><p>Small samples, so results are hard to generalise</p></li><li><p>Respondents may give answers they think are expected</p></li></ul>
+<p><strong>Caribbean example:</strong> A researcher studying how hurricane recovery affected small businesses in Roseau, Dominica, interviews five business owners using a semi-structured schedule and records the interviews with their permission.</p>
+<h2 id="2-focus-groups">2. Focus Groups</h2>
+<p>A <strong>focus group</strong> is a guided discussion with a small group of people, usually 6 to 10, who share a common characteristic related to the topic. A <strong>moderator</strong> leads the discussion while a <strong>note-taker</strong> or recording device captures what is said.</p>
+<p>The researcher is interested in how opinions form and change as participants react to one another, not only in individual answers.</p>
+<p><strong>Roles</strong></p>
+<ul><li><p><strong>Moderator:</strong> introduces the topic, keeps the discussion on track, makes sure everyone speaks, and stays neutral.</p></li><li><p><strong>Note-taker:</strong> records key points, quotes and group dynamics.</p></li><li><p><strong>Participants:</strong> share views openly and respect others&#39; turns to speak.</p></li></ul>
+<p><strong>The focus group schedule</strong></p>
+<p>The <strong>focus group schedule</strong> (also called a discussion guide) outlines the flow of the session. It usually includes:</p>
+<ol><li><p>Welcome, purpose of the study, ground rules and confidentiality</p></li><li><p>An icebreaker so participants feel comfortable</p></li><li><p>Main discussion questions, ordered from general to specific</p></li><li><p>Probes and follow-up prompts</p></li><li><p>A closing round where each person adds a final thought</p></li><li><p>Thanks and a reminder of how the findings will be used</p></li></ol>
+<p><strong>Strengths</strong></p>
+<ul><li><p>Collects many views quickly</p></li><li><p>Group interaction can reveal ideas that individual interviews miss</p></li><li><p>Useful for testing a product, message or idea before launch</p></li></ul>
+<p><strong>Limitations</strong></p>
+<ul><li><p>Dominant speakers can silence others</p></li><li><p>Participants may follow the group instead of stating their true opinion (<strong>groupthink</strong>)</p></li><li><p>Sensitive topics may not be shared openly</p></li><li><p>Results cannot be generalised to a whole population</p></li></ul>
+<p><strong>Caribbean example:</strong> A media company in Guyana holds a focus group with eight secondary students to learn which social media platforms they use for news before redesigning its website.</p>
+<h2 id="3-surveys-and-questionnaires">3. Surveys and Questionnaires</h2>
+<p>A <strong>survey</strong> is a method of collecting data from a large number of people. The most common instrument is the <strong>questionnaire</strong>, a written set of questions that respondents answer themselves or that a researcher reads out. Surveys produce mainly quantitative data that can be counted and shown in tables and charts.</p>
+<p><strong>Ways of administering a survey</strong></p>
+<div class="tw"><table><thead><tr><th>Mode</th><th>How it works</th><th>Main advantage</th><th>Main drawback</th></tr></thead><tbody><tr><td>Online</td><td>Link sent by email, social media or an app such as Google Forms</td><td>Fast, cheap, easy to analyse</td><td>Excludes people without internet access</td></tr><tr><td>Face to face</td><td>Researcher hands out or reads the questionnaire in person</td><td>High response rate, can explain questions</td><td>Time-consuming, interviewer presence may influence answers</td></tr><tr><td>Telephone</td><td>Questions asked by phone</td><td>Reaches scattered respondents quickly</td><td>Calls may be ignored, limited length</td></tr><tr><td>Mail</td><td>Paper questionnaire posted with a return envelope</td><td>Reaches people without internet, no interviewer bias</td><td>Low response rate, slow</td></tr></tbody></table></div>
+<p><strong>Types of questions</strong></p>
+<ul><li><p><strong>Closed-ended:</strong> fixed answers to choose from, such as yes/no, multiple choice, rating scales (for example, a Likert scale from Strongly Agree to Strongly Disagree) or ranking. Easy to analyse.</p></li><li><p><strong>Open-ended:</strong> respondents answer in their own words. Rich in detail but harder to analyse.</p></li><li><p><strong>Contingency (filter) questions:</strong> answered only if a previous answer applies, such as &quot;If yes, how often?&quot;</p></li></ul>
+<p><strong>Rules for good questionnaire design</strong></p>
+<ol><li><p>Use clear, simple language the respondents understand.</p></li><li><p>Ask one thing per question. Avoid double-barrelled questions such as &quot;Is the service fast and friendly?&quot;</p></li><li><p>Avoid leading questions, such as &quot;Don&#39;t you agree that...?&quot;</p></li><li><p>Avoid vague or sensitive wording, and keep personal questions to the end.</p></li><li><p>Order questions logically, from easy to difficult.</p></li><li><p>Give a cover note stating the purpose, confidentiality and how to return the form.</p></li><li><p>Provide clear instructions and enough space for answers.</p></li><li><p>Pilot test the questionnaire on a few people before using it widely.</p></li></ol>
+<p><strong>Strengths</strong></p>
+<ul><li><p>Collects data from many people at low cost</p></li><li><p>Anonymity encourages honest answers</p></li><li><p>Standard questions make results easy to compare and analyse statistically</p></li></ul>
+<p><strong>Limitations</strong></p>
+<ul><li><p>Respondents may misunderstand questions and cannot ask for help</p></li><li><p>Low response rates, especially for mailed and online forms</p></li><li><p>Answers may be careless, incomplete or untruthful</p></li><li><p>Little depth compared with interviews</p></li></ul>
+<p><strong>Caribbean example:</strong> A student in Belize surveys 100 students at Calabash Point Secondary and Sandbox Tree College on mobile data spending, using an online questionnaire with closed-ended and Likert scale questions.</p>
+<h2 id="4-observation">4. Observation</h2>
+<p><strong>Observation</strong> is the method of watching and recording people&#39;s behaviour, events or conditions as they happen, instead of asking about them. It shows what people actually do, which can differ from what they say they do.</p>
+<p><strong>Types of observation</strong></p>
+<ul><li><p><strong>Participant observation:</strong> the researcher joins the group being studied and takes part in its activities.</p></li><li><p><strong>Non-participant observation:</strong> the researcher watches from outside without taking part.</p></li><li><p><strong>Overt observation:</strong> the people know they are being observed.</p></li><li><p><strong>Covert observation:</strong> the people do not know. This raises ethical issues and needs careful justification.</p></li><li><p><strong>Structured observation:</strong> behaviour is recorded using a prepared schedule or checklist.</p></li><li><p><strong>Unstructured observation:</strong> the researcher records whatever seems relevant in field notes.</p></li></ul>
+<p><strong>Observation schedule and checklist</strong></p>
+<p>An <strong>observation schedule</strong> is a planned form for recording what is seen, usually at set times or intervals. An <strong>observation checklist</strong> is a simpler list of behaviours or items that the researcher ticks off as they occur.</p>
+<p>A good schedule or checklist contains:</p>
+<ol><li><p>Date, time, location and name of the observer</p></li><li><p>The purpose of the observation</p></li><li><p>A list of specific, observable behaviours or items to look for</p></li><li><p>Space to tick, tally or note how often and how long each occurs</p></li><li><p>A comments section for unexpected events</p></li></ol>
+<p><strong>Sample observation checklist: customer service at a Kingstown shop</strong></p>
+<div class="tw"><table><thead><tr><th>Behaviour observed</th><th>Yes</th><th>No</th><th>Notes</th></tr></thead><tbody><tr><td>Customer greeted within one minute</td><td></td><td></td><td></td></tr><tr><td>Staff member makes eye contact</td><td></td><td></td><td></td></tr><tr><td>Product information explained</td><td></td><td></td><td></td></tr><tr><td>Payment processed correctly</td><td></td><td></td><td></td></tr><tr><td>Customer thanked on leaving</td><td></td><td></td><td></td></tr></tbody></table></div>
+<p><strong>Strengths</strong></p>
+<ul><li><p>Records real behaviour as it happens</p></li><li><p>Does not depend on respondents&#39; memory or honesty</p></li><li><p>Useful for people who cannot be interviewed, such as young children</p></li></ul>
+<p><strong>Limitations</strong></p>
+<ul><li><p>Time-consuming and cannot explain why people behave as they do</p></li><li><p><strong>Hawthorne effect:</strong> people may change their behaviour when they know they are being watched</p></li><li><p>Observer bias, because two observers may interpret the same event differently</p></li><li><p>Ethical concerns about privacy and consent</p></li></ul>
+<h2 id="5-document-analysis">5. Document Analysis</h2>
+<p><strong>Document analysis</strong> is the systematic study of existing written, visual or recorded material to answer a research question. The researcher does not collect new data from people. The documents are <strong>secondary sources</strong> that already exist.</p>
+<p><strong>Sources of documents</strong></p>
+<ul><li><p><strong>Public records:</strong> government reports, census data, laws, policies, minutes of meetings</p></li><li><p><strong>Media:</strong> newspapers, magazines, websites, radio and television broadcasts, social media posts</p></li><li><p><strong>Organisational documents:</strong> annual reports, memos, emails, brochures, school records</p></li><li><p><strong>Personal documents:</strong> diaries, letters, photographs, journals</p></li><li><p><strong>Archives and statistics:</strong> historical records, published statistics, previous research studies</p></li></ul>
+<p><strong>Steps in document analysis</strong></p>
+<ol><li><p>State the research question the documents must help answer.</p></li><li><p>Locate and select relevant documents.</p></li><li><p>Check the document&#39;s authenticity, credibility, representativeness and meaning.</p></li><li><p>Read closely and record key points, quotes and patterns.</p></li><li><p>Code or group the information into themes or categories.</p></li><li><p>Interpret the findings and relate them to the research question.</p></li></ol>
+<p><strong>Evaluating a document</strong></p>
+<div class="tw"><table><thead><tr><th>Criterion</th><th>Question to ask</th></tr></thead><tbody><tr><td>Authenticity</td><td>Is it genuine and what it claims to be?</td></tr><tr><td>Credibility</td><td>Is the author or source trustworthy and free of serious error?</td></tr><tr><td>Representativeness</td><td>Is it typical of its kind, or an unusual example?</td></tr><tr><td>Meaning</td><td>Is the content clear, and what was it written to achieve?</td></tr><tr><td>Currency</td><td>Is it recent enough for the research purpose?</td></tr></tbody></table></div>
+<p><strong>Strengths</strong></p>
+<ul><li><p>Low cost and easy to access</p></li><li><p>Non-reactive, because the documents are not affected by being studied</p></li><li><p>Allows study of past events and long-term change</p></li></ul>
+<p><strong>Limitations</strong></p>
+<ul><li><p>Documents may be biased, incomplete or written for a different purpose</p></li><li><p>Some documents are confidential or hard to obtain</p></li><li><p>Cannot be questioned to explain what they mean</p></li></ul>
+<p><strong>Caribbean example:</strong> A researcher compares how The Daily Herald reported on Hurricane Irma recovery over several years by analysing articles for key themes.</p>
+<h2 id="choosing-the-right-method">Choosing the Right Method</h2>
+<p>Choose the method by asking what you need to know, from whom, and how much time and money you have. Many studies combine methods, which is called <strong>triangulation</strong> and makes findings more reliable.</p>
+<div class="tw"><table><thead><tr><th>Method</th><th>Data produced</th><th>Sample size</th><th>Time and cost</th><th>Best for</th></tr></thead><tbody><tr><td>Interview</td><td>Qualitative, in depth</td><td>Small</td><td>High</td><td>Personal experiences and detailed opinions</td></tr><tr><td>Focus group</td><td>Qualitative, group views</td><td>Small groups</td><td>Medium</td><td>Testing ideas and exploring attitudes</td></tr><tr><td>Survey / questionnaire</td><td>Mainly quantitative</td><td>Large</td><td>Low</td><td>Measuring opinions or habits across many people</td></tr><tr><td>Observation</td><td>Qualitative or quantitative</td><td>Small to medium</td><td>High</td><td>Real behaviour and events</td></tr><tr><td>Document analysis</td><td>Qualitative or quantitative</td><td>Depends on documents</td><td>Low</td><td>Past events, trends and official positions</td></tr></tbody></table></div>
+<p><strong>Ethical research checklist</strong></p>
+<ul><li><p>Obtain informed consent before collecting data.</p></li><li><p>Protect confidentiality and anonymity.</p></li><li><p>Explain the purpose honestly and allow people to withdraw.</p></li><li><p>Store data securely and report findings accurately.</p></li><li><p>Acknowledge all sources used.</p></li></ul>
+<h2 id="review-questions">Review Questions</h2>
+<ol><li><p>Distinguish between a <strong>method</strong> and an <strong>instrument</strong> of data collection, giving one example of each.</p></li><li><p>Describe <strong>three</strong> ways in which an interview can be conducted.</p></li><li><p>State <strong>two</strong> advantages and <strong>two</strong> disadvantages of using focus groups.</p></li><li><p>What is an <strong>interview schedule</strong>, and what should it contain?</p></li><li><p>Explain the difference between <strong>closed-ended</strong> and <strong>open-ended</strong> questions. Give one example of each.</p></li><li><p>Identify <strong>three</strong> problems to avoid when writing questionnaire items.</p></li><li><p>A researcher wants to find out how students use their lunch break at school. Justify why <strong>observation</strong> would be suitable, and name one limitation of the method.</p></li><li><p>Explain what is meant by the <strong>Hawthorne effect</strong>.</p></li><li><p>List <strong>four</strong> sources of documents a researcher could analyse, and state how the researcher can judge whether a document is credible.</p></li><li><p>A researcher wishes to study public opinion on a new tourism policy in The Bahamas. Recommend two data collection methods and justify your choices.</p></li></ol>
+<p><strong>Suggested answers</strong></p>
+<ol><li><p>A method is the way data is gathered, such as a survey. An instrument is the tool used to record it, such as a questionnaire.</p></li><li><p>Face to face, by telephone and online (video call or live chat).</p></li><li><p>Advantages: many views are collected quickly, and group interaction reveals new ideas. Disadvantages: dominant members may silence others, and participants may follow the group (groupthink).</p></li><li><p>It is the written list of questions and prompts the interviewer follows. It contains an introduction, ordered questions, probes, space for answers and a closing.</p></li><li><p>Closed-ended questions have fixed answers, such as &quot;Do you own a smartphone? Yes / No&quot;. Open-ended questions let respondents answer freely, such as &quot;Why do you prefer this brand?&quot;</p></li><li><p>Any three of: leading questions, double-barrelled questions, vague wording, difficult language, sensitive questions placed early, illogical order.</p></li><li><p>Observation shows actual behaviour rather than reported behaviour. Limitation: it is time-consuming, or people may change their behaviour when watched.</p></li><li><p>People alter their behaviour because they know they are being observed.</p></li><li><p>Any four of: government reports, newspapers, websites, annual reports, diaries, minutes, statistics. Credibility is judged by checking the author, source, date, accuracy and possible bias.</p></li><li><p>A survey would gather views from many residents, and interviews with officials or business owners would add depth. Combining the two (triangulation) makes the findings more reliable.</p></li></ol>
+</article><p class="credit">CAPE Communication Studies</p></main>
+<script>document.querySelectorAll('input[type=checkbox][disabled]').forEach(function(c,i){c.disabled=false;var k='chk-'+location.pathname+'-'+i;try{c.checked=localStorage.getItem(k)==='1'}catch(e){}c.addEventListener('change',function(){try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});</script>
+</body></html>

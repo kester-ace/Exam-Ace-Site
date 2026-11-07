@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en-GB" data-gs-own>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper 02 Practice Bank</title>
+<meta name="description" content="Past and practice Paper 02s for CAPE Digital Media Unit 1, with timed exam mode, mark schemes, self-marking, a topic filter and a Dial it down support mode.">
+<style>
+/* Paper 02 Practice Bank: same night palette as the other course games. Print is light. */
+:root{
+  --bg:#081221; --bg2:#0d1b30; --panel:#12233d; --panel2:#172d4c; --panel3:#1d375b; --line:#284670; --line2:#355a8a;
+  --text:#eaf2fb; --muted:#a5b8d1; --dim:#7b90ad;
+  --primary:#ff7a59; --primary-hi:#ff9a7f; --on-primary:#1a0d08;
+  --focus:#ffe27a; --accent:#2ee6c5; --gold:#ffc53d; --violet:#b48dff;
+  --m1:#63a4ff; --m2:#ffc53d; --m3:#7fdc8f;
+  --good:#52d98f; --bad:#ff6b6b;
+  --r:14px; --r-sm:10px;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:"Avenir Next","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);background-image:radial-gradient(1200px 600px at 85% -10%,rgba(46,230,197,.10),transparent 60%),radial-gradient(900px 500px at -10% 20%,rgba(255,122,89,.08),transparent 60%);background-attachment:fixed;color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:8px}
+[hidden]{display:none!important}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 16px 0}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.15;margin:0}
+h2{font-size:clamp(1.3rem,3.2vw,1.8rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:750}
+h4{font-size:.98rem;font-weight:700}
+p{margin:.45em 0}
+a{color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.88rem}
+ul,ol{padding-left:1.3em;margin:.4em 0}
+svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-logo{width:46px;height:46px;flex:none}
+h1{font-size:clamp(1.35rem,3.4vw,2rem);font-weight:800;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+.sub{display:block;color:var(--muted);font-size:.82rem;letter-spacing:.04em;margin-top:3px}
+.modes{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap}
+.modes button{border:0;background:transparent;border-radius:999px;padding:8px 13px;font-weight:650;color:var(--muted);min-height:40px}
+.modes button[aria-pressed="true"]{background:var(--panel3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.dialbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px}
+.switch{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:4px 0;font-weight:700;min-height:40px;text-align:left}
+.switch .track{width:46px;height:26px;border-radius:99px;background:var(--bg2);border:1px solid var(--line2);position:relative;flex:none;transition:background .15s}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.switch[aria-pressed="true"] .track{background:var(--accent)}
+.switch[aria-pressed="true"] .track::after{transform:translateX(20px);background:#04211c}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--panel2);padding:9px 14px;font-weight:650;min-height:44px;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--panel3);border-color:#4a71a6}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn.primary:hover{background:var(--primary-hi)}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:6px 11px;font-size:.88rem}
+.btn.accent{background:transparent;border-color:var(--accent);color:var(--accent)}
+.btn[aria-expanded="true"].accent{background:rgba(46,230,197,.14)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:14px 0;min-width:0}
+.kicker{display:inline-block;font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:700}
+.lead{color:var(--muted);max-width:70ch}
+
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+.pcard{text-align:left;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-height:120px}
+.pcard b{font-family:var(--display);font-size:1.25rem}
+.pcard .k{font-size:.8rem;color:var(--muted)}
+.pcard[aria-pressed="true"]{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary);background:var(--panel2)}
+.meter{height:5px;border-radius:5px;background:var(--panel3);overflow:hidden;margin-top:auto}
+.meter i{display:block;height:100%;background:var(--accent);width:0}
+
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:700;border:1px solid var(--line2);background:var(--bg2);color:var(--muted);white-space:nowrap}
+.pill.marks{color:var(--gold);border-color:rgba(255,197,61,.5)}
+.pill.M1{color:var(--m1);border-color:rgba(99,164,255,.5)}
+.pill.M2{color:var(--m2);border-color:rgba(255,197,61,.5)}
+.pill.M3{color:var(--m3);border-color:rgba(127,220,143,.5)}
+.pill.cmd{color:var(--violet);border-color:rgba(180,141,255,.5)}
+.pill.prac{color:var(--primary);border-color:rgba(255,122,89,.5)}
+.pills{display:flex;flex-wrap:wrap;gap:5px}
+
+.paperhead{display:grid;gap:10px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:.9rem}
+.facts b{color:var(--text)}
+.instr{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 14px;font-size:.92rem}
+.flag{border-left:4px solid var(--gold);background:rgba(255,197,61,.08);padding:8px 12px;border-radius:8px;font-size:.9rem}
+.stim{border-left:4px solid var(--accent);background:rgba(46,230,197,.06);padding:10px 14px;border-radius:8px}
+.figs{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.figs figure{margin:0;text-align:center;background:#fff;border-radius:10px;padding:8px}
+.figs img{display:block;width:150px;height:auto;max-width:100%}
+.figs figcaption{color:#333;font-size:.82rem;margin-top:4px}
+
+.timer{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(13,27,48,.96);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;margin:12px 0}
+.clock{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:1.45rem;font-weight:800;min-width:6.2ch}
+.clock.low{color:var(--gold)} .clock.out{color:var(--bad)}
+.tally{font-size:.9rem;color:var(--muted)}
+.tally b{color:var(--text)}
+
+.q{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin:14px 0;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.qhead h3{margin-right:auto}
+.qbody{padding:4px 16px 12px}
+.qfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line);background:var(--bg2)}
+.part{padding:14px 0;border-bottom:1px dashed var(--line)}
+.part:last-child{border-bottom:0}
+.ptop{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.plabel{font-family:var(--display);font-weight:800;color:var(--accent);margin-right:6px}
+.ptext{margin:6px 0 8px;max-width:78ch}
+.ctx{font-size:.84rem;color:var(--dim);margin-bottom:4px}
+textarea.ans{width:100%;min-height:110px;resize:vertical;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px;line-height:1.5;display:block}
+textarea.ans:focus{border-color:var(--accent)}
+.panels{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.panels label{font-size:.82rem;color:var(--muted);font-weight:700;display:block;margin-bottom:3px}
+.panels textarea.ans{min-height:120px}
+.wc{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--dim);margin-top:4px}
+.wc .ok{color:var(--good)}
+.pracnote{font-size:.85rem;color:var(--muted);background:rgba(255,122,89,.07);border:1px dashed rgba(255,122,89,.45);border-radius:8px;padding:6px 10px;margin:0 0 8px}
+
+.dial{margin:8px 0;border:1px solid rgba(46,230,197,.45);background:rgba(46,230,197,.06);border-radius:var(--r-sm);padding:12px 14px;display:grid;gap:10px}
+.dial h4{color:var(--accent)}
+.frame{display:grid;gap:6px}
+.frame .fr{display:grid;grid-template-columns:minmax(78px,auto) 1fr;gap:8px;align-items:start;background:var(--bg2);border-radius:8px;padding:6px 10px;font-size:.92rem}
+.frame .fr b{color:var(--gold);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starters button{border:1px dashed var(--line2);background:var(--bg2);border-radius:8px;padding:5px 9px;font-size:.88rem;text-align:left}
+.terms span{display:inline-block;border-radius:6px;background:var(--panel3);padding:2px 8px;margin:2px;font-size:.86rem}
+.worked{background:var(--bg2);border-radius:8px;padding:8px 12px;font-size:.92rem}
+.worked .wq{font-weight:700}
+
+.ms{margin-top:10px;border:1px solid rgba(255,197,61,.45);border-radius:var(--r-sm);background:rgba(255,197,61,.05);padding:10px 14px}
+.mslabel{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.pts{list-style:none;padding:0;margin:8px 0;display:grid;gap:6px}
+.pts li{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;background:var(--bg2);border-radius:8px;padding:7px 10px}
+.pts li.on{background:rgba(82,217,143,.12);box-shadow:inset 3px 0 0 var(--good)}
+.pts label{display:flex;gap:10px;align-items:flex-start;flex:1;cursor:pointer;min-width:0}
+.pts input[type=checkbox]{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--good)}
+.pts .pm{color:var(--gold);font-weight:700;font-size:.82rem;white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;flex:none}
+.seg button{border:0;background:transparent;min-width:34px;min-height:32px;font-weight:700;font-size:.86rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--good);color:#06210f}
+.seg button[aria-pressed="true"][data-v="0"]{background:var(--panel3);color:var(--text)}
+.ptxt{flex:1;min-width:0}
+.model{margin-top:8px}
+.model summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px;display:flex;align-items:center}
+.model div{background:var(--bg2);border-radius:8px;padding:8px 12px;white-space:pre-line}
+.mnote{font-size:.86rem;color:var(--muted);font-style:italic}
+.score{font-family:var(--display);font-weight:800;color:var(--good)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line2);background:var(--bg2);border-radius:999px;padding:6px 12px;font-size:.88rem;font-weight:650;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#04211c}
+.chip small{opacity:.75;margin-left:3px}
+.grp{margin-top:10px}
+.grp>h4{margin:12px 0 4px;color:var(--muted);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase}
+
+.cwgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.cw{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.cw h3{color:var(--violet)}
+.cw .len{font-size:.86rem;color:var(--gold);margin-top:6px}
+.cw .eg{font-size:.88rem;color:var(--muted);margin-top:6px}
+.tbl{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+
+footer.foot{max-width:1100px;margin:28px auto 0;padding:18px 16px 30px;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem;text-align:center}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line2);border-radius:10px;padding:10px 16px;z-index:50;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+
+#print{display:none}
+@media (max-width:560px){
+  .wrap{padding:12px 12px 0}
+  .card,.qbody,.qhead,.qfoot{padding-left:12px;padding-right:12px}
+  .modes{width:100%;display:grid;grid-template-columns:1fr 1fr;border-radius:14px}
+  .modes button{padding:8px 6px;font-size:.9rem;border-radius:10px}
+  .pts li>.ptxt{flex-basis:100%}
+  .pts li .seg{margin-left:auto}
+  .frame .fr{grid-template-columns:1fr}
+  .pts li{flex-wrap:wrap}
+}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff!important;color:#000;font-size:11pt}
+  body>*:not(#print){display:none!important}
+  #print{display:block!important;color:#000;font-family:Georgia,"Times New Roman",serif}
+  #print h1{font-size:16pt;margin:0 0 4pt} #print h2{font-size:13pt;margin:14pt 0 4pt;border-bottom:1px solid #000;padding-bottom:2pt;break-after:avoid;page-break-after:avoid}
+  #print .pi{font-size:9.5pt;color:#333}
+  #print .pp{margin:8pt 0;break-inside:avoid}
+  #print .pm{float:right;font-weight:bold}
+  #print .lines{border-bottom:1px solid #999;height:22pt}
+  #print .box{border:1px solid #666;height:70mm;margin-top:4pt}
+  #print .sb{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt}
+  #print .sb div{border:1px solid #666;height:48mm;font-size:8pt;padding:2pt}
+  #print ul.ck{list-style:none;padding-left:0} #print ul.ck li::before{content:"\2610  "}
+  #print .mdl{border-left:2pt solid #999;padding-left:6pt;font-size:10pt;white-space:pre-line}
+  #print .flagp{border:1px solid #999;padding:4pt 6pt;font-size:9.5pt;margin:6pt 0}
+  #print .figs img{width:110px} #print .figs figure{border:1px solid #ccc}
+  #print .foot{margin-top:16pt;font-size:9pt;text-align:center;color:#444}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script data-lockdown>/* Lockdown exam mode client for games (Developed by Kester Small). Inside the course iframe it asks the parent course to run lockdown (full screen of the parent page, overlays, log). Opened on its own it loads ../tools/lockdown.js. */
+(function () {
+  if (window.LDX) return;
+  var framed = false; try { framed = window.parent && window.parent !== window; } catch (e) { framed = true; }
+  var mode = null, sendLocal = null, n = 0, pend = {}, H = {}, st = { active: false, paste: true, types: null, adjust: false, locks: {} };
+  function recv(d) {
+    if (!d || typeof d.type !== 'string' || d.type.indexOf('ldx:') !== 0) return;
+    if (d.reqId && pend[d.reqId]) { var f = pend[d.reqId]; delete pend[d.reqId]; f(d); }
+    if (d.type === 'ldx:state') { st.active = !!d.active; if ('paste' in d) st.paste = !!d.paste; }
+    else if (d.type === 'ldx:locks' && d.locks) { st.locks = d.locks; if (H.locks) H.locks(st.locks); }
+    else if (d.type === 'ldx:force-submit') { if (H.forceSubmit) H.forceSubmit(); }
+    else if (d.type === 'ldx:online') { var els = document.querySelectorAll('[data-ldx-online="' + d.attemptId + '"]'); for (var i = 0; i < els.length; i++) els[i].textContent = d.status === 'sent' ? 'Sent to the online exam log.' : 'Not sent online (saved on this device only).'; }
+  }
+  function post(m) { if (mode === 'frame') window.parent.postMessage(m, '*'); else if (mode === 'local') sendLocal(m); }
+  function req(type, o) { return new Promise(function (res) { var id = 'r' + (++n); pend[id] = res; o = o || {}; o.type = type; o.reqId = id; post(o); }); }
+  function apply(d) { st.types = d.types || null; st.adjust = !!d.adjust; st.locks = d.locks || {}; if (d.css && !document.getElementById('ldx-css')) { var s = document.createElement('style'); s.id = 'ldx-css'; s.textContent = d.css; (document.head || document.documentElement).appendChild(s); } }
+  var ready = new Promise(function (res) {
+    function local() {
+      function link() { sendLocal = window.COURSE_LOCKDOWN.connectLocal(recv); mode = 'local'; req('ldx:hello').then(function (d) { apply(d); res(true); }); }
+      if (window.COURSE_LOCKDOWN) return link();
+      var s = document.createElement('script'); s.src = '../tools/lockdown.js';
+      s.onload = function () { if (window.COURSE_LOCKDOWN) link(); else res(false); }; s.onerror = function () { res(false); };
+      (document.head || document.documentElement).appendChild(s);
+    }
+    if (!framed) return local();
+    var done = false;
+    window.addEventListener('message', function (ev) {
+      if (ev.source !== window.parent) return; var d = ev.data;
+      if (!done && d && d.type === 'ldx:here') { done = true; mode = 'frame'; apply(d); res(true); return; }
+      if (mode === 'frame') recv(d);
+    });
+    try { window.parent.postMessage({ type: 'ldx:hello', reqId: 'hello' }, '*'); } catch (e) { }
+    setTimeout(function () { if (!done) { done = true; local(); } }, 900);
+  });
+  /* guards inside this iframe (the parent course guards its own page) */
+  function on() { return mode === 'frame' && st.active; }
+  function inAns(t) { return !!(t && t.closest && t.closest('input:not([type=radio]):not([type=checkbox]),textarea,[contenteditable="true"]')); }
+  function ev(m) { post({ type: 'ldx:event', detail: m }); }
+  document.addEventListener('keydown', function (e) {
+    if (!on()) return; var k = (e.key || '').toLowerCase(), c = e.ctrlKey || e.metaKey;
+    if (k === 'printscreen') { ev('screenshot key'); return; } if (!c) return;
+    var m = { c: 'copy', x: 'cut', v: 'paste', a: 'select-all', p: 'print', s: 'save', u: 'view source' }[k]; if (!m) return;
+    if (k === 'a' && inAns(e.target)) return; if (k === 'v' && inAns(e.target) && !st.paste) return;
+    e.preventDefault(); e.stopPropagation(); ev(m);
+  }, true);
+  ['copy', 'cut', 'paste'].forEach(function (t) { document.addEventListener(t, function (e) { if (!on()) return; if (t === 'paste' && inAns(e.target) && !st.paste) return; e.preventDefault(); e.stopPropagation(); ev(t); }, true); });
+  document.addEventListener('selectstart', function (e) { if (on() && !inAns(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', function (e) { if (on()) e.preventDefault(); }, true);
+  document.addEventListener('drop', function (e) { if (on()) { e.preventDefault(); ev('drag and drop'); } }, true);
+  document.addEventListener('contextmenu', function (e) { if (on()) { e.preventDefault(); ev('right-click menu'); } }, true);
+  window.addEventListener('beforeprint', function () { if (on()) ev('print'); });
+  window.addEventListener('blur', function () { if (on()) post({ type: 'ldx:blur' }); });
+  var coverEl = null;
+  var L = window.LDX = {
+    ready: ready,
+    on: function (k, f) { H[k] = f; },
+    active: function () { return st.active; },
+    required: function (type) { return ready.then(function (ok) { return !!(ok && st.types && st.types[type] && !st.adjust); }); },
+    isLocked: function (id) { return !!st.locks[id]; },
+    begin: function (o) { return ready.then(function (ok) { return ok ? req('ldx:begin', { testId: o.testId, kind: o.kind, title: o.title, name: o.name || '', cls: o.cls || '' }) : { ok: true, off: true, unavailable: true }; }); },
+    end: function (o) { return mode ? req('ldx:end', { score: o && o.score || null, attemptId: o && o.attemptId }) : Promise.resolve({}); },
+    showLock: function (id) { return mode ? req('ldx:showlock', { testId: id }) : Promise.resolve({}); },
+    cover: function (kind, title, text, btn, fn) {
+      L.uncover(); var c = coverEl = document.createElement('div'); c.dataset.k = kind;
+      c.setAttribute('style', 'position:fixed;inset:0;z-index:2147480000;display:grid;place-items:center;padding:16px;background:#0B1736;color:#FFFFFF;font:16px/1.5 system-ui,sans-serif;text-align:center');
+      c.innerHTML = '<div style="max-width:520px"><h2 style="margin:0 0 8px;font-size:1.4rem"></h2><p style="margin:0 0 16px"></p><button type="button" style="font:700 1rem system-ui,sans-serif;padding:12px 20px;border-radius:999px;border:2px solid #E7B21E;background:#E7B21E;color:#0B1736;cursor:pointer;min-height:44px"></button></div>';
+      c.querySelector('h2').textContent = title; c.querySelector('p').textContent = text; var b = c.querySelector('button'); b.textContent = btn; b.onclick = fn;
+      document.body.appendChild(c); setTimeout(function () { try { b.focus(); } catch (e) { } }, 30); return c;
+    },
+    uncover: function () { if (coverEl) { coverEl.remove(); coverEl = null; } },
+    covered: function () { return coverEl ? coverEl.dataset.k : ''; }
+  };
+})();
+</script>
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<a class="sr" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="11" fill="#172d4c" stroke="#355a8a"/><path d="M14 13h15l6 6v17H14z" fill="#0d1b30" stroke="#2ee6c5" stroke-width="2" stroke-linejoin="round"/><path d="M18 22h13M18 27h13M18 32h8" stroke="#ff7a59" stroke-width="2.4" stroke-linecap="round"/><circle cx="35" cy="35" r="7" fill="#ffc53d"/><path d="M35 31.5V35l2.3 1.6" stroke="#1a0d08" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+    <div><h1>Paper 02 <span>Practice Bank</span></h1><span class="sub">CAPE Digital Media Unit 1 · Exam practice</span></div>
+  </div>
+  <nav class="modes" aria-label="Sections">
+    <button type="button" data-view="papers" aria-pressed="true">Papers</button>
+    <button type="button" data-view="topics" aria-pressed="false">By topic</button>
+    <button type="button" data-view="cmd" aria-pressed="false">Command words</button>
+    <button type="button" data-view="about" aria-pressed="false">About</button>
+  </nav>
+</header>
+<div class="dialbar">
+  <button type="button" class="switch" id="dialAll" aria-pressed="false"><span class="track" aria-hidden="true"></span><span>Dial it down</span></button>
+  <span class="muted small">Turn this on to open sentence starters, a planning frame, key terms and a worked example under every question. Each question also has its own Dial it down button.</span>
+</div>
+<main id="main" tabindex="-1">
+  <section id="v-papers"></section>
+  <section id="v-topics" hidden></section>
+  <section id="v-cmd" hidden></section>
+  <section id="v-about" hidden></section>
+</main>
+</div>
+<footer class="foot">Paper 02 Practice Bank · Digital Media Unit 1 · Kester Small</footer>
+<div id="live" class="sr" aria-live="polite"></div>
+<div id="print" aria-hidden="true"></div>
+<script>
+/* Paper 02 Practice Bank data. Question text keeps the source wording; obvious typos fixed only. */
+const TOPICS = {
+  ip:        {n:'Intellectual property and licensing', mod:'M1'},
+  web:       {n:'Evolution of the web', mod:'M1'},
+  products:  {n:'Digital media products', mod:'M1'},
+  platforms: {n:'Digital media platforms', mod:'M1'},
+  media:     {n:'Traditional and new media', mod:'M1'},
+  impact:    {n:'Impact and benefits of digital media', mod:'M1'},
+  careers:   {n:'Careers and job opportunities', mod:'M1'},
+  tools:     {n:'Digital media tools', mod:'M1'},
+  users:     {n:'Digital users', mod:'M2'},
+  business:  {n:'Business opportunities and challenges', mod:'M2'},
+  funding:   {n:'Funding', mod:'M2'},
+  currency:  {n:'Digital currency', mod:'M2'},
+  skills:    {n:'Skills and dispositions', mod:'M2'},
+  work:      {n:'Modern work environment', mod:'M2'},
+  creative:  {n:'Creative design process', mod:'M3'},
+  preprod:   {n:'Pre-production and planning', mod:'M3'},
+  audience:  {n:'Target audience', mod:'M3'},
+  comms:     {n:'Digital communication', mod:'M3'},
+  critique:  {n:'Media critique and editing', mod:'M3'},
+  practical: {n:'Practical production task', mod:'M3'}
+};
+
+/* Command words: meaning, words per mark (guide), frame type */
+const CMD = {
+  define:     {n:'Define', mean:'Give the precise meaning of a term. Say what category it belongs to, then the feature that makes it different. An example can secure the second mark.', wpm:15, frame:'define'},
+  state:      {n:'State', mean:'Give a short, clear answer with no explanation needed. One valid point per mark.', wpm:6, frame:'list'},
+  identify:   {n:'Identify', mean:'Pick out and name the item. One valid point per mark.', wpm:6, frame:'list'},
+  name:       {n:'Name', mean:'Give the name or term only. One valid point per mark.', wpm:5, frame:'list'},
+  list:       {n:'List', mean:'Write a short list of items, one per line. One valid item per mark.', wpm:5, frame:'list'},
+  outline:    {n:'Outline', mean:'Give the main points briefly, without full detail. About one clear sentence per mark.', wpm:12, frame:'list'},
+  describe:   {n:'Describe', mean:'Give an account of the features or characteristics: what it is like, what happens. You do not need to say why.', wpm:18, frame:'peel'},
+  explain:    {n:'Explain', mean:'Give reasons, causes or how something works. Use "because", "so" or "this means" to show the link, and give an example.', wpm:20, frame:'peel'},
+  justify:    {n:'Justify', mean:'Support a choice or decision with reasons and evidence from the scenario.', wpm:20, frame:'peel'},
+  distinguish:{n:'Distinguish', mean:'Show the difference between two things. Describe each one and link them with "whereas".', wpm:18, frame:'compare'},
+  discuss:    {n:'Discuss', mean:'Write an extended answer that explores the issue, its causes and effects, and gives examples. Where relevant, consider more than one side.', wpm:25, frame:'peel'},
+  evaluate:   {n:'Evaluate', mean:'Weigh up strengths and weaknesses, then reach a supported judgement.', wpm:25, frame:'peel'},
+  suggest:    {n:'Suggest', mean:'Propose a sensible idea or improvement and apply it to the situation. Say what to change and why it helps.', wpm:18, frame:'peel'},
+  trace:      {n:'Trace', mean:'Show how something developed over time, stage by stage, in order.', wpm:20, frame:'sequence'},
+  critique:   {n:'Critique', mean:'Judge the strengths and weaknesses of a piece of work against criteria, using specific evidence from it.', wpm:25, frame:'peel'},
+  create:     {n:'Create / design', mean:'Produce the product, sketch or plan. You are marked against criteria such as relevance, content, technique and presentation, not word count.', wpm:0, frame:'practical'}
+};
+
+/* Worked examples of a SIMILAR question, by topic (not the same question). */
+const WORKED = {
+  ip:{q:'Explain the difference between a copyright and a trademark. (4 marks)', a:'A copyright protects an original creative work, such as a song, photograph or video, from being copied or shared without the creator\'s permission. It applies automatically once the work is fixed in a tangible form. <b>Whereas</b> a trademark protects a brand identifier, such as a name, logo or slogan, that distinguishes one business\'s goods from another\'s. For example, a Soca music video is protected by copyright, while the record label\'s logo is protected as a trademark.', why:'Each right is defined (1 + 1) and the difference is made clear with "whereas" (1). The example applies both ideas (1).'},
+  web:{q:'Describe TWO characteristics of Web 2.0. (4 marks)', a:'Web 2.0 is the read-write or social web. First, users can create and upload their own content, such as YouTube videos or blog posts, instead of only reading pages. Second, it is highly interactive: people comment on, share and like content, so communication runs both ways between brands and audiences.', why:'Two characteristics are given (1 + 1) and each is developed with detail or an example (1 + 1).'},
+  products:{q:'Identify ONE digital media product to promote a Carnival j\'ouvert event and justify it for the target audience. (3 marks)', a:'A 20-second vertical reel for Instagram and TikTok. It suits young adult revellers because they spend much of their time on these apps and watch short, energetic clips on their phones. It also has a useful shelf-life, because it can be reposted each year with the dates updated.', why:'The product is named (1). The justification is linked to the audience (1) and to a second criterion, shelf-life (1).'},
+  platforms:{q:'Explain why TikTok is a suitable platform for reaching teenagers. (2 marks)', a:'TikTok is suitable because most teenagers already use it every day, and its algorithm pushes short, entertaining videos to users with similar interests. This means a brand can reach many teens quickly without a large advertising budget.', why:'Reason (1) plus a developed effect, introduced with "this means" (1).'},
+  media:{q:'Distinguish between traditional media and new media. (2 marks)', a:'Traditional media, such as newspapers, radio and television, delivers content one way to a mass audience on a fixed schedule, <b>whereas</b> new media, such as social media and podcasts, is digital, on demand and interactive, so audiences can respond, share and create content.', why:'Each type is characterised (1 + 1), and "whereas" makes the contrast explicit.'},
+  impact:{q:'Explain TWO ways digital media can benefit a small Caribbean restaurant. (4 marks)', a:'First, social media gives the restaurant low-cost reach: a well-shot reel of its johnnycakes can be seen by cruise visitors before they even land, which brings in new customers. Second, it allows two-way engagement: the restaurant can reply to reviews and messages, which builds trust and repeat business.', why:'Two benefits (1 + 1), each explained with its effect on the business (1 + 1).'},
+  careers:{q:'Outline TWO roles of a social media manager. (2 marks)', a:'(1) Plans and schedules posts across the brand\'s platforms using a content calendar. (2) Monitors comments and analytics, then reports on engagement to the business.', why:'One brief, accurate role per mark.'},
+  tools:{q:'Describe TWO reasons why Canva is suitable for creating a school event flyer. (4 marks)', a:'First, Canva is easy to use: it has drag-and-drop templates, so students with little design training can produce a professional layout quickly. Second, it is cloud-based and free for education, so the team can work on the same flyer from different devices without buying software.', why:'Two reasons (1 + 1), each developed with detail (1 + 1).'},
+  users:{q:'Give TWO characteristics of a digital immigrant. (2 marks)', a:'(1) Learned to use digital technology as an adult, so may prefer step-by-step instructions. (2) Often prefers traditional channels such as email, phone calls or printed material over newer apps.', why:'Two accurate characteristics, one mark each.'},
+  business:{q:'Discuss ONE challenge faced by a podcast start-up in the Caribbean. (4 marks)', a:'One challenge is earning money from a small audience. The Caribbean market is small and split across many islands, so a new podcast may struggle to reach the download numbers that advertisers want. Without sponsors, the creator may not be able to cover the cost of microphones, editing software and hosting. To overcome this, the podcast could target the diaspora as well and look for local brand partnerships.', why:'Challenge identified (1), explained with its cause (1), consequence for the business (1), and a developed point (solution or regional context) (1).'},
+  funding:{q:'Explain how crowdfunding can support an independent filmmaker. (2 marks)', a:'Crowdfunding lets the filmmaker raise small amounts of money from many supporters online, for example on Kickstarter. This pays for equipment and editing without taking on a bank loan, and it also builds an audience before release.', why:'What the funding is or does (1), and how it supports the project (1).'},
+  currency:{q:'Define the term "cryptocurrency". (2 marks)', a:'A cryptocurrency is a type of digital currency that exists only electronically (1). It uses cryptography and a decentralised blockchain to record transactions, without a central bank, for example Bitcoin (1).', why:'Category plus a distinguishing feature, with an example.'},
+  skills:{q:'Explain how resilience can help a freelance graphic designer. (2 marks)', a:'Resilience helps a freelancer keep going after rejected pitches or slow months, because they learn from feedback instead of giving up. This means they keep improving their portfolio and eventually win more clients.', why:'Skill applied (1), with an effect (1).'},
+  work:{q:'Explain how video conferencing supports a remote design team. (2 marks)', a:'Video conferencing, such as Microsoft Teams, lets team members in different locations meet face to face online and share their screens. This means they can review designs together in real time without travelling, which saves time and money.', why:'How it works (1) plus the benefit (1).'},
+  creative:{q:'Explain the "ideation" stage of the creative design process. (2 marks)', a:'Ideation is the stage where the designer generates as many possible ideas or solutions as they can, for example by brainstorming or mind mapping (1). This matters because a wide range of ideas gives more options to choose from at the selection stage (1).', why:'What happens at the stage (1) and why it matters (1).'},
+  preprod:{q:'Define the term "storyboard" and state TWO elements of a storyboard panel. (3 marks)', a:'A storyboard is a sequence of sketched panels that plans each shot of a video or animation in order before filming (1). Each panel can include a scene description (1) and the shot type, for example a close-up (1).', why:'Definition (1) and two elements (1 + 1).'},
+  audience:{q:'Create a short profile of the target audience for a Caribbean food vlog. (3 marks)', a:'Gender: male and female, aged 18 to 35. Interests: cooking, travel, food photography, YouTube and Instagram reels. Importance: the vlog helps them learn quick, affordable local recipes and connects diaspora viewers to home.', why:'Each required detail is given in turn: gender (1), interests (1) and importance (1).'},
+  comms:{q:'Explain how a shared cloud folder can help a design team work efficiently. (2 marks)', a:'A shared cloud folder, such as Google Drive, stores all the project files in one place that every member can open from any device. This means nobody works on an out-of-date version, and files do not need to be emailed back and forth.', why:'Use (1) plus efficiency gain (1).'},
+  critique:{q:'Critique the audio in a 30-second tourism promo. (3 marks)', a:'Strength: the steel-pan music suits the Caribbean theme and sets a relaxed mood. Weakness: from about 0:12 the music is louder than the voice-over, so the key message ("Book by 30 June") is hard to hear. Effect: viewers may miss the call to action, so the promo is less effective.', why:'A judgement (1), specific evidence from the clip (1) and its effect on the viewer (1).'},
+  practical:{q:'Plan a 30-second video promoting a beach clean-up for teenagers. (planning task)', a:'Concept: "Leave only footprints". Audience: teenagers aged 13 to 18. Tool: a video editor such as OpenShot or CapCut. Sequence: (1) wide shot of the beach at sunrise, (2) close-ups of litter, (3) medium shots of volunteers working, (4) before-and-after split screen, (5) title card with date and place. Audio: upbeat royalty-free track, ducked under a short voice-over. Text: large sans-serif captions, high contrast. Export: MP4, 1080p, under 30 seconds.', why:'A strong plan covers purpose, audience, tool, sequence, audio, text and export settings. These match the criteria practical tasks are marked on.'}
+};
+
+/* ---------------- PAPERS ---------------- */
+const PAPERS = [
+/* ======================= 2017 ======================= */
+{ id:'p17', year:'2017', title:'CAPE Digital Media Unit 1 Paper 02, May/June 2017', short:'2017',
+  kind:'CXC past paper', time:165, timeNote:'2 hours 45 minutes, as printed on the paper.', total:45,
+  src:'2017_DM_UNIT_1_PAPER_2.pdf (CXC test code 02159020). Two copies were uploaded and they are identical.',
+  msNote:'The source is the question paper only. It has no mark scheme.', suggested:true,
+  instr:['This paper consists of ONE major task.','The task consists of a background, theme, audience and production.','You are required to respond to the entire task. Where appropriate, use the spaces provided for your responses.','A digital media kit has been provided to assist in the production work.','All work, including project and asset files used, MUST be digitally compressed into a SINGLE ZIP FILE and submitted as directed by the invigilator.','You are strongly advised to save your work INTERMITTENTLY.'],
+  note:'This older paper weights the questions 15, 10 and 20 marks. Paper 02 now has three 15-mark questions, one per module.',
+  stim:'<p><b>Guidelines</b></p><p>You have been asked to design a digital media story that promotes physical activities that can be done while on vacation in the Caribbean. This will involve</p><ul><li>the creation of a digital media story using the creative process</li><li>one or more of the following digital media formats: photographs, audio, video.</li></ul><p><b>Theme:</b> Vacationing in the Caribbean<br><b>Audience:</b> Young adults</p>',
+  qs:[
+  { n:'1', title:'Question 1', total:15, parts:[
+    { id:'p17-1a', l:'(a)', m:10, cmd:'create', mod:'M3', t:['preprod','practical'], prac:true,
+      q:'Using a mind map and thumbnails, show the development of your product concept. Your creation MUST include at least FIVE credible branches. <i>(You MUST create your solution as a separate document, label it as "Question 1 (a)" and upload.)</i>',
+      ms:[['Central node clearly names the product concept and theme (physical activities on a Caribbean vacation)',1],['At least FIVE branches are present',1],['Branches are credible and relevant, for example hiking, snorkelling, kayaking, beach volleyball, zip-lining or dance',2],['Sub-branches develop the ideas (audience, media format, locations, message, mood or colour)',2],['At least three thumbnail sketches show possible layouts or shots',2],['Thumbnails link clearly to mind map ideas and show development towards one chosen concept',1],['Work is legible, labelled "Question 1 (a)" and uploaded as instructed',1]],
+      model:'Centre: "Island Moves: an active Caribbean getaway (video story)". Branches: (1) Activities: hiking Gros Piton, snorkelling at Anse Chastanet, kayaking in Marigot Bay, St. Lucia. (2) Audience: young adults aged 18 to 30, adventurous, on Instagram and TikTok. (3) Media: short video clips, drone photographs, upbeat soca audio. (4) Message: "Stay active, explore more". (5) Look and feel: turquoise and sunset orange, bold sans-serif titles. (6) Locations: beaches, trails, lagoons. Thumbnails: frame 1 is a wide establishing shot of the coastline; frame 2 is a GoPro close-up of a snorkeller; frame 3 shows hikers at the summit in a medium shot; frame 4 is the end card with the call to action.',
+      terms:['mind map','central node','branch','sub-branch','thumbnail','concept development','ideation'] },
+    { id:'p17-1b', l:'(b)', m:2, cmd:'state', mod:'M2', t:['funding'],
+      q:'State TWO sources of equity funding that can be considered for funding this product.',
+      ms:[['Angel investors',1],['Venture capitalists or venture capital firms',1],['Equity crowdfunding (investors receive shares)',1],['Business partners or private investors who buy a share of ownership',1],['Accelerators or incubators that invest in exchange for equity',1]],
+      note:'Any TWO, one mark each. Equity means the funder receives a share of ownership, so do not credit loans, grants or donations.',
+      model:'(1) Angel investors. (2) Venture capitalists.',
+      terms:['equity','shares','ownership','angel investor','venture capital'] },
+    { id:'p17-1c', l:'(c)', m:3, cmd:'create', mod:'M3', t:['audience'],
+      q:'Create a short profile of the target audience. Include EACH of the following details:<ul><li>Gender</li><li>Specific interests, which may include sports, gaming, videos, television shows, cartoons and reading</li><li>The importance of this product to the target audience</li></ul>',
+      ms:[['Gender stated (for example, male and female young adults aged 18 to 30)',1],['Specific interests relevant to young adults are given',1],['The importance of the product to this audience is explained',1]],
+      model:'Gender: male and female young adults, aged about 18 to 30. Interests: outdoor sports, fitness, travel vlogs, social media videos and adventure games. Importance: the story shows them affordable, active things to do on a Caribbean holiday, so they can plan trips that keep them healthy and give them content to share.',
+      terms:['target audience','demographic','psychographic','interests'] }
+  ]},
+  { n:'2', title:'Question 2', total:10, parts:[
+    { id:'p17-2a', l:'(a)', m:2, cmd:'name', mod:'M3', t:['creative'],
+      q:'Name the final TWO stages of the creative process.',
+      ms:[['Implementation',1],['Evaluation',1]],
+      note:'The creative process has seven steps: acceptance, analysis, definition, ideation, selection, implementation, evaluation.',
+      model:'Implementation and evaluation.', terms:['implementation','evaluation','creative design process'] },
+    { id:'p17-2bi', l:'(b)(i)', m:1, cmd:'state', mod:'M1', t:['ip'],
+      q:'In an effort to protect your story, would you seek a copyright or a patent?',
+      ms:[['Copyright',1]], model:'Copyright.', terms:['copyright','patent'] },
+    { id:'p17-2bii', l:'(b)(ii)', m:3, cmd:'justify', mod:'M1', t:['ip'],
+      q:'Justify your response in (b) (i) by explaining the difference between a copyright and a patent.',
+      ms:[['Copyright protects original creative works (stories, video, images, audio) as soon as they are fixed in a tangible form',1],['A patent protects a new, useful invention or process and must be applied for and granted',1],['The story is a creative work, not an invention, so copyright is the right protection',1],['Difference in duration: copyright lasts for the creator\'s life plus decades, while a patent lasts about 20 years',1]],
+      note:'Maximum 3.',
+      model:'Copyright protects original creative expression, such as my video story, its photographs and music, automatically from the moment it is created and saved. A patent protects a new invention, such as a device or technical process, and only after the government grants it following an application. My story is a creative work rather than an invention, so copyright is the correct protection.',
+      terms:['original work','fixed form','invention','exclusive rights'] },
+    { id:'p17-2ci', l:'(c)(i)', m:2, cmd:'identify', mod:'M2', t:['business'],
+      q:'Identify TWO types of digital media businesses that could assist with the creation of your story.',
+      ms:[['Video production or post-production company',1],['Photography studio',1],['Audio or recording studio',1],['Animation or motion graphics studio',1],['Stock media agency (photo, video or music library)',1],['Digital marketing or creative agency',1]],
+      note:'Any TWO.', model:'(1) A video production company. (2) An audio recording studio.', terms:['production house','post-production','stock media'] },
+    { id:'p17-2cii', l:'(c)(ii)', m:2, cmd:'describe', mod:'M2', t:['business'],
+      q:'Describe the involvement of any ONE business identified in (c) (i) in the production of your story.',
+      ms:[['States the business\'s role in the production (what it does)',1],['Describes how this improves or completes the story (detail or example)',1]],
+      model:'A video production company would film the hiking and snorkelling scenes with professional cameras and drones. It would then edit the clips, correct the colour and add titles and music, so the finished story looks polished and appeals to young adults.',
+      terms:['filming','editing','colour correction','post-production'] }
+  ]},
+  { n:'3', title:'Question 3', total:20, parts:[
+    { id:'p17-3a', l:'(a)', m:13, cmd:'create', mod:'M3', t:['practical'], prac:true,
+      q:'Create your story from the pieces of media provided (photographs, audio and video), by selecting and using an appropriate digital media tool.',
+      ms:[['An appropriate tool is selected and used (for example OpenShot, iMovie or another video editor)',1],['The media provided is used appropriately',2],['The story has a clear sequence: opening, development and ending',2],['Content is relevant to the theme (active vacation in the Caribbean) and to young adults',2],['Editing techniques are effective (cuts, transitions, pacing)',2],['Audio is synchronised and levels are balanced',1],['Titles and text are legible and correctly spelt',1],['Creativity and visual appeal (colour, composition)',2]],
+      model:'A 45-second story in OpenShot. Open with a drone shot of the coastline and the title "Move the Islands". Cut to clips of hiking, snorkelling and kayaking on the beat of an upbeat track, with a 0.5-second cross-fade between locations. Add short captions naming each activity and end on a call to action: "Plan your active getaway". Audio is lowered under any voice-over.',
+      terms:['timeline','transition','pacing','audio levels','title card','call to action'] },
+    { id:'p17-3b', l:'(b)', m:3, cmd:'create', mod:'M3', t:['practical'], prac:true,
+      q:'Export your finished product into any one of the following formats and then submit it: MPEG2, MP4, AVI, WEBM, WMV, FLV. Ensure that it does not exceed 10 MB.',
+      ms:[['Exported in one of the listed formats',1],['File size does not exceed 10 MB',1],['File named and submitted as directed',1]],
+      model:'Export as MP4 (H.264) at 720p with a moderate bit rate, so that a 45-second video stays under 10 MB. Check the file size before submitting.',
+      terms:['export','codec','resolution','bit rate','file size','MP4'] },
+    { id:'p17-3c', l:'(c)', m:4, cmd:'justify', mod:'M3', t:['practical','critique'],
+      q:'Justify TWO of the pieces of media that you used.',
+      ms:[['First piece of media identified',1],['First piece justified (link to theme, audience or message)',1],['Second piece of media identified',1],['Second piece justified',1]],
+      model:'I used the drone photograph of the beach as my opening shot, because its wide view of turquoise water immediately says "Caribbean vacation" and grabs young adults\' attention. I used the upbeat soca audio track, because its energy matches the theme of physical activity and suits the audience\'s music taste.',
+      terms:['relevance','mood','audience appeal','establishing shot'] }
+  ]}
+]},
+
+/* ======================= 2022 MOCK ======================= */
+{ id:'p22', year:'2022', title:'CAPE Digital Media Practice Mock Paper 2, 2022', short:'2022 mock',
+  kind:'Practice mock paper', time:165, timeNote:'2 hours 45 minutes, as printed on the paper.', total:45,
+  src:'CAPE_DIGITAL_MEDIA_PRACTICE_MOCK_PAPER__2_2022.docx',
+  msNote:'The source has no mark scheme. Marks are printed only for 1(a) and 1(c), so the other allocations are suggested to make three 15-mark questions.', suggested:true,
+  instr:['This paper consists of THREE questions. You will have 2 hours and 45 minutes to answer them.','You MUST answer ALL questions.','Where work is created outside the online platform, use the upload container provided to submit your responses.','All hard copies must be handed over to the invigilator at the end of the examination.'],
+  note:'Question 3 needs a video called examclip.mp4. It was not among the uploads. Use the clip your teacher provides, or any short promotional video, and critique that.',
+  qs:[
+  { n:'1', title:'Question 1', total:15, parts:[
+    { id:'p22-1a', l:'(a)', m:6, cmd:'explain', mod:'M1', t:['ip'],
+      q:'Explain three reasons for the use of Creative Commons licences.',
+      ms:[['Lets creators share work legally while keeping copyright ("some rights reserved"), explained',2],['Gives clear, standard permissions, so users know what they can do without asking, explained',2],['Encourages collaboration, remixing and open education, explained',2],['Increases exposure and attribution for the creator, explained',2],['Gives users free, legal content to reuse, reducing piracy, explained',2],['Licences are recognised internationally and machine-readable, explained',2]],
+      note:'Any THREE: 1 mark for the reason, 1 for the explanation. Maximum 6.',
+      model:'First, Creative Commons lets creators share their work while keeping their copyright, because they choose which rights to give away ("some rights reserved") instead of "all rights reserved". Second, it gives users clear, standard permissions, so a student can see from the licence that they may reuse a photo with credit without having to email the photographer. Third, it encourages collaboration and creativity, because others can legally build on, remix or translate the work, which spreads knowledge and gives the original creator wider exposure.',
+      terms:['Creative Commons','licence','attribution','some rights reserved','remix','open movement'] },
+    { id:'p22-1b', l:'(b)', m:3, cmd:'explain', mod:'M1', t:['ip'],
+      q:'Explain the meaning of EACH of the following licensing terms:<ul><li>Attribution</li><li>No derivative</li><li>No commercial</li></ul>',
+      ms:[['Attribution (BY): users must credit the creator in the way the creator specifies',1],['No derivative (ND, NoDerivatives): the work may be shared only unchanged; no remixes or adaptations',1],['No commercial (NC, NonCommercial): the work may be used only for non-commercial purposes, not to make money',1]],
+      model:'Attribution (BY): anyone who uses the work must credit the original creator, for example by naming them and linking to the licence. No derivative (ND): people may copy and share the work only in its original form; they may not edit, remix or build on it. No commercial (NC): people may use the work only for non-commercial purposes, so they cannot sell it or use it in paid advertising.',
+      terms:['BY','ND','NC','derivative work','commercial use'] },
+    { id:'p22-1c', l:'(c)', m:6, cmd:'explain', mod:'M1', t:['ip'],
+      q:'What are three ways that content creators can legally protect their intellectual property?',
+      ms:[['Register copyright or keep dated evidence of creation, explained',2],['Register a trademark for the brand name or logo, explained',2],['Apply for a patent for an invention or industrial design, explained',2],['Use licences, contracts, terms of use or NDAs, explained',2],['Add copyright notices or watermarks and use DRM, explained',2],['Enforce rights with takedown notices or legal action, explained',2]],
+      note:'Any THREE: 1 mark for the method, 1 for how it protects. Maximum 6.',
+      model:'First, a creator can register a trademark for their brand name and logo with the intellectual property office, which gives them the legal right to stop others using a confusingly similar mark. Second, they can license their work through written contracts or Creative Commons, so the terms of use are legally binding and any breach can be challenged. Third, they can use a copyright notice, watermarks and DRM, and send takedown notices when work is posted without permission, which gives them evidence and a legal route to have it removed.',
+      terms:['register','trademark','patent','licence agreement','watermark','DRM','takedown notice'] }
+  ]},
+  { n:'2', title:'Question 2', total:15, parts:[
+    { id:'p22-2a', l:'(a)', m:3, cmd:'explain', mod:'M3', t:['creative'],
+      q:'Identify and explain TWO stages of the creative process.',
+      ms:[['Two correct stages named (acceptance, analysis, definition, ideation, selection, implementation, evaluation)',1],['First stage explained',1],['Second stage explained',1]],
+      model:'Ideation is the stage where the designer brainstorms many possible solutions, for example by mind mapping or sketching thumbnails. Evaluation is the final stage, where the finished product is tested against the brief and audience feedback to judge how well it solved the problem and what to improve.',
+      terms:['acceptance','analysis','definition','ideation','selection','implementation','evaluation'] },
+    { id:'p22-2bi', l:'(b)(i)', m:2, cmd:'identify', mod:'M3', t:['comms','work'],
+      q:'A virtual team is working remotely on a project. Identify TWO forms of electronic communication that team members can use to collaborate on the project.',
+      ms:[['Email',1],['Video conferencing (for example Zoom, Teams or Google Meet)',1],['Instant messaging or team chat (for example Slack or WhatsApp)',1],['Cloud collaboration or shared documents (for example Google Docs or Drive)',1],['Wikis, blogs or online project boards',1]],
+      note:'Any TWO.', model:'(1) Video conferencing. (2) Cloud-based shared documents.', terms:['synchronous','asynchronous','video conferencing','cloud collaboration'] },
+    { id:'p22-2bii', l:'(b)(ii)', m:4, cmd:'explain', mod:'M3', t:['comms','work'],
+      q:'Explain how team members can use EACH of the electronic communication modes identified in (i) above to work more efficiently.',
+      ms:[['How the first mode is used',1],['Why the first mode improves efficiency',1],['How the second mode is used',1],['Why the second mode improves efficiency',1]],
+      model:'Video conferencing lets the team hold quick daily meetings and share screens to review designs together. This saves travel time and lets them resolve problems in minutes instead of through long email chains. Shared cloud documents let everyone edit the same script or plan at the same time from any device, with comments and version history. This means nobody works from an out-of-date copy and files never need to be emailed back and forth.',
+      terms:['real time','screen sharing','version history','collaboration'] },
+    { id:'p22-2c', l:'(c)', m:6, cmd:'explain', mod:'M2', t:['skills'],
+      q:'Adaptability, innovation and curiosity are three skills that are considered necessary to enhance employability and entrepreneurship. Explain how EACH of these skills can help an entrepreneur.<br>(i) Adaptability<br>(ii) Innovation<br>(iii) Curiosity',
+      ms:[['Adaptability: adjusting to change (technology, markets, crises)',1],['Adaptability: effect on the entrepreneur, with an example',1],['Innovation: creating new products, services or methods',1],['Innovation: effect, for example a competitive edge or new revenue',1],['Curiosity: continually researching, asking questions and learning',1],['Curiosity: effect, for example spotting trends or opportunities early',1]],
+      model:'(i) Adaptability helps an entrepreneur respond to change. When the pandemic closed shops, adaptable owners moved their sales online, which kept their businesses alive. (ii) Innovation helps an entrepreneur create new products or better ways of working, which gives them an edge over competitors. An example is a photographer who offers 360° virtual tours to hotels. (iii) Curiosity drives an entrepreneur to keep learning about new tools and customer needs, so they spot opportunities such as AI-assisted editing or short-form video before their rivals do.',
+      terms:['adaptability','innovation','curiosity','competitive advantage','entrepreneur'] }
+  ]},
+  { n:'3', title:'Question 3', total:15, parts:[
+    { id:'p22-3a', l:'(a)', m:9, cmd:'critique', mod:'M3', t:['critique'],
+      q:'A video titled <b>examclip.mp4</b> has been posted onto the computer desktop. View the clip, then provide a detailed critique of the clip using the following criteria:<br>Editing<br>Choice of images<br>Design and layout',
+      ms:[['Editing: a strength or weakness is identified (cuts, transitions, pacing, continuity, audio sync)',1],['Editing: specific evidence from the clip (scene or time)',1],['Editing: effect on the viewer or message explained',1],['Choice of images: judgement on relevance, quality or resolution',1],['Choice of images: specific evidence',1],['Choice of images: effect explained',1],['Design and layout: judgement on text placement, legibility, colour, composition or branding',1],['Design and layout: specific evidence',1],['Design and layout: effect explained',1]],
+      note:'Three marks per criterion: judgement, evidence and effect.',
+      model:'Editing: the cuts are mostly well timed to the music, but the star-wipe transition at 0:08 looks dated and distracts from the message. Several clips also run too long (0:15 to 0:22), so the pace drags and viewers may lose interest. Choice of images: the beach shots are relevant and bright, but the market image at 0:18 is pixelated, which makes the product look unprofessional. Design and layout: the title text is placed over a busy background in thin yellow letters, so it is hard to read; the logo appears only at the very end, which weakens brand recall.',
+      terms:['pacing','continuity','transition','resolution','composition','rule of thirds','legibility','contrast'] },
+    { id:'p22-3b', l:'(b)', m:6, cmd:'suggest', mod:'M3', t:['critique'],
+      q:'Suggest how the editor can adjust EACH of the following elements to produce a quality video product:<br>Editing<br>Choice of images<br>Design and layout',
+      ms:[['Editing: a specific adjustment',1],['Editing: why it improves quality',1],['Choice of images: a specific adjustment',1],['Choice of images: why it improves quality',1],['Design and layout: a specific adjustment',1],['Design and layout: why it improves quality',1]],
+      note:'The source labels this part "3. a)" a second time. It is shown here as 3(b).',
+      model:'Editing: replace the star-wipe with simple cuts or short cross-fades, and trim each clip to 2 to 3 seconds, so the video flows smoothly and holds attention. Choice of images: swap the pixelated market photo for a high-resolution image or a fresh clip, so the product looks professional on large screens. Design and layout: use a bold sans-serif title with a dark semi-transparent band behind it, placed on a rule-of-thirds line, and show the logo in the opening and closing frames, so the text is legible and the brand is remembered.',
+      terms:['trim','cross-fade','high resolution','lower third','contrast','brand consistency'] }
+  ]}
+]},
+
+/* ======================= 2023 ======================= */
+{ id:'p23', year:'2023', title:'CAPE Digital Media Unit 1 Paper 02, 2023', short:'2023',
+  kind:'Past paper (as supplied)', time:135, timeNote:'No time is printed on this paper. The timer uses the Paper 02 allowance of 2 hours 15 minutes.', total:45,
+  src:'2023_DM_UNIT_1_PAPER_2_2.docx',
+  msNote:'The source has no mark scheme. Questions 1 to 3 have printed marks. Question 4 has none, so 10 marks are suggested, giving 15 for Module 3 and 45 in total.', suggested:true,
+  guided:'p2-2023-guided.html',
+  instr:['Answer ALL questions.','Question 4 is a practical task using the media toolkit provided.'],
+  note:'Theme: Sports in the Caribbean.',
+  qs:[
+  { n:'1', title:'Module 1, Question 1', total:15, parts:[
+    { id:'p23-1i', l:'(i)', m:2, cmd:'state', mod:'M1', t:['ip'],
+      q:'State the purpose of digital rights management (DRM) in digital media production.',
+      ms:[['Protects digital content from unauthorised copying, sharing or distribution',1],['Lets the rights holder control access and use (who, how, on which devices, for how long or for payment)',1]],
+      model:'DRM uses technology to protect digital media from unauthorised copying and distribution. It lets the rights holder control who can access the content and how it is used, for example by limiting it to paying subscribers or to certain devices, as Netflix does.',
+      terms:['DRM','unauthorised','access control','rights holder','licence'] },
+    { id:'p23-1ii', l:'(ii)', m:4, cmd:'justify', mod:'M1', t:['products'],
+      q:'Identify ONE relevant digital media product that can be used to communicate information about spectator sports and sporting events in the Caribbean region. Justify your product choice based on the target audience, shelf-life and its usefulness.',
+      ms:[['A relevant digital media product is identified (for example a short social media video, mobile app, podcast or website)',1],['Justified by target audience',1],['Justified by shelf-life',1],['Justified by usefulness',1]],
+      model:'A short social media video, such as a 30-second reel. Target audience: Caribbean sports fans, young people and visitors mostly watch short videos on their phones, so the reel reaches them where they already are. Shelf-life: it can be reused for recurring events such as CPL cricket each season, with the dates updated. Usefulness: in a few seconds it shows highlights, venues, dates and a call to action to attend or watch.',
+      terms:['digital media product','target audience','shelf-life','usefulness','reel'] },
+    { id:'p23-1iii', l:'(iii)', m:3, cmd:'justify', mod:'M1', t:['ip'],
+      q:'Suggest ONE appropriate intellectual property right that could be assigned to the digital media product identified in (1) (ii). Justify your suggestion.',
+      ms:[['Copyright suggested (accept trademark if the product is a brand name or logo)',1],['It protects original creative works (video, images, music, graphics) automatically',1],['It stops others copying, editing or redistributing without permission, and allows licensing',1]],
+      note:'The source says "(1) (i)", but the product was identified in (1) (ii). Corrected here.',
+      model:'Copyright. The reel is an original creative work combining video, photographs, graphics and music, and copyright protects such work automatically once it is created. This means other people cannot copy, re-upload or edit the reel without permission, and the creator can license it to sponsors or broadcasters.',
+      terms:['copyright','original work','licensing','exclusive rights'] },
+    { id:'p23-1iv', l:'(iv)', m:6, cmd:'trace', mod:'M1', t:['web'],
+      q:'Trace the development of web technology from Web 1.0 to Web 4.0, outlining the main characteristics of EACH evolution of web technology that enables the communication you seek to use for the promotion of sports, via digital media products.',
+      ms:[['Web 1.0: read-only, static pages; one-way communication',1],['Web 2.0: read-write social web; user-generated content, sharing, comments',1],['Web 3.0: semantic or decentralised web; data-driven personalisation, AI and linked data',1],['Web 4.0: symbiotic web; AI agents, IoT, always-connected mobile and real-time interaction',1],['Developments are presented in sequence, linked to sports promotion (first link)',1],['Second clear link to sports communication',1]],
+      model:'Web 1.0 (the read-only web) had static pages, so a sports body could only post fixtures for fans to read, and communication was one way. Web 2.0 (the read-write, social web) let fans comment, share and upload, so clubs could build communities on Facebook and YouTube and fans could post their own match clips. Web 3.0 (the semantic, decentralised web) uses data and AI to personalise feeds, so a cricket fan is automatically shown CPL highlights and ticket offers. Web 4.0 (the symbiotic web) connects people, AI and smart devices in real time, so fans can get live scores on smartwatches, use AI assistants to buy tickets and watch immersive AR replays.',
+      terms:['read-only','read-write','user-generated content','semantic web','personalisation','symbiotic web','IoT'] }
+  ]},
+  { n:'2', title:'Module 2, Question 2', total:15, parts:[
+    { id:'p23-2i', l:'(i)', m:2, cmd:'state', mod:'M2', t:['careers','skills'],
+      q:'State TWO digital media career opportunities that sports enthusiasts, seeking to advance sports as a service, may be able to pursue.',
+      ms:[['Sports content creator or social media manager for a team',1],['Sports videographer or video editor',1],['Sports photographer',1],['Sports podcaster, commentator or live-streamer',1],['Sports graphic designer or motion designer',1],['Sports data or analytics specialist, or esports producer',1]],
+      note:'Any TWO.', model:'(1) Sports videographer or video editor. (2) Social media manager for a sports team.', terms:['career','content creator','videographer'] },
+    { id:'p23-2ii', l:'(ii)', m:2, cmd:'state', mod:'M2', t:['business'],
+      q:'State TWO business opportunities in the digital media industry for regional sports entrepreneurs.',
+      ms:[['Live-streaming sports events',1],['Sports highlights or video production service',1],['Sports app or fantasy league platform',1],['Online ticketing or e-commerce for merchandise',1],['Sports podcast network or sports marketing agency',1]],
+      note:'Any TWO.', model:'(1) A live-streaming service for regional school and club games. (2) A sports highlights production business.', terms:['business opportunity','streaming','e-commerce'] },
+    { id:'p23-2iii', l:'(iii)', m:4, cmd:'discuss', mod:'M2', t:['business'],
+      q:'Discuss ONE potential challenge that could be faced by sports entrepreneurs who wish to be engaged in ONE of the business opportunities stated in 2 (ii).',
+      ms:[['A relevant challenge is identified for the chosen opportunity',1],['The cause of the challenge is explained',1],['The effect on the business is explained',1],['Developed point: regional context, example or a way to reduce the challenge',1]],
+      model:'For a live-streaming business, one challenge is the high cost of equipment combined with unreliable internet. The entrepreneur needs cameras, encoders and strong upload bandwidth at venues that often have poor connectivity. If the stream buffers or drops during a big match, viewers lose trust and sponsors may pull out, which cuts revenue. Because Caribbean markets are small, it is hard to earn back these costs quickly, so the entrepreneur might start by bonding several mobile connections or by partnering with a telecom provider.',
+      terms:['bandwidth','start-up cost','revenue','sponsorship','market size'] },
+    { id:'p23-2iv', l:'(iv)', m:1, cmd:'identify', mod:'M2', t:['funding'],
+      q:'Identify ONE possible source of funding for sports entrepreneurs who wish to capitalise on any of the digital media business opportunities stated in (2) (ii).',
+      ms:[['Any valid source: a government, sports or tourism agency grant; a bank loan; an angel investor; venture capital; crowdfunding; corporate sponsorship; a regional development fund',1]],
+      model:'A grant from a government sports or tourism agency.', terms:['grant','loan','sponsorship','crowdfunding'] },
+    { id:'p23-2v', l:'(v)', m:2, cmd:'explain', mod:'M2', t:['funding'],
+      q:'Explain how the identified source of funding can support sports entrepreneurs in pursuing digital media business opportunities.',
+      ms:[['What the funding pays for (equipment, software, internet, staff, marketing)',1],['How this enables or grows the business (quality, reach, sustainability)',1]],
+      model:'The grant pays for cameras, streaming software and reliable internet without the entrepreneur taking on debt. This means they can produce high-quality streams from the start, attract viewers and sponsors, and reinvest their early income in growing the business.',
+      terms:['capital','debt','reinvest'] },
+    { id:'p23-2vi', l:'(vi)', m:2, cmd:'define', mod:'M2', t:['currency'],
+      q:'Define the term "digital currency".',
+      ms:[['Money or value that exists only in electronic form (no physical notes or coins)',1],['Used to make online payments, transfers or transactions through digital systems',1]],
+      model:'Digital currency is money or value that exists only in electronic form rather than as physical notes or coins. It is stored and transferred through computers, mobile wallets or blockchain networks to pay for goods and services online.',
+      terms:['electronic','digital wallet','transaction','blockchain'] },
+    { id:'p23-2vii', l:'(vii)', m:2, cmd:'name', mod:'M2', t:['currency'],
+      q:'Name TWO types of digital currency that regional patrons could utilise to gain access to digital media products or services.',
+      ms:[['Cryptocurrency (for example Bitcoin or Ethereum)',1],['Central bank digital currency (for example DCash in the ECCU or the Bahamas Sand Dollar)',1],['Stablecoin (for example USDT or USDC)',1],['Virtual or in-platform currency (for example in-game tokens or platform credits)',1]],
+      note:'Any TWO. Specific named currencies such as Bitcoin and Ethereum may be accepted as examples.',
+      model:'(1) Cryptocurrency, for example Bitcoin. (2) Central bank digital currency, for example DCash.',
+      terms:['cryptocurrency','CBDC','stablecoin'] }
+  ]},
+  { n:'3', title:'Module 3, Question 3', total:5, parts:[
+    { id:'p23-3i', l:'(i)', m:3, cmd:'list', mod:'M3', t:['preprod'],
+      q:'List THREE factors that affect the creation of digital media content.',
+      ms:[['Target audience',1],['Purpose or message',1],['Budget',1],['Time available or deadline',1],['Equipment, hardware and software',1],['Skills or personnel',1],['Location',1],['Legal issues (copyright, permissions)',1],['Accessibility, cultural context or intended platform',1]],
+      note:'Any THREE.', model:'(1) Target audience. (2) Budget. (3) Available equipment and software.', terms:['factors affecting production','resources','audience'] },
+    { id:'p23-3ii', l:'(ii)', m:2, cmd:'explain', mod:'M3', t:['preprod'],
+      q:'Explain how ONE factor listed in (i) affects the creation of digital media content.',
+      ms:[['How the factor shapes decisions about the content',1],['A consequence or example',1]],
+      model:'The target audience affects the style, language, length and platform of the content. For example, content for teenagers would be a short, fast-paced vertical video with trending music on TikTok, whereas content for older viewers might be a longer Facebook video with clear narration.',
+      terms:['target audience','tone','format','platform'] }
+  ]},
+  { n:'4', title:'Module 3, Question 4', total:10, parts:[
+    { id:'p23-4', l:'', m:10, cmd:'create', mod:'M3', t:['practical'], prac:true,
+      q:'<p><b>Theme: Sports in the Caribbean</b></p><p><b>Guidelines:</b> You have been asked to design a sports-related digital media product that promotes awareness and engagement in sporting activities in the Caribbean. Your product should aim to encourage healthy lifestyles through active participation in sports. Create your product from the pieces of media provided in the toolkit (photographs, audio and video), by selecting and using an appropriate digital media tool (software).</p><p>Ensure that your finished product (if it is a video) does NOT exceed 30 seconds. If it is a poster, the dimensions should be 8.5 x 11 inches. In creating your digital story, ensure that attention is given to its flow, relevance to the Caribbean and that there is appropriate use of colours and imagery.</p><p>Export your finished product labelled "Question 4" into any ONE of the following formats and submit.</p><ul><li>If the product is a video: MPEG2, MP4 or AVI</li><li>If the product is a flyer or poster: PNG or PDF</li></ul>',
+      ms:[['Relevant to the theme: sports awareness, engagement and healthy lifestyles',2],['Toolkit media used appropriately with a suitable tool',2],['Flow: a logical, cohesive sequence or layout',2],['Relevance to the Caribbean',1],['Appropriate use of colour and imagery',1],['Specifications met: video no longer than 30 s, or poster 8.5 x 11 in',1],['Exported in an accepted format and labelled "Question 4"',1]],
+      note:'No marks are printed for Question 4. Ten marks are suggested so that Module 3 totals 15. The 2023 Locked Guided Practice scores this task out of 15.',
+      model:'Video plan: "Move Caribbean: Get Active". 0 to 4 s: drone clip of a packed stadium with a bold title. 4 to 20 s: quick cuts of cricket, football, netball and athletics clips from the toolkit, each with a one-word caption (Play, Run, Swim, Win). 20 to 27 s: families jogging on the beach with the caption "Healthy island, healthy you". 27 to 30 s: end card with a call to action and hashtag. Colours: sea blue, sunshine yellow and green for health. Audio: upbeat soca track under the whole video. Export: MP4, 1080p, 30 s, saved as "Question 4.mp4".',
+      terms:['flow','composition','colour psychology','aspect ratio','export','call to action'] }
+  ]}
+]},
+
+/* ======================= 2024 ======================= */
+{ id:'p24', year:'2024', title:'CAPE Digital Media Unit 1 Paper 02, 2024', short:'2024',
+  kind:'Past paper (as supplied)', time:135, timeNote:'No time is printed on this paper. The timer uses the Paper 02 allowance of 2 hours 15 minutes.', total:45,
+  src:'2024_DM_UNIT_1_PAPER_2_1.docx',
+  msNote:'The source has no mark scheme and no printed marks. All mark allocations are suggested, to give three 15-mark questions, in line with the Paper 02 format.', suggested:true,
+  instr:['Answer ALL questions.','Question 3(b) is a practical task using the images provided.'],
+  note:'Theme: COVID-19 public health communication.',
+  qs:[
+  { n:'1', title:'Module 1, Question 1', total:15,
+    stem:'<p>(a) Since the rise of Covid-19, the Ministry of Health would like you to develop a digital campaign to spread awareness of the symptoms, remedies and preventative measures for the disease. The campaign must be relevant even though the country is post-pandemic.</p>',
+    parts:[
+    { id:'p24-1ai', l:'(a)(i)', m:3, cmd:'state', mod:'M1', t:['audience','preprod'],
+      q:'State THREE factors which would have to be taken into consideration when developing your digital media campaign strategy.',
+      ms:[['Target audience',1],['Purpose, message or campaign objectives',1],['Choice of platform or channel',1],['Budget and resources',1],['Timing and relevance in a post-pandemic context',1],['Cultural context and language',1],['Accessibility',1],['Accuracy of health information and legal or ethical issues (permissions, data)',1],['Evaluation measures (reach, engagement)',1]],
+      note:'Any THREE.', model:'(1) Target audience. (2) The platforms to be used. (3) The accuracy and relevance of the message in a post-pandemic context.', terms:['campaign strategy','target audience','platform','message'] },
+    { id:'p24-1aii', l:'(a)(ii)', m:2, cmd:'describe', mod:'M1', t:['audience','preprod'],
+      q:'Describe why ONE factor stated above would be relevant to the campaign.',
+      ms:[['The factor is described',1],['Its relevance to this COVID-19 or post-pandemic campaign is made clear',1]],
+      model:'Target audience is relevant because different groups need different messages and channels. Elderly people and people with chronic illnesses are most at risk, so the campaign must reach them through channels they trust, such as television, WhatsApp and large, easy-to-read graphics, as well as reaching young people on social media.',
+      terms:['vulnerable groups','channel','relevance'] },
+    { id:'p24-1bi', l:'(b)(i)', m:2, cmd:'distinguish', mod:'M1', t:['tools'],
+      stem:'(b) The Ministry of Health decided to pursue a flyer campaign.',
+      q:'Distinguish between the TWO categories of tools which the Ministry of Health team could select from when creating artefacts for the campaign.',
+      ms:[['Proprietary (commercial) software: owned and licensed for a fee, with closed source code (for example Adobe Photoshop, InDesign or Microsoft Publisher)',1],['Open-source (free) software: free to use, with source code that can be viewed and modified (for example GIMP, Inkscape or Scribus)',1]],
+      note:'Suggested interpretation: proprietary versus open-source software. Also accept any other valid pair that is clearly distinguished, such as raster versus vector tools, or desktop versus web-based tools.',
+      model:'Proprietary software, such as Adobe Photoshop, is owned by a company and must be bought or licensed, and users cannot see or change its source code. Open-source software, such as GIMP, is free to download and use, and its source code is publicly available for anyone to modify.',
+      terms:['proprietary','open source','licence','source code'] },
+    { id:'p24-1bii', l:'(b)(ii)', m:3, cmd:'discuss', mod:'M1', t:['tools'],
+      q:'Discuss ONE distinct advantage that one type of software would have over the other.',
+      ms:[['An advantage is identified',1],['The advantage is explained',1],['It is applied to the Ministry\'s flyer campaign',1]],
+      model:'Open-source software has the advantage of no licence cost. A tool such as GIMP or Inkscape can be installed on every computer in the Ministry\'s team without paying yearly subscriptions. This means public money can go towards printing and distributing more flyers instead of software fees, which is especially important for a government campaign on a limited budget.',
+      terms:['cost','licence fee','support','features'] },
+    { id:'p24-1ci', l:'(c)(i)', m:1, cmd:'state', mod:'M1', t:['tools'],
+      q:'State ONE digital media tool that can be utilised to develop artefacts to support a poster campaign.',
+      ms:[['Any suitable tool: Canva, Adobe Photoshop, Illustrator, InDesign or Express, Microsoft Publisher, GIMP, Inkscape, Affinity Designer',1]],
+      model:'Canva.', terms:['graphic design tool'] },
+    { id:'p24-1cii', l:'(c)(ii)', m:4, cmd:'describe', mod:'M1', t:['tools'],
+      q:'Describe TWO reasons why this tool would be suitable for this task.',
+      ms:[['First reason identified',1],['First reason developed with detail',1],['Second reason identified',1],['Second reason developed with detail',1]],
+      model:'First, Canva provides ready-made poster templates with health and awareness layouts, so the team can produce a clear, professional poster quickly even without design training. Second, it is cloud-based with sharing and commenting, so the Ministry\'s health officers can check the medical content and approve the design online before it is printed or posted.',
+      terms:['templates','ease of use','collaboration','export formats'] }
+  ]},
+  { n:'2', title:'Module 2, Question 2', total:15, parts:[
+    { id:'p24-2ai', l:'(a)(i)', m:2, cmd:'state', mod:'M2', t:['users','platforms'],
+      q:'Considering the difference between two types of users, state which platform would be suitable for EACH type of user.',
+      ms:[['Digital natives: a suitable platform (for example Instagram, TikTok, YouTube or Snapchat)',1],['Digital immigrants: a suitable platform (for example Facebook, email, a website, WhatsApp or television)',1]],
+      note:'The two types of users are taken to be digital natives and digital immigrants (Module 2, Objective 1).',
+      model:'Digital natives: TikTok. Digital immigrants: Facebook.', terms:['digital native','digital immigrant'] },
+    { id:'p24-2aii', l:'(a)(ii)', m:4, cmd:'explain', mod:'M2', t:['users','platforms'],
+      q:'Explain why EACH platform stated above is suitable for each type of user.',
+      ms:[['Digital natives: a characteristic of the user',1],['Digital natives: why the platform matches it',1],['Digital immigrants: a characteristic of the user',1],['Digital immigrants: why the platform matches it',1]],
+      model:'Digital natives grew up with technology and prefer fast, visual, mobile content, so TikTok suits them because it delivers short, trending videos they can watch and share instantly. Digital immigrants adopted technology later and prefer familiar, simple interfaces and text, so Facebook suits them because it is easy to navigate and supports longer posts, groups and links to trusted sources.',
+      terms:['characteristics','mobile-first','familiarity','interface'] },
+    { id:'p24-2bi', l:'(b)', m:4, cmd:'discuss', mod:'M2', t:['work'],
+      q:'Discuss how telecommuting and cloud sharing facilitated remote work during the pandemic.',
+      ms:[['Telecommuting explained: working away from the office using the internet and devices',1],['How telecommuting kept work going during lockdowns and social distancing',1],['Cloud sharing explained: files stored online and accessible anywhere',1],['How cloud sharing enabled collaboration (real-time editing, version control, backup)',1]],
+      model:'Telecommuting allowed employees to work from home using laptops, the internet and video conferencing. During lockdowns this kept businesses and schools operating while workers stayed safe from infection. Cloud sharing, such as Google Drive or OneDrive, stored files online so that staff could open them from any location. Teams could edit the same document at the same time and track versions, so collaboration continued without anyone being in the office.',
+      terms:['telecommuting','cloud storage','real-time collaboration','lockdown'] },
+    { id:'p24-2ci', l:'(c)(i)', m:2, cmd:'state', mod:'M2', t:['skills'],
+      q:'State TWO skills needed for an entrepreneur to ensure survival during an unpredictable time such as the Covid-19 pandemic.',
+      ms:[['Adaptability',1],['Innovation or creativity',1],['Problem-solving or critical thinking',1],['Digital literacy',1],['Financial literacy or resource management',1],['Communication or networking',1],['Resilience',1]],
+      note:'Any TWO.', model:'(1) Adaptability. (2) Digital literacy.', terms:['skills','dispositions','resilience'] },
+    { id:'p24-2cii', l:'(c)(ii)', m:3, cmd:'describe', mod:'M2', t:['skills'],
+      q:'Describe how ONE of these two skills would be helpful for a business to cope with challenges brought on by the pandemic.',
+      ms:[['The skill is described',1],['How it is applied to a pandemic challenge',1],['The outcome for the business, or an example',1]],
+      model:'Adaptability is the ability to change plans quickly when conditions change. When the pandemic closed physical stores, an adaptable boutique owner moved to selling through an Instagram shop with WhatsApp ordering and contactless delivery. This kept income flowing and even reached new customers outside the island.',
+      terms:['adaptability','pivot','e-commerce'] }
+  ]},
+  { n:'3', title:'Module 3, Question 3', total:15, parts:[
+    { id:'p24-3ai', l:'(a)(i)', m:2, cmd:'state', mod:'M3', t:['creative'],
+      q:'State TWO steps in the creative process that should be completed when designing a product.',
+      ms:[['Any one step: acceptance, analysis, definition, ideation, selection, implementation, evaluation',1],['A second, different step',1]],
+      model:'(1) Ideation. (2) Evaluation.', terms:['acceptance','analysis','definition','ideation','selection','implementation','evaluation'] },
+    { id:'p24-3aii', l:'(a)(ii)', m:4, cmd:'explain', mod:'M3', t:['creative'],
+      q:'Explain how these steps help in the design and implementation of the product.',
+      ms:[['What happens in the first step',1],['How the first step helps the design or implementation',1],['What happens in the second step',1],['How the second step helps',1]],
+      model:'In ideation, the designer brainstorms many possible solutions through mind maps and thumbnails. This helps because comparing several ideas leads to a stronger, more creative final design instead of the first idea that came to mind. In evaluation, the finished product is tested against the brief and audience feedback. This helps the designer find weaknesses, such as text that is hard to read, and improve them before or after release.',
+      terms:['brainstorm','thumbnails','feedback','brief'] },
+    { id:'p24-3b', l:'(b)', m:9, cmd:'create', mod:'M3', t:['practical'], prac:true,
+      q:'Using the images provided, create a digital poster that will be used by the World Health Organization (WHO) in a social media campaign designed to inform the public about the coronavirus disease. On your poster, you should include information related to the:<ul><li>transmission of the disease</li><li>symptoms associated with the disease</li><li>measures one could take to avoid contracting the disease</li><li>remedies for persons who may have contracted the disease</li></ul><p class="muted small">You can only upload files of the following types: doc, docx, pdf, zip.</p>',
+      ms:[['Accurate information on transmission',1],['Accurate information on symptoms',1],['Accurate information on prevention measures',1],['Accurate information on remedies or what to do if infected',1],['Provided images used appropriately',1],['Clear visual hierarchy and readable layout',1],['Colour and typography suit a public health message',1],['Suitable for social media and credible (WHO branding or source)',1],['Saved and uploaded in an accepted file type',1]],
+      note:'No marks are printed. Nine marks are suggested.',
+      model:'Layout (1080 x 1350 px social post, exported to PDF): heading "COVID-19: Know. Protect. Recover." in bold white on WHO blue. Four colour-coded panels with icons and the provided images. How it spreads: respiratory droplets and aerosols, close contact, touching contaminated surfaces and then the face. Symptoms: fever, cough, tiredness, loss of taste or smell, sore throat. Prevention: get vaccinated, wash or sanitise hands, wear a mask in crowded indoor spaces, keep windows open, stay home when sick. If you are infected: rest, drink fluids, take fever relief, isolate, and seek medical care for difficulty breathing. Footer: WHO logo, "Source: who.int" and a hashtag.',
+      terms:['visual hierarchy','icons','contrast','credibility','call to action'] }
+  ]}
+]},
+
+/* ======================= JAN 2025 SEMESTER EXAM ======================= */
+{ id:'s25', year:'Jan 2025', title:'Digital Media Unit 1 End of Semester One Examination, January 2025 (Paper 2)', short:'Jan 2025 semester exam',
+  kind:'From the semester examinations', time:150, timeNote:'2½ hours, as printed on the paper.', total:75,
+  src:'DIGITAL_MEDIA_UNIT_1_END_OF_FIRST__SEMESTER_EXAMINATION_JANUARY_2025_1.docx',
+  msNote:'The source has printed marks (75 in total) but no mark scheme. It has no multiple-choice section: all five questions are structured or practical.', suggested:true,
+  instr:['This paper consists of FIVE questions. You will have 2 hours and 30 minutes to answer them.','You MUST answer ALL questions.','Write your answers according to the instructions in each section.','Coloured pencils and markers can be used to design graphical elements such as logos and storyboards.'],
+  note:'Five questions worth 75 marks. This is a school semester exam, so its format differs from the 45-mark CXC Paper 02.',
+  stim:'<p>Local clothing label, Carib Couture, is in the process of launching its first line, and is preparing for its first ad campaign, to be aired on television. Its target audience is <b>teenagers aged 13–19 years</b>.</p>',
+  qs:[
+  { n:'1', title:'Question 1', total:20, parts:[
+    { id:'s25-1a', l:'(a)', m:2, cmd:'define', mod:'M3', t:['audience'],
+      q:'Define the term "target audience".',
+      ms:[['The specific group of people a product, message or campaign is aimed at',1],['Shares characteristics such as age, gender, interests or location',1]],
+      model:'A target audience is the specific group of people that a product, message or advertisement is designed to reach. They share characteristics such as age, interests, income or location, for example teenagers aged 13 to 19 for Carib Couture.',
+      terms:['demographic','characteristics','campaign'] },
+    { id:'s25-1bi', l:'(b)(i)', m:3, cmd:'name', mod:'M2', t:['users'],
+      stem:'(b) Given the target demographic for the advertisement:',
+      q:'Name the type of digital user that BEST satisfies the target demographic and give TWO characteristics of the user.',
+      ms:[['Digital native',1],['First characteristic (for example grew up with digital technology, comfortable with new devices, mobile-first)',1],['Second characteristic (for example prefers visual or video content, multitasks, expects instant information, active on social media)',1]],
+      model:'Digital native. (1) They grew up using smartphones and the internet, so new apps feel natural to them. (2) They prefer short, visual content such as videos and memes, and expect information instantly.',
+      terms:['digital native','characteristics'] },
+    { id:'s25-1bii', l:'(b)(ii)', m:3, cmd:'identify', mod:'M1', t:['platforms'],
+      q:'Given the target demographic for the advertisement, identify THREE other platforms that the clothing line can use to advertise its product.',
+      ms:[['Instagram',1],['TikTok',1],['YouTube',1],['Snapchat',1],['Brand website or online store',1],['Pinterest',1],['Influencer partnerships on social media',1]],
+      note:'Any THREE platforms other than television.', model:'(1) TikTok. (2) Instagram. (3) YouTube.', terms:['platform','social media'] },
+    { id:'s25-1ci', l:'(c)(i)', m:6, cmd:'explain', mod:'M1', t:['impact'],
+      q:'Explain THREE ways in which the use of digital media can benefit the company.',
+      ms:[['Wider, even global, reach at low cost, explained',2],['Targeted advertising and analytics to measure results, explained',2],['Two-way engagement and feedback with customers, explained',2],['Online sales around the clock (e-commerce), explained',2],['Brand building through user-generated content and influencers, explained',2]],
+      note:'Any THREE: 1 mark for the benefit, 1 for the explanation. Maximum 6.',
+      model:'First, digital media gives Carib Couture wide reach at low cost: one Instagram reel can be seen by teenagers across the Caribbean and the diaspora for far less than a television slot. Second, it allows targeted advertising with analytics, so the label can show ads only to 13 to 19-year-olds interested in fashion and measure which posts lead to sales. Third, it creates two-way engagement: customers can comment, share outfit photos and tag the brand, which builds loyalty and gives free promotion.',
+      terms:['reach','targeting','analytics','engagement','e-commerce','user-generated content'] },
+    { id:'s25-1cii', l:'(c)(ii)', m:6, cmd:'explain', mod:'M2', t:['business'],
+      q:'Given that the company is Caribbean-based, identify and explain THREE challenges that the company may experience when trying to use digital media as a promotion tool.',
+      ms:[['Limited or costly internet and bandwidth in some territories, explained',2],['Small, fragmented regional market, explained',2],['Online payment access (cards, PayPal restrictions, currencies), explained',2],['Shipping and logistics costs and delays, explained',2],['Competition from large international brands, explained',2],['Skills gaps or the cost of equipment and training, explained',2]],
+      note:'Any THREE: 1 mark for the challenge, 1 for the explanation. Maximum 6. The source numbers the parts of (c) as (iii) and (iv); they are shown here as (c)(i) and (c)(ii).',
+      model:'First, payment access: many Caribbean teenagers and parents do not have credit cards, and some payment services are restricted in the region, so online sales from ads may not convert. Second, shipping costs between islands are high and slow, which makes it hard to fulfil orders generated by regional promotion. Third, Carib Couture competes for attention with large international brands such as Shein and Nike, which have much bigger advertising budgets, so a small label\'s posts can be drowned out.',
+      terms:['connectivity','market size','payment access','logistics','competition'] }
+  ]},
+  { n:'2', title:'Question 2', total:15, parts:[
+    { id:'s25-2a', l:'(a)', m:4, cmd:'explain', mod:'M1', t:['media'],
+      q:'Explain the difference between traditional media and new media, giving ONE example of each. Give ONE example of traditional advertising and ONE example of digital advertising that can be created to promote Carib Couture.',
+      ms:[['Traditional media: one-way, analogue or broadcast, scheduled, mass audience',1],['New media: digital, interactive, on-demand, delivered over the internet',1],['One example of each type of media (for example newspaper or television; social media or podcast)',1],['One traditional advert and one digital advert for Carib Couture (for example a radio jingle or billboard; an Instagram reel or TikTok ad)',1]],
+      model:'Traditional media, such as television and newspapers, sends one-way messages to a mass audience on a fixed schedule, whereas new media, such as Instagram and podcasts, is digital, on demand and interactive, so audiences can respond and share. Traditional advertising: a billboard on Frederick Street in Port of Spain showing the new line. Digital advertising: a sponsored TikTok video of teens styling Carib Couture outfits.',
+      terms:['one-way','interactive','on demand','mass media'] },
+    { id:'s25-2bi', l:'(b)(i)', m:2, cmd:'explain', mod:'M1', t:['platforms'],
+      q:'Explain how Carib Couture can use a website to promote the brand.',
+      ms:[['A use of the website (online store, lookbook or catalogue, brand story, blog)',1],['How this promotes the brand (24/7 access, credibility, SEO, links to social media, email sign-up)',1]],
+      model:'Carib Couture can use a website as an online store and lookbook showing the new line with prices. Because it is available 24/7 and appears in search results, customers can find, trust and buy from the brand at any time, and the site can link to its Instagram and TikTok.',
+      terms:['e-commerce','lookbook','SEO','credibility'] },
+    { id:'s25-2bii', l:'(b)(ii)', m:2, cmd:'justify', mod:'M1', t:['platforms'],
+      q:'Create an appropriate website address (URL) for Carib Couture. Justify your name choice.',
+      ms:[['A suitable, correctly formed URL (for example www.caribcouture.com)',1],['Justification: matches the brand name, short, memorable, easy to spell, appropriate domain',1]],
+      model:'www.caribcouture.com. It uses the exact brand name, so it is easy for customers to remember and find. It is short with no hyphens, and .com is the most widely recognised domain for a business that wants to sell beyond the island.',
+      terms:['URL','domain name','top-level domain'] },
+    { id:'s25-2ci', l:'(c)(i)', m:3, cmd:'name', mod:'M1', t:['careers'],
+      q:'Besides a webmaster, name THREE job opportunities in the digital media field that may arise as a result of the digitisation of Carib Couture\'s services.',
+      ms:[['Social media manager',1],['Content creator or influencer',1],['Graphic designer',1],['Web designer or developer',1],['Fashion photographer or videographer',1],['Digital marketer or SEO analyst',1],['E-commerce manager or UX/UI designer',1]],
+      note:'Any THREE, not including webmaster.', model:'(1) Social media manager. (2) Graphic designer. (3) Fashion videographer.', terms:['job role','digitisation'] },
+    { id:'s25-2cii', l:'(c)(ii)', m:4, cmd:'outline', mod:'M1', t:['careers'],
+      q:'For any TWO of the job opportunities named in (c) (i), outline TWO roles that are associated with EACH.',
+      ms:[['Job 1: first role',1],['Job 1: second role',1],['Job 2: first role',1],['Job 2: second role',1]],
+      model:'Social media manager: (1) plans and schedules posts on Instagram and TikTok using a content calendar; (2) responds to comments and reports on engagement analytics. Graphic designer: (1) creates the visuals for adverts, posts and the website; (2) keeps the brand\'s logo, colours and fonts consistent across all materials.',
+      terms:['content calendar','analytics','brand guidelines'] }
+  ]},
+  { n:'3', title:'Question 3', total:10,
+    stem:'<p>Question 3 refers to the following figures.</p>[[FIGS]]<p>Figure 1 features the logo for French fashion house Chanel, while Figure 2 features the logo for Carib Couture. A lawyer who has viewed the logo for Carib Couture has stated that "it is a trademark infringement lawsuit waiting to happen".</p>',
+    parts:[
+    { id:'s25-3i', l:'(i)', m:2, cmd:'define', mod:'M1', t:['ip'],
+      q:'Define the term "trademark".',
+      ms:[['A recognisable sign, word, symbol, logo or design',1],['That identifies a business\'s goods or services, distinguishes them from others and is legally protected',1]],
+      model:'A trademark is a recognisable word, name, symbol, logo or design that identifies the goods or services of one business and distinguishes them from those of others. Once registered, it is legally protected, so other businesses cannot use it.',
+      terms:['distinguish','brand','registered','legal protection'] },
+    { id:'s25-3ii', l:'(ii)', m:2, cmd:'describe', mod:'M1', t:['ip'],
+      q:'Describe the concept of "trademark infringement".',
+      ms:[['Unauthorised use of a mark that is identical or confusingly similar to someone else\'s trademark',1],['Likely to confuse consumers about the source or association of the goods, which can lead to legal action',1]],
+      model:'Trademark infringement is the unauthorised use of a mark that is identical or confusingly similar to another company\'s trademark on similar goods. It is likely to make customers think the products are connected. Carib Couture\'s interlocking curved "C" shapes closely resemble Chanel\'s logo, and both are fashion brands, so shoppers could be confused and Chanel could sue.',
+      terms:['unauthorised','confusingly similar','consumer confusion','lawsuit'] },
+    { id:'s25-3iii', l:'(iii)', m:6, cmd:'create', mod:'M3', t:['practical','ip'], prac:true,
+      q:'In the box provided, sketch a rough draft of a new logo for Carib Couture, in order to avoid allegations of trademark infringement. <i>(Sketch on paper or in a drawing app; describe your design in the box below.)</i>',
+      ms:[['Original design that avoids interlocking "C" shapes and does not resemble Chanel',2],['Reflects a Caribbean fashion identity (motifs, colour, style)',1],['Brand name included and legible',1],['Simple, scalable and memorable',1],['Neat sketch with colour or typeface notes',1]],
+      model:'Design idea: a stylised hibiscus flower whose petals form a needle and thread, beside "CARIB COUTURE" in an elegant high-contrast serif. Colours: coral and turquoise on cream. The mark avoids interlocking letters entirely, works in one colour at small sizes, and immediately says "Caribbean fashion".',
+      terms:['originality','logomark','wordmark','scalable','colour palette'] }
+  ]},
+  { n:'4', title:'Question 4', total:15,
+    stem:'<p>You have been hired to design the advertisement campaign for Carib Couture and have decided to use a mind map to "get your creative juices flowing".</p>',
+    parts:[
+    { id:'s25-4i', l:'(i)', m:3, cmd:'define', mod:'M3', t:['preprod'],
+      q:'Define the term "mind map".',
+      ms:[['A visual diagram or brainstorming tool',1],['A central idea in the middle with branches of related ideas and sub-ideas radiating out',1],['Used to generate and organise ideas and show the relationships between them',1]],
+      model:'A mind map is a visual brainstorming diagram that places a central idea in the middle of the page, with branches of related ideas and sub-ideas radiating outwards. It is used to generate and organise ideas and show how they connect, for example when planning an ad campaign.',
+      terms:['central node','branches','sub-nodes','brainstorming'] },
+    { id:'s25-4ii', l:'(ii)', m:12, cmd:'create', mod:'M3', t:['preprod','practical'], prac:true,
+      q:'In the space provided, create a mind map for an ad campaign promoting Carib Couture, <b>with at least four branches</b> in the map and at least two sub-nodes for each branch to illustrate the conceptual development of the ad. <i>(Draw it on paper, or type it below as an indented outline.)</i>',
+      ms:[['Central node: Carib Couture ad campaign',1],['Branch 1 relevant to the campaign',1],['Branch 2 relevant',1],['Branch 3 relevant',1],['Branch 4 relevant',1],['Branch 1 has at least two relevant sub-nodes',1],['Branch 2 has at least two relevant sub-nodes',1],['Branch 3 has at least two relevant sub-nodes',1],['Branch 4 has at least two relevant sub-nodes',1],['Ideas show the conceptual development of the ad',2],['Clear and neat, using keywords',1]],
+      model:'Carib Couture ad campaign\n- Audience: teens aged 13 to 19; style-conscious, on TikTok and Instagram\n- Message: "Wear the islands"; confidence and Caribbean pride\n- Visuals: bright coral and turquoise; beach and downtown street locations; diverse teen models\n- Platforms: TV spot (30 s); TikTok and Instagram reels; influencer try-ons\n- Sound: soca-pop beat; short voice-over tagline\n- Call to action: launch-day discount code; #WearTheIslands challenge',
+      terms:['central node','branch','sub-node','concept'] }
+  ]},
+  { n:'5', title:'Question 5', total:15, parts:[
+    { id:'s25-5', l:'', m:15, cmd:'create', mod:'M3', t:['preprod','practical'], prac:true, panels:6,
+      q:'<p><b>Instructions:</b> You have been hired by Carib Couture, a luxury fashion brand that celebrates Caribbean-inspired elegance, vibrant colours and versatile style, to shoot a 30-second ad campaign. Create a 6-panel storyboard for a fashion campaign ad to promote the brand, using the template provided. Each panel should depict a distinct scene or moment in the ad, and the sequence should tell a cohesive story about the Carib Couture collection.</p><p><b>Requirements:</b></p><ol><li>For each panel, include the following:<ul><li><b>Scene description:</b> What is happening in the shot? What is the environment, and what action is taking place?</li><li><b>Shot type:</b> Identify whether the shot is a wide shot, medium shot or close-up.</li><li><b>Text/tagline:</b> Provide any textual overlays or taglines that should appear with the shot.</li></ul></li><li><b>Use clear, concise descriptions</b> to illustrate the flow of the ad. Focus on how the visuals can communicate key themes such as Caribbean-inspired elegance, confidence and versatility.</li></ol>',
+      ms:[['All six panels have a clear scene description',2],['Shot types are correctly identified and varied (wide, medium, close-up)',2],['Text or taglines are appropriate to the brand',2],['The sequence is cohesive, with a beginning, middle and end',3],['The visuals communicate Caribbean-inspired elegance, confidence and versatility',3],['The plan is realistic for a 30-second ad',1],['Descriptions are clear and concise, and the storyboard is neatly presented',2]],
+      model:'Panel 1 (wide shot): sunrise over Pigeon Point, Tobago; a model walks along the shoreline in a flowing coral maxi dress. Text: "Born of the islands." Panel 2 (close-up): hand-stitched hibiscus embroidery on the hem. Text: "Crafted with care." Panel 3 (medium shot): the same model in a tailored linen blazer on colourful Frederick Street in Port of Spain, smiling confidently. Text: "Day to night." Panel 4 (medium shot): three friends of different styles laughing at a beach café in mix-and-match pieces. Text: "Your style, your way." Panel 5 (close-up): the model\'s face at golden hour with gold earrings, looking at the camera. Text: "Confidence is couture." Panel 6 (wide shot): the group on a yacht at sunset, with the logo fading in. Text: "Carib Couture: wear the islands. Shop now."',
+      terms:['wide shot','medium shot','close-up','tagline','sequence','continuity'] }
+  ]}
+]}
+];
+
+const FIG1='data:image/png;base64,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', FIG2='data:image/png;base64,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';
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip=h=>{const d=document.createElement('div');d.innerHTML=h.replace(/<li>/g,'\n- ').replace(/<br\s*\/?>/g,'\n').replace(/<\/p>/g,'\n');return d.textContent.replace(/\n{3,}/g,'\n\n').trim();};
+const FIGHTML='<div class="figs"><figure><img src="'+FIG1+'" alt="Figure 1: the Chanel logo, two interlocking curved C shapes above the word CHANEL"><figcaption>Fig. 1</figcaption></figure><figure><img src="'+FIG2+'" alt="Figure 2: the Carib Couture logo, two curved C shapes back to back with a pointed oval between them, above the words CaribCouture"><figcaption>Fig. 2</figcaption></figure></div>';
+const fill=h=>(h||'').replace('[[FIGS]]',FIGHTML);
+
+/* ---------- index ---------- */
+const ALL=[]; const BYID={};
+PAPERS.forEach(P=>P.qs.forEach(Q=>Q.parts.forEach(pt=>{const o={P,Q,pt};ALL.push(o);BYID[pt.id]=o;})));
+
+/* ---------- state ---------- */
+const KEY='dm-p2bank-v1';
+let S={a:{},tk:{},rv:{},tm:{},dial:false,view:'papers',paper:'p17',topic:'ip',mod:'all',open:{}};
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')S=Object.assign(S,o);}}catch(e){}
+/* saved progress (GameSave): dm-p2bank-v1 already keeps every answer, tick, revealed mark scheme, timer (paused when you leave),
+   the view, paper and topic chosen and Dial it down. "Clear everything on this device" now starts the whole bank over.
+   Start over clears it all, except the record of a lockdown exam you have already submitted. */
+['a','tk','rv','tm','open'].forEach(k=>{if(!S[k]||typeof S[k]!=='object'||Array.isArray(S[k]))S[k]={};});
+if(!['papers','topics','cmd','about'].includes(S.view))S.view='papers';
+if(!PAPERS.some(P=>P.id===S.paper))S.paper=PAPERS[0].id;
+if(S.topic!=='all'&&!TOPICS[S.topic])S.topic='ip';
+if(!['all','M1','M2','M3'].includes(S.mod))S.mod='all';
+S.dial=!!S.dial;
+Object.keys(S.tm).forEach(k=>{const t=S.tm[k];if(!t||typeof t!=='object'||!isFinite(t.left)||t.left<0)delete S.tm[k];else t.left=Math.round(t.left);});
+let gsDead=false;
+const gsHad=Object.keys(S.a).some(k=>typeof S.a[k]==='string'&&S.a[k].trim())||Object.keys(S.tk).length>0||Object.keys(S.rv).length>0;
+if(window.GameSave){GameSave.register([KEY]);GameSave.onReset(()=>{gsDead=true;clearTimeout(saveT);const rep=S.ldxrep&&typeof S.ldxrep==='object'&&Object.keys(S.ldxrep).length?S.ldxrep:null,keep={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('capeDM1.lockdown.')===0)keep[k]=localStorage.getItem(k);}}catch(e){}setTimeout(()=>{Object.keys(keep).forEach(k=>{try{if(localStorage.getItem(k)===null)localStorage.setItem(k,keep[k]);}catch(e){}});if(rep){try{localStorage.setItem(KEY,JSON.stringify({ldxrep:rep}));}catch(e){}}},0);});}
+let saveT=null;
+function save(){if(gsDead)return;clearTimeout(saveT);saveT=setTimeout(saveNow,250);}
+function saveNow(){if(gsDead)return;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+window.addEventListener('pagehide',()=>{pauseAll(true);saveNow();});
+function announce(t){const l=$('#live');l.textContent='';setTimeout(()=>{l.textContent=t;},30);}
+function toast(t){const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+
+/* ---------- marking ---------- */
+function ptScore(pt){const t=S.tk[pt.id]||{};let s=0;pt.ms.forEach((m,i)=>{s+=Math.min(+t[i]||0,m[1]);});return Math.min(s,pt.m);}
+function qScore(Q){let s=0,any=false;Q.parts.forEach(pt=>{if(S.rv[pt.id]){any=true;s+=ptScore(pt);}});return {s,any};}
+function paperScore(P){let s=0,marked=0,parts=0,poss=0;P.qs.forEach(Q=>Q.parts.forEach(pt=>{parts++;if(S.rv[pt.id]){marked++;s+=ptScore(pt);poss+=pt.m;}}));return {s,marked,parts,poss};}
+function answered(P){let n=0,t=0;P.qs.forEach(Q=>Q.parts.forEach(pt=>{t++;if(ansText(pt).trim())n++;}));return {n,t};}
+function ansText(pt){if(pt.panels){let o=[];for(let k=1;k<=pt.panels;k++){const v=S.a[pt.id+'#'+k];if(v&&v.trim())o.push('Panel '+k+': '+v.trim());}return o.join('\n');}return S.a[pt.id]||'';}
+const words=s=>(s.trim().match(/\S+/g)||[]).length;
+function target(pt){const c=CMD[pt.cmd]||CMD.explain;if(!c.wpm)return null;const mid=c.wpm*pt.m;return [Math.max(3,Math.round(mid*.75/5)*5||3),Math.max(5,Math.round(mid*1.25/5)*5)];}
+
+/* ---------- dial it down ---------- */
+const STARTERS={
+  define:['{T} is a type of …','{T} refers to …','It is used to …','For example, …'],
+  list:['1. …','2. …','3. …'],
+  peel:['One reason is … because …','This means that …','For example, in the case of …','As a result, …','A second point is …','Therefore …'],
+  compare:['{A} is … whereas {B} is …','The key difference is that …','For example, … while …'],
+  sequence:['At first, …','This developed into …','Next, …','Today, …','For sports promotion, this means …'],
+  practical:['My product is a … for …','I will use … (software) because …','The opening shows …','The colours … suggest …','I will export it as … because …']
+};
+function frameRows(pt){
+  const c=CMD[pt.cmd]||CMD.explain, f=c.frame;
+  if(f==='list'){const n=Math.min(pt.m,6);return Array.from({length:n},(_,i)=>['Point '+(i+1),'One clear item: a word or short phrase. One mark each.']);}
+  if(f==='define')return [['Term','Name the term.'],['Category','"…is a type of / is the …"'],['Key feature','What makes it different, or what it does.'],['Example','A quick example, if marks allow.']];
+  if(f==='compare')return [['First','Describe the first category or type.'],['Whereas','Describe the second, using "whereas".'],['Example','An example of each.']];
+  if(f==='sequence')return [['Stage 1','Name it and give its main characteristic.'],['Stage 2','What changed?'],['Stage 3','What changed?'],['Stage 4','What changed?'],['Link','How each stage helps the communication asked about.']];
+  if(f==='practical')return [['Purpose','What must the product do, and for whom?'],['Tool','Which software, and why it suits the task.'],['Content','Which provided media you will use, and what each part says.'],['Design','Colour, type, layout or shot choices, and their effect.'],['Specs','Length or size, file format, file name.'],['Check','Tick off each mark-scheme criterion before you submit.']];
+  const n=peelN(pt);
+  const rows=[['P','Point: make one clear point that answers the question.'],['E','Explain: say how or why, using "because" or "this means".'],['E','Example: give a specific example, ideally from the scenario or the Caribbean.'],['L','Link: connect back to the question or the effect.']];
+  if(n>1)rows.push(['Repeat','Write '+n+' PEEL blocks for '+pt.m+' marks, one per point.']);
+  return rows;
+}
+function peelN(pt){return pt.cmd==='discuss'||pt.cmd==='evaluate'||pt.cmd==='critique'?Math.max(1,Math.min(3,Math.round(pt.m/3))):Math.max(1,Math.min(3,Math.round(pt.m/2)));}
+function frameText(pt){
+  const c=CMD[pt.cmd]||CMD.explain;
+  if(c.frame==='list')return Array.from({length:Math.min(pt.m,6)},(_,i)=>(i+1)+'. ').join('\n');
+  if(c.frame==='define')return 'X is a type of … that …\nFor example, …';
+  if(c.frame==='compare')return '… is … whereas … is …\nFor example, …';
+  if(c.frame==='sequence')return 'Web 1.0: …\nWeb 2.0: …\nWeb 3.0: …\nWeb 4.0: …\nFor sports promotion this means …';
+  if(c.frame==='practical')return 'Purpose and audience: …\nTool: …\nContent and sequence: …\nDesign choices: …\nSpecs and export: …';
+  const n=peelN(pt);let s='';for(let i=1;i<=n;i++)s+=(n>1?'Point '+i+': ':'Point: ')+'…\nExplain (because / this means): …\nExample: …\nLink: …\n\n';return s.trim();
+}
+function dialHTML(pt){
+  const c=CMD[pt.cmd]||CMD.explain, w=WORKED[pt.t[0]]||WORKED.practical, tg=target(pt);
+  const st=(STARTERS[c.frame]||STARTERS.peel).map(s=>s.replace('{T}','This term').replace('{A}','The first type').replace('{B}','the second'));
+  return '<div class="dial" data-dial="'+pt.id+'">'+
+   '<div><h4>What "'+esc(c.n)+'" wants</h4><p class="small" style="margin:.2em 0">'+esc(c.mean)+(tg?' For '+pt.m+' mark'+(pt.m>1?'s':'')+', aim for about '+tg[0]+' to '+tg[1]+' words.':'')+'</p></div>'+
+   '<div><h4>Planning frame'+(c.frame==='peel'?' (PEEL)':'')+'</h4><div class="frame">'+frameRows(pt).map(r=>'<div class="fr"><b>'+esc(r[0])+'</b><span>'+esc(r[1])+'</span></div>').join('')+'</div>'+
+   (pt.panels?'':'<div class="row" style="margin-top:6px"><button type="button" class="btn sm" data-act="frame" data-id="'+pt.id+'">Put this frame in my answer box</button></div>')+'</div>'+
+   '<div><h4>Sentence starters</h4><p class="small muted" style="margin:.1em 0 .4em">Tap one to add it to your answer.</p><div class="starters">'+st.map(s=>'<button type="button" data-act="starter" data-id="'+pt.id+'">'+esc(s)+'</button>').join('')+'</div></div>'+
+   '<div class="terms"><h4>Key terms to use</h4>'+(pt.terms||[]).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>'+
+   '<div><h4>Worked example of a similar question</h4><div class="worked"><p class="wq">'+esc(w.q)+'</p><p>'+w.a+'</p><p class="small muted"><b>Why it scores:</b> '+esc(w.why)+'</p></div></div>'+
+  '</div>';
+}
+
+/* ---------- part render ---------- */
+function msHTML(o){
+  const {P,pt}=o, t=S.tk[pt.id]||{};
+  const pts=pt.ms.map((m,i)=>{const v=+t[i]||0;
+    if(m[1]===1)return '<li class="'+(v?'on':'')+'"><label><input type="checkbox" data-act="tick" data-id="'+pt.id+'" data-i="'+i+'"'+(v?' checked':'')+'><span class="ptxt">'+esc(m[0])+'</span></label><span class="pm">1 mark</span></li>';
+    let seg='<span class="seg" role="group" aria-label="Marks for this point">';for(let k=0;k<=m[1];k++)seg+='<button type="button" data-act="seg" data-id="'+pt.id+'" data-i="'+i+'" data-v="'+k+'" aria-pressed="'+(v===k)+'">'+k+'</button>';seg+='</span>';
+    return '<li class="'+(v?'on':'')+'"><span class="ptxt">'+esc(m[0])+' <span class="pm">(up to '+m[1]+')</span></span>'+seg+'</li>';}).join('');
+  const sum=pt.ms.reduce((a,m)=>a+m[1],0);
+  return '<div class="ms" id="ms-'+pt.id+'"><div class="mslabel">'+(P.suggested?'Suggested mark scheme prepared for your teacher to confirm':'Mark scheme')+'</div>'+
+    '<p class="small muted" style="margin:.3em 0">Tick each point your answer makes.'+(sum>pt.m?' Award a maximum of '+pt.m+'.':'')+'</p>'+
+    '<ul class="pts">'+pts+'</ul>'+(pt.note?'<p class="mnote">'+esc(pt.note)+'</p>':'')+
+    '<details class="model"><summary>Model answer</summary><div>'+esc(pt.model)+'</div></details>'+
+    '<p style="margin:.6em 0 0">Your mark: <span class="score" data-pscore="'+pt.id+'">'+ptScore(pt)+'</span> / '+pt.m+'</p></div>';
+}
+function answerHTML(pt){
+  const tg=target(pt);
+  if(pt.panels){let h='<div class="panels">';for(let k=1;k<=pt.panels;k++){const id=pt.id+'#'+k;h+='<div><label for="ta-'+id+'">Panel '+k+'</label><textarea class="ans" id="ta-'+id+'" data-key="'+id+'" data-pid="'+pt.id+'" placeholder="Scene description, shot type, text or tagline">'+esc(S.a[id]||'')+'</textarea></div>';}return h+'</div><div class="wc"><span data-wc="'+pt.id+'">'+words(ansText(pt))+' words</span><span>Sketch the panels on paper too.</span></div>';}
+  return '<label class="sr" for="ta-'+pt.id+'">Your answer to '+esc(pt.l||'this question')+'</label><textarea class="ans" id="ta-'+pt.id+'" data-key="'+pt.id+'" data-pid="'+pt.id+'" placeholder="'+(pt.prac?'Plan your product here, then note what you made and where you saved it.':'Type your answer here.')+'">'+esc(S.a[pt.id]||'')+'</textarea>'+
+   '<div class="wc"><span data-wc="'+pt.id+'">'+words(S.a[pt.id]||'')+' words</span><span>'+(tg?'Aim for about '+tg[0]+' to '+tg[1]+' words':'Marked against criteria, not word count')+'</span></div>';
+}
+function partHTML(o,ctx){
+  const {P,Q,pt}=o, c=CMD[pt.cmd]||CMD.explain;
+  const tags='<div class="pills"><span class="pill marks">'+pt.m+' mark'+(pt.m>1?'s':'')+'</span><span class="pill '+pt.mod+'">'+pt.mod+'</span>'+pt.t.map(t=>'<span class="pill">'+esc(TOPICS[t].n)+'</span>').join('')+'<span class="pill cmd">'+esc(c.n)+'</span>'+(pt.prac?'<span class="pill prac">Practical</span>':'')+'</div>';
+  const open=S.dial||S.open[pt.id];
+  return '<div class="part" id="part-'+pt.id+'">'+
+    (ctx==='topic'?'<div class="ctx">'+esc(P.short)+' · '+esc(Q.title)+' '+esc(pt.l)+'</div>'+(Q.stem?'<details class="small"><summary class="muted" style="cursor:pointer">Show the question stem</summary>'+fill(Q.stem)+'</details>':'')+(P.stim&&ctx==='topic'?'<details class="small"><summary class="muted" style="cursor:pointer">Show the scenario</summary>'+P.stim+'</details>':''):'')+
+    '<div class="ptop"><div>'+(pt.l?'<span class="plabel">'+esc(pt.l)+'</span>':'')+'</div>'+tags+'</div>'+
+    (pt.stem?'<p class="ptext muted">'+pt.stem+'</p>':'')+
+    '<div class="ptext">'+pt.q+'</div>'+
+    (pt.prac?'<p class="pracnote">Practical task: produce this in software or on paper, as your teacher directs. Use the box to plan, then record what you made and where you saved it.</p>':'')+
+    '<div class="row" style="margin-bottom:8px"><button type="button" class="btn sm accent" data-act="dial" data-id="'+pt.id+'" aria-expanded="'+(!!open)+'">Dial it down</button>'+
+    (ctx==='topic'?'<button type="button" class="btn sm" data-act="reveal1" data-id="'+pt.id+'"'+(S.rv[pt.id]?' hidden':'')+'>Reveal mark scheme</button>':'')+'</div>'+
+    (open?dialHTML(pt):'')+
+    answerHTML(pt)+
+    (S.rv[pt.id]?msHTML(o):'')+
+  '</div>';
+}
+function qHTML(P,Q){
+  const sc=qScore(Q), all=Q.parts.every(pt=>S.rv[pt.id]);
+  return '<article class="q" id="q-'+P.id+'-'+Q.n+'"><div class="qhead"><h3>'+esc(Q.title)+'</h3><span class="pill marks">'+Q.total+' marks</span></div><div class="qbody">'+
+    (Q.stem?'<div class="ptext">'+fill(Q.stem)+'</div>':'')+
+    Q.parts.map(pt=>partHTML(BYID[pt.id],'paper')).join('')+'</div>'+
+    '<div class="qfoot">'+(all?'<span class="muted small">Mark scheme revealed.</span>':'<button type="button" class="btn primary sm" data-act="revealQ" data-p="'+P.id+'" data-q="'+Q.n+'">Reveal mark scheme</button>')+'<span class="spacer"></span><span>Self-marked: <span class="score" data-qscore="'+P.id+'-'+Q.n+'">'+(sc.any?sc.s:'–')+'</span> / '+Q.total+'</span></div></article>';
+}
+
+/* ---------- timer ---------- */
+const ticks={};
+function tm(P){if(!S.tm[P.id])S.tm[P.id]={left:P.time*60,run:false,end:0};return S.tm[P.id];}
+function left(P){const t=tm(P);return t.run?Math.max(0,Math.round((t.end-Date.now())/1000)):t.left;}
+function fmt(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(x).padStart(2,'0');}
+function startT(P){const t=tm(P);if(t.run)return;if(t.left<=0)t.left=P.time*60;t.run=true;t.end=Date.now()+t.left*1000;save();loop(P);announce('Timer started.');}
+function pauseT(P){const t=tm(P);if(!t.run)return;t.left=left(P);t.run=false;save();announce('Timer paused.');}
+function pauseAll(silent){PAPERS.forEach(P=>{const t=S.tm[P.id];if(t&&t.run){t.left=left(P);t.run=false;}});}
+function resetT(P){S.tm[P.id]={left:P.time*60,run:false,end:0};save();paintTimer(P);}
+function loop(P){clearInterval(ticks[P.id]);ticks[P.id]=setInterval(()=>{paintTimer(P);const t=tm(P);if(t.run&&left(P)<=0){t.run=false;t.left=0;clearInterval(ticks[P.id]);save();paintTimer(P);if(EX.on&&EX.P===P){toast('Time is up. Your exam has been submitted.');examEnd(P);}else{toast('Time is up. Finish your sentence, then reveal the mark schemes.');announce('Time is up.');}}},1000);}
+function paintTimer(P){const el=$('#clock');if(!el||el.dataset.p!==P.id)return;const s=left(P),t=tm(P);el.textContent=fmt(s);el.classList.toggle('low',s>0&&s<=600);el.classList.toggle('out',s<=0);const b=$('#tStart');if(b){b.textContent=t.run?'Pause':(s<P.time*60&&s>0?'Resume':'Start timer');}}
+
+/* ---------- views ---------- */
+function paperCards(){
+  return '<div class="pgrid">'+PAPERS.map(P=>{const a=answered(P),sc=paperScore(P);return '<button type="button" class="pcard" data-act="pick" data-p="'+P.id+'" aria-pressed="'+(S.paper===P.id)+'"><span class="k">'+esc(P.kind)+'</span><b>'+esc(P.year)+'</b><span class="k">'+fmt(P.time*60).replace(/:00$/,'')+' h · '+P.total+' marks</span><span class="k">'+a.n+'/'+a.t+' answered'+(sc.marked?' · '+sc.s+'/'+sc.poss+' marked':'')+'</span><span class="meter"><i style="width:'+Math.round(a.n/a.t*100)+'%"></i></span></button>';}).join('')+'</div>';
+}
+function renderPapers(){
+  const P=PAPERS.find(x=>x.id===S.paper)||PAPERS[0], sc=paperScore(P);
+  $('#v-papers').innerHTML=
+   '<div class="card"><span class="kicker">Exam practice</span><h2>Choose a paper</h2><p class="lead">Five Paper 02s: CXC 2017, the 2022 practice mock, 2023, 2024 and the January 2025 semester exam. Start the timer, answer every part, then reveal the mark scheme and tick the points you made.</p>'+paperCards()+'</div>'+
+   '<section class="card paperhead" aria-labelledby="ph"><div><span class="kicker">'+esc(P.kind)+'</span><h2 id="ph">'+esc(P.title)+'</h2></div>'+
+   '<div class="facts"><span><b>Time:</b> '+esc(P.timeNote)+'</span><span><b>Total:</b> '+P.total+' marks</span><span><b>Questions:</b> '+P.qs.length+'</span></div>'+
+   '<div class="flag"><b>Mark scheme status:</b> '+esc(P.msNote)+' Every mark scheme here is a suggested mark scheme prepared for your teacher to confirm.</div>'+
+   (P.note?'<p class="small muted">'+esc(P.note)+'</p>':'')+
+   (P.guided?'<p><a href="'+P.guided+'">Prefer step by step? Open the 2023 Locked Guided Practice</a> <span class="muted small">(the same paper with locked, scaffolded stages)</span></p>':'')+
+   '<details class="instr"><summary style="cursor:pointer;font-weight:700">Instructions</summary><ol>'+P.instr.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ol></details>'+
+   '<div class="row"><button type="button" class="btn" data-act="printP">Print paper</button><button type="button" class="btn" data-act="printM">Print mark scheme</button><button type="button" class="btn" data-act="dl">Download my answers</button><button type="button" class="btn ghost" data-act="revealAll">Reveal all mark schemes</button><button type="button" class="btn ghost" data-act="clear">Clear this paper</button></div></section>'+
+   ldxHTML(P)+'<div class="timer" role="group" aria-label="Exam timer"><span class="clock" id="clock" data-p="'+P.id+'" aria-live="off">'+fmt(left(P))+'</span><button type="button" class="btn sm primary" id="tStart" data-act="tstart">Start timer</button><button type="button" class="btn sm ghost" data-act="treset">Reset</button><span class="spacer"></span><span class="tally">Self-marked: <b data-ptotal="'+P.id+'">'+sc.s+'</b> / '+P.total+' <span class="muted">('+sc.marked+' of '+sc.parts+' parts)</span></span></div>'+
+   (P.stim?'<div class="stim">'+P.stim+'</div>':'')+
+   P.qs.map(Q=>qHTML(P,Q)).join('');
+  paintTimer(P);if(tm(P).run)loop(P);
+}
+function renderTopics(){
+  const counts={};ALL.forEach(o=>o.pt.t.forEach(t=>counts[t]=(counts[t]||0)+1));
+  const chip=(t)=>'<button type="button" class="chip" data-act="topic" data-t="'+t+'" aria-pressed="'+(S.topic===t)+'">'+esc(TOPICS[t].n)+'<small>'+counts[t]+'</small></button>';
+  const mods=['M1','M2','M3'];
+  const modName={M1:'Module 1: Understanding Digital Media',M2:'Module 2: The Digital Media Ecosystem',M3:'Module 3: Creative Solution Design'};
+  const list=ALL.filter(o=>S.topic==='all'?(S.mod==='all'||o.pt.mod===S.mod):o.pt.t.includes(S.topic));
+  $('#v-topics').innerHTML='<div class="card"><span class="kicker">Practise by topic</span><h2>Every question on one topic</h2><p class="lead">Pick a topic to see every matching part from all five papers together. Your answers are shared with the Papers view, so work done here also appears there.</p>'+
+   mods.map(m=>'<div class="grp"><h4>'+modName[m]+'</h4><div class="chips">'+Object.keys(TOPICS).filter(t=>TOPICS[t].mod===m&&counts[t]).map(chip).join('')+'</div></div>').join('')+
+   '<div class="grp"><h4>Or a whole module</h4><div class="chips"><button type="button" class="chip" data-act="topic" data-t="all" aria-pressed="'+(S.topic==='all')+'">All topics</button>'+(S.topic==='all'?['all','M1','M2','M3'].map(m=>'<button type="button" class="chip" data-act="mod" data-m="'+m+'" aria-pressed="'+(S.mod===m)+'">'+(m==='all'?'Every module':m)+'</button>').join(''):'')+'</div></div></div>'+
+   '<div class="card"><h3>'+esc(S.topic==='all'?(S.mod==='all'?'All questions':modName[S.mod]):TOPICS[S.topic].n)+' <span class="muted small">· '+list.length+' part'+(list.length===1?'':'s')+', '+list.reduce((a,o)=>a+o.pt.m,0)+' marks</span></h3>'+
+   list.map(o=>partHTML(o,'topic')).join('')+'</div>';
+}
+function renderCmd(){
+  const core=['define','describe','explain','discuss','evaluate','outline'], more=['state','identify','name','list','justify','distinguish','suggest','trace','critique','create'];
+  const len=k=>{const c=CMD[k];if(!c.wpm)return 'Marked against criteria. Plan first, then produce.';return [1,2,4,6].map(m=>m+' mark'+(m>1?'s':'')+' ≈ '+Math.round(c.wpm*m*.75/5)*5+'–'+Math.round(c.wpm*m*1.25/5)*5+' words').join(' · ').replace(/≈ 0–/g,'≈ 5–');};
+  const eg={define:'Define the term "digital currency". (2 marks)',describe:'Describe the concept of "trademark infringement". (2 marks)',explain:'Explain THREE ways in which the use of digital media can benefit the company. (6 marks)',discuss:'Discuss ONE potential challenge that could be faced by sports entrepreneurs. (4 marks)',evaluate:'Evaluate the utility of Canva for a small business. (6 marks)',outline:'Outline TWO roles associated with each job. (4 marks)'};
+  const card=k=>{const c=CMD[k];return '<div class="cw"><h3>'+esc(c.n)+'</h3><p class="small">'+esc(c.mean)+'</p><p class="len">'+len(k)+'</p>'+(eg[k]?'<p class="eg">e.g. '+esc(eg[k])+'</p>':'')+'</div>';};
+  const used={};ALL.forEach(o=>used[o.pt.cmd]=(used[o.pt.cmd]||0)+1);
+  $('#v-cmd').innerHTML='<div class="card"><span class="kicker">CXC command words</span><h2>Read the verb, then match the depth</h2><p class="lead">The command word tells you how deep to go. The marks tell you how many developed points to make. As a rule, one mark is one valid point, and "explain" and "discuss" marks need the reason or effect as well as the point.</p></div>'+
+   '<div class="card"><h3>The big six</h3><div class="cwgrid" style="margin-top:10px">'+core.map(card).join('')+'</div></div>'+
+   '<div class="card"><h3>Marks-to-length guide</h3><div class="tbl"><table><thead><tr><th>Marks</th><th>What the examiner wants</th><th>Typical length</th></tr></thead><tbody>'+
+   '<tr><td>1</td><td>One correct word, phrase or fact (state, name, identify, list)</td><td>A few words</td></tr>'+
+   '<tr><td>2</td><td>A definition with its key feature, or one point plus its explanation</td><td>1 to 2 sentences (about 25 to 45 words)</td></tr>'+
+   '<tr><td>3</td><td>Three points, or one point fully developed: point, explanation, example</td><td>2 to 4 sentences (about 45 to 70 words)</td></tr>'+
+   '<tr><td>4</td><td>Two developed points, each with an explanation or example</td><td>1 short paragraph (about 70 to 110 words)</td></tr>'+
+   '<tr><td>6</td><td>Three developed points, or a discussion with a judgement</td><td>2 short paragraphs (about 110 to 170 words)</td></tr>'+
+   '<tr><td>9 to 15</td><td>Practical tasks and extended work, marked against criteria</td><td>Plan against every criterion</td></tr></tbody></table></div></div>'+
+   '<div class="card"><h3>Other command words in these papers</h3><div class="cwgrid" style="margin-top:10px">'+more.map(card).join('')+'</div></div>'+
+   '<div class="card"><h3>How often each command word appears in this bank</h3><p class="small muted">'+Object.keys(used).sort((a,b)=>used[b]-used[a]).map(k=>esc(CMD[k].n)+': '+used[k]).join(' · ')+'</p></div>';
+}
+function renderAbout(){
+  const rows=PAPERS.map(P=>{let n=0;P.qs.forEach(Q=>n+=Q.parts.length);return '<tr><td><b>'+esc(P.year)+'</b><br><span class="small muted">'+esc(P.kind)+'</span></td><td>'+P.qs.length+' questions, '+n+' parts</td><td>'+P.total+'</td><td>'+esc(P.timeNote)+'</td><td class="small">'+esc(P.msNote)+'</td></tr>';}).join('');
+  $('#v-about').innerHTML='<div class="card"><span class="kicker">About this bank</span><h2>Sources and mark schemes</h2><p class="lead">From the collection of past and practice Paper 02s. The question wording is kept as written, with only obvious typing errors corrected and numbering tidied where noted.</p>'+
+   '<div class="tbl"><table><thead><tr><th>Paper</th><th>Content</th><th>Marks</th><th>Time</th><th>Mark scheme</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+   '<div class="card"><h3>How Paper 02 is examined</h3><p>Paper 02 lasts 2 hours 15 minutes and is worth 20 per cent of the Unit. It has three compulsory questions, one per module, each worth 15 marks (45 in total). The questions can include practical work such as planning, photographing, editing and format conversion, as well as structured and essay questions. Candidates have no internet access, and the assets are delivered on a thumb drive.</p><p class="small muted">Older papers differ: 2017 weights its questions 15, 10 and 20, and the January 2025 semester exam is a 75-mark school paper.</p></div>'+
+   '<div class="card"><h3>About the practical tasks</h3><p>Several questions ask you to produce something: a mind map, a video, a poster, a logo or a storyboard. The original exam toolkits (photographs, audio, video and the 2022 clip examclip.mp4) were not supplied with these papers. Use the media your teacher provides, or your own photographs and video. The answer box is for your plan and a note of what you made.</p></div>'+
+   '<div class="card"><h3>Your work on this device</h3><p class="small">Answers, ticks and timers are saved in this browser only. Use <b>Download my answers</b> on each paper to keep a copy or hand it in.</p><button type="button" class="btn ghost" data-act="wipe">Clear everything on this device</button></div>';
+}
+function render(){
+  $$('.modes button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===S.view)));
+  ['papers','topics','cmd','about'].forEach(v=>$('#v-'+v).hidden=v!==S.view);
+  $('#dialAll').setAttribute('aria-pressed',String(!!S.dial));
+  ({papers:renderPapers,topics:renderTopics,cmd:renderCmd,about:renderAbout})[S.view]();
+}
+
+/* ---------- live updates ---------- */
+function refreshScores(pt){
+  const o=BYID[pt.id];
+  $$('[data-pscore="'+pt.id+'"]').forEach(e=>e.textContent=ptScore(pt));
+  const sc=qScore(o.Q);$$('[data-qscore="'+o.P.id+'-'+o.Q.n+'"]').forEach(e=>e.textContent=sc.any?sc.s:'–');
+  const ps=paperScore(o.P);if(ps.parts&&ps.marked===ps.parts){clearTimeout(refreshScores.t);refreshScores.t=setTimeout(()=>{const q=paperScore(o.P);if(q.marked===q.parts){try { if (window.parent && window.parent !== window) window.parent.postMessage({type:'dm:result',kind:'paper2',id:'p2bank-'+o.P.id,title:'Paper 02 (self-marked): '+o.P.title,score:q.s,max:q.poss||o.P.total,pct:Math.round(q.s/Math.max(1,q.poss||o.P.total)*100)}, '*'); } catch (e) { } /* LMS hook: dm:result */}},4000);}
+  $$('[data-ptotal="'+o.P.id+'"]').forEach(e=>{e.textContent=ps.s;const s=e.parentNode.querySelector('.muted');if(s)s.textContent='('+ps.marked+' of '+ps.parts+' parts)';});
+}
+function rerenderPart(id,ctx){const o=BYID[id],el=$('#part-'+id);if(!el)return;const c=el.querySelector('.ctx')?'topic':'paper';const tmp=document.createElement('div');tmp.innerHTML=partHTML(o,c);el.replaceWith(tmp.firstChild);}
+
+/* ---------- print ---------- */
+function printDoc(P,mode){
+  let h='<h1>'+esc(P.title)+'</h1><p class="pi">'+(mode==='ms'?'Mark scheme · ':'')+'Time: '+esc(P.timeNote)+' · Total: '+P.total+' marks · CAPE Digital Media Unit 1</p>';
+  if(mode==='ms')h+='<div class="flagp"><b>Suggested mark scheme prepared for your teacher to confirm.</b> '+esc(P.msNote)+'</div>';
+  else h+='<p class="pi">Name: ______________________ &nbsp; Form: ________ &nbsp; Date: ____________</p><ol class="pi">'+P.instr.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ol>';
+  if(P.stim)h+='<div class="pp">'+P.stim+'</div>';
+  P.qs.forEach(Q=>{h+='<h2>'+esc(Q.title)+' <span class="pm">['+Q.total+' marks]</span></h2>'+(Q.stem?'<div class="pp">'+fill(Q.stem)+'</div>':'');
+    Q.parts.forEach(pt=>{h+='<div class="pp"><span class="pm">['+pt.m+']</span>'+(pt.stem?'<p>'+pt.stem+'</p>':'')+'<b>'+esc(pt.l)+'</b> '+pt.q;
+      if(mode==='ms'){h+='<ul class="ck">'+pt.ms.map(m=>'<li>'+esc(m[0])+' ('+m[1]+')</li>').join('')+'</ul>'+(pt.note?'<p class="pi"><i>'+esc(pt.note)+'</i></p>':'')+'<p class="pi"><b>Model answer</b></p><div class="mdl">'+esc(pt.model)+'</div>';}
+      else if(pt.panels){h+='<div class="sb">'+Array.from({length:pt.panels},(_,i)=>'<div>Scene '+(i+1)+':</div>').join('')+'</div>';}
+      else if(pt.prac){h+='<div class="box"></div>';}
+      else{const n=Math.max(2,Math.min(12,pt.m*2));h+='<div>'+'<div class="lines"></div>'.repeat(n)+'</div>';}
+      h+='</div>';});});
+  h+='<p class="foot">'+(mode==='ms'?'END OF MARK SCHEME':'END OF EXAM')+'<br>Paper 02 Practice Bank · Digital Media Unit 1 · Kester Small</p>';
+  $('#print').innerHTML=h;
+  try{window.print();}catch(e){}
+}
+
+/* ---------- download ---------- */
+function download(P){
+  const sc=paperScore(P);let t=P.title+'\nPaper 02 Practice Bank · Digital Media Unit 1 · Kester Small\nSaved: '+new Date().toLocaleString('en-GB')+'\n';
+  t+='Self-marked: '+sc.s+' / '+P.total+' ('+sc.marked+' of '+sc.parts+' parts marked)\n'+'='.repeat(60)+'\n';
+  if(S.ldxrep&&S.ldxrep[P.id])t+='\n'+S.ldxrep[P.id].text+'\n'+'='.repeat(60)+'\n';
+  if(P.stim)t+='\n'+strip(P.stim)+'\n';
+  P.qs.forEach(Q=>{t+='\n'+Q.title.toUpperCase()+' ['+Q.total+' marks]\n'+(Q.stem?strip(Q.stem.replace('[[FIGS]]','<p>[Figures 1 and 2]</p>'))+'\n':'');
+    Q.parts.forEach(pt=>{t+='\n'+(pt.l?pt.l+' ':'')+strip(pt.q)+' ['+pt.m+']\n'+'-'.repeat(40)+'\n'+(ansText(pt).trim()||'(no answer yet)')+'\n'+(S.rv[pt.id]?'Self-mark: '+ptScore(pt)+' / '+pt.m+'\n':'');});});
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='Paper02_'+P.short.replace(/[^a-z0-9]+/gi,'_')+'_my_answers.txt';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast('Your answers have been downloaded as a .txt file.');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const v=e.target.closest('.modes button');if(v){S.view=v.dataset.view;save();render();$('#main').focus({preventScroll:true});window.scrollTo(0,0);return;}
+  if(e.target.closest('#dialAll')){S.dial=!S.dial;if(!S.dial)S.open={};save();render();announce(S.dial?'Dial it down is on for every question.':'Dial it down is off.');return;}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act, P=PAPERS.find(x=>x.id===S.paper);
+  if(act==='pick'){S.paper=b.dataset.p;save();render();const h=$('#ph');if(h){h.setAttribute('tabindex','-1');h.focus();}return;}
+  if(act==='tstart'){if(LDXX&&EX.on){toast('The exam timer cannot be paused in lockdown exam mode. Use End exam and submit.');return;}if(LDXX&&!tm(P).run&&LDXX.isLocked('p2bank-'+P.id)){LDXX.showLock('p2bank-'+P.id);return;}if(LDXX&&!tm(P).run){LDXX.required('p2bank').then(q=>{if(q)examStart(P);else{startT(P);paintTimer(P);}});return;}tm(P).run?pauseT(P):startT(P);paintTimer(P);return;}
+  if(act==='treset'){if(confirm('Reset the timer to '+fmt(P.time*60)+'?'))resetT(P);return;}
+  if(act==='revealQ'){const Q=P.qs.find(q=>q.n===b.dataset.q);pauseT(P);paintTimer(P);Q.parts.forEach(pt=>S.rv[pt.id]=true);save();const el=$('#q-'+P.id+'-'+Q.n);const t=document.createElement('div');t.innerHTML=qHTML(P,Q);el.replaceWith(t.firstChild);refreshScores(Q.parts[0]);announce('Mark scheme revealed. Tick the points you made.');const m=$('#ms-'+Q.parts[0].id);if(m)m.scrollIntoView({block:'nearest'});return;}
+  if(act==='revealAll'){pauseT(P);P.qs.forEach(Q=>Q.parts.forEach(pt=>S.rv[pt.id]=true));save();render();announce('All mark schemes revealed.');return;}
+  if(act==='reveal1'){S.rv[b.dataset.id]=true;save();rerenderPart(b.dataset.id);refreshScores(BYID[b.dataset.id].pt);return;}
+  if(act==='dial'){const id=b.dataset.id;if(S.dial){ALL.forEach(o=>S.open[o.pt.id]=true);S.dial=false;$('#dialAll').setAttribute('aria-pressed','false');}S.open[id]=!S.open[id];save();rerenderPart(id);const nb=$('#part-'+id+' [data-act="dial"]');if(nb)nb.focus();return;}
+  if(act==='seg'){const id=b.dataset.id,i=b.dataset.i;(S.tk[id]=S.tk[id]||{})[i]=+b.dataset.v;save();const li=b.closest('li');$$('button',li).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));li.classList.toggle('on',+b.dataset.v>0);refreshScores(BYID[id].pt);return;}
+  if(act==='starter'||act==='frame'){const pt=BYID[b.dataset.id].pt,ta=$('#ta-'+pt.id);if(!ta)return;const add=act==='frame'?frameText(pt):b.textContent;ta.value=(ta.value.trim()?ta.value.replace(/\s*$/,'')+(act==='frame'?'\n\n':' '):'')+add;ta.dispatchEvent(new Event('input',{bubbles:true}));ta.focus();return;}
+  if(act==='printP'){printDoc(P,'paper');return;}
+  if(act==='printM'){printDoc(P,'ms');return;}
+  if(act==='dl'){download(P);return;}
+  if(act==='clear'){if(!confirm('Clear all answers, ticks and the timer for '+P.short+'?'))return;P.qs.forEach(Q=>Q.parts.forEach(pt=>{delete S.a[pt.id];for(let k=1;k<=6;k++)delete S.a[pt.id+'#'+k];delete S.tk[pt.id];delete S.rv[pt.id];}));delete S.tm[P.id];save();render();toast('Paper cleared.');return;}
+  if(act==='wipe'){if(window.GameSave){GameSave.startOver();return;}if(!confirm('Clear every answer, tick and timer saved on this device?'))return;S.a={};S.tk={};S.rv={};S.tm={};S.open={};save();render();toast('Everything cleared.');return;}
+  if(act==='topic'){S.topic=b.dataset.t;if(S.topic!=='all')S.mod='all';save();renderTopics();return;}
+  if(act==='mod'){S.mod=b.dataset.m;save();renderTopics();return;}
+});
+document.addEventListener('change',e=>{const c=e.target.closest('input[data-act="tick"]');if(!c)return;const id=c.dataset.id;(S.tk[id]=S.tk[id]||{})[c.dataset.i]=c.checked?1:0;c.closest('li').classList.toggle('on',c.checked);save();refreshScores(BYID[id].pt);});
+document.addEventListener('input',e=>{const t=e.target.closest('textarea.ans');if(!t)return;S.a[t.dataset.key]=t.value;save();const pt=BYID[t.dataset.pid].pt;$$('[data-wc="'+pt.id+'"]').forEach(w=>{const n=words(ansText(pt)),tg=target(pt);w.textContent=n+' word'+(n===1?'':'s');w.classList.toggle('ok',!!tg&&n>=tg[0]);});});
+window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
+
+/* LDX-GLUE: lockdown exam mode for the timed exam mode (graded) */
+const EX={on:false,P:null};
+const LDXX=window.LDX||null;
+S.ldxrep=S.ldxrep&&typeof S.ldxrep==='object'&&!Array.isArray(S.ldxrep)?S.ldxrep:{};
+if(LDXX){LDXX.required('p2bank').then(q=>{if(q){pauseAll();save();render();}});}
+function ldxHTML(P){
+  if(!LDXX)return '';
+  const tid='p2bank-'+P.id;
+  if(EX.on&&EX.P===P)return '<div class="card" role="status"><b>🔒 Lockdown exam mode is running.</b> Mark schemes, printing, downloads and other papers are switched off until you submit. <div class="row" style="margin-top:8px"><button type="button" class="btn primary" data-act="ldxend">End exam and submit</button></div></div>';
+  let h='';
+  if(LDXX.isLocked(tid))h+='<div class="card"><h3>Locked: see your teacher</h3><p>The timed exam for this paper was submitted automatically after too many violations. You cannot restart it until your teacher unlocks it.</p><button type="button" class="btn" data-act="ldxlock">Show the attempt id and unlock</button></div>';
+  if(S.ldxrep[P.id])h+=S.ldxrep[P.id].html;
+  return h;
+}
+function examStart(P){
+  LDXX.begin({testId:'p2bank-'+P.id,kind:'p2bank',title:'Paper 02 bank: '+P.short}).then(r=>{
+    if(r.ok&&r.attemptId){EX.on=true;EX.P=P;delete S.ldxrep[P.id];startT(P);render();announce('Exam started. The timer is running.');}
+    else if(r.ok){startT(P);paintTimer(P);}
+    else render();
+  });
+}
+function examEnd(P){
+  if(!EX.on||EX.P!==P)return; EX.on=false; pauseT(P);
+  P.qs.forEach(Q=>Q.parts.forEach(pt=>S.rv[pt.id]=true)); save();
+  LDXX.end({}).then(d=>{if(d&&d.html){S.ldxrep[P.id]={html:d.html,text:d.text};save();}render();announce('Exam submitted. Mark schemes are now shown for self-marking.');});
+}
+LDXX&&LDXX.on('forceSubmit',()=>{if(EX.on)examEnd(EX.P);});
+LDXX&&LDXX.on('locks',()=>{if(!EX.on&&S.view==='papers')render();});
+const LDX_BLOCK=['pick','revealQ','revealAll','reveal1','printP','printM','dl','clear','wipe','treset','topic','mod'];
+document.addEventListener('click',e=>{
+  if(!LDXX)return;
+  const b=e.target.closest('[data-act]');
+  if(b&&b.dataset.act==='ldxend'){e.stopImmediatePropagation();if(EX.on)examEnd(EX.P);return;}
+  if(b&&b.dataset.act==='ldxlock'){e.stopImmediatePropagation();const P=PAPERS.find(x=>x.id===S.paper)||PAPERS[0];LDXX.showLock('p2bank-'+P.id);return;}
+  if(!EX.on)return;
+  if((b&&LDX_BLOCK.includes(b.dataset.act))||e.target.closest('.modes button')){e.preventDefault();e.stopImmediatePropagation();toast('Switched off during the exam. Use End exam and submit first.');}
+},true);
+render();
+if(gsHad&&window.GameSave&&GameSave.toast)setTimeout(()=>GameSave.toast('Welcome back! Your progress was restored.'),400);
+window.__p2={PAPERS,ALL,get state(){return S;},printDoc};
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

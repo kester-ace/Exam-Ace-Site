@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Time Zone Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1726; --bg2:#10223a; --panel:#13294a; --panel2:#183356; --line:#24476f;
+  --ink:#eef4fb; --soft:#a9bdd6; --dim:#7590b2;
+  --amber:#ffb84d; --amber2:#ffd28a; --teal:#33d1b2; --teal2:#1f9e86; --coral:#ff6b7f; --sky:#6fb6ff;
+  --land:#3d6f94; --land2:#5286ad; --ocean:#0c1d33; --night:rgba(2,8,20,.5);
+  --paper:#fbfaf6; --pink:#1b2533;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--body);overflow-x:hidden;
+  background-image:radial-gradient(1200px 500px at 85% -10%,rgba(111,182,255,.12),transparent 60%),radial-gradient(900px 400px at -10% 110%,rgba(51,209,178,.08),transparent 60%);background-attachment:fixed}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1180px;margin:0 auto;padding:12px 16px 0}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{flex:none;width:44px;height:44px}
+h1{font:700 clamp(20px,3vw,27px)/1.05 var(--disp);margin:0;letter-spacing:-.01em}
+.sub{margin:3px 0 0;color:var(--soft);font-size:13px}
+.hud{display:flex;align-items:center;gap:8px;flex:none}
+.starchip{font:700 14px/1 var(--mono);background:var(--panel);border:1px solid var(--line);padding:9px 11px;border-radius:999px;color:var(--amber);white-space:nowrap}
+.iconbtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center}
+.iconbtn svg{width:20px;height:20px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 12px;padding:5px;background:rgba(16,34,58,.75);border:1px solid var(--line);border-radius:14px}
+.tab{flex:1 1 auto;border:0;background:transparent;color:var(--soft);padding:9px 12px;border-radius:10px;font:600 14px/1.15 var(--disp);display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.tab .tstar{font:700 11px/1 var(--mono);color:var(--dim)}
+.tab[aria-selected=true]{background:var(--amber);color:#1d1406}
+.tab[aria-selected=true] .tstar{color:#8a6a2a}
+.tstar b{color:var(--amber);font-weight:700}
+.tab[aria-selected=true] .tstar b{color:#3a2200}
+.tab:hover:not([aria-selected=true]){background:var(--panel2);color:var(--ink)}
+footer{text-align:center;color:var(--dim);font-size:12.5px;padding:18px 16px 20px}
+
+.panel{background:linear-gradient(180deg,var(--panel),#11243f);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
+.h2{font:700 19px/1.2 var(--disp);margin:0 0 4px}
+.lead{color:var(--soft);margin:0 0 10px;font-size:14px}
+.btn{border:0;border-radius:10px;padding:10px 16px;background:var(--amber);color:#1d1406;font:700 15px/1.1 var(--disp);display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:hover{background:var(--amber2)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--panel2)}
+.btn.sm{padding:7px 11px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mono{font-family:var(--mono)}
+.muted{color:var(--soft)}
+.kbd{font:600 12px/1 var(--mono);background:var(--bg2);border:1px solid var(--line);padding:2px 6px;border-radius:5px}
+section[hidden]{display:none!important}
+
+/* ---------- World clock ---------- */
+.wc-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px}
+.mapwrap{overflow-x:auto;overflow-y:hidden;border-radius:12px;background:var(--ocean);border:1px solid var(--line);-webkit-overflow-scrolling:touch}
+#map{display:block;width:100%;min-width:640px;height:auto}
+#map .land{fill:var(--land);stroke:var(--land2);stroke-width:.35;stroke-linejoin:round}
+#map .grat{stroke:rgba(169,189,214,.09);stroke-width:.3;fill:none}
+#map .idl{stroke:var(--amber);stroke-width:.5;stroke-dasharray:2 1.6;opacity:.85}
+#map .idltxt{fill:var(--amber);font:600 3.4px var(--mono)}
+#map .night{fill:var(--night)}
+#map .dot{fill:var(--amber);stroke:#0b1726;stroke-width:.6}
+#map .dot.home{fill:var(--teal);r:2.4}
+#map .lead{stroke:rgba(255,255,255,.45);stroke-width:.35}
+#map .pill rect{fill:#0b1726;stroke:var(--line);stroke-width:.4}
+#map .pill.home rect{fill:#0e3a3a;stroke:var(--teal)}
+#map .pill text{fill:var(--ink);font:500 4.6px var(--mono)}
+#map .pill .pt{fill:var(--amber2);font-weight:700}
+#map .pill.home .pt{fill:#7ff0d8}
+#map .pill .dayx{fill:var(--coral);font-size:3.4px;font-weight:700}
+#map .sun{fill:#ffe08a;opacity:.9}
+.maphint{font-size:12px;color:var(--dim);margin:6px 2px 0;display:none}
+.readout{font-size:14px;color:var(--soft);margin:0 0 10px}
+.big{font:700 40px/1 var(--mono);color:var(--teal);letter-spacing:-.02em}
+.big small{font:500 15px var(--body);color:var(--soft);margin-left:6px;letter-spacing:0}
+.field{display:grid;gap:5px;margin:10px 0}
+.field label,.flabel{font:600 13px/1.2 var(--disp);color:var(--soft)}
+input[type=date],input[type=text],select{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-height:42px;width:100%;color-scheme:dark}
+input[type=range]{width:100%;accent-color:var(--amber);height:28px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 11px;font:600 13px var(--disp);color:var(--soft)}
+.seg button[aria-pressed=true]{background:var(--sky);color:#06203d}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:6px 10px;font:600 12.5px var(--disp);color:var(--ink)}
+.chip:hover{border-color:var(--sky)}
+.missions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 0}
+.cards{margin-top:12px}
+.mission{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.mission .ms{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:var(--dim);font:700 14px/1 var(--mono)}
+.mission.done{border-style:solid;border-color:var(--teal2);background:rgba(51,209,178,.08)}
+.mission.done .ms{background:var(--teal);border-color:var(--teal);color:#062a22}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.city{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:9px 10px 10px;min-width:0;position:relative}
+.city.home{border-color:var(--teal);background:linear-gradient(180deg,rgba(51,209,178,.14),var(--bg2))}
+.city .cn{font:700 14px/1.15 var(--disp)}
+.city .cc{font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.city .ct{font:700 25px/1.1 var(--mono);color:var(--amber2);margin-top:5px}
+.city.home .ct{color:#7ff0d8}
+.city .c12{font-size:12px;color:var(--soft)}
+.city .cd{font-size:12px;margin-top:3px}
+.city .cm{font:500 11.5px/1.3 var(--mono);color:var(--soft);margin-top:4px}
+.night-ico{position:absolute;top:9px;right:9px;width:16px;height:16px;opacity:.8}
+.badge{display:inline-block;font:700 10.5px/1 var(--disp);padding:3px 6px;border-radius:999px;vertical-align:1px;letter-spacing:.02em}
+.b-next{background:var(--coral);color:#33040d}
+.b-prev{background:var(--sky);color:#06203d}
+.b-dst{background:rgba(255,184,77,.16);color:var(--amber);border:1px solid rgba(255,184,77,.4)}
+.b-nodst{background:rgba(51,209,178,.14);color:var(--teal);border:1px solid rgba(51,209,178,.35)}
+details.learn{margin-top:12px}
+details.learn>summary{cursor:pointer;font:700 17px var(--disp);list-style:none;display:flex;align-items:center;gap:8px}
+details.learn>summary::-webkit-details-marker{display:none}
+details.learn>summary::before{content:'+';display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--amber);color:#1d1406;font:700 17px/1 var(--mono)}
+details.learn[open]>summary::before{content:'−'}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:12px}
+.idea{background:var(--bg2);border-left:4px solid var(--sky);border-radius:10px;padding:10px 12px;font-size:14px}
+.idea h3{margin:0 0 4px;font:700 15px var(--disp)}
+.idea p{margin:0;color:var(--soft)}
+.idea.sxm{border-left-color:var(--teal)} .idea.dst{border-left-color:var(--amber)} .idea.idl{border-left-color:var(--coral)}
+table.gap{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+table.gap th,table.gap td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left}
+table.gap th{font:600 12px var(--disp);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.tblscroll{overflow-x:auto}
+
+/* ---------- Questions ---------- */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.prog{display:flex;gap:4px}
+.prog i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.prog i.ok{background:var(--teal)} .prog i.bad{background:var(--coral)} .prog i.cur{background:var(--amber)}
+.score{font:700 15px var(--mono);color:var(--amber)}
+.qbody{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:start}
+.clockbox{display:grid;justify-items:center;gap:4px;text-align:center}
+.clockbox svg{width:130px;height:130px}
+.clockbox .cl{font:600 12px var(--disp);color:var(--soft)}
+.qtext{font:700 clamp(17px,2.3vw,21px)/1.3 var(--disp);margin:0 0 12px;text-wrap:pretty}
+.qtext .hl{color:var(--amber2)}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--bg2);border-radius:11px;padding:11px 13px;font:700 17px/1.2 var(--mono);display:flex;gap:10px;align-items:center;min-height:52px}
+.opt .ol{flex:none;width:24px;height:24px;border-radius:6px;background:var(--panel2);display:grid;place-items:center;font:700 12px var(--disp);color:var(--soft)}
+.opt small{display:block;font:400 12px var(--body);color:var(--soft)}
+.opt:hover:not(:disabled){border-color:var(--amber)}
+.opt.right{border-color:var(--teal);background:rgba(51,209,178,.14)}
+.opt.wrong{border-color:var(--coral);background:rgba(255,107,127,.12)}
+.opt:disabled{cursor:default}
+.typed{display:grid;gap:10px;max-width:460px}
+.typed input{font:700 22px var(--mono);letter-spacing:.04em}
+.daypick{display:flex;flex-wrap:wrap;gap:6px}
+.daypick button{border:1px solid var(--line);background:var(--bg2);border-radius:9px;padding:8px 12px;font:600 13.5px var(--disp)}
+.daypick button[aria-pressed=true]{background:var(--sky);color:#06203d;border-color:var(--sky)}
+.fb{margin-top:12px;border-radius:12px;padding:12px 14px;background:var(--bg2);border-left:5px solid var(--line);font-size:14.5px}
+.fb.ok{border-left-color:var(--teal)} .fb.bad{border-left-color:var(--coral)}
+.fb strong{font:700 16px var(--disp);display:block;margin-bottom:3px}
+.fb .work{margin:6px 0 0;padding-left:18px;color:var(--soft)}
+.fb .work li{margin:2px 0}
+.result{text-align:center;padding:22px 10px}
+.result .stars3{font-size:44px;letter-spacing:6px;color:var(--line)}
+.result .stars3 b{color:var(--amber);font-weight:400}
+.result .pct{font:700 34px var(--mono);margin:6px 0}
+.pop{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.intro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+.bestline{font:600 13px var(--mono);color:var(--soft)}
+
+/* ---------- Book the call ---------- */
+.scn-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.scn-meta{font:600 13px var(--mono);color:var(--amber)}
+.axis{display:grid;grid-template-columns:200px minmax(0,1fr);gap:10px;margin-top:10px;padding:0 7px 0 9px}
+.axis .ticks{position:relative;height:18px;font:500 10.5px var(--mono);color:var(--dim)}
+.axis .ticks span{position:absolute;transform:translateX(-50%);top:2px}
+.tl{display:grid;gap:8px;margin-top:2px}
+.tlrow{display:grid;grid-template-columns:200px minmax(0,1fr);gap:10px;align-items:center;border-radius:12px;padding:6px 6px 6px 8px;border:1px solid transparent;transition:background .25s,border-color .25s}
+.tlrow.ok{background:rgba(51,209,178,.12);border-color:rgba(51,209,178,.5)}
+.tlrow.part{background:rgba(255,184,77,.08);border-color:rgba(255,184,77,.35)}
+.tlrow.no{background:rgba(255,107,127,.07);border-color:rgba(255,107,127,.3)}
+.tll .n{font:700 14px/1.15 var(--disp)}
+.tll .l{font:700 15px/1.2 var(--mono);color:var(--amber2)}
+.tll .s{display:block;font-size:12px;color:var(--soft);line-height:1.25;margin-top:2px}
+.tll .n,.tll .l{white-space:nowrap}
+.tlrow.ok .tll .s{color:#8ff2dc}
+.track{position:relative;height:34px;border-radius:8px;background:#0a1626;overflow:hidden;touch-action:none;cursor:ew-resize;border:1px solid #1e3a5c}
+.track .off{position:absolute;top:0;bottom:0;background:rgba(51,209,178,.28);border-left:1px solid rgba(51,209,178,.7);border-right:1px solid rgba(51,209,178,.7)}
+.tlrow.ok .track .off{background:rgba(51,209,178,.55)}
+.track .wk{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(255,107,127,.16) 0 4px,transparent 4px 8px)}
+.track .hr{position:absolute;bottom:2px;font:500 9.5px var(--mono);color:rgba(238,244,251,.55);transform:translateX(-50%);pointer-events:none}
+.track .mt{position:absolute;top:2px;bottom:2px;border-radius:6px;border:2px solid var(--amber);background:rgba(255,184,77,.25);box-shadow:0 0 0 2px rgba(11,23,38,.6);pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--soft);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.slidebox{display:grid;grid-template-columns:200px minmax(0,1fr);gap:10px;align-items:center;margin-top:8px;padding:0 7px 0 9px}
+.email{background:var(--paper);color:var(--pink);border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:10px;white-space:pre-wrap;font-family:var(--body);overflow-wrap:anywhere}
+.email b{font-weight:700}
+
+/* ---------- Itinerary ---------- */
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.steps span{font:600 12.5px var(--disp);padding:6px 10px;border-radius:999px;background:var(--bg2);color:var(--dim);border:1px solid var(--line)}
+.steps span.on{background:var(--amber);color:#1d1406;border-color:var(--amber)}
+.steps span.done{color:var(--teal);border-color:var(--teal2)}
+.flights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pass{background:var(--paper);color:var(--pink);border-radius:14px;padding:12px 14px;position:relative;overflow:hidden}
+.pass::after{content:'';position:absolute;right:-9px;top:50%;width:18px;height:18px;border-radius:50%;background:var(--panel);transform:translateY(-50%)}
+.pass .fl{display:flex;justify-content:space-between;font:700 13px var(--mono);color:#46566e}
+.pass .route{display:flex;align-items:center;gap:8px;font:700 26px/1 var(--disp);margin:8px 0 6px;color:#0f1d30}
+.pass .route svg{width:22px;height:22px;flex:none}
+.pass .info{font-size:13px;line-height:1.4;color:#36455c}
+.pass .info b{color:#0f1d30}
+.pass .zones{font:600 11.5px var(--mono);color:#5b6b83;margin:6px 0;background:#eef1f6;border-radius:7px;padding:5px 7px}
+.pass label{font:700 12px var(--disp);color:#36455c}
+.pass input[type=text]{background:#fff;color:#0f1d30;border:2px solid #c9d2df;font:700 20px var(--mono);color-scheme:light}
+.pass .plus{display:flex;align-items:center;gap:6px;font:600 13px var(--body);margin-top:6px;color:#36455c}
+.pass .plus input{width:18px;height:18px;accent-color:#0f6b5a}
+.pass.ok{box-shadow:0 0 0 3px var(--teal)} .pass.bad{box-shadow:0 0 0 3px var(--coral)}
+.pass .pfb{font-size:12.5px;margin-top:6px;min-height:1em;color:#36455c}
+.choice{display:grid;gap:8px;margin:8px 0}
+.choice button{text-align:left;background:var(--paper);color:var(--pink);border:3px solid transparent;border-radius:10px;padding:10px 12px;font:400 13.5px/1.35 var(--body)}
+.choice button .hd{font:700 13px/1.35 var(--body);text-transform:none}
+.choice button[aria-pressed=true]{border-color:var(--amber)}
+.choice button.right{border-color:var(--teal)} .choice button.wrong{border-color:var(--coral);opacity:.75}
+.builder{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;align-items:start}
+.pool{display:grid;gap:6px;max-height:560px;overflow:auto;padding-right:4px}
+.ecard{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;text-align:left;border:1px solid var(--line);background:var(--bg2);border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.3}
+.ecard:hover:not(:disabled){border-color:var(--amber)}
+.ecard .et{font:700 14px/1.1 var(--mono);color:var(--amber2)}
+.ecard .et small{display:block;font:600 10px var(--mono);color:var(--dim);margin-top:2px}
+.ecard:disabled{opacity:.35;cursor:default}
+.doc{background:var(--paper);color:#151c28;border-radius:6px;padding:20px 20px 16px;box-shadow:0 12px 30px rgba(0,0,0,.35);min-width:0}
+.doc .dh{text-align:center;font:700 13.5px/1.45 'Atkinson Hyperlegible',Arial,sans-serif;text-transform:uppercase;margin-bottom:10px;letter-spacing:.02em}
+.doc .dh .t1{font-size:17px;text-decoration:underline;letter-spacing:.08em}
+.doc .dh.empty{color:#9aa4b2;font-weight:400;text-transform:none;font-style:italic}
+table.itin{width:100%;border-collapse:collapse;font-size:13px;line-height:1.35}
+table.itin th{border-top:2px solid #151c28;border-bottom:1px solid #151c28;text-align:left;padding:6px 6px;font-weight:700;text-transform:uppercase;font-size:11.5px;letter-spacing:.05em}
+table.itin td{border-bottom:1px solid #c8ced8;padding:6px 6px;vertical-align:top}
+table.itin td.dt{width:200px;font-weight:700}
+table.itin td.tm{width:76px;font-family:var(--mono);font-weight:700;white-space:nowrap}
+table.itin td.tm small{display:block;font-size:10px;color:#5b6b83}
+table.itin td.ac{width:100px;white-space:nowrap;text-align:right}
+table.itin tr.daystart td{border-top:1.5px solid #151c28}
+table.itin select{background:#fff;color:#151c28;border:1px solid #b9c3d1;font-size:12px;padding:4px 4px;min-height:34px;color-scheme:light;width:100%}
+table.itin tr.e-ok td{background:#e5f7f1} table.itin tr.e-bad td{background:#fde8eb}
+table.itin .why{display:block;font-size:11.5px;color:#a3132b;margin-top:3px;font-weight:700}
+.mini{border:1px solid #b9c3d1;background:#fff;color:#151c28;border-radius:6px;width:30px;height:30px;font:700 13px var(--mono);padding:0}
+.mini:hover{background:#eef1f6}
+.doc .notes{font-size:12px;color:#36455c;margin-top:10px;border-top:1px solid #c8ced8;padding-top:7px}
+.emptyrow td{color:#8a94a3;font-style:italic;text-align:center;padding:16px!important}
+.rules{background:var(--bg2);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:10px}
+.rules ul{margin:4px 0 0;padding-left:18px;color:var(--soft)}
+
+/* responsive */
+/* ---------- Global HQ ---------- */
+#hqPanel{--g:#33d1b2;--g2:#0e3a3a}
+.genres{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+.genre{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid var(--line);background:var(--bg2);border-radius:12px;padding:10px;min-width:0}
+.genre svg{flex:none;width:42px;height:42px}
+.genre b{display:block;font:700 14px/1.2 var(--disp)}
+.genre span{display:block;font-size:12px;color:var(--soft);line-height:1.25}
+.genre[aria-pressed=true]{border-color:var(--gc);background:color-mix(in srgb,var(--gc) 16%,var(--bg2))}
+.genre:hover{border-color:var(--gc)}
+.hqtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;border-bottom:3px solid var(--g);padding-bottom:10px;margin-bottom:10px}
+.hqco{display:flex;align-items:center;gap:10px;min-width:0}
+.hqco svg{flex:none;width:40px;height:40px}
+.hqco b{font:700 16px/1.15 var(--disp);display:block}
+.hqco span{font-size:12px;color:var(--soft)}
+.places{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.place{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 6px;font-size:13px}
+.place svg{width:18px;height:18px;flex:none}
+.place b{font:700 13px var(--mono);color:var(--amber2)}
+.place.from{border-color:var(--g)}
+.place.asleep{border-color:rgba(255,107,127,.6)}
+.place small{color:var(--dim);font-size:11.5px}
+.arrow{color:var(--dim);font:700 16px var(--mono)}
+.attrs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0 12px}
+.attr{background:var(--bg2);border-radius:9px;padding:6px 9px;min-width:0}
+.attr i{display:block;font:600 10.5px/1.2 var(--disp);color:var(--dim);text-transform:uppercase;letter-spacing:.05em;font-style:normal}
+.attr b{font:700 13.5px/1.25 var(--body)}
+.attr.hot b{color:var(--coral)} .attr.warm b{color:var(--amber)}
+.media{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.med{display:grid;justify-items:center;gap:4px;text-align:center;border:2px solid var(--line);background:var(--bg2);border-radius:11px;padding:8px 4px;font:600 12px/1.2 var(--disp);min-height:76px}
+.med svg{width:26px;height:26px;color:var(--sky)}
+.med[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 20%,var(--bg2))}
+.med[aria-pressed=true] svg{color:var(--ink)}
+.med.best{border-color:var(--teal)} .med.acc{border-color:var(--amber)} .med.poor{border-color:var(--coral)}
+.med:disabled{cursor:default}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-top:6px}
+.fact{display:flex;gap:8px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-size:13px;cursor:pointer}
+.fact input{width:18px;height:18px;flex:none;accent-color:var(--g);margin:1px 0 0}
+.fact b{font:700 13px var(--disp);display:block}
+.fact span{color:var(--soft);font-size:12px;line-height:1.25}
+.fact.key{border-color:var(--teal)} .fact.miss{border-color:var(--amber);border-style:dashed} .fact.extra{border-color:var(--coral)}
+.verdict{display:inline-block;font:700 13px var(--disp);padding:4px 10px;border-radius:999px;margin-right:6px}
+.v-best{background:var(--teal);color:#062a22} .v-acc{background:var(--amber);color:#2a1a02} .v-poor{background:var(--coral);color:#33040d}
+.sstep{font:700 14px var(--disp);margin:12px 0 6px}
+.sstep em{font-style:normal;color:var(--g)}
+table.mt{width:100%;border-collapse:collapse;font-size:13.5px}
+table.mt th,table.mt td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.mt th{font:600 12px var(--disp);color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+table.mt td:first-child{white-space:nowrap;font-weight:700}
+table.mt svg{width:18px;height:18px;vertical-align:-4px;margin-right:6px;color:var(--sky)}
+.rank{font:700 22px var(--disp);color:var(--g);margin:4px 0}
+@media (max-width:860px){.genres{grid-template-columns:repeat(2,minmax(0,1fr))}.media{grid-template-columns:repeat(4,minmax(0,1fr))}.attrs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.media{grid-template-columns:repeat(3,minmax(0,1fr))}.genres{grid-template-columns:1fr}.facts{grid-template-columns:1fr}table.mt td:first-child{white-space:normal}}
+
+@media (max-width:860px){
+  .wc-grid{grid-template-columns:1fr}
+  .flights{grid-template-columns:1fr}
+  .builder{grid-template-columns:1fr}
+  .pool{max-height:none}
+}
+@media (max-width:640px){
+  .wrap{padding:10px 16px 0}
+  .logo{width:36px;height:36px}
+  .sub{font-size:12px}
+  .tab{padding:8px 9px;font-size:13px;flex:1 1 40%}
+  .missions{grid-template-columns:1fr}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .maphint{display:block}
+  .qbody{grid-template-columns:1fr}
+  .clockbox{grid-template-columns:auto 1fr;justify-items:start;align-items:center;text-align:left;gap:10px}
+  .clockbox svg{width:84px;height:84px}
+  .opts{grid-template-columns:1fr}
+  .axis,.tlrow,.slidebox{grid-template-columns:1fr}
+  .axis>div:first-child,.slidebox>div:first-child{display:none}
+  .tlrow{gap:5px}
+  .tll{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+  .track .hr.odd{display:none}
+  .axis .ticks span.odd{display:none}
+  .intro{grid-template-columns:1fr}
+  .doc{padding:14px 10px}
+  table.itin thead{display:none}
+  table.itin,table.itin tbody,table.itin tr,table.itin td{display:block;width:auto!important}
+  table.itin tr{border-bottom:1px solid #c8ced8;padding:6px 0;display:grid;grid-template-columns:70px minmax(0,1fr);gap:2px 8px}
+  table.itin td{border:0;padding:2px 4px}
+  table.itin td.dt{grid-column:1/-1}
+  table.itin td.ac{grid-column:1/-1;text-align:left}
+  table.itin tr.daystart td{border-top:0}
+  table.itin tr.daystart{border-top:1.5px solid #151c28}
+  .emptyrow{display:block!important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="#13294a" stroke="#ffb84d" stroke-width="2.5"/><path d="M3 24h42M24 3c-7 6-7 36 0 42M24 3c7 6 7 36 0 42" stroke="#6fb6ff" stroke-width="1.6" fill="none"/><path d="M24 12v12l8 5" stroke="#33d1b2" stroke-width="3.2" stroke-linecap="round" fill="none"/><circle cx="24" cy="24" r="2.6" fill="#ffb84d"/></svg>
+      <div><h1>Time Zone Navigator</h1><p class="sub">Time zones, itineraries and international scheduling · CSEC Information Technology · Section 2 (SO 2.3, 2.4)</p></div>
+    </div>
+    <div class="hud">
+      <span class="starchip" id="starTotal" aria-live="polite">★ 0/18</span>
+      <button class="iconbtn" id="muteBtn" aria-pressed="false" aria-label="Mute sounds"></button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Game modes">
+    <button class="tab" role="tab" id="tab-world" aria-controls="m-world" aria-selected="true">World clock <span class="tstar" data-s="world"></span></button>
+    <button class="tab" role="tab" id="tab-quick" aria-controls="m-quick" aria-selected="false" tabindex="-1">What time is it there? <span class="tstar" data-s="quick"></span></button>
+    <button class="tab" role="tab" id="tab-call" aria-controls="m-call" aria-selected="false" tabindex="-1">Book the call <span class="tstar" data-s="call"></span></button>
+    <button class="tab" role="tab" id="tab-itin" aria-controls="m-itin" aria-selected="false" tabindex="-1">Itinerary builder <span class="tstar" data-s="itin"></span></button>
+    <button class="tab" role="tab" id="tab-hq" aria-controls="m-hq" aria-selected="false" tabindex="-1">Global HQ <span class="tstar" data-s="hq"></span></button>
+    <button class="tab" role="tab" id="tab-quiz" aria-controls="m-quiz" aria-selected="false" tabindex="-1">Quiz <span class="tstar" data-s="quiz"></span></button>
+  </nav>
+
+  <main>
+    <!-- ===== WORLD CLOCK ===== -->
+    <section id="m-world" role="tabpanel" aria-labelledby="tab-world">
+      <div class="wc-grid">
+        <div style="min-width:0">
+        <div class="panel" style="padding:8px">
+          <div class="mapwrap"><svg id="map" viewBox="0 0 360 128" role="img" aria-label="World map showing the local time in each city"></svg></div>
+          <p class="maphint">Swipe the map sideways to see every city.</p>
+        </div>
+        <div class="missions" id="missions" aria-label="World clock missions"></div>
+        </div>
+        <div class="panel">
+          <p class="readout" id="wcRead">When it is…</p>
+          <div class="big" id="wcBig">09:00<small>9:00 am</small></div>
+          <div class="field">
+            <label for="wcTime">Bridgetown time (drag or use arrow keys)</label>
+            <input type="range" id="wcTime" min="0" max="1425" step="15" value="540" aria-valuetext="09:00">
+            <div class="row" style="justify-content:space-between">
+              <button class="btn ghost sm" id="wcMinus" aria-label="One hour earlier">− 1 h</button>
+              <div class="seg" role="group" aria-label="Clock format"><button aria-pressed="true" id="f24">24-hour</button><button aria-pressed="false" id="f12">am/pm</button></div>
+              <button class="btn ghost sm" id="wcPlus" aria-label="One hour later">+ 1 h</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="wcDate">Date in Bridgetown</label>
+            <input type="date" id="wcDate" min="2024-01-01" max="2030-12-31">
+          </div>
+          <div class="chips" aria-label="Quick dates">
+            <button class="chip" data-preset="today">Today</button>
+            <button class="chip" data-preset="jan">15 January (winter)</button>
+            <button class="chip" data-preset="jul">15 July (summer)</button>
+            <button class="chip" data-preset="mar">Mid-March gap</button>
+          </div>
+        </div>
+      </div>
+      <div class="cards" id="wcCards" aria-live="off"></div>
+      <details class="learn panel" id="learn" open>
+        <summary>Key ideas: how time zones work</summary>
+        <div class="ideas" id="ideas"></div>
+      </details>
+    </section>
+
+    <!-- ===== QUICK ===== -->
+    <section id="m-quick" role="tabpanel" aria-labelledby="tab-quick" hidden>
+      <div class="panel" id="quickPanel"></div>
+    </section>
+
+    <!-- ===== CALL ===== -->
+    <section id="m-call" role="tabpanel" aria-labelledby="tab-call" hidden>
+      <div class="panel" id="callPanel"></div>
+    </section>
+
+    <!-- ===== ITINERARY ===== -->
+    <section id="m-itin" role="tabpanel" aria-labelledby="tab-itin" hidden>
+      <div class="panel" id="itinPanel"></div>
+    </section>
+
+    <!-- ===== GLOBAL HQ ===== -->
+    <section id="m-hq" role="tabpanel" aria-labelledby="tab-hq" hidden>
+      <div class="panel" id="hqPanel"></div>
+    </section>
+
+    <!-- ===== QUIZ ===== -->
+    <section id="m-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+      <div class="panel" id="quizPanel"></div>
+    </section>
+  </main>
+  <div id="live" class="sr" aria-live="polite"></div>
+</div>
+<footer>Kester Small</footer>
+
+<script>
+'use strict';
+/* =====================================================================
+   TIME ENGINE — every time is computed with Intl.DateTimeFormat and
+   IANA zone names. No offsets are hard-coded anywhere.
+   ===================================================================== */
+const SXM_TZ='America/Barbados';
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+const _fmt={};
+function fmtFor(tz){return _fmt[tz]||(_fmt[tz]=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',weekday:'short'}));}
+function parts(utc,tz){
+  const o={};for(const p of fmtFor(tz).formatToParts(new Date(utc)))o[p.type]=p.value;
+  let h=+o.hour;if(h===24)h=0;
+  return {y:+o.year,m:+o.month,d:+o.day,h:h,mi:+o.minute,s:+o.second,wd:WD[o.weekday]};
+}
+function offsetMin(utc,tz){const p=parts(utc,tz);return Math.round((Date.UTC(p.y,p.m-1,p.d,p.h,p.mi,p.s)-Math.floor(utc/1000)*1000)/60000);}
+function toUtc(y,m,d,h,mi,tz){ // local wall time in tz -> UTC ms
+  const guess=Date.UTC(y,m-1,d,h,mi);
+  const o1=offsetMin(guess,tz);let utc=guess-o1*60000;
+  const o2=offsetMin(utc,tz);if(o2!==o1)utc=guess-o2*60000;
+  return utc;
+}
+function isValidLocal(y,m,d,h,mi,tz){const p=parts(toUtc(y,m,d,h,mi,tz),tz);return p.y===y&&p.m===m&&p.d===d&&p.h===h&&p.mi===mi;}
+function hasDST(tz,y){return offsetMin(Date.UTC(y,0,1,12),tz)!==offsetMin(Date.UTC(y,6,1,12),tz);}
+function isDST(utc,tz){const y=parts(utc,tz).y;const a=offsetMin(Date.UTC(y,0,1,12),tz),b=offsetMin(Date.UTC(y,6,1,12),tz);if(a===b)return false;return offsetMin(utc,tz)>Math.min(a,b);}
+function dayNum(p){return Math.round(Date.UTC(p.y,p.m-1,p.d)/864e5);}
+const pad=n=>String(n).padStart(2,'0');
+function t24(h,mi){return pad(h)+':'+pad(mi);}
+function t12(h,mi){if(h===0&&mi===0)return '12:00 am (midnight)';if(h===12&&mi===0)return '12:00 pm (noon)';return ((h%12)||12)+':'+pad(mi)+' '+(h<12?'am':'pm');}
+function t12s(h,mi){return ((h%12)||12)+':'+pad(mi)+' '+(h<12?'am':'pm');}
+function longDate(p){return DAYS[p.wd]+' '+p.d+' '+MONTHS[p.m-1]+' '+p.y;}
+function shortDate(p){return DAYS[p.wd].slice(0,3)+' '+p.d+' '+MONTHS[p.m-1].slice(0,3);}
+function offStr(min){if(min===0)return 'UTC+0';const s=min<0?'−':'+',a=Math.abs(min),h=Math.floor(a/60),m=a%60;return 'UTC'+s+h+(m?':'+pad(m):'');}
+function durStr(min){const a=Math.abs(min),h=Math.floor(a/60),m=a%60;return (h?h+' h':'')+(h&&m?' ':'')+(m?m+' min':'')||'0 h';}
+function gapStr(diff){return diff===0?'same time':durStr(diff)+(diff>0?' ahead':' behind');}
+const _abbr={};
+function zoneAbbr(utc,tz){
+  const key=tz+'|'+offsetMin(utc,tz);if(key in _abbr)return _abbr[key];
+  let r=null;
+  for(const loc of ['en-US','en-GB','en-AU','en-IN']){
+    try{const v=new Intl.DateTimeFormat(loc,{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date(utc)).find(p=>p.type==='timeZoneName');if(v&&/^[A-Z]{2,5}$/.test(v.value)){r=v.value;break;}}catch(e){}
+  }
+  return _abbr[key]=r||offStr(offsetMin(utc,tz));
+}
+function ymd(s){const [y,m,d]=s.split('-').map(Number);return {y,m,d};}
+function iso(p){return p.y+'-'+pad(p.m)+'-'+pad(p.d);}
+function addDaysIso(s,n){const {y,m,d}=ymd(s);const t=new Date(Date.UTC(y,m-1,d+n));return t.getUTCFullYear()+'-'+pad(t.getUTCMonth()+1)+'-'+pad(t.getUTCDate());}
+
+/* ===== Cities ===== */
+const CITIES=[
+ {id:'sxm',name:'Bridgetown',country:'Barbados',tz:'America/Barbados',lat:13.10,lon:-59.62,code:'BGI',dx:25,dy:-1},
+ {id:'mia',name:'Miami',country:'USA (Florida)',tz:'America/New_York',lat:25.77,lon:-80.19,code:'MIA',dx:-24,dy:1},
+ {id:'nyc',name:'New York',country:'USA',tz:'America/New_York',lat:40.71,lon:-74.0,code:'NYC',dx:24,dy:-5},
+ {id:'tor',name:'Toronto',country:'Canada',tz:'America/Toronto',lat:43.65,lon:-79.38,code:'TOR',dx:-6,dy:-12},
+ {id:'lax',name:'Los Angeles',country:'USA',tz:'America/Los_Angeles',lat:34.05,lon:-118.24,code:'LA',dx:-22,dy:6},
+ {id:'kin',name:'Kingston',country:'Jamaica',tz:'America/Jamaica',lat:17.97,lon:-76.79,code:'KIN',dx:-24,dy:8},
+ {id:'sdq',name:'Santo Domingo',country:'Dominican Republic',tz:'America/Santo_Domingo',lat:18.47,lon:-69.9,code:'SDQ',dx:25,dy:-11},
+ {id:'cur',name:'Willemstad',country:'Curaçao',tz:'America/Curacao',lat:12.11,lon:-68.93,code:'CUR',dx:-22,dy:10},
+ {id:'pos',name:'Port of Spain',country:'Trinidad and Tobago',tz:'America/Port_of_Spain',lat:10.66,lon:-61.51,code:'POS',dx:24,dy:3},
+ {id:'geo',name:'Georgetown',country:'Guyana',tz:'America/Guyana',lat:6.8,lon:-58.16,code:'GEO',dx:21,dy:10},
+ {id:'lon',name:'London',country:'United Kingdom',tz:'Europe/London',lat:51.5,lon:-0.13,code:'LON',dx:-23,dy:-5},
+ {id:'ams',name:'Amsterdam',country:'Netherlands',tz:'Europe/Amsterdam',lat:52.37,lon:4.9,code:'AMS',dx:16,dy:-12},
+ {id:'los',name:'Lagos',country:'Nigeria',tz:'Africa/Lagos',lat:6.52,lon:3.38,code:'LOS',dx:4,dy:13},
+ {id:'bom',name:'Mumbai',country:'India',tz:'Asia/Kolkata',lat:19.08,lon:72.88,code:'BOM',dx:-14,dy:12},
+ {id:'tyo',name:'Tokyo',country:'Japan',tz:'Asia/Tokyo',lat:35.68,lon:139.69,code:'TYO',dx:19,dy:-7},
+ {id:'syd',name:'Sydney',country:'Australia',tz:'Australia/Sydney',lat:-33.87,lon:151.21,code:'SYD',dx:-4,dy:11},
+];
+const C=Object.fromEntries(CITIES.map(c=>[c.id,c]));
+
+/* ===== Storage / sound ===== */
+function load(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function save(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+const BEST={world:0,quick:0,call:0,itin:0,hq:0,quiz:0};
+try{const b=JSON.parse(load('tzn.best')||'{}');for(const k in BEST)if(typeof b[k]==='number')BEST[k]=b[k];}catch(e){}
+function setBest(k,v){if(v>BEST[k]){BEST[k]=v;save('tzn.best',JSON.stringify(BEST));renderStars();return true;}return false;}
+function starsFor(pct){return pct>=90?3:pct>=70?2:pct>=50?1:0;}
+function modeStars(k){return k==='world'?popcount(BEST.world):starsFor(BEST[k]);}
+function popcount(n){let c=0;while(n){c+=n&1;n>>=1;}return c;}
+function renderStars(){
+  let t=0;for(const k in BEST){const s=modeStars(k);t+=s;const el=document.querySelector('.tstar[data-s="'+k+'"]');if(el){el.innerHTML='<b>'+'★'.repeat(s)+'</b>'+'☆'.repeat(3-s);el.setAttribute('aria-label',s+' of 3 stars');}}
+  const st=document.getElementById('starTotal');const mx=Object.keys(BEST).length*3;st.textContent='★ '+t+'/'+mx;st.setAttribute('aria-label',t+' of '+mx+' stars earned');
+}
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let muted=load('tzn.mute')==='1',actx=null;
+function tone(f,d,type,vol,when){
+  if(muted)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const t=actx.currentTime+(when||0),o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||.12,t+.012);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+.03);
+  }catch(e){}
+}
+const SFX={
+  click(){tone(620,.06,'triangle',.07);},
+  tick(){tone(1250,.025,'square',.025);},
+  ok(){tone(660,.12,'triangle',.13);tone(990,.2,'triangle',.13,.1);},
+  bad(){tone(196,.28,'sawtooth',.06);tone(147,.3,'sawtooth',.05,.08);},
+  win(){[523,659,784,1047].forEach((f,i)=>tone(f,.3,'triangle',.12,i*.11));},
+  star(){[880,1175,1568].forEach((f,i)=>tone(f,.18,'sine',.1,i*.07));}
+};
+const ICON_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const muteBtn=document.getElementById('muteBtn');
+function renderMute(){muteBtn.innerHTML=muted?ICON_OFF:ICON_ON;muteBtn.setAttribute('aria-pressed',String(muted));muteBtn.setAttribute('aria-label',muted?'Turn sounds on':'Mute sounds');}
+muteBtn.addEventListener('click',()=>{muted=!muted;save('tzn.mute',muted?'1':'0');renderMute();SFX.click();});
+renderMute();
+function say(msg){const l=document.getElementById('live');l.textContent='';setTimeout(()=>{l.textContent=msg;},30);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const rnd=n=>Math.floor(Math.random()*n);
+function starsHTML(n){let s='';for(let i=0;i<3;i++)s+=i<n?'<b>★</b>':'☆';return s;}
+
+/* ===== Tabs ===== */
+const tabs=[...document.querySelectorAll('.tab')];
+function openTab(t,focus){
+  tabs.forEach(b=>{const on=b===t;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});
+  if(focus)t.focus();
+  const id=t.getAttribute('aria-controls');
+  if(id==='m-quick'&&!QS.started)renderQuickIntro();
+  if(id==='m-call'&&!CALL.started)renderCallIntro();
+  if(id==='m-itin'&&!IT.started)renderItinIntro();
+  if(id==='m-hq'&&!HQ.started)renderHqIntro();
+  if(id==='m-quiz'&&!QZ.started)renderQuizIntro();
+}
+tabs.forEach((t,i)=>{
+  t.addEventListener('click',()=>{SFX.click();openTab(t);});
+  t.addEventListener('keydown',e=>{let j=null;if(e.key==='ArrowRight')j=(i+1)%tabs.length;else if(e.key==='ArrowLeft')j=(i-1+tabs.length)%tabs.length;else if(e.key==='Home')j=0;else if(e.key==='End')j=tabs.length-1;if(j!==null){e.preventDefault();openTab(tabs[j],true);}});
+});
+
+/* =====================================================================
+   MODE 1 — WORLD CLOCK
+   ===================================================================== */
+const LAND={
+ na:'-168,66 -162,70 -150,71 -140,70 -125,71 -110,73 -95,72 -85,70 -80,73 -70,70 -62,67 -61,60 -56,53 -60,47 -66,45 -70,42 -74,40 -76,35 -81,31 -80,26 -81,25 -82,27 -84,30 -90,29 -94,29.5 -97,27 -97,22 -95,19 -91,19 -90,21 -87,21 -88,16 -84,15 -83,10 -79,9 -77.5,8 -79,7 -81,8 -86,11 -88,13 -92,14.5 -96,16 -101,17 -105,20 -106,23 -110,24 -112,29 -114,31 -112,26 -110,23 -112,24 -115,28 -117,32 -121,35 -124,40 -124,46 -125,49 -128,51 -131,54 -135,57 -140,59.5 -146,61 -152,59 -158,57 -164,55 -158,58.5 -162,60 -165,62 -164,64 -168,66',
+ gl:'-55,60 -44,60 -38,65 -22,70 -19,76 -20,81 -32,83.5 -60,82 -72,78 -66,76 -58,75 -54,70 -52,66',
+ ic:'-24,64 -22,63.4 -14,64.4 -14,66 -18,66.5 -23,66.4',
+ sa:'-77.5,8 -75,11 -72,12 -68,10.6 -62,10.7 -60,8.5 -57,6 -52,5 -50,1.5 -48,-1 -44,-2 -40,-3 -35,-5.5 -35,-9 -38,-13 -39,-17 -41,-22 -45,-23.5 -48,-26 -49,-29 -53,-34 -58,-35 -57,-38 -62,-39 -65,-41 -64,-43 -67,-46 -66,-48 -69,-51 -68,-53 -72,-54 -75,-50 -74,-44 -73,-38 -71.5,-30 -70.5,-23 -70,-18 -72,-17 -76,-14 -79,-9 -81,-6 -80,-2 -80,1 -77,4 -78,7',
+ eu:'-9.5,37 -9,39 -9,43 -2,43.5 -1.5,46 -4.5,48 -1.5,49 1,50.5 2.5,51 4,51.8 4.8,53 7,53.5 8.7,55 8,57 10.5,57.6 10.5,55.5 12.5,54.5 14,54 18,54.8 21,55.5 21.5,57.5 24,57.6 23.5,59.5 28,59.5 22,60.5 21.5,63 25,65.5 22,65.8 17,62.5 18.5,60 16,56.3 12.8,55.8 11,58.8 8,58 5.5,59 5,61.8 8,63.5 12,65.5 15,68 19,70 25,71 31,70 33,69 41,67 40,65 44,66.5 44,68.4 54,68.9 58,68.5 66,69 69,73 73,72 80,73 87,75 100,77 105,77.5 113,74 128,72.5 140,72.5 150,71 160,70 170,70 180,69 180,65 179,63 172,61 165,60 163,58 157,51 156,57 160,61 151,59.5 143,59 136,54.5 141,53 140,48 135,43 131,42.5 129.5,40.5 129,35.5 126.5,35 126,37.5 125,39.8 121.5,40.8 122,38.8 118,38.5 119.5,37 122.5,37 120,34.5 121.8,31 122,29 119.5,25.5 116,22.8 113,22.2 110,21 108,21.5 106.5,19 108.8,15.5 109,11.5 105,8.7 104.8,10.4 103,11 100.5,13.5 100,10 102,6 103.5,4 104,1.5 101,2.8 98.5,8 98.3,13 97.5,16.5 94,16 92.5,20.5 90,22 87,21.5 86,20 82,16.5 80.2,13 80,10 77.5,8 76.5,9.5 74.5,14 73,18 72.6,21.4 70,22.5 68,23.8 66.5,25.4 62,25.2 57.5,25.7 56.5,27 54,26.8 51.5,24 51.5,25.8 50.5,26 48.5,28 47.6,30 48.7,29.9 50.2,29 54,24 56,24.5 56.5,26.3 59,22.6 58.5,20.5 55,17.5 52,16 49,14 45,12.8 43.4,12.7 42.8,15 41,18.5 39,21.5 37,25 35,28 34.5,29.6 34.2,31.3 35.9,34.5 36,36.6 32.5,36.2 30.5,36.4 27.5,37 26.4,39.5 27.5,40.4 29,41 28,41.7 29,41.3 31,41.2 33.5,42 36,41.6 38.5,40.9 41.5,41.5 39.8,43.6 37.5,44.7 38,46.8 35,45.6 33.5,44.4 32.5,45.4 30,45.8 28.6,44 27.5,42.5 28,41.6 26.2,41 24,40.8 22.6,40.3 23.6,38.2 22.8,36.6 21.6,36.9 21,38.4 19.4,40.4 19.6,41.8 16,43.5 13.6,45.6 12.3,44.7 14,42.5 16,41.4 18.5,40.2 16.6,38.5 15.7,40 12.8,41.6 10.6,42.9 9.6,44.2 7.5,43.8 4.5,43.4 3.2,42 3.2,41.9 0.9,41 0,39 -0.7,37.6 -2.2,36.7 -5.4,36.1 -7.4,37.2',
+ uk:'-5.7,50.1 -3.4,50.6 1.3,51.1 1.7,52.7 0.2,53.6 -1.5,55.6 -2.1,57.2 -1.8,57.6 -3.2,58.6 -5,58.6 -6.1,57.5 -5.6,56.3 -6.3,55.5 -4.8,54.8 -3.2,54.2 -3,53.4 -4.6,53.3 -4.2,52.2 -5.2,51.7 -3.4,51.4 -4.7,51',
+ ie:'-10.3,51.8 -6.2,52.1 -6,53.6 -5.6,54.7 -7.4,55.3 -10,54.2 -9.9,53.3',
+ af:'-17,21 -16.5,24 -13,27.7 -10,29.5 -9.6,32 -6.8,34 -5.9,35.8 -2,35.1 1,36.5 4,36.9 9.6,37.3 11,36.8 10.2,34.3 11.2,33.2 15.2,32.3 19.5,30.5 20.1,32.3 23,32.5 25,31.7 29,30.9 32.2,31.3 34.2,31.3 34.6,29 33.6,27.9 32.6,29.9 32.4,29.6 33.6,27.2 35.5,24 36.8,22 37.4,18.6 38.8,16.6 39.7,15.1 41.7,13.4 43.3,12.4 43.1,11.5 44.6,10.4 49,11.3 51.1,11.9 51,10.4 50.7,9.3 48.6,5.3 46,2.2 43.1,-0.6 41.5,-1.7 40.2,-2.8 39.2,-4.7 38.7,-6.5 39.4,-8 39.8,-10.2 40.5,-11.7 40.6,-15.5 37.4,-17.6 35.2,-19.3 35.5,-22.1 35.4,-24.1 33,-25.4 32.9,-26.8 32.5,-28.6 31.3,-29.4 30,-31.3 27.5,-33.2 25.8,-33.7 22.6,-33.9 20,-34.8 18.4,-34 18.2,-31.7 16.3,-28.6 15.2,-27.1 14.4,-22.6 13.4,-20.9 11.8,-18.1 11.6,-16.7 12.2,-14.4 13.6,-12 13.2,-9 12.2,-6.1 12.3,-4.6 11.1,-3.9 9.4,-1.3 9.3,1.2 9.6,3.5 8.5,4.5 6.7,4.2 5.4,5.5 4.3,6.3 1.9,6.1 -1.1,5 -2.8,5 -4,5.2 -7.5,4.3 -9,5 -11.4,6.8 -13.2,8.9 -15.1,11 -16.7,12.4 -17.2,14.9 -16.6,16.8 -16.1,18.5 -16.3,19.6',
+ mg:'43.3,-22 44,-25 47,-25.2 49.5,-17 50.4,-15.5 49.3,-12 48,-13.5 44.4,-16.2 44,-18',
+ ar:'34.2,31.3 35.9,34.5 36,36.6 38,36.9 42,37.2 44.8,37.2 46.5,38.5 48,41 49.5,40.4 49,38 49.1,37.6 51,37 54,37.3 53.8,40.8 52.8,42 55.5,45 53,47 52,46.6 51.2,47 49.2,46.5 48.6,45.8 47.6,43.6 47.4,42 46.7,41.9 43,42.8 40,43.4 41.5,41.5 38.5,40.9 36,41.6 33.5,42 31,41.2 29,41.3 28,41.7 27.5,40.4 30.5,36.4 32.5,36.2 36,36.6',
+ ja:'130.2,31.3 131.3,31.4 131.9,33.9 133.5,33.9 135.1,33.8 136.8,34.3 138.8,34.6 140.4,35.1 141,36.5 141,38.4 142,39.8 141.4,41.4 140,41.4 139.9,40.4 139.8,38.9 138.5,37.8 136.9,37.1 135.6,35.5 133.2,35.6 131,34.4',
+ hk:'140,41.6 141.3,41.4 143.2,42 145.3,43.3 144.3,44.1 142,45.4 141.2,43.6 140,42.6',
+ au:'113.6,-22.5 113.4,-26 114.9,-29.5 115,-33.6 117.9,-35.1 121.5,-33.8 124,-33.4 126,-32.3 129,-31.6 131.3,-31.5 134.2,-32.7 135.6,-34.8 137.8,-32.9 137.7,-35.6 139.6,-36 140.6,-38 143.5,-38.8 146.3,-39.1 148,-37.8 150,-37.5 150.9,-35 151.8,-32.6 153.1,-30.4 153.5,-28.1 153,-25.2 151,-23.6 149.4,-21.6 147.3,-19.4 146.1,-18.2 145.4,-15 143.5,-14 142.5,-10.8 141.6,-12.9 141.5,-16.5 140.5,-17.6 139,-17.3 136.7,-15.8 135.8,-14.1 136.9,-12.4 135,-12.2 132.5,-11.6 131,-12.2 129.8,-14 127.7,-14.4 125.8,-14.9 124.4,-16.5 122.2,-18.2 121.1,-19.6 118.8,-20.3 116.5,-20.7 114.6,-21.8',
+ tas:'144.7,-40.7 148.2,-40.9 148.3,-42.1 147.1,-43.3 145.4,-42.4',
+ nz:'172.7,-34.5 174.4,-35.5 175.9,-37.4 178.4,-37.7 177,-39.3 176,-41.3 174.7,-41.3 175.2,-40 174.6,-39.2 173.8,-39.1 174.6,-37.3 173.1,-35.2',
+ nz2:'174.2,-41.4 173,-43.7 171.3,-44.4 170.8,-45.9 169.2,-46.6 166.5,-46 167.6,-44.5 170.6,-42.9 172.8,-40.5',
+ sm:'95.3,5.5 97.5,5.2 100.4,2 103.8,-1.1 106.1,-3.1 105.9,-5.8 104.7,-5.9 102.6,-4.2 100.9,-2 99.3,0.1 98.6,1.8 96.4,3.9',
+ jv:'105.8,-6 108.5,-6.4 111,-6.5 112.6,-6.9 114.6,-7.8 114.4,-8.7 111.7,-8.3 108.4,-7.8 106.3,-7.3',
+ bo:'109.1,1.8 110.4,1.7 111.4,2.7 113,3.2 115.5,5.4 117.2,6.9 119,5.4 118.6,4.5 117.9,1.8 119,0.9 117.8,0.8 116.5,-1.7 116,-3.7 114.9,-4.1 113.3,-3.1 111.7,-3 110.2,-2.9 109.6,-1.3',
+ sl:'120.7,1.3 125,1.6 123.5,0.4 121,0.5 120,-1 121.5,-1.8 122.8,-0.8 121.5,-4.5 120.5,-5.5 119.4,-5.4 119.6,-4 118.8,-2.8 119.8,0',
+ ph:'120.6,18.5 122.2,18.5 122.4,17 121.7,15.9 122,14 123.9,13.7 124.2,12.5 123,13 121.4,13.6 120.6,14.4 120,16',
+ ph2:'122,7 124.4,6.1 125.7,7 126.5,7.8 126.2,9.4 125.4,9.8 123.6,8.6 122.8,7.4',
+ ng:'131,-0.8 134,-0.8 136,-2.2 137.7,-1.4 141,-2.6 144.6,-3.9 146,-5.5 147.6,-6.1 147.9,-8 150,-10.3 148.6,-10.3 147,-9.4 146,-8 144.7,-7.6 143.3,-8.2 143.3,-9 141,-9.1 139,-8.1 138,-7.5 138.7,-6.8 138,-5.4 135.2,-4.4 133.6,-3.6 132.8,-4.1 132,-2.8 133,-2.4',
+ tw:'120.1,23 121,25.1 121.9,25 121.5,23.5 120.7,21.9',
+ hn:'108.7,18.5 110.3,18.7 111,19.7 110.6,20.1 109.3,19.9',
+ sri:'79.9,6.9 79.8,8.2 80,9.8 81.3,8.6 81.8,7.5 81.2,6.2 80.3,5.9',
+ cu:'-84.9,21.9 -83.3,22.2 -81.7,23.1 -80,23 -77.6,21.8 -75.6,21.2 -74.2,20.3 -75.7,19.9 -77.7,19.9 -77.2,20.7 -78.5,21 -80.3,22 -82.2,22.3 -83.9,21.3',
+ hi:'-74.4,18.4 -72.8,19.9 -71.6,19.9 -70,19.7 -68.4,18.6 -68.8,18.2 -70,18.2 -71.4,17.6 -72.4,18.2 -74.3,18.3',
+ jm:'-78.4,18.3 -77,18.5 -76.2,18 -76.9,17.9 -77.8,17.9',
+ pr:'-67.2,18.5 -65.6,18.4 -65.7,18 -67.2,18',
+ sxm:'-63.2,18.1 -62.9,18.15 -62.95,17.95 -63.15,17.98',
+ tt:'-61.9,10.8 -61,10.8 -61,10.1 -61.9,10.05',
+ ant:'-180,-82 180,-82 180,-71 170,-71 160,-69.5 140,-66.5 120,-66.5 100,-65.8 80,-67 60,-67 40,-69 20,-70 0,-70.5 -20,-73 -45,-77.5 -58,-64 -62,-65.5 -68,-70 -75,-72.5 -100,-73 -120,-74 -140,-75.5 -160,-78 -180,-78'
+};
+const PX=lon=>lon+180, PY=lat=>78-lat;
+function poly(str){return str.split(' ').map(s=>{const [a,b]=s.split(',').map(Number);return (PX(a)).toFixed(1)+','+(PY(b)).toFixed(1);}).join(' ');}
+const svgNS='http://www.w3.org/2000/svg';
+const mapEl=document.getElementById('map');
+(function buildMap(){
+  let h='<defs><clipPath id="mclip"><rect x="0" y="0" width="360" height="128"/></clipPath></defs><g clip-path="url(#mclip)">';
+  for(let lon=-150;lon<=180;lon+=30)h+='<line class="grat" x1="'+PX(lon)+'" y1="0" x2="'+PX(lon)+'" y2="128"/>';
+  for(let lat=60;lat>=-40;lat-=20)h+='<line class="grat" x1="0" y1="'+PY(lat)+'" x2="360" y2="'+PY(lat)+'"/>';
+  h+='<line class="grat" x1="0" y1="'+PY(0)+'" x2="360" y2="'+PY(0)+'" style="stroke:rgba(169,189,214,.2)"/>';
+  for(const k in LAND)h+='<polygon class="land" points="'+poly(LAND[k])+'"/>';
+  h+='<path id="night" class="night" d=""/><circle id="sun" class="sun" r="2.2" cx="0" cy="0"/>';
+  h+='<line class="idl" x1="359.4" y1="0" x2="359.4" y2="128"/><line class="idl" x1="0.6" y1="0" x2="0.6" y2="128"/>';
+  h+='<text class="idltxt" transform="translate(356.6 66) rotate(-90)" text-anchor="middle">INTERNATIONAL DATE LINE (180°)</text>';
+  h+='<g id="cityLayer"></g></g>';
+  mapEl.innerHTML=h;
+})();
+function solar(utc){
+  const d=new Date(utc),start=Date.UTC(d.getUTCFullYear(),0,0),doy=(utc-start)/864e5;
+  const decl=-23.44*Math.cos(2*Math.PI/365*(doy+10));
+  const hrs=d.getUTCHours()+d.getUTCMinutes()/60;
+  let lon=-(hrs-12)*15;if(lon<-180)lon+=360;if(lon>180)lon-=360;
+  return {decl,lon};
+}
+function drawNight(utc){
+  const s=solar(utc);let dec=s.decl;if(Math.abs(dec)<0.4)dec=dec<0?-0.4:0.4;
+  const t=Math.tan(dec*Math.PI/180);let pts=[];
+  for(let lon=-180;lon<=180;lon+=2){const H=(lon-s.lon)*Math.PI/180;const lat=Math.atan(-Math.cos(H)/t)*180/Math.PI;pts.push(PX(lon).toFixed(1)+','+Math.max(-2,Math.min(130,PY(lat))).toFixed(1));}
+  const edge=dec>0?130:-2;
+  document.getElementById('night').setAttribute('d','M0,'+edge+' L'+pts.join(' L')+' L360,'+edge+' Z');
+  const sun=document.getElementById('sun');sun.setAttribute('cx',PX(s.lon));sun.setAttribute('cy',PY(s.decl));
+}
+const WC={date:null,min:540,h12:false,missions:BEST.world||0};
+function sxmToday(){return iso(parts(Date.now(),SXM_TZ));}
+WC.date=sxmToday();
+const wcTime=document.getElementById('wcTime'),wcDate=document.getElementById('wcDate');
+wcDate.value=WC.date;
+function wcUtc(){const {y,m,d}=ymd(WC.date);return toUtc(y,m,d,Math.floor(WC.min/60),WC.min%60,SXM_TZ);}
+function fmtT(p){return WC.h12?t12s(p.h,p.mi):t24(p.h,p.mi);}
+const MISSIONS=[
+  {txt:'Make it <b>09:00</b> in the morning in <b>Tokyo</b>. What day is it there?',test:u=>{const p=parts(u,'Asia/Tokyo');return p.h===9&&p.mi===0;},msg:'Tokyo is at 09:00, but look: in Bridgetown it is still the evening before!'},
+  {txt:'Find a date when <b>New York</b> is <b>1 hour behind</b> Bridgetown.',test:u=>offsetMin(u,SXM_TZ)-offsetMin(u,'America/New_York')===60,msg:'In winter New York is on Eastern Standard Time (UTC−5), 1 hour behind us. In summer (daylight saving) it is UTC−4, the same as Barbados.'},
+  {txt:'Find a date when <b>London</b> is only <b>4 hours ahead</b> of Bridgetown.',test:u=>offsetMin(u,'Europe/London')-offsetMin(u,SXM_TZ)===240,msg:'In winter London is on GMT (UTC+0), 4 hours ahead of us. In British Summer Time (BST, UTC+1) it is 5 hours ahead.'}
+];
+function renderMissions(){
+  document.getElementById('missions').innerHTML=MISSIONS.map((m,i)=>{const d=(WC.missions>>i)&1;return '<div class="mission'+(d?' done':'')+'" id="ms'+i+'"><span class="ms" aria-hidden="true">'+(d?'★':(i+1))+'</span><span><span class="sr">'+(d?'Completed mission: ':'Mission: ')+'</span>'+m.txt+'</span></div>';}).join('');
+}
+function checkMissions(u){
+  if(!WC.touched)return;
+  MISSIONS.forEach((m,i)=>{if(!((WC.missions>>i)&1)&&m.test(u)){WC.missions|=1<<i;setBest('world',WC.missions);renderMissions();SFX.star();say('Mission complete. '+m.msg);const el=document.getElementById('ms'+i);if(el&&!reduceMotion)el.classList.add('pop');const sp=el&&el.querySelector('span:last-child');if(sp)sp.insertAdjacentHTML('beforeend','<br><span class="muted" style="font-size:12.5px">'+m.msg+'</span>');}});
+}
+const MOON='<svg class="night-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="#a9bdd6"/></svg>';
+const SUNI='<svg class="night-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="#ffd28a"/><g stroke="#ffd28a" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M5.2 18.8l1.7-1.7M17.1 6.9l1.7-1.7"/></g></svg>';
+function renderWorld(){
+  const u=wcUtc(),hp=parts(u,SXM_TZ),hd=dayNum(hp),hoff=offsetMin(u,SXM_TZ);
+  document.getElementById('wcRead').innerHTML='When it is this time on <b>'+longDate(hp)+'</b> in <b>Bridgetown</b> ('+zoneAbbr(u,SXM_TZ)+', '+offStr(hoff)+')…';
+  document.getElementById('wcBig').innerHTML=(WC.h12?t12s(hp.h,hp.mi):t24(hp.h,hp.mi))+'<small>'+(WC.h12?t24(hp.h,hp.mi):t12(hp.h,hp.mi))+'</small>';
+  wcTime.value=WC.min;wcTime.setAttribute('aria-valuetext',t24(hp.h,hp.mi)+', '+t12(hp.h,hp.mi)+' in Bridgetown');
+  let cards='',pills='',leads='';
+  for(const c of CITIES){
+    const p=parts(u,c.tz),off=offsetMin(u,c.tz),dd=dayNum(p)-hd,dst=isDST(u,c.tz),usesDst=hasDST(c.tz,p.y);
+    const night=p.h<6||p.h>=19;
+    let badge=dd>0?' <span class="badge b-next">Next day</span>':dd<0?' <span class="badge b-prev">Day before</span>':'';
+    let db=c.id==='sxm'?'<span class="badge b-nodst">No daylight saving</span>':dst?'<span class="badge b-dst">Summer time</span>':usesDst?'<span class="badge b-nodst" style="opacity:.8">Standard time</span>':'';
+    cards+='<article class="city'+(c.id==='sxm'?' home':'')+'" aria-label="'+esc(c.name+': '+t24(p.h,p.mi)+', '+longDate(p)+', '+offStr(off))+'">'+(night?MOON:SUNI)+
+      '<div class="cn">'+c.name+'</div><div class="cc">'+c.country+'</div>'+
+      '<div class="ct">'+fmtT(p)+'</div><div class="c12">'+(WC.h12?t24(p.h,p.mi):t12(p.h,p.mi))+'</div>'+
+      '<div class="cd">'+shortDate(p)+badge+'</div>'+
+      '<div class="cm">'+(zoneAbbr(u,c.tz).startsWith('UTC')?'':zoneAbbr(u,c.tz)+' · ')+offStr(off)+'<br>'+(c.id==='sxm'?'home':gapStr(off-hoff))+'</div>'+(db?'<div style="margin-top:5px">'+db+'</div>':'')+'</article>';
+    const x=PX(c.lon),y=PY(c.lat),lx=x+c.dx,ly=y+c.dy,w=c.code.length>2?33:30;
+    leads+='<line class="lead" x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+lx.toFixed(1)+'" y2="'+ly.toFixed(1)+'"/>';
+    const tt=WC.h12?t12s(p.h,p.mi).replace(' ',''):t24(p.h,p.mi);const ww=WC.h12?w+4:w;
+    pills+='<g class="pill'+(c.id==='sxm'?' home':'')+'"><title>'+esc(c.name+' '+t24(p.h,p.mi)+' '+longDate(p))+'</title><rect x="'+(lx-ww/2).toFixed(1)+'" y="'+(ly-4.2).toFixed(1)+'" width="'+ww+'" height="8.4" rx="2.2"/>'+
+      '<text x="'+(lx-ww/2+2.2).toFixed(1)+'" y="'+(ly+1.6).toFixed(1)+'">'+c.code+'</text><text class="pt" x="'+(lx+ww/2-2.2).toFixed(1)+'" y="'+(ly+1.6).toFixed(1)+'" text-anchor="end">'+tt+'</text>'+
+      (dd?'<text class="dayx" x="'+(lx+ww/2+0.6).toFixed(1)+'" y="'+(ly-3).toFixed(1)+'">'+(dd>0?'+1':'−1')+'</text>':'')+'</g>';
+    pills+='';
+    leads+='<circle class="dot'+(c.id==='sxm'?' home':'')+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(c.id==='sxm'?2.3:1.6)+'"/>';
+  }
+  document.getElementById('cityLayer').innerHTML=leads+pills;
+  document.getElementById('wcCards').innerHTML=cards;
+  drawNight(u);
+  renderIdeas(hp.y);
+  checkMissions(u);
+}
+function changeTransitions(tz,y){
+  const out=[];let prev=offsetMin(Date.UTC(y,0,1,12),tz);
+  for(let d=1;d<=365;d++){const u=Date.UTC(y,0,1+d,12),o=offsetMin(u,tz);if(o!==prev){out.push({p:parts(u,tz),fwd:o>prev});prev=o;}}
+  return out;
+}
+let _ideasYear=null;
+function renderIdeas(y){
+  if(_ideasYear===y)return;_ideasYear=y;
+  const jan=Date.UTC(y,0,15,16),jul=Date.UTC(y,6,15,16);
+  const sx=offsetMin(jan,SXM_TZ);
+  const rows=['nyc','tor','lax','lon','ams','syd'].map(id=>{const c=C[id];const a=offsetMin(jan,c.tz)-offsetMin(jan,SXM_TZ),b=offsetMin(jul,c.tz)-offsetMin(jul,SXM_TZ);return '<tr><td>'+c.name+'</td><td>'+gapStr(a)+'</td><td>'+gapStr(b)+'</td></tr>';}).join('');
+  const ny=changeTransitions('America/New_York',y),eu=changeTransitions('Europe/London',y),sy=changeTransitions('Australia/Sydney',y);
+  const lst=t=>t.map(x=>longDate(x.p)+' ('+(x.fwd?'forward':'back')+')').join(' and ');
+  document.getElementById('ideas').innerHTML=
+   '<div class="idea"><h3>UTC: the world’s reference clock</h3><p>Coordinated Universal Time (UTC) is the starting point for every time zone. Each zone is described as hours <b>ahead</b> (+) or <b>behind</b> (−) UTC. Tokyo is UTC+9; Los Angeles is UTC−8 in winter.</p></div>'+
+   '<div class="idea sxm"><h3>Barbados: AST, UTC−4 all year</h3><p>Barbados keeps Atlantic Standard Time (AST), '+offStr(sx)+', all year round. We do <b>not</b> use daylight saving time, so our clocks never go forward or back.</p></div>'+
+   '<div class="idea dst"><h3>Daylight saving changes the gap</h3><p>The USA, Canada, the UK and Europe put their clocks forward one hour in spring and back in autumn. In '+y+', New York changes on '+lst(ny)+'; the UK and Europe change on '+lst(eu)+'. Because they change on different dates, the gap with Bridgetown changes during the year.</p></div>'+
+   '<div class="idea dst"><h3>Southern hemisphere is the other way round</h3><p>Sydney has summer time from October to April. In '+y+' its clocks change on '+lst(sy)+'.</p></div>'+
+   '<div class="idea"><h3>The 24-hour clock</h3><p>Hours run from 00:00 (midnight) to 23:59. For pm times add 12: 3:45 pm = 15:45. Timetables and itineraries use the 24-hour clock to avoid am/pm mistakes.</p></div>'+
+   '<div class="idea"><h3>am and pm</h3><p><b>am</b> (ante meridiem) means before noon; <b>pm</b> (post meridiem) means after noon. 12:00 pm is noon and 12:00 am is midnight, which is why 24-hour times are clearer.</p></div>'+
+   '<div class="idea idl"><h3>The International Date Line</h3><p>The date line runs roughly along the 180° line of longitude in the Pacific Ocean. Crossing it travelling <b>west</b>, the date jumps <b>forward</b> one day; travelling <b>east</b>, it goes back one day. This is why Tokyo and Sydney are often already in “tomorrow”.</p></div>'+
+   '<div class="idea idl"><h3>“Next day” arrivals (+1)</h3><p>On long eastbound or overnight flights you may land on the next calendar day in local time. Itineraries and tickets show this as “+1”, for example <span class="mono">07:50 +1</span>.</p></div>'+
+   '<div class="idea"><h3>Dating documents and e-mails</h3><p>Write dates in full (Friday 20 November 2026) on documents sent abroad: 03/04 means 3 April in Europe but 4 March in the USA. Always state the time zone in meeting invitations.</p></div>'+
+   '<div class="idea" style="grid-column:1/-1"><h3>How far ahead or behind Bridgetown? ('+y+')</h3><div class="tblscroll"><table class="gap"><thead><tr><th>City</th><th>15 January</th><th>15 July</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+wcTime.addEventListener('input',()=>{WC.touched=true;WC.min=+wcTime.value;SFX.tick();renderWorld();});
+document.getElementById('wcMinus').addEventListener('click',()=>{WC.touched=true;SFX.click();if(WC.min>=60)WC.min-=60;else{WC.min+=1380;WC.date=addDaysIso(WC.date,-1);wcDate.value=WC.date;}renderWorld();});
+document.getElementById('wcPlus').addEventListener('click',()=>{WC.touched=true;SFX.click();if(WC.min+60<1440)WC.min+=60;else{WC.min-=1380;WC.date=addDaysIso(WC.date,1);wcDate.value=WC.date;}renderWorld();});
+wcDate.addEventListener('change',()=>{WC.touched=true;if(/^\d{4}-\d\d-\d\d$/.test(wcDate.value)){WC.date=wcDate.value;SFX.click();renderWorld();}});
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  SFX.click();WC.touched=true;const y=+WC.date.slice(0,4),k=b.dataset.preset;
+  if(k==='today'){WC.date=sxmToday();const p=parts(Date.now(),SXM_TZ);WC.min=p.h*60+Math.floor(p.mi/15)*15;}
+  else if(k==='jan')WC.date=y+'-01-15';else if(k==='jul')WC.date=y+'-07-15';
+  else if(k==='mar'){ // a date after the US change but before the European change, found by computation
+    let found=null;for(let d=1;d<=31&&!found;d++){const u=Date.UTC(y,2,d,16);if(isDST(u,'America/New_York')&&!isDST(u,'Europe/London'))found=y+'-03-'+pad(Math.min(d+1,31));}
+    WC.date=found||y+'-03-15';
+  }
+  wcDate.value=WC.date;renderWorld();
+}));
+function setFmt(h12){WC.h12=h12;document.getElementById('f24').setAttribute('aria-pressed',String(!h12));document.getElementById('f12').setAttribute('aria-pressed',String(h12));SFX.click();renderWorld();}
+document.getElementById('f24').addEventListener('click',()=>setFmt(false));
+document.getElementById('f12').addEventListener('click',()=>setFmt(true));
+
+/* =====================================================================
+   SHARED: analogue clock
+   ===================================================================== */
+function analog(h,mi,label){
+  const a=(h%12+mi/60)*30,b=mi*6;let ticks='';
+  for(let i=0;i<12;i++){const r=i*30*Math.PI/180;ticks+='<line x1="'+(50+38*Math.sin(r)).toFixed(1)+'" y1="'+(50-38*Math.cos(r)).toFixed(1)+'" x2="'+(50+(i%3?35:31)*Math.sin(r)).toFixed(1)+'" y2="'+(50-(i%3?35:31)*Math.cos(r)).toFixed(1)+'" stroke="#a9bdd6" stroke-width="'+(i%3?1.2:2.4)+'"/>';}
+  const night=h<6||h>=19;
+  return '<svg viewBox="0 0 100 100" role="img" aria-label="'+esc(label)+'"><circle cx="50" cy="50" r="45" fill="'+(night?'#0a1626':'#183356')+'" stroke="#ffb84d" stroke-width="3"/>'+ticks+
+   '<line x1="50" y1="50" x2="'+(50+21*Math.sin(a*Math.PI/180)).toFixed(1)+'" y2="'+(50-21*Math.cos(a*Math.PI/180)).toFixed(1)+'" stroke="#eef4fb" stroke-width="4.5" stroke-linecap="round"/>'+
+   '<line x1="50" y1="50" x2="'+(50+32*Math.sin(b*Math.PI/180)).toFixed(1)+'" y2="'+(50-32*Math.cos(b*Math.PI/180)).toFixed(1)+'" stroke="#33d1b2" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="50" r="3.5" fill="#ffb84d"/>'+
+   '<text x="50" y="72" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#a9bdd6">'+(h<12?'am':'pm')+'</text></svg>';
+}
+function parseTime(s){
+  s=String(s).trim().toLowerCase().replace(/\./g,'').replace(/\s+/g,' ').replace(/(\d)\s*(a|p)\s*m?$/,'$1 $2m');
+  s=s.replace(/\s*\(.*\)$/,'').replace(/ ?(hrs|hours|h)$/,'');
+  const m=s.match(/^(\d{1,2})(?:[:h]?(\d{2}))?\s*(am|pm)?$/);if(!m)return null;
+  let h=+m[1],mi=m[2]?+m[2]:0;if(mi>59)return null;
+  if(m[3]){if(h<1||h>12)return null;h=h%12+(m[3]==='pm'?12:0);}else if(h>23)return null;
+  return h*60+mi;
+}
+
+/* =====================================================================
+   MODE 2 — WHAT TIME IS IT THERE?
+   ===================================================================== */
+const QS={started:false,qs:[],i:0,score:0,answered:false,res:[],day:null};
+function randomDate(){
+  const y=2026,bucket=Math.random();let m;
+  if(bucket<.38)m=[12,1,2][rnd(3)];else if(bucket<.76)m=[6,7,8][rnd(3)];else m=[3,4,10,11][rnd(4)];
+  return {y,m,d:1+rnd(28)};
+}
+function genQuick(type){
+  for(let tries=0;tries<200;tries++){
+    const src=Math.random()<.62?C.sxm:C[['nyc','lon','ams','tyo','lax','syd','bom','tor'][rnd(8)]];
+    let pool=CITIES.filter(c=>c.tz!==src.tz);if(src.id!=='sxm'&&Math.random()<.5)pool=[C.sxm];
+    const dst=pool[rnd(pool.length)];
+    const dt=randomDate(),h=rnd(24),mi=[0,0,15,30,45][rnd(5)];
+    if(!isValidLocal(dt.y,dt.m,dt.d,h,mi,src.tz))continue;
+    const u=toUtc(dt.y,dt.m,dt.d,h,mi,src.tz),sp=parts(u,src.tz),dp=parts(u,dst.tz);
+    const so=offsetMin(u,src.tz),do_=offsetMin(u,dst.tz);if(so===do_)continue;
+    // make the transition hour itself never ambiguous: answer must be a real wall time
+    const srcMin=h*60+mi,diff=do_-so,ans=srcMin+diff;
+    const dayRel=dayNum(dp)-dayNum(sp);
+    if(Math.floor(ans/1440)!==dayRel)continue; // sanity: arithmetic matches Intl
+    return {type,src,dst,u,sp,dp,so,do_,diff,srcMin,ans,dayRel,h12:type==='mc'&&Math.random()<.4};
+  }
+}
+function minLabel(total,h12){const day=Math.floor(total/1440),m=((total%1440)+1440)%1440,h=Math.floor(m/60),mi=m%60;return {t:h12?t12s(h,mi):t24(h,mi),day};}
+function dayWord(d,p){return d>0?'next day':d<0?'day before':'same day';}
+function renderQuickIntro(){
+  QS.started=false;
+  document.getElementById('quickPanel').innerHTML='<div class="intro"><div><h2 class="h2">What time is it there?</h2><p class="lead">Ten quick questions built from real dates in 2026, some in winter, some in summer time. Work out the local time in another city. Watch out for daylight saving and for “next day” answers!</p>'+
+  '<p class="muted" style="margin:0;font-size:14px">Method: find each city’s UTC offset <b>on that date</b>, work out the difference, then add or subtract. Some questions are multiple choice; for others you type the time (for example <span class="kbd">18:30</span> or <span class="kbd">6:30 pm</span>) and choose the day.</p>'+
+  '<p class="bestline">Best score: '+BEST.quick+'%</p></div><div><button class="btn" id="qsStart">Start ▸</button></div></div>';
+  document.getElementById('qsStart').addEventListener('click',startQuick);
+}
+function startQuick(){
+  SFX.click();QS.started=true;QS.i=0;QS.score=0;QS.res=[];
+  QS.qs=Array.from({length:10},(_,i)=>genQuick(i%3===2||i%3===0&&i>4?'typed':'mc'));
+  renderQuick();
+}
+function renderQuick(){
+  const q=QS.qs[QS.i];QS.answered=false;QS.day=null;
+  const prog=QS.qs.map((_,k)=>'<i class="'+(k<QS.i?(QS.res[k]?'ok':'bad'):k===QS.i?'cur':'')+'"></i>').join('');
+  let body='<div class="qhead"><div><span class="muted mono" style="font-size:13px">Question '+(QS.i+1)+' of 10</span><div class="prog" aria-hidden="true">'+prog+'</div></div><span class="score" aria-label="Score">'+QS.score+' pts</span></div>';
+  const st=q.h12?t12s(q.sp.h,q.sp.mi):t24(q.sp.h,q.sp.mi);
+  body+='<div class="qbody"><div class="clockbox">'+analog(q.sp.h,q.sp.mi,q.src.name+' clock showing '+t12(q.sp.h,q.sp.mi))+'<div class="cl">'+q.src.name+'<br><span class="mono">'+t24(q.sp.h,q.sp.mi)+'</span></div></div><div>';
+  body+='<p class="qtext" id="qtext">It is <span class="hl">'+st+'</span> on <span class="hl">'+longDate(q.sp)+'</span> in '+q.src.name+'. What time is it in <span class="hl">'+q.dst.name+'</span>'+(q.h12?' (am/pm)':'')+'?</p>';
+  if(q.type==='mc'){
+    const cand=[q.ans,q.ans+60,q.ans-60,q.srcMin-q.diff,q.ans+120,q.ans-120,q.ans+30];
+    const seen=new Set(),opts=[];
+    for(const v of cand){const L=minLabel(v,q.h12),k=L.t+'|'+L.day;if(!seen.has(k)){seen.add(k);opts.push({v,L});}if(opts.length===4)break;}
+    const sh=(Array.isArray(q.ov)&&q.ov.length===opts.length&&q.ov.every(v=>opts.some(o=>o.v===v)))?q.ov.map(v=>opts.find(o=>o.v===v)):shuffle(opts);q.ov=null;q.opts=sh;
+    body+='<div class="opts" role="group" aria-labelledby="qtext">'+sh.map((o,k)=>'<button class="opt" data-k="'+k+'"><span class="ol">'+'ABCD'[k]+'</span><span>'+o.L.t+(o.L.day?'<small>'+(o.L.day>0?'next day':'day before')+'</small>':'')+'</span></button>').join('')+'</div>';
+  }else{
+    body+='<div class="typed"><label class="flabel" for="qIn">Time in '+q.dst.name+' (24-hour or am/pm)</label><input type="text" id="qIn" inputmode="text" autocomplete="off" placeholder="e.g. 18:30"><span class="flabel" id="dayLbl">Which day is it in '+q.dst.name+'?</span><div class="daypick" role="group" aria-labelledby="dayLbl"><button data-d="-1" aria-pressed="false">Day before</button><button data-d="0" aria-pressed="false">Same day</button><button data-d="1" aria-pressed="false">Next day</button></div><div><button class="btn" id="qCheck">Check answer</button></div></div>';
+  }
+  body+='<div id="qfb" aria-live="polite"></div></div></div>';
+  const P=document.getElementById('quickPanel');P.innerHTML=body;
+  if(q.type==='mc'){P.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>answerQuick(+b.dataset.k)));P.querySelector('.opt').focus();}
+  else{
+    const inp=document.getElementById('qIn');
+    P.querySelectorAll('.daypick button').forEach(b=>b.addEventListener('click',()=>{QS.day=+b.dataset.d;P.querySelectorAll('.daypick button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));SFX.click();}));
+    document.getElementById('qCheck').addEventListener('click',()=>answerQuick(null));
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')answerQuick(null);});
+    inp.focus();
+  }
+}
+function workSteps(q){
+  const so=q.so,do_=q.do_;
+  const sd=isDST(q.u,q.src.tz),dd=isDST(q.u,q.dst.tz);
+  const note=c=>c.id==='sxm'?' (Atlantic Standard Time, no daylight saving)':(isDST(q.u,c.tz)?' (summer time / daylight saving in force on this date)':(hasDST(c.tz,q.sp.y)?' (standard / winter time on this date)':' (no daylight saving)'));
+  const L=minLabel(q.ans,false);
+  return '<ol class="work"><li>'+q.src.name+' on '+longDate(q.sp)+': <b>'+offStr(so)+'</b>'+note(q.src)+'.</li><li>'+q.dst.name+' on that date: <b>'+offStr(do_)+'</b>'+note(q.dst)+'.</li><li>'+q.dst.name+' is <b>'+gapStr(q.diff)+'</b>'+(q.diff>0?' of ':' ')+q.src.name+'.</li><li>'+t24(q.sp.h,q.sp.mi)+' '+(q.diff>0?'+':'−')+' '+durStr(q.diff)+' = <b>'+L.t+'</b> ('+t12(q.dp.h,q.dp.mi)+') on <b>'+longDate(q.dp)+'</b>'+(q.dayRel?' — the '+(q.dayRel>0?'next day':'day before'):'')+'.</li></ol>';
+}
+function answerQuick(k){
+  if(QS.answered)return;const q=QS.qs[QS.i];let ok;
+  if(q.type==='mc'){
+    const o=q.opts[k];ok=o.v===q.ans;
+    document.querySelectorAll('#quickPanel .opt').forEach((b,j)=>{b.disabled=true;if(q.opts[j].v===q.ans)b.classList.add('right');else if(j===k)b.classList.add('wrong');});
+  }else{
+    const inp=document.getElementById('qIn'),v=parseTime(inp.value);
+    if(v===null){document.getElementById('qfb').innerHTML='<div class="fb bad"><strong>Type a time such as 18:30 or 6:30 pm.</strong></div>';inp.focus();return;}
+    if(QS.day===null){document.getElementById('qfb').innerHTML='<div class="fb bad"><strong>Now choose the day: day before, same day or next day.</strong></div>';document.querySelector('.daypick button[data-d="0"]').focus();return;}
+    const want=((q.ans%1440)+1440)%1440;ok=v===want&&QS.day===q.dayRel;
+    inp.disabled=true;document.querySelectorAll('.daypick button,#qCheck').forEach(b=>b.disabled=true);
+  }
+  QS.answered=true;QS.res[QS.i]=ok;if(ok){QS.score+=10;SFX.ok();}else SFX.bad();
+  const L=minLabel(q.ans,false);
+  document.getElementById('qfb').innerHTML='<div class="fb '+(ok?'ok':'bad')+'"><strong>'+(ok?'Correct!':'Not quite. The answer is '+L.t+' ('+t12(q.dp.h,q.dp.mi)+'), '+dayWord(q.dayRel)+'.')+'</strong>'+workSteps(q)+'</div><div style="margin-top:10px"><button class="btn" id="qNext">'+(QS.i<9?'Next question ▸':'See results ▸')+'</button></div>';
+  document.querySelector('#quickPanel .score').textContent=QS.score+' pts';
+  say(ok?'Correct':'Incorrect. The answer is '+L.t);
+  const nb=document.getElementById('qNext');nb.addEventListener('click',()=>{SFX.click();if(QS.i<9){QS.i++;renderQuick();}else quickResult();});nb.focus();
+}
+function resultHTML(title,pct,bestKey,extra,again){
+  const s=starsFor(pct),nb=setBest(bestKey,pct);
+  return '<div class="result"><h2 class="h2">'+title+'</h2><div class="stars3 '+(reduceMotion?'':'pop')+'" aria-label="'+s+' of 3 stars">'+starsHTML(s)+'</div><div class="pct">'+pct+'%</div><p class="muted">'+(nb?'New best score!':'Best score: '+BEST[bestKey]+'%')+'</p>'+(extra||'')+'<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="'+again+'">Play again</button></div></div>';
+}
+function quickResult(){
+  const pct=QS.score;
+  document.getElementById('quickPanel').innerHTML=resultHTML('Round complete',pct,'quick','<p>You answered '+QS.res.filter(Boolean).length+' of 10 correctly. '+(pct>=90?'Excellent time-zone thinking!':pct>=70?'Good work. Check the daylight saving dates again.':'Practise with the World clock first, then try again.')+'</p>','qsAgain');
+  starFx(starsFor(pct));document.getElementById('qsAgain').addEventListener('click',startQuick);document.getElementById('qsAgain').focus();
+}
+function starFx(s){if(s>=2)SFX.win();else if(s===1)SFX.ok();else SFX.bad();}
+
+/* =====================================================================
+   MODE 3 — BOOK THE CALL
+   ===================================================================== */
+const OFFICE_START=510,OFFICE_END=990; // 08:30–16:30 local
+const SCENARIOS=[
+ {title:'Caribbean sales huddle',date:'2026-07-12',cities:['sxm','kin','pos'],dur:60,org:'Coral Bay Trading Ltd. (Bridgetown)',brief:'Ms Ana Lake in Bridgetown needs a one-hour video call with the Kingston and Port of Spain sales teams.'},
+ {title:'North American suppliers',date:'2026-01-20',cities:['sxm','tor','lax'],dur:60,org:'Coral Bay Trading Ltd.',brief:'Book a one-hour call with Northbridge Supplies in Toronto and Pacific Crest Imports in Los Angeles. Los Angeles is a long way west…'},
+ {title:'European partners (winter)',date:'2026-01-21',cities:['sxm','lon','ams'],dur:60,org:'Coral Bay Trading Ltd.',brief:'A one-hour planning call with Thameside Consulting in London and Tulpenveld B.V. in Amsterdam.'},
+ {title:'European partners (summer)',date:'2026-07-15',cities:['sxm','lon','ams'],dur:60,org:'Coral Bay Trading Ltd.',brief:'The same team six months later. London and Amsterdam are now on summer time, but Barbados never changes. Has the window got bigger or smaller?'},
+ {title:'Four-city project review',date:'2026-03-16',cities:['sxm','nyc','los','bom'],dur:60,org:'Coral Bay Trading Ltd.',brief:'A one-hour review with New York, Lagos and Mumbai. Hint: there may be no perfect slot. Find the best compromise, with the fewest minutes outside office hours in total.'},
+ {title:'Friday call to Asia-Pacific',date:'2026-01-23',cities:['sxm','tyo','syd'],dur:30,org:'Coral Bay Trading Ltd.',brief:'A short 30-minute call on Friday with Sakura Line Logistics in Tokyo and Harbourview Freight in Sydney. Careful: when it is Friday afternoon in Bridgetown, what day is it in Tokyo?'}
+];
+const CALL={started:false,i:0,start:540,scores:[],booked:false,dragging:false};
+function scnBase(s){const {y,m,d}=ymd(s.date);return toUtc(y,m,d,0,0,SXM_TZ);}
+function evalSlot(s,startMin){
+  const base=scnBase(s)+startMin*60000;let total=0;const per=[];
+  for(const id of s.cities){
+    const tz=C[id].tz;let out=0,why={wk:0,early:0,late:0};
+    for(let t=0;t<s.dur;t+=15){const p=parts(base+t*60000,tz),lm=p.h*60+p.mi;
+      if(p.wd===0||p.wd===6){out+=15;why.wk+=15;}
+      else if(lm<OFFICE_START){out+=15;why.early+=15;}
+      else if(lm+15>OFFICE_END){out+=15;why.late+=15;}
+    }
+    total+=out;per.push({id,out,why,p0:parts(base,tz),p1:parts(base+s.dur*60000,tz),off:offsetMin(base,tz)});
+  }
+  return {total,per};
+}
+function bestSlot(s){let best=1e9,starts=[];for(let m=0;m<=1440-s.dur;m+=15){const t=evalSlot(s,m).total;if(t<best){best=t;starts=[m];}else if(t===best)starts.push(m);}return {best,starts};}
+function renderCallIntro(){
+  CALL.started=false;
+  document.getElementById('callPanel').innerHTML='<div class="intro"><div><h2 class="h2">Book the call</h2><p class="lead">You are the office administrator at <b>Coral Bay Trading Ltd.</b> in Bridgetown. Schedule six video meetings so that everyone is inside office hours: <b>08:30–16:30, Monday to Friday, in their own local time</b>.</p><p class="muted" style="margin:0;font-size:14px">Drag along any bar (or use the slider and arrow keys) to move the meeting. A city’s row lights up green when the whole meeting is inside its office hours. When no perfect slot exists, find the fairest compromise. After booking, you will see the invitation e-mail with every participant’s local time.</p><p class="bestline">Best score: '+BEST.call+'%</p></div><div><button class="btn" id="callStart">Start ▸</button></div></div>';
+  document.getElementById('callStart').addEventListener('click',()=>{SFX.click();CALL.started=true;CALL.i=0;CALL.scores=[];loadScn();});
+}
+function loadScn(){CALL.booked=false;CALL.start=8*60+30;renderScn();}
+function officeRuns(s,id){ // segments (in SXM minutes of the window) that are inside office hours for this city
+  const base=scnBase(s),tz=C[id].tz,runs=[],wk=[];let cur=null,cw=null;
+  for(let m=0;m<1440;m+=15){const p=parts(base+m*60000,tz),lm=p.h*60+p.mi,isWk=p.wd===0||p.wd===6,inO=!isWk&&lm>=OFFICE_START&&lm+15<=OFFICE_END;
+    if(inO){if(!cur)cur={a:m,b:m+15};else cur.b=m+15;}else if(cur){runs.push(cur);cur=null;}
+    if(isWk){if(!cw)cw={a:m,b:m+15};else cw.b=m+15;}else if(cw){wk.push(cw);cw=null;}
+  }
+  if(cur)runs.push(cur);if(cw)wk.push(cw);return {runs,wk};
+}
+function renderScn(){
+  const s=SCENARIOS[CALL.i],P=document.getElementById('callPanel'),base=scnBase(s),hp=parts(base,SXM_TZ);
+  let h='<div class="scn-head"><div><div class="scn-meta">Meeting '+(CALL.i+1)+' of '+SCENARIOS.length+' · '+s.dur+' minutes</div><h2 class="h2">'+s.title+'</h2><p class="lead" style="margin:0">'+s.brief+'</p></div><div class="scn-meta" style="text-align:right">'+longDate(hp)+'<br><span class="muted">(date in Bridgetown)</span></div></div>';
+  // axis
+  let ticks='';for(let k=0;k<=24;k+=3){ticks+='<span class="'+(k%6?'odd':'')+'" style="left:'+(k/24*100)+'%">'+pad(k%24)+'</span>';}
+  h+='<div class="axis"><div class="flabel" style="align-self:end">Bridgetown time ▸</div><div class="ticks" aria-hidden="true">'+ticks+'</div></div><div class="tl" id="tl">';
+  for(const id of s.cities){
+    const c=C[id],R=officeRuns(s,id);
+    let segs=R.runs.map(r=>'<span class="off" style="left:'+(r.a/1440*100)+'%;width:'+((r.b-r.a)/1440*100)+'%"></span>').join('')+R.wk.map(r=>'<span class="wk" style="left:'+(r.a/1440*100)+'%;width:'+((r.b-r.a)/1440*100)+'%"></span>').join('');
+    let hrs='';for(let k=0;k<24;k+=3){const p=parts(base+k*3600000,c.tz);hrs+='<span class="hr '+(k%6?'odd':'')+'" style="'+(k===0?'left:4px;transform:none':'left:'+(k/24*100)+'%')+'">'+t24(p.h,p.mi)+(p.wd===0||p.wd===6?' '+DAYS[p.wd].slice(0,3):'')+'</span>';}
+    h+='<div class="tlrow" id="row-'+id+'"><div class="tll"><span class="n">'+c.name+'</span> <span class="l" id="lt-'+id+'"></span> <span class="s" id="st-'+id+'"></span></div><div class="track" data-id="'+id+'" aria-hidden="true">'+segs+hrs+'<span class="mt"></span></div></div>';
+  }
+  h+='</div><div class="slidebox"><div class="flabel"><label for="callSlider">Meeting starts (Bridgetown)</label></div><input type="range" id="callSlider" min="0" max="'+(1440-s.dur)+'" step="15" value="'+CALL.start+'"></div>';
+  h+='<div class="legend"><span><i style="background:rgba(51,209,178,.55)"></i>Office hours 08:30–16:30 local</span><span><i style="background:repeating-linear-gradient(135deg,rgba(255,107,127,.5) 0 3px,transparent 3px 6px)"></i>Weekend in that city</span><span><i style="border:2px solid var(--amber);background:rgba(255,184,77,.25)"></i>Your meeting</span></div>';
+  h+='<div class="row" style="margin-top:12px;justify-content:space-between"><span class="score" id="callTot"></span><button class="btn" id="bookBtn">Book this time ▸</button></div><div id="callFb" aria-live="polite"></div>';
+  P.innerHTML=h;
+  const sl=document.getElementById('callSlider');
+  sl.addEventListener('input',()=>{if(CALL.booked)return;CALL.start=+sl.value;SFX.tick();updateScn();});
+  P.querySelectorAll('.track').forEach(tr=>{
+    const setFrom=e=>{if(CALL.booked)return;const r=tr.getBoundingClientRect();let m=((e.clientX-r.left)/r.width)*1440-s.dur/2;m=Math.round(m/15)*15;m=Math.max(0,Math.min(1440-s.dur,m));if(m!==CALL.start){CALL.start=m;SFX.tick();updateScn();}};
+    tr.addEventListener('pointerdown',e=>{CALL.dragging=true;try{tr.setPointerCapture(e.pointerId);}catch(_){}setFrom(e);});
+    tr.addEventListener('pointermove',e=>{if(CALL.dragging)setFrom(e);});
+    const end=()=>{CALL.dragging=false;};tr.addEventListener('pointerup',end);tr.addEventListener('pointercancel',end);
+  });
+  document.getElementById('bookBtn').addEventListener('click',bookCall);
+  updateScn();
+}
+function rowStatus(r,dur){
+  if(r.out===0)return {cls:'ok',txt:'✓ Inside office hours'};
+  const bits=[];if(r.why.wk)bits.push('weekend ('+DAYS[r.p0.wd]+')');if(r.why.early)bits.push(durStr(r.why.early)+' before 08:30');if(r.why.late)bits.push(durStr(r.why.late)+' after 16:30');
+  return {cls:r.out<dur?'part':'no',txt:'✗ '+bits.join(', ')};
+}
+function updateScn(){
+  const s=SCENARIOS[CALL.i],ev=evalSlot(s,CALL.start),sl=document.getElementById('callSlider');
+  sl.value=CALL.start;
+  const hp=ev.per[0].p0;
+  sl.setAttribute('aria-valuetext','Starts '+t24(hp.h,hp.mi)+' in Bridgetown. '+ev.per.map(r=>C[r.id].name+' '+t24(r.p0.h,r.p0.mi)+' '+(r.out?'outside office hours':'inside office hours')).join('; '));
+  for(const r of ev.per){
+    const st=rowStatus(r,s.dur),row=document.getElementById('row-'+r.id);
+    row.className='tlrow '+st.cls;
+    document.getElementById('lt-'+r.id).textContent=t24(r.p0.h,r.p0.mi)+'–'+t24(r.p1.h,r.p1.mi);
+    document.getElementById('st-'+r.id).textContent=DAYS[r.p0.wd].slice(0,3)+' '+r.p0.d+' '+MONTHS[r.p0.m-1].slice(0,3)+' · '+st.txt;
+    const mt=row.querySelector('.mt');mt.style.left=(CALL.start/1440*100)+'%';mt.style.width=(s.dur/1440*100)+'%';
+  }
+  const okc=ev.per.filter(r=>!r.out).length;
+  document.getElementById('callTot').textContent=okc+' of '+s.cities.length+' in office hours · '+ev.total+' min outside';
+}
+function bookCall(){
+  if(CALL.booked){nextScn();return;}
+  const s=SCENARIOS[CALL.i],ev=evalSlot(s,CALL.start),B=bestSlot(s);
+  let score=ev.total===B.best?100:Math.max(0,Math.round(100-(ev.total-B.best)*100/120));
+  CALL.scores[CALL.i]=score;CALL.booked=true;
+  const perfect=B.best===0,bs=B.starts[0],bp=parts(scnBase(s)+bs*60000,SXM_TZ),be=parts(scnBase(s)+(B.starts[B.starts.length-1])*60000,SXM_TZ);
+  let msg;
+  if(ev.total===0){msg='<strong>Perfect booking! Everyone is inside office hours.</strong>';SFX.ok();}
+  else if(ev.total===B.best){msg='<strong>Best possible compromise!</strong> No perfect slot exists for these cities. Your choice has the fewest minutes outside office hours ('+ev.total+' min in total).';SFX.ok();}
+  else{msg='<strong>'+(perfect?'A perfect slot was available.':'A better compromise was available.')+'</strong> '+(perfect?'Any start between <b>'+t24(bp.h,bp.mi)+'</b> and <b>'+t24(be.h,be.mi)+'</b> Bridgetown time puts everyone inside office hours.':'The best start (for example <b>'+t24(bp.h,bp.mi)+'</b> Bridgetown time) has only '+B.best+' min outside office hours in total; yours has '+ev.total+' min.');SFX.bad();}
+  if(!perfect&&ev.total!==B.best)msg+='';
+  if(!perfect)msg+='<br><span class="muted">When no perfect slot exists, offices often take turns: one month the early call is in Bridgetown, the next month it is in Mumbai or Tokyo.</span>';
+  // invitation e-mail
+  const hp=ev.per[0].p0;
+  const lines=ev.per.map(r=>'• '+C[r.id].name+': '+t24(r.p0.h,r.p0.mi)+'–'+t24(r.p1.h,r.p1.mi)+' '+zoneAbbr(scnBase(s)+CALL.start*60000,C[r.id].tz)+' ('+offStr(r.off)+'), '+longDate(r.p0)).join('\n');
+  const email='<b>To:</b> '+s.cities.slice(1).map(id=>C[id].name+' team').join('; ')+'\n<b>Subject:</b> Video call: '+s.title+', '+longDate(hp)+', '+t24(hp.h,hp.mi)+' AST\n\nDear colleagues\n\nI am pleased to confirm our '+s.dur+'-minute video call. Please note the time in your own city:\n\n'+lines+'\n\nThe meeting link will follow in a separate e-mail.\n\nKind regards\nAna Lake\nOffice Administrator, '+s.org;
+  document.getElementById('callFb').innerHTML='<div class="fb '+(score>=100?'ok':'bad')+'">'+msg+'<div class="mono" style="margin-top:6px;color:var(--amber)">Score for this meeting: '+score+'/100</div></div><p class="flabel" style="margin:12px 0 0">Invitation e-mail (notice that each time states its time zone and the full date):</p><div class="email">'+email+'</div>';
+  const bb=document.getElementById('bookBtn');bb.textContent=CALL.i<SCENARIOS.length-1?'Next meeting ▸':'See results ▸';bb.focus();
+  document.getElementById('callSlider').disabled=true;
+  say(score>=100?'Booked. Full marks.':'Booked. Score '+score);
+}
+function nextScn(){
+  SFX.click();
+  if(CALL.i<SCENARIOS.length-1){CALL.i++;loadScn();document.getElementById('callPanel').scrollIntoView({block:'start',behavior:reduceMotion?'auto':'smooth'});return;}
+  const pct=Math.round(CALL.scores.reduce((a,b)=>a+b,0)/SCENARIOS.length);
+  document.getElementById('callPanel').innerHTML=resultHTML('All meetings booked',pct,'call','<p>'+CALL.scores.map((v,i)=>SCENARIOS[i].title+': '+v).join(' · ')+'</p>','callAgain');
+  starFx(starsFor(pct));const a=document.getElementById('callAgain');a.addEventListener('click',()=>{SFX.click();CALL.i=0;CALL.scores=[];loadScn();});a.focus();
+}
+
+/* =====================================================================
+   MODE 4 — ITINERARY BUILDER
+   ===================================================================== */
+const TRAVELLER={name:'Mrs Danielle Richardson-Brooks',title:'Managing Director',company:'Coral Bay Trading Ltd., Bridgetown, Barbados'};
+const FLIGHTS=[
+ {no:'GO 214',from:'BGI',fromName:'Grantley Adams International Airport, Barbados',fromTz:SXM_TZ,to:'MIA',toName:'Miami International Airport',toTz:'America/New_York',toCity:'Miami',date:'2026-11-16',dep:'10:20',dur:165},
+ {no:'GO 517',from:'MIA',fromName:'Miami International Airport',fromTz:'America/New_York',to:'JFK',toName:'John F. Kennedy International Airport, New York',toTz:'America/New_York',toCity:'New York',date:'2026-11-18',dep:'08:40',dur:175},
+ {no:'GO 088',from:'JFK',fromName:'John F. Kennedy International Airport, New York',fromTz:'America/New_York',to:'AMS',toName:'Amsterdam Airport Schiphol',toTz:'Europe/Amsterdam',toCity:'Amsterdam',date:'2026-11-19',dep:'18:30',dur:440}
+];
+FLIGHTS.forEach(f=>{const {y,m,d}=ymd(f.date),[hh,mm]=f.dep.split(':').map(Number);f.depUtc=toUtc(y,m,d,hh,mm,f.fromTz);f.arrUtc=f.depUtc+f.dur*60000;f.dp=parts(f.depUtc,f.fromTz);f.ap=parts(f.arrUtc,f.toTz);f.apSrc=parts(f.arrUtc,f.fromTz);f.plus=dayNum(f.ap)-dayNum(f.dp);});
+function locTime(dateIso,hhmm,tz){const {y,m,d}=ymd(dateIso),[a,b]=hhmm.split(':').map(Number);return toUtc(y,m,d,a,b,tz);}
+const NY='America/New_York',AMS='Europe/Amsterdam';
+function buildEntries(){
+  const F=FLIGHTS,E=[];
+  const add=(id,dateIso,time,tz,text)=>E.push({id,date:dateIso,time,tz,text,ok:true});
+  add('e1',F[0].date,F[0].dep,SXM_TZ,'Depart Grantley Adams International Airport (BGI) on flight '+F[0].no+' to Miami. Check in by 08:20.');
+  add('e2',iso(F[0].ap),t24(F[0].ap.h,F[0].ap.mi),NY,'Arrive Miami International Airport (MIA). Hotel car to the Palm Crescent Hotel.');
+  add('e3','2026-11-16','15:00',NY,'Check in: Palm Crescent Hotel, 1200 Bayshore Drive, Miami (2 nights, confirmation PCH-4471).');
+  add('e4','2026-11-17','09:30',NY,'Meeting with Mr Alvaro Mendes, Operations Director, Bayfront Logistics Inc., Conference Room 4B.');
+  add('e5','2026-11-17','19:00',NY,'Dinner with the Bayfront Logistics directors at the Coral Grill Restaurant (table for four).');
+  add('e6','2026-11-18','06:30',NY,'Check out of the Palm Crescent Hotel; taxi to Miami International Airport.');
+  add('e7',F[1].date,F[1].dep,NY,'Depart Miami (MIA) on flight '+F[1].no+' to New York.');
+  add('e8',iso(F[1].ap),t24(F[1].ap.h,F[1].ap.mi),NY,'Arrive John F. Kennedy International Airport (JFK). Car to The Greystone Hotel, West 54th Street (2 nights).');
+  add('e9','2026-11-18','14:00',NY,'Meeting with Ms Harriet Okafor, Head of Partnerships, Hudson Line Media, 22nd Floor.');
+  const vc=locTime('2026-11-19','10:00',NY),vcs=parts(vc,SXM_TZ);
+  add('e10','2026-11-19','10:00',NY,'Video call with the Bridgetown office ('+t24(vcs.h,vcs.mi)+' in Barbados).');
+  add('e11',F[2].date,F[2].dep,NY,'Check out of The Greystone Hotel. Depart New York (JFK) on overnight flight '+F[2].no+' to Amsterdam.');
+  add('e12',iso(F[2].ap),t24(F[2].ap.h,F[2].ap.mi),AMS,'Arrive Amsterdam Airport Schiphol (AMS). Transfer to Hotel De Zilveren Brug, Herengracht.');
+  add('e13','2026-11-20','14:00',AMS,'Meeting with Mr Pieter van Dalen, Managing Director, Noordzee Shipping B.V.');
+  E.push({id:'d1',time:t24(F[0].apSrc.h,F[0].apSrc.mi),tz:SXM_TZ,text:'Arrive Miami International Airport (MIA), time shown in Barbados time.',ok:false,why:'Itineraries show the LOCAL time at each place. In Miami, use Miami time.'});
+  E.push({id:'d2',time:t24(F[2].apSrc.h,F[2].apSrc.mi),tz:NY,text:'Arrive Amsterdam Airport Schiphol (AMS), time shown in New York time.',ok:false,why:'Arrival times must be in the local time of the arrival city (Amsterdam).'});
+  E.forEach(e=>{const u=e.date?locTime(e.date,e.time,e.tz):FLIGHTS[0].depUtc;e.abbr=zoneAbbr(e.id==='d2'?FLIGHTS[2].arrUtc:e.id==='d1'?FLIGHTS[0].arrUtc:u,e.tz);});
+  return E;
+}
+const TRIP_DAYS=['2026-11-16','2026-11-17','2026-11-18','2026-11-19','2026-11-20'];
+function isoLong(s){const {y,m,d}=ymd(s);return longDate(parts(Date.UTC(y,m-1,d,16),'UTC'));}
+const IT={started:false,step:0,a:[],aTries:[0,0,0],aScore:0,head:null,dateStyle:null,hScore:0,dScore:0,rows:[],entries:null,tScore:null,checks:0};
+function renderItinIntro(){
+  IT.started=false;
+  const F=FLIGHTS;
+  document.getElementById('itinPanel').innerHTML='<div class="intro"><div><h2 class="h2">Itinerary builder</h2><p class="lead">Your manager, <b>'+TRAVELLER.name+'</b>, '+TRAVELLER.title+' of '+TRAVELLER.company.split(',')[0]+', is flying from Barbados to <b>Miami</b>, then <b>New York</b>, then <b>Amsterdam</b> ('+isoLong(TRIP_DAYS[0])+' to '+isoLong(TRIP_DAYS[4])+').</p><p class="muted" style="margin:0;font-size:14px"><b>Part A:</b> work out the local arrival time of each flight, including a “next day” (+1) arrival.<br><b>Part B:</b> lay out a correctly formatted itinerary: heading, dates in full, and every event in date and time order with flight details, hotels and appointments.</p><p class="bestline">Best score: '+BEST.itin+'%</p></div><div><button class="btn" id="itStart">Start ▸</button></div></div>';
+  document.getElementById('itStart').addEventListener('click',()=>{SFX.click();IT.started=true;Object.assign(IT,{step:0,a:[null,null,null],aTries:[0,0,0],aScore:0,head:null,dateStyle:null,hScore:0,dScore:0,rows:[],tScore:null,checks:0,entries:buildEntries()});renderItin();});
+}
+function stepsBar(){const n=['A · Arrival times','B1 · Heading','B2 · Dates','B3 · Itinerary table'];return '<div class="steps" aria-label="Progress">'+n.map((t,i)=>'<span class="'+(i===IT.step?'on':i<IT.step?'done':'')+'"'+(i===IT.step?' aria-current="step"':'')+'>'+(i<IT.step?'✓ ':'')+t+'</span>').join('')+'</div>';}
+const PLANE='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13.5l8-1.8L13.6 3h2.2l-1.5 8.2 5-.9c1.4-.3 2.7.7 2.7 1.6s-1.3 1.9-2.7 1.6l-5-.9 1.5 8.2h-2.2L10 12.7 2 11z" fill="#0f6b5a" transform="rotate(0 12 12)"/></svg>';
+function renderItin(){
+  const P=document.getElementById('itinPanel');let h=stepsBar();
+  if(IT.step===0){
+    h+='<h2 class="h2">Part A: Local arrival times</h2><p class="lead">Departure times are in the <b>local time of the departure airport</b>. Add the flight time and give the arrival time in the <b>local time of the arrival airport</b> (24-hour clock). Tick +1 if the flight lands on the next calendar day.</p><div class="flights">';
+    FLIGHTS.forEach((f,i)=>{
+      const o1=offsetMin(f.depUtc,f.fromTz),o2=offsetMin(f.arrUtc,f.toTz);
+      h+='<div class="pass" id="pass'+i+'"><div class="fl"><span>'+f.no+'</span><span>'+shortDate(f.dp)+' '+f.dp.y+'</span></div><div class="route">'+f.from+PLANE+f.to+'</div>'+
+       '<div class="info">Departs <b>'+f.dep+'</b> local time<br>Flight time: <b>'+durStr(f.dur)+'</b></div>'+
+       '<div class="zones">'+f.from+': '+zoneAbbr(f.depUtc,f.fromTz)+' '+offStr(o1)+' · '+f.to+': '+zoneAbbr(f.arrUtc,f.toTz)+' '+offStr(o2)+'</div>'+
+       '<label for="arr'+i+'">Arrival in '+f.toCity+' (local)</label><input type="text" id="arr'+i+'" placeholder="hh:mm" autocomplete="off" inputmode="numeric" '+(IT.a[i]?'disabled value="'+t24(f.ap.h,f.ap.mi)+'"':'')+'>'+
+       '<label class="plus"><input type="checkbox" id="plus'+i+'" '+(IT.a[i]&&f.plus?'checked':'')+(IT.a[i]?' disabled':'')+'> +1 (arrives the next day)</label><div class="pfb" id="pfb'+i+'" aria-live="polite"></div></div>';
+    });
+    h+='</div><div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn ghost" id="itHint">Show me the method</button><button class="btn" id="itCheckA">Check arrival times</button></div><div id="itHintBox"></div>';
+    P.innerHTML=h;
+    document.getElementById('itCheckA').addEventListener('click',checkA);
+    document.getElementById('itHint').addEventListener('click',()=>{SFX.click();const f=FLIGHTS[0],o1=offsetMin(f.depUtc,f.fromTz),du=parts(f.depUtc,'UTC'),au=parts(f.arrUtc,'UTC');
+      document.getElementById('itHintBox').innerHTML='<div class="fb"><strong>Method (worked example for '+f.no+')</strong><ol class="work"><li>Convert departure to UTC: '+f.dep+' at '+offStr(o1)+' → <b>'+t24(du.h,du.mi)+' UTC</b>.</li><li>Add the flight time ('+durStr(f.dur)+') → <b>'+t24(au.h,au.mi)+' UTC</b>.</li><li>Convert to the arrival zone ('+offStr(offsetMin(f.arrUtc,f.toTz))+') → the local arrival time. If you pass midnight, tick +1.</li></ol></div>';});
+    P.querySelectorAll('.pass input[type=text]').forEach(inp=>inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkA();}));
+    return;
+  }
+  if(IT.step===1){
+    const opts=[
+      {k:'a',ok:true,html:'<div class="hd">ITINERARY FOR MRS DANIELLE RICHARDSON-BROOKS<br>MANAGING DIRECTOR, CORAL BAY TRADING LTD.<br>BARBADOS – MIAMI – NEW YORK – AMSTERDAM<br>MONDAY 16 NOVEMBER TO FRIDAY 20 NOVEMBER 2026</div>'},
+      {k:'b',ok:false,html:'<div class="hd">Danielle’s Trip!!<br>16/11/26 – 20/11/26</div>',why:'Too informal: no full name or job title, and the numeric dates could be misread abroad.'},
+      {k:'c',ok:false,html:'<div class="hd">ITINERARY<br>CORAL BAY TRADING LTD.<br>NOVEMBER</div>',why:'It does not say who is travelling, where to, or the exact dates.'}
+    ];
+    IT._hopts=shuffle(opts);
+    h+='<h2 class="h2">Part B1: Choose the heading</h2><p class="lead">An itinerary heading should state that it is an itinerary, <b>who</b> is travelling (name and title), <b>where</b> to, and the <b>exact dates</b>. Choose the best heading.</p><div class="choice" role="group" aria-label="Heading options">'+IT._hopts.map((o,i)=>'<button data-i="'+i+'" aria-pressed="false">'+o.html+'</button>').join('')+'</div><div id="itFb" aria-live="polite"></div>';
+    P.innerHTML=h;P.querySelectorAll('.choice button').forEach(b=>b.addEventListener('click',()=>pickChoice(b,IT._hopts,'head')));P.querySelector('.choice button').focus();return;
+  }
+  if(IT.step===2){
+    const opts=[{k:'full',ok:true,html:'<b>Monday 16 November 2026</b>, written in full'},{k:'dmy',ok:false,html:'<b>16/11/26</b>, day/month/year in figures',why:'In the USA, 03/04 means 4 March, but in Europe it means 3 April. Figures can be misread.'},{k:'mdy',ok:false,html:'<b>11/16/2026</b>, month/day/year in figures',why:'A reader in Amsterdam would expect day first. Figures can be misread on documents used in several countries.'}];
+    IT._dopts=shuffle(opts);
+    h+='<h2 class="h2">Part B2: How should the dates be written?</h2><p class="lead">This itinerary will be read in Barbados, the USA and the Netherlands. Which date style should you use in the Date column?</p><div class="choice" role="group" aria-label="Date style options">'+IT._dopts.map((o,i)=>'<button data-i="'+i+'" aria-pressed="false">'+o.html+'</button>').join('')+'</div><div id="itFb" aria-live="polite"></div>';
+    P.innerHTML=h;P.querySelectorAll('.choice button').forEach(b=>b.addEventListener('click',()=>pickChoice(b,IT._dopts,'date')));P.querySelector('.choice button').focus();return;
+  }
+  if(IT.step===3){renderBuilder();}
+  if(IT.step===4){renderItinResult();}
+}
+function checkA(){
+  let allDone=true,anyBad=false;
+  FLIGHTS.forEach((f,i)=>{
+    if(IT.a[i])return;const inp=document.getElementById('arr'+i),plus=document.getElementById('plus'+i).checked,v=parseTime(inp.value),pass=document.getElementById('pass'+i),fb=document.getElementById('pfb'+i);
+    if(v===null){allDone=false;fb.textContent='Type a time such as 13:05.';pass.className='pass bad';anyBad=true;return;}
+    const ok=v===f.ap.h*60+f.ap.mi&&plus===(f.plus>0);
+    IT.aTries[i]++;
+    if(ok){IT.a[i]=true;IT.aScore+=IT.aTries[i]===1?10:IT.aTries[i]===2?6:3;pass.className='pass ok';fb.innerHTML='✓ Correct: '+t24(f.ap.h,f.ap.mi)+(f.plus?' +1 ('+longDate(f.ap)+')':'')+' local time.';inp.disabled=true;document.getElementById('plus'+i).disabled=true;}
+    else{anyBad=true;allDone=false;pass.className='pass bad';
+      if(IT.aTries[i]>=3){IT.a[i]=true;fb.innerHTML='The answer is <b>'+t24(f.ap.h,f.ap.mi)+(f.plus?' +1':'')+'</b>. ('+f.dep+' '+offStr(offsetMin(f.depUtc,f.fromTz))+' + '+durStr(f.dur)+', shown in '+offStr(offsetMin(f.arrUtc,f.toTz))+'.)';inp.value=t24(f.ap.h,f.ap.mi);inp.disabled=true;document.getElementById('plus'+i).checked=f.plus>0;document.getElementById('plus'+i).disabled=true;}
+      else{const vv=v;const diffS=vv-(f.apSrc.h*60+f.apSrc.mi);fb.textContent=(diffS===0?'That is the arrival time in the departure city’s time zone. Convert it to '+f.toCity+' time.':(v===f.ap.h*60+f.ap.mi?'Right time, but check the +1 box: which day does it land?':'Not yet. Try again ('+(3-IT.aTries[i])+' tries left).'));}
+    }
+  });
+  if(FLIGHTS.every((f,i)=>IT.a[i])){SFX.ok();const box=document.getElementById('itHintBox');box.innerHTML='<div class="fb ok"><strong>Part A complete: '+IT.aScore+'/30 points.</strong>Notice flight '+FLIGHTS[2].no+': it leaves New York on '+longDate(FLIGHTS[2].dp)+' but lands in Amsterdam on '+longDate(FLIGHTS[2].ap)+'. That is a “next day” arrival.</div><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="toB">Continue to Part B ▸</button></div>';document.getElementById('itCheckA').disabled=true;const tb=document.getElementById('toB');tb.addEventListener('click',()=>{SFX.click();IT.step=1;renderItin();});tb.focus();}
+  else if(anyBad)SFX.bad();
+}
+function pickChoice(b,opts,kind){
+  const i=+b.dataset.i,o=opts[i],fb=document.getElementById('itFb');
+  if(b.classList.contains('wrong')||document.querySelector('#itinPanel .choice button.right'))return;
+  b.setAttribute('aria-pressed','true');
+  if(o.ok){b.classList.add('right');SFX.ok();const tries=document.querySelectorAll('#itinPanel .choice button.wrong').length;const pts=tries===0?10:tries===1?5:2;if(kind==='head')IT.hScore=pts;else IT.dScore=pts;
+    fb.innerHTML='<div class="fb ok"><strong>Correct (+'+pts+')</strong>'+(kind==='head'?'A clear heading: what the document is, who it is for, the route and the exact dates. It is centred and in capitals, like a display heading.':'Dates written in full can’t be misread in any country, and the day name helps the traveller.')+'</div><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="itNext">Continue ▸</button></div>';
+    const nb=document.getElementById('itNext');nb.addEventListener('click',()=>{SFX.click();IT.step++;renderItin();});nb.focus();
+  }else{b.classList.add('wrong');SFX.bad();fb.innerHTML='<div class="fb bad"><strong>Not the best choice.</strong>'+o.why+'</div>';}
+}
+function rowsSorted(){return IT.rows;}
+function renderBuilder(){
+  const P=document.getElementById('itinPanel'),E=IT.entries,used=new Set(IT.rows.map(r=>r.id));
+  const poolOrder=IT._pool||(IT._pool=shuffle(E.map(e=>e.id)));
+  let h=stepsBar()+'<h2 class="h2">Part B3: Lay out the itinerary</h2>';
+  h+='<div class="rules"><b>Itinerary rules</b><ul><li>One row per event: flights, hotel check-ins and check-outs, appointments.</li><li>Choose the correct <b>date</b> for each row and keep rows in <b>date and time order</b> (use ↑ ↓).</li><li>All times are <b>local times</b> on the 24-hour clock. Leave out entries that use the wrong time zone.</li></ul></div>';
+  h+='<div class="builder"><div><div class="flabel" style="margin-bottom:6px">Entry cards: select one to add it to the itinerary ('+(E.length-used.size)+' left)</div><div class="pool" role="list">';
+  for(const id of poolOrder){const e=E.find(x=>x.id===id);h+='<button class="ecard" role="listitem" data-add="'+id+'" '+(used.has(id)?'disabled':'')+' aria-label="Add: '+esc(e.time+' '+e.abbr+'. '+e.text)+'"><span class="et">'+e.time+'<small>'+e.abbr+'</small></span><span>'+esc(e.text)+'</span></button>';}
+  h+='</div></div><div class="doc" aria-label="Itinerary document">'+docHead()+'<table class="itin"><thead><tr><th>Date</th><th>Time</th><th>Details</th><th class="sr">Actions</th></tr></thead><tbody>';
+  if(!IT.rows.length)h+='<tr class="emptyrow"><td colspan="4">Add entry cards to build the itinerary.</td></tr>';
+  IT.rows.forEach((r,i)=>{const e=E.find(x=>x.id===r.id);
+    h+='<tr class="'+(r.mark||'')+'"><td class="dt"><label class="sr" for="rd'+i+'">Date for row '+(i+1)+'</label><select id="rd'+i+'" data-row="'+i+'"><option value="">Choose date…</option>'+TRIP_DAYS.map(d=>'<option value="'+d+'" '+(r.date===d?'selected':'')+'>'+isoLong(d)+'</option>').join('')+'</select></td><td class="tm">'+e.time+'<small>'+e.abbr+'</small></td><td>'+esc(e.text)+(r.why?'<span class="why">'+esc(r.why)+'</span>':'')+'</td><td class="ac"><button class="mini" data-up="'+i+'" aria-label="Move row '+(i+1)+' up" '+(i===0?'disabled':'')+'>↑</button> <button class="mini" data-dn="'+i+'" aria-label="Move row '+(i+1)+' down" '+(i===IT.rows.length-1?'disabled':'')+'>↓</button> <button class="mini" data-rm="'+i+'" aria-label="Remove row '+(i+1)+'">✕</button></td></tr>';});
+  h+='</tbody></table><div class="notes">All times shown are local times. '+zoneNote()+'</div></div></div>';
+  h+='<div class="row" style="margin-top:12px;justify-content:space-between"><span class="muted" style="font-size:13px">'+IT.rows.length+' rows · checks used: '+IT.checks+'</span><button class="btn" id="itCheckB">Check my itinerary</button></div><div id="itFbB" aria-live="polite"></div>';
+  P.innerHTML=h;
+  P.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{SFX.click();IT.rows.push({id:b.dataset.add,date:''});clearMarks();renderBuilder();const s=document.getElementById('rd'+(IT.rows.length-1));if(s)s.focus();say('Row added. Choose its date.');}));
+  P.querySelectorAll('select[data-row]').forEach(s=>s.addEventListener('change',()=>{IT.rows[+s.dataset.row].date=s.value;clearMarks();SFX.click();}));
+  const mv=(i,j,focusSel)=>{const r=IT.rows;[r[i],r[j]]=[r[j],r[i]];clearMarks();SFX.click();renderBuilder();const b=document.querySelector(focusSel.replace('#',j));if(b&&!b.disabled)b.focus();else{const s=document.getElementById('rd'+j);if(s)s.focus();}};
+  P.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.up;mv(i,i-1,'[data-up="#"]');}));
+  P.querySelectorAll('[data-dn]').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.dn;mv(i,i+1,'[data-dn="#"]');}));
+  P.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{IT.rows.splice(+b.dataset.rm,1);clearMarks();SFX.click();renderBuilder();const n=document.querySelector('[data-add]:not(:disabled)');if(n)n.focus();}));
+  document.getElementById('itCheckB').addEventListener('click',checkB);
+}
+function clearMarks(){IT.rows.forEach(r=>{r.mark='';r.why='';});}
+function docHead(){return '<div class="dh"><div class="t1">Itinerary</div>'+TRAVELLER.name.toUpperCase()+'<br>'+TRAVELLER.title.toUpperCase()+', CORAL BAY TRADING LTD.<br>BARBADOS – MIAMI – NEW YORK – AMSTERDAM<br>'+isoLong(TRIP_DAYS[0]).toUpperCase().replace(' 2026','')+' TO '+isoLong(TRIP_DAYS[4]).toUpperCase()+'</div>';}
+function zoneNote(){const u1=FLIGHTS[0].depUtc,u2=FLIGHTS[0].arrUtc,u3=FLIGHTS[2].arrUtc;return zoneAbbr(u1,SXM_TZ)+' = Barbados ('+offStr(offsetMin(u1,SXM_TZ))+'); '+zoneAbbr(u2,NY)+' = Miami and New York ('+offStr(offsetMin(u2,NY))+'); '+zoneAbbr(u3,AMS)+' = Amsterdam ('+offStr(offsetMin(u3,AMS))+'). +1 = arrives the next day.';}
+function checkB(){
+  IT.checks++;const E=IT.entries,order=E.filter(e=>e.ok).map(e=>e.id);let errors=0;const msgs=[];
+  clearMarks();
+  let lastKey=-1;
+  IT.rows.forEach(r=>{const e=E.find(x=>x.id===r.id);
+    if(!e.ok){r.mark='e-bad';r.why=e.why;errors++;return;}
+    const idx=order.indexOf(e.id);
+    if(r.date!==e.date){r.mark='e-bad';r.why=r.date?'Wrong date. Check which day this happens in local time.':'Choose a date for this row.';errors++;}
+    else if(idx<lastKey){r.mark='e-bad';r.why='Out of order: this event happens earlier than the row above it.';errors++;}
+    else r.mark='e-ok';
+    lastKey=Math.max(lastKey,idx);
+  });
+  const missing=order.filter(id=>!IT.rows.some(r=>r.id===id));
+  errors+=missing.length;
+  if(missing.length)msgs.push(missing.length+' event'+(missing.length>1?'s are':' is')+' still missing from the itinerary.');
+  renderBuilder();
+  const fb=document.getElementById('itFbB');
+  if(errors===0){
+    IT.tScore=Math.max(20,50-(IT.checks-1)*6);SFX.win();
+    fb.innerHTML='<div class="fb ok"><strong>Perfect itinerary! (+'+IT.tScore+')</strong>Every event is present, correctly dated and in order, and all times are local.</div><div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="itFinish">See the finished itinerary ▸</button></div>';
+    const b=document.getElementById('itFinish');b.addEventListener('click',()=>{SFX.click();IT.step=4;renderItin();});b.focus();
+  }else{
+    SFX.bad();
+    fb.innerHTML='<div class="fb bad"><strong>'+errors+' thing'+(errors>1?'s':'')+' to fix.</strong>'+(msgs.join(' ')||'Look at the rows marked in red.')+(IT.checks>=3?'<div style="margin-top:8px"><button class="btn ghost sm" id="itGive">Show the model answer (fewer points)</button></div>':'')+'</div>';
+    const g=document.getElementById('itGive');if(g)g.addEventListener('click',()=>{IT.rows=order.map(id=>({id,date:E.find(e=>e.id===id).date}));IT.tScore=10;IT.step=4;SFX.click();renderItin();});
+  }
+  say(errors?errors+' errors found':'Perfect itinerary');
+}
+function renderItinResult(){
+  const E=IT.entries,P=document.getElementById('itinPanel');let rows='',prev='';
+  IT.rows.forEach(r=>{const e=E.find(x=>x.id===r.id),first=r.date!==prev;prev=r.date;const plus=(e.id==='e12'&&FLIGHTS[2].plus)?' +1':'';
+    rows+='<tr class="'+(first?'daystart':'')+'"><td class="dt">'+(first?isoLong(r.date):'')+'</td><td class="tm">'+e.time+plus+'<small>'+e.abbr+'</small></td><td>'+esc(e.text)+'</td></tr>';});
+  const pct=Math.min(100,IT.aScore+IT.hScore+IT.dScore+(IT.tScore||0));
+  P.innerHTML=stepsBar().replace(/class="on"/,'class="done"')+'<div class="doc" style="max-width:820px;margin:0 auto">'+docHead()+'<table class="itin"><thead><tr><th>Date</th><th>Time</th><th>Details</th></tr></thead><tbody>'+rows+'</tbody></table><div class="notes">All times shown are local times. '+zoneNote()+'</div></div>'+
+   resultHTML('Itinerary complete',pct,'itin','<p>Part A arrival times: '+IT.aScore+'/30 · Heading: '+IT.hScore+'/10 · Dates: '+IT.dScore+'/10 · Table: '+(IT.tScore||0)+'/50</p><p class="muted" style="font-size:13.5px">Format used: a centred heading in capitals, a ruled table with Date, Time and Details columns, each date written in full and shown once per day, local 24-hour times with the time zone, and a note explaining the abbreviations.</p>','itAgain');
+  starFx(starsFor(pct));const a=document.getElementById('itAgain');a.addEventListener('click',()=>{IT.started=false;renderItinIntro();document.getElementById('itStart').click();});
+}
+
+/* =====================================================================
+   MODE 5 — QUIZ
+   ===================================================================== */
+const QZ={started:false,qs:[],i:0,score:0,res:[]};
+function quizPool(){
+  const pool=[];
+  const Q=(q,right,wrong,exp)=>pool.push({q,right,wrong,exp});
+  Q('What does UTC stand for?','Coordinated Universal Time',['Universal Time Calendar','United Time Clock','Ultimate Travel Clock'],'UTC, Coordinated Universal Time, is the reference time from which every time zone is measured.');
+  const jan=Date.UTC(2026,0,15,16);
+  Q('Which time zone does Barbados use all year round?','Atlantic Standard Time, '+offStr(offsetMin(jan,SXM_TZ))+', with no daylight saving',['Eastern Standard Time, UTC−5, with daylight saving','Greenwich Mean Time, UTC+0','Atlantic Standard Time in winter and UTC−3 in summer'],'Barbados keeps AST ('+offStr(offsetMin(jan,SXM_TZ))+') all year. Our clocks never change.');
+  Q('What is 15:45 on the 12-hour clock?','3:45 pm',['5:45 pm','3:45 am','1:45 pm'],'Subtract 12 from afternoon hours: 15 − 12 = 3, so 15:45 is 3:45 pm.');
+  Q('What is 12:00 am?','Midnight (00:00)',['Noon (12:00)','Half past midnight','There is no such time'],'12:00 am is midnight, the start of the day (00:00). Noon is 12:00 pm. The 24-hour clock avoids this confusion.');
+  Q('A traveller crosses the International Date Line flying westwards across the Pacific. What happens to the date?','It moves forward one day',['It goes back one day','It stays the same','It moves forward one hour only'],'Going west across the date line, you skip forward a calendar day; going east, you repeat a day.');
+  Q('Why does the time difference between Bridgetown and New York change during the year?','New York uses daylight saving time but Barbados does not',['Barbados changes its clocks twice a year','The Earth spins faster in summer','Airlines change the time zones each season'],'New York moves between UTC−5 (winter) and UTC−4 (summer). Barbados stays at UTC−4, so the gap changes from 1 hour to none.');
+  Q('On an itinerary, flight arrival times should be shown in…','the local time of the arrival airport',['Barbados time','UTC only','the local time of the departure airport'],'Itineraries always use local time at each place, so the traveller can match clocks at the airport.');
+  Q('An itinerary shows “Arrive AMS 07:50 +1”. What does “+1” mean?','The flight lands on the next calendar day, local time',['The flight is 1 hour late','Amsterdam is 1 hour ahead','There is one stop on the way'],'+1 shows a next-day arrival: an overnight flight that lands the following morning, local time.');
+  Q('Which is the best way to write a date on a document read in the USA and in Europe?','Friday 3 April 2026',['03/04/27','4/3/2026','3.4.27'],'Write dates in full. 03/04 is 3 April in Europe but 4 March in the USA.');
+  Q('What should an e-mail inviting people in several countries to a video call include?','The date in full and the time with its time zone, ideally each person’s local time',['Only the time in Bridgetown with no time zone','Just “tomorrow morning”','The time in UTC, with no date'],'Electronic communication across countries should state the time zone (and full date) to prevent missed meetings.');
+  Q('Mumbai (India) is unusual because its time zone…','is 5 hours 30 minutes ahead of UTC',['uses daylight saving twice a year','is the same as UTC','changes every month'],'India uses UTC+5:30. Some time zones are offset by half an hour.');
+  Q('What is 5:20 pm on the 24-hour clock?','17:20',['05:20','15:20','17:02'],'Add 12 to pm hours: 5 + 12 = 17, so 17:20.');
+  // computed questions
+  const mk=(y,m,d,h,mi,tz)=>{const u=toUtc(y,m,d,h,mi,SXM_TZ),p=parts(u,tz);return {u,p};};
+  [[2026,1,15],[2026,7,15]].forEach(([y,m,d])=>{const r=mk(y,m,d,9,0,'Europe/London');const right=t24(r.p.h,r.p.mi);const w=[t24((r.p.h+1)%24,0),t24((r.p.h+23)%24,0),'05:00'].filter(x=>x!==right);
+    Q('It is 09:00 in Bridgetown on '+longDate(parts(r.u,SXM_TZ))+'. What time is it in London?',right,w.slice(0,3),'On that date London is '+offStr(offsetMin(r.u,'Europe/London'))+' ('+zoneAbbr(r.u,'Europe/London')+'), '+gapStr(offsetMin(r.u,'Europe/London')-offsetMin(r.u,SXM_TZ))+' of Bridgetown.');});
+  {const r=mk(2026,7,15,14,0,'America/New_York');const right=t24(r.p.h,r.p.mi);Q('It is 14:00 in Bridgetown on '+longDate(parts(r.u,SXM_TZ))+'. What time is it in New York?',right,[t24(r.p.h-1,0),t24(r.p.h+1,0),t24(r.p.h-4,0)],'In July New York is on summer time ('+offStr(offsetMin(r.u,'America/New_York'))+'), the same as Barbados.');}
+  {const u=toUtc(2026,11,23,22,0,SXM_TZ),p=parts(u,'Europe/Amsterdam');Q('An e-mail is sent from Bridgetown at 22:00 on '+longDate(parts(u,SXM_TZ))+'. What date and time is it in Amsterdam when it arrives a moment later?',t24(p.h,p.mi)+' on '+longDate(p),[t24(p.h,p.mi)+' on '+longDate(parts(u,SXM_TZ)),'18:00 on '+longDate(parts(u,SXM_TZ)),t24((p.h+1)%24,p.mi)+' on '+longDate(p)],'Amsterdam is '+gapStr(offsetMin(u,'Europe/Amsterdam')-offsetMin(u,SXM_TZ))+' in November, so the e-mail arrives on the next day there. Always check the date as well as the time.');}
+  return pool;
+}
+function renderQuizIntro(){
+  QZ.started=false;
+  document.getElementById('quizPanel').innerHTML='<div class="intro"><div><h2 class="h2">Time zone quiz</h2><p class="lead">Ten questions on UTC, the 24-hour clock, am and pm, daylight saving, the International Date Line, itineraries and international communication. Some answers are calculated live from real dates.</p><p class="bestline">Best score: '+BEST.quiz+'%</p></div><div><button class="btn" id="qzStart">Start quiz ▸</button></div></div>';
+  document.getElementById('qzStart').addEventListener('click',startQuiz);
+}
+function startQuiz(){
+  SFX.click();QZ.started=true;QZ.i=0;QZ.score=0;QZ.res=[];
+  const pool=quizPool(),comp=pool.slice(12),stat=shuffle(pool.slice(0,12));
+  QZ.qs=shuffle(stat.slice(0,7).concat(shuffle(comp).slice(0,3))).map(q=>({...q,opts:shuffle([q.right,...q.wrong.slice(0,3)])}));
+  renderQuizQ();
+}
+function renderQuizQ(){
+  const q=QZ.qs[QZ.i],prog=QZ.qs.map((_,k)=>'<i class="'+(k<QZ.i?(QZ.res[k]?'ok':'bad'):k===QZ.i?'cur':'')+'"></i>').join('');
+  const P=document.getElementById('quizPanel');
+  P.innerHTML='<div class="qhead"><div><span class="muted mono" style="font-size:13px">Question '+(QZ.i+1)+' of 10</span><div class="prog" aria-hidden="true">'+prog+'</div></div><span class="score">'+QZ.score+' / 10</span></div><p class="qtext" id="qzt">'+esc(q.q)+'</p><div class="opts" role="group" aria-labelledby="qzt">'+q.opts.map((o,k)=>'<button class="opt" data-k="'+k+'" style="font:600 15px/1.3 var(--body)"><span class="ol">'+'ABCD'[k]+'</span><span>'+esc(o)+'</span></button>').join('')+'</div><div id="qzfb" aria-live="polite"></div>';
+  P.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    if(b.disabled)return;const k=+b.dataset.k,ok=q.opts[k]===q.right;QZ.res[QZ.i]=ok;if(ok){QZ.score++;SFX.ok();}else SFX.bad();
+    P.querySelectorAll('.opt').forEach((x,j)=>{x.disabled=true;if(q.opts[j]===q.right)x.classList.add('right');else if(j===k)x.classList.add('wrong');});
+    document.getElementById('qzfb').innerHTML='<div class="fb '+(ok?'ok':'bad')+'"><strong>'+(ok?'Correct!':'Not quite.')+'</strong>'+esc(q.exp)+'</div><div style="margin-top:10px"><button class="btn" id="qzNext">'+(QZ.i<9?'Next ▸':'See results ▸')+'</button></div>';
+    P.querySelector('.score').textContent=QZ.score+' / 10';say(ok?'Correct':'Incorrect. '+q.right);
+    const n=document.getElementById('qzNext');n.addEventListener('click',()=>{SFX.click();if(QZ.i<9){QZ.i++;renderQuizQ();}else{const pct=QZ.score*10;P.innerHTML=resultHTML('Quiz complete',pct,'quiz','<p>'+QZ.score+' out of 10 correct.</p>','qzAgain');starFx(starsFor(pct));const a=document.getElementById('qzAgain');a.addEventListener('click',startQuiz);a.focus();}});n.focus();
+  }));
+  P.querySelector('.opt').focus();
+}
+
+/* =====================================================================
+   MODE 6 — GLOBAL HQ: CHOOSE THE CHANNEL
+   Factors are the seven used for choosing communication tools (CSEC Section 2).
+   ===================================================================== */
+const FACTORS=[
+ {k:'urgency',n:'Degree of urgency',d:'How quickly must it arrive and be acted on?'},
+ {k:'genre',n:'Genre (oral, written, visual)',d:'Spoken, written for a record, or shown visually?'},
+ {k:'conf',n:'Level of confidentiality',d:'How sensitive is the information?'},
+ {k:'loc',n:'Location / time zone',d:'Where are they, and is it day or night there?'},
+ {k:'cost',n:'Cost',d:'How expensive is the medium for this job?'},
+ {k:'eff',n:'Efficiency',d:'Time and effort to prepare, send and process.'},
+ {k:'effv',n:'Effectiveness',d:'Will it be received, understood and acted on?'}
+];
+const FN=Object.fromEntries(FACTORS.map(f=>[f.k,f.n]));
+const IC=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+const MEDIA=[
+ {k:'email',n:'E-mail',i:IC('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'),use:'Routine written messages that need a record and attachments. Not instant: people may not check it straight away.'},
+ {k:'im',n:'Instant message / chat',i:IC('<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>'),use:'Quick, informal questions to colleagues who are online now, especially in the same time zone.'},
+ {k:'video',n:'Video conference',i:IC('<rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 10l6-3.5v11l-6-3.5z"/>'),use:'Discussion, brainstorming and sensitive face-to-face conversations across distance. Schedule it in overlapping office hours.'},
+ {k:'phone',n:'Phone / VoIP call',i:IC('<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>'),use:'Urgent matters that need an immediate answer or a personal voice. Check the local time first.'},
+ {k:'sms',n:'SMS / text',i:IC('<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M9.5 9h5M9.5 12h5M11 18.5h2"/>'),use:'Short, urgent alerts to many mobile phones at once. Works even without internet or power at the office.'},
+ {k:'intranet',n:'Intranet / notice board',i:IC('<rect x="3" y="4" width="18" height="15" rx="2"/><path d="M3 8h18M7 12h6M7 15h10"/><circle cx="17" cy="12" r="1"/>'),use:'Policies, procedures and notices for all staff, kept in one official place everyone can check.'},
+ {k:'cloud',n:'Shared cloud document',i:IC('<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8a4 4 0 0 1-.5 10z"/><path d="M12 11v5M9.5 13.5L12 11l2.5 2.5"/>'),use:'Several people editing one document, or sharing very large files, at times that suit each time zone.'},
+ {k:'fax',n:'Fax',i:IC('<path d="M7 9V3h8l2 2v4"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 15h10v6H7z"/>'),use:'Signed paper documents to organisations that still use fax, including some legal, medical and government offices.'},
+ {k:'voicemail',n:'Voicemail',i:IC('<circle cx="6.5" cy="13" r="3.5"/><circle cx="17.5" cy="13" r="3.5"/><path d="M6.5 16.5h11"/>'),use:'A short spoken message left when the person cannot answer. They can listen when they are free.'},
+ {k:'social',n:'Social media post',i:IC('<path d="M3 11v3l11 4V7L3 11z"/><path d="M14 9a4 4 0 0 1 0 7M17 6.5a7.5 7.5 0 0 1 0 12"/>'),use:'Public announcements and marketing that should reach a large audience quickly and cheaply. Never for private information.'},
+ {k:'newsletter',n:'E-newsletter / mailing list',i:IC('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h4M7 16h4"/><rect x="13" y="11" width="4" height="5"/>'),use:'Regular, designed updates to subscribers or customers who have signed up. Low cost per reader.'},
+ {k:'secure',n:'Secure encrypted e-mail / portal',i:IC('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5"/>'),use:'Confidential documents and personal, salary, health or financial data. Only the authorised person can open it.'}
+];
+const MD=Object.fromEntries(MEDIA.map(m=>[m.k,m]));
+const REALTIME=new Set(['phone','video','sms']);
+const badge=(c,g)=>'<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="'+c+'"/><g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">'+g+'</g></svg>';
+const GENRES=[
+ {k:'hotel',n:'Hotel and resort chain',co:'Sandy Cove Resorts & Hotels',c:'#2bb8a4',g:'<circle cx="31" cy="16" r="5"/><path d="M17 37V20M17 20c-5 0-8 3-9 6M17 20c5 0 8 3 9 6M17 20c-2-4-6-5-9-4M17 20c2-4 6-5 9-4M9 37h30"/>',T:{cust:'guests',sys:'online booking system',prod:'the new all-inclusive family package',supplier:'linen supplier',camp:'the winter holiday campaign',policy:'guest-data protection'},
+  special:{title:'VIP guest’s payment details',text:'The Kingston resort must send a VIP guest’s passport scan and credit-card authorisation to reservations in Bridgetown before the guest arrives tomorrow.',to:['kin'],at:['sxm',11,0],a:{urg:'Medium',conf:'Restricted',aud:'1 reservations manager',rec:'Yes',att:'Passport scan, card form',disc:'No',cost:'Any',form:'Formal'},best:['secure'],acc:[],f:['conf','genre','effv'],why:'Passport and card details are personal and financial data. Only a secure encrypted portal or e-mail protects them. Ordinary e-mail, chat or fax could be intercepted or seen by the wrong person.'}},
+ {k:'air',n:'Airline / cruise line',co:'Frigatebird Air & Cruises',c:'#3d8bff',g:'<path d="M6 30l14-3 9-15h4l-4 14 10-2c2 0 3 1 3 2s-1 2-3 2l-10-2 4 14h-4l-9-15-14-3z"/>',T:{cust:'passengers',sys:'online check-in system',prod:'the new Bridgetown to Amsterdam route',supplier:'in-flight catering supplier',camp:'the summer sailing campaign',policy:'cabin-crew rest'},
+  special:{title:'Flight delayed three hours',text:'Flight GO 418 from Bridgetown to London will leave three hours late. 180 passengers must be told before they set off for the airport in the next hour.',to:['sxm'],at:['sxm',6,30],a:{urg:'High',conf:'Public',aud:'180 passengers',rec:'Helpful',att:'None',disc:'No',cost:'Low',form:'Semi-formal'},best:['sms'],acc:['email'],f:['urgency','effv','eff'],why:'A text reaches 180 phones in seconds, and passengers read it straight away. E-mail is a useful back-up with full details, but many people will not check it before leaving home.'}},
+ {k:'bank',n:'International bank',co:'Sugar Bay International Bank',c:'#c9a227',g:'<path d="M8 19L24 9l16 10z"/><path d="M12 22v12M20 22v12M28 22v12M36 22v12M8 38h32"/>',T:{cust:'account holders',sys:'online banking platform',prod:'the new green savings account',supplier:'bank-card printer',camp:'the student account campaign',policy:'anti-fraud'},
+  special:{title:'Regulator needs a signed certificate',text:'The Lagos branch must send a signed compliance certificate to the national regulator by tomorrow. The regulator accepts only fax or its own secure upload portal.',to:['los'],at:['los',11,0],a:{urg:'Medium',conf:'Confidential',aud:'1 regulator',rec:'Yes, signed',att:'Signed certificate',disc:'No',cost:'Any',form:'Very formal'},best:['secure','fax'],acc:['email'],f:['conf','genre','effv'],why:'A signed document to an organisation that only accepts fax or its secure portal: either is correct. The secure portal also protects the confidential content. Ordinary e-mail is not what the regulator accepts.'}},
+ {k:'ship',n:'Shipping and logistics',co:'Simpson Lagoon Freight Lines',c:'#ef7d32',g:'<path d="M6 30h36l-5 9H11z"/><rect x="12" y="20" width="8" height="10"/><rect x="20" y="14" width="8" height="16"/><rect x="28" y="20" width="8" height="10"/>',T:{cust:'shippers',sys:'cargo-tracking system',prod:'the new express freight service',supplier:'port agent',camp:'the holiday-season freight campaign',policy:'dangerous-goods handling'},
+  special:{title:'Ship arriving six hours early',text:'A container ship will now dock in Port of Spain six hours earlier than planned. The dock supervisor must arrange a crew within 30 minutes.',to:['pos'],at:['pos',7,0],a:{urg:'Critical',conf:'Internal',aud:'1 dock supervisor',rec:'Follow-up later',att:'None',disc:'Yes, quickly',cost:'Any',form:'Informal'},best:['phone'],acc:['sms','im'],f:['urgency','effv','genre'],why:'Only a phone call gives an instant answer and lets you agree the plan there and then. A text or chat message is acceptable as a back-up, but you cannot be sure it has been read in time.'}},
+ {k:'fash',n:'Fashion and retail',co:'Flamboyant & Co. Fashion House',c:'#e2508f',g:'<path d="M24 12a3 3 0 1 1 3 3c-2 0-3 1-3 3v1"/><path d="M24 19L8 31c-1 1 0 3 1 3h30c1 0 2-2 1-3z"/>',T:{cust:'shoppers',sys:'online store',prod:'the new summer collection',supplier:'fabric mill',camp:'the back-to-school campaign',policy:'returns and refunds'},
+  special:{title:'Show the new collection to buyers',text:'Buyers in Tokyo, Mumbai and London must see the new collection’s fabrics, colours and fit, and give their views, before orders are placed next week.',to:['tyo','bom','lon'],at:['sxm',9,0],sched:true,a:{urg:'Medium',conf:'Internal',aud:'3 buyers',rec:'Notes afterwards',att:'Samples to show',disc:'Yes',cost:'Save on travel',form:'Semi-formal'},best:['video'],acc:['cloud'],f:['genre','loc','effv','cost'],why:'The buyers need to see the clothes and discuss them, so a visual, interactive medium is best. Schedule the video conference in hours that overlap for all three cities. Photos in a shared folder are acceptable, but there is no live discussion.'}},
+ {k:'tech',n:'Tech / software',co:'Coralcode Software',c:'#8b6cff',g:'<path d="M18 15l-9 9 9 9M30 15l9 9-9 9M27 12l-6 24"/>',T:{cust:'users',sys:'cloud platform',prod:'app release 5.0',supplier:'hardware reseller',camp:'the free-trial campaign',policy:'password and security'},
+  special:{title:'Agree the API documentation',text:'Developers in Toronto, Mumbai and Sydney must write and agree the technical documentation for a new feature over the next week.',to:['tor','bom','syd'],at:['sxm',10,0],a:{urg:'Low',conf:'Internal',aud:'3 teams',rec:'Yes',att:'Diagrams and code samples',disc:'Some comments',cost:'Low',form:'Semi-formal'},best:['cloud'],acc:['email'],f:['loc','eff','genre'],why:'A shared cloud document lets each team edit and comment during its own working day, with no midnight meetings. E-mailing versions back and forth works, but it soon gets confusing.'}},
+ {k:'media',n:'Media and entertainment',co:'Pelican Point Media Group',c:'#ff5a5f',g:'<rect x="8" y="12" width="32" height="24" rx="4"/><path d="M21 19v10l8-5z"/>',T:{cust:'viewers',sys:'streaming platform',prod:'the new drama series',supplier:'film-equipment hire company',camp:'the new-season campaign',policy:'social-media conduct'},
+  special:{title:'Announce the premiere',text:'Pelican Point wants to announce the premiere date of its new drama series to fans around the world.',to:['nyc','lon','tyo'],at:['sxm',12,0],a:{urg:'Medium',conf:'Public',aud:'Millions of fans',rec:'No',att:'Trailer clip',disc:'Comments welcome',cost:'Low',form:'Informal'},best:['social'],acc:['newsletter'],f:['effv','cost','genre'],why:'A social media post with the trailer reaches a huge public audience at almost no cost, and fans can share it. An e-newsletter only reaches people who have already signed up.'}},
+ {k:'tel',n:'Telecommunications',co:'Leeward Wave Telecom',c:'#1fb5e0',g:'<circle cx="24" cy="30" r="3"/><path d="M17 23a10 10 0 0 1 14 0M12 18a17 17 0 0 1 24 0M24 33v6"/>',T:{cust:'subscribers',sys:'mobile network',prod:'the new 5G home plan',supplier:'tower contractor',camp:'the unlimited-data campaign',policy:'customer-privacy'},
+  special:{title:'Mobile data outage',text:'Mobile data is down in Kingston after a cable fault, but calls and texts still work. Subscribers must be told that service will return by 18:00.',to:['kin'],at:['kin',13,0],a:{urg:'High',conf:'Public',aud:'60,000 subscribers',rec:'No',att:'None',disc:'No',cost:'Low',form:'Semi-formal'},best:['sms'],acc:['social'],f:['urgency','effv','loc'],why:'Texts still get through when mobile data does not, so an SMS reaches every subscriber at once. A social media post is acceptable, but people without data cannot see it.'}}
+];
+const GD=Object.fromEntries(GENRES.map(g=>[g.k,g]));
+const HQ_SCN=[
+ {id:'breach',title:'Data breach: tell Tokyo now',text:'A cyber-attack has exposed {cust}’ records on the {sys}. The Tokyo office runs the system and must start the emergency plan immediately.',to:['tyo'],at:['tyo',3,0],a:{urg:'Critical',conf:'Restricted',aud:'1 on-call manager',rec:'Yes',att:'Incident log',disc:'Yes, at once',cost:'Any',form:'Formal'},best:['phone'],acc:['secure'],f:['urgency','conf','loc','effv'],why:'It is the middle of the night in Tokyo, but this is critical, so phoning the on-call manager is justified. Then follow up with a secure encrypted e-mail containing the incident log for the record. A secure e-mail on its own may not be read until morning.'},
+ {id:'salary',title:'Confidential salary review',text:'The salary review spreadsheet for {co}’s London staff must go to the Head of Human Resources in London.',to:['lon'],at:['sxm',10,0],a:{urg:'Medium',conf:'Restricted',aud:'1 HR head',rec:'Yes',att:'Salary spreadsheet',disc:'No',cost:'Any',form:'Formal'},best:['secure'],acc:[],f:['conf','genre','effv'],why:'Salaries are confidential personal data, so use secure encrypted e-mail (or the HR portal). Never use a group chat or ordinary e-mail, which can be forwarded or sent to the wrong person.'},
+ {id:'brain',title:'Brainstorm with six offices',text:'Creative leads in six offices must brainstorm ideas for {camp} together.',to:['nyc','lon','ams','tor','kin','los'],at:['sxm',8,0],sched:true,a:{urg:'Medium',conf:'Internal',aud:'6 offices',rec:'Notes afterwards',att:'Mood board',disc:'Yes, lots',cost:'Save on travel',form:'Semi-formal'},best:['video'],acc:['phone'],f:['genre','loc','effv','cost'],why:'Brainstorming needs live discussion, and video lets everyone share visuals. Schedule it in office hours that overlap for all six cities. A conference phone call is acceptable but loses the visuals.'},
+ {id:'policy',title:'Policy update for 2,000 staff',text:'A new {policy} policy must reach all 2,000 staff in every office, and stay available for them to check later.',to:['nyc','lon','ams','tor','kin','pos','los','bom','tyo','syd'],at:['sxm',9,0],a:{urg:'Low',conf:'Internal',aud:'2,000 staff',rec:'Yes, official',att:'Policy document',disc:'No',cost:'Low',form:'Formal'},best:['intranet'],acc:['email','newsletter'],f:['eff','cost','genre','loc'],why:'Publish the policy on the intranet, the single official place staff can always check, and send an e-mail alert with the link. Staff read it in their own working hours.'},
+ {id:'yesno',title:'Quick yes or no',text:'You need a quick yes or no from a colleague in Port of Spain: can the {supplier} visit on Thursday instead of Wednesday?',to:['pos'],at:['sxm',11,0],a:{urg:'Medium',conf:'Internal',aud:'1 colleague',rec:'No',att:'None',disc:'One-word answer',cost:'Low',form:'Informal'},best:['im'],acc:['phone','sms'],f:['urgency','eff','loc'],why:'Port of Spain is on the same time as Bridgetown, and it is office hours, so an instant message gets a quick reply with very little effort. A call is acceptable but takes more time than the question needs.'},
+ {id:'fax',title:'Signed contract to an old-fashioned supplier',text:'The {supplier} in Lagos needs a copy of the signed contract today. Their office still relies on an old fax machine, although they can also open e-mail.',to:['los'],at:['sxm',8,30],a:{urg:'Medium',conf:'Confidential',aud:'1 supplier',rec:'Yes, signed',att:'Signed contract',disc:'No',cost:'Low',form:'Formal'},best:['fax','email'],acc:['secure'],f:['genre','effv','eff'],why:'A signed copy must be sent as an exact image of the document. Fax suits their equipment, and a scanned PDF by e-mail (scan to mail) works too. A secure portal is fine, but the supplier may not have access.'},
+ {id:'hurricane',title:'Hurricane warning in Bridgetown',text:'A hurricane warning has been issued for Barbados. All 120 staff at the Bridgetown head office must be told tonight to secure their homes and not come in tomorrow.',to:['sxm'],at:['sxm',19,30],a:{urg:'Critical',conf:'Public',aud:'120 local staff',rec:'Helpful',att:'None',disc:'Confirm they got it',cost:'Any',form:'Semi-formal'},best:['sms'],acc:['phone'],f:['urgency','effv','loc'],why:'Send an SMS alert to every phone straight away, then use a phone tree so managers call their teams to confirm. E-mail and the intranet may not be seen, especially if the power or internet fails.'},
+ {id:'launch',title:'Launch to the public',text:'{co} wants to tell {cust} around the world about {prod}.',to:['nyc','lon','tor','syd'],at:['sxm',12,0],a:{urg:'Low',conf:'Public',aud:'Worldwide public',rec:'No',att:'Photos, video',disc:'Comments welcome',cost:'Low',form:'Informal'},best:['social','newsletter'],acc:['email'],f:['effv','cost','eff'],why:'Social media posts and an e-newsletter reach a very large audience cheaply and quickly, and people can read them at any hour in their own time zone.'},
+ {id:'monthly',title:'Monthly update to subscribers',text:'Send the monthly news update to 40,000 {cust} who have signed up to hear from {co}.',to:['nyc','lon','ams','syd'],at:['sxm',10,0],a:{urg:'Low',conf:'Public',aud:'40,000 subscribers',rec:'No',att:'Images, links',disc:'No',cost:'Low',form:'Semi-formal'},best:['newsletter'],acc:['email','social'],f:['cost','eff','effv'],why:'An e-newsletter to a mailing list is designed for regular updates to people who opted in. It is cheap and arrives for each reader to open in their own time zone.'},
+ {id:'report',title:'Edit the quarterly report together',text:'Finance teams in Amsterdam, Toronto and Mumbai must all add their figures to the quarterly report before Friday.',to:['ams','tor','bom'],at:['sxm',9,30],a:{urg:'Medium',conf:'Confidential',aud:'3 teams',rec:'Yes',att:'Large spreadsheet',disc:'Comments',cost:'Low',form:'Formal'},best:['cloud'],acc:['email','secure'],f:['eff','loc','genre'],why:'A shared cloud document (with restricted access) lets each team edit during its own office hours, and everyone always sees the latest version. E-mailing attachments creates confusing copies.'},
+ {id:'remind',title:'Friendly reminder to Sydney',text:'You want to remind the Sydney office manager that the agenda for next month’s regional meeting is due in two weeks.',to:['syd'],at:['syd',2,30],a:{urg:'Low',conf:'Internal',aud:'1 manager',rec:'Yes',att:'None',disc:'No',cost:'Low',form:'Semi-formal'},best:['email'],acc:['im'],f:['loc','urgency','cost'],why:'Look at the time in Sydney: the manager is asleep. This is not urgent, so send an e-mail that will be waiting when the working day begins. A phone call or text would wake them for nothing.'},
+ {id:'vmail',title:'No answer from Kingston',text:'You phone the Kingston branch manager to say that tomorrow’s 10:00 visit from the {supplier} has moved to 11:00, but she does not pick up. She checks her messages after meetings.',to:['kin'],at:['kin',15,0],a:{urg:'Medium',conf:'Internal',aud:'1 manager',rec:'Helpful',att:'None',disc:'No',cost:'Low',form:'Informal'},best:['voicemail'],acc:['im','sms'],f:['genre','urgency','effv'],why:'You are already on the call, so leave a short, clear voicemail. She will hear it after her meeting. A text or chat message is also acceptable.'},
+ {id:'feedback',title:'Sensitive feedback',text:'You must give a team leader in New York some sensitive feedback about complaints from {cust}.',to:['nyc'],at:['sxm',10,0],a:{urg:'Medium',conf:'Confidential',aud:'1 team leader',rec:'Summary later',att:'None',disc:'Yes',cost:'Any',form:'Formal'},best:['video'],acc:['phone'],f:['conf','genre','effv'],why:'Sensitive feedback is best given orally and face to face, so they can ask questions and hear your tone. A private video call is the closest thing. A phone call is acceptable. Never use chat or group e-mail.'},
+ {id:'server',title:'Restart the server now',text:'The {sys} is failing. The Mumbai IT team must restart a server immediately. They are at their desks.',to:['bom'],at:['bom',14,30],a:{urg:'Critical',conf:'Internal',aud:'IT team',rec:'Log later',att:'None',disc:'Quick confirmation',cost:'Any',form:'Informal'},best:['phone','im'],acc:['sms','video'],f:['urgency','effv','loc'],why:'It is office hours in Mumbai, so a call or an instant message reaches the team at once and they can confirm when it is done. E-mail is too slow for an emergency.'},
+ {id:'bigfile',title:'Send 2 GB of design files',text:'The Toronto office needs 2 GB of photographs and design files for {camp}.',to:['tor'],at:['sxm',13,0],a:{urg:'Low',conf:'Internal',aud:'1 office',rec:'Yes',att:'2 GB of files',disc:'No',cost:'Low',form:'Semi-formal'},best:['cloud'],acc:[],f:['eff','effv','genre'],why:'Files this large are too big for an e-mail attachment. Share them through a cloud folder and send the link. Fax and chat cannot handle them.'}
+];
+const NIGHT=p=>p.h<6||p.h>=22;
+const DAYI=p=>(p.h<6||p.h>=19)?MOON.replace('class="night-ico"',''):SUNI.replace('class="night-ico"','');
+const HQ={started:false,genre:null,list:[],i:0,pick:null,scores:[],verdicts:[],base:null,done:false};
+function fill(s,g){return s.replace(/\{(\w+)\}/g,(m,k)=>k==='co'?g.co:(g.T[k]||m));}
+function hqBaseDate(){let d=sxmToday();for(let i=1;i<=7;i++){const n=addDaysIso(d,i),{y,m,dd}=(()=>{const o=ymd(n);return {y:o.y,m:o.m,dd:o.d};})();if(new Date(Date.UTC(y,m-1,dd)).getUTCDay()===2)return y===ymd(d).y?n:addDaysIso(n,-7);}return d;}
+function hqUtc(s){const {y,m,d}=ymd(HQ.base);const [city,h,mi]=s.at;return toUtc(y,m,d,h,mi,C[city].tz);}
+function renderHqIntro(){
+  HQ.started=false;const P=document.getElementById('hqPanel');
+  let h='<div class="intro" style="grid-template-columns:1fr"><div><h2 class="h2">Global HQ: Choose the Channel</h2><p class="lead">You are the communications officer at the head office of a multinational company in <b>Bridgetown, Barbados</b>, with offices in New York, London, Amsterdam, Toronto, Kingston, Port of Spain, Lagos, Mumbai, Tokyo and Sydney. For each message, choose the <b>best electronic medium</b>, then tick the factors that drove your choice. Check the local time where the message is going: do not wake people at night unless it is urgent!</p><p class="sstep">1. Choose your company’s line of business</p><div class="genres" role="group" aria-label="Company type">';
+  GENRES.forEach(g=>{h+='<button class="genre" style="--gc:'+g.c+'" data-g="'+g.k+'" aria-pressed="'+(HQ.genre===g.k)+'">'+badge(g.c,g.g)+'<span><b>'+g.n+'</b><span>'+g.co+'</span></span></button>';});
+  h+='</div><div class="row" style="justify-content:space-between"><span class="bestline">Best score: '+BEST.hq+'%</span><button class="btn" id="hqStart" '+(HQ.genre?'':'disabled')+'>Start the working day ▸</button></div></div></div>';
+  P.innerHTML=h;
+  P.querySelectorAll('.genre').forEach(b=>b.addEventListener('click',()=>{HQ.genre=b.dataset.g;SFX.click();P.style.setProperty('--g',GD[HQ.genre].c);P.querySelectorAll('.genre').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.getElementById('hqStart').disabled=false;}));
+  document.getElementById('hqStart').addEventListener('click',startHq);
+}
+function startHq(){
+  SFX.click();const g=GD[HQ.genre];HQ.started=true;HQ.i=0;HQ.scores=[];HQ.verdicts=[];HQ.base=hqBaseDate();
+  const sp=Object.assign({id:'special'},g.special);
+  HQ.list=shuffle([sp].concat(shuffle(HQ_SCN).slice(0,12)));
+  document.getElementById('hqPanel').style.setProperty('--g',g.c);
+  renderHq();
+}
+function overlapSlot(cities){
+  const s={date:HQ.base,cities:['sxm'].concat(cities.filter(c=>c!=='sxm')),dur:60};const B=bestSlot(s);
+  const m=B.starts[0],ev=evalSlot(s,m);
+  return {perfect:B.best===0,ev};
+}
+function hqTop(){const g=GD[HQ.genre];return '<div class="hqtop"><div class="hqco">'+badge(g.c,g.g)+'<div><b>'+g.co+'</b><span>Head office: Bridgetown, Barbados · '+g.n+'</span></div></div><div class="row"><span class="scn-meta">Message '+(HQ.i+1)+' of '+HQ.list.length+'</span><span class="score">'+HQ.scores.reduce((a,b)=>a+b,0)+' pts</span></div></div>';}
+function renderHq(){
+  const g=GD[HQ.genre],s=HQ.list[HQ.i],u=hqUtc(s),P=document.getElementById('hqPanel');HQ.pick=null;HQ.done=false;
+  const sp=parts(u,SXM_TZ);
+  let places='<span class="place from">'+DAYI(sp)+'Bridgetown <b>'+t24(sp.h,sp.mi)+'</b> <small>'+DAYS[sp.wd].slice(0,3)+' (you)</small></span><span class="arrow" aria-hidden="true">→</span>';
+  const tos=s.to.filter(id=>id!=='sxm');
+  if(!tos.length)places+='<span class="place">'+DAYI(sp)+'Bridgetown staff <b>'+t24(sp.h,sp.mi)+'</b></span>';
+  tos.forEach(id=>{const p=parts(u,C[id].tz),asl=NIGHT(p);places+='<span class="place'+(asl?' asleep':'')+'" aria-label="'+esc(C[id].name+': '+t24(p.h,p.mi)+' '+DAYS[p.wd]+(asl?', night time':''))+'">'+DAYI(p)+C[id].name+' <b>'+t24(p.h,p.mi)+'</b> <small>'+DAYS[p.wd].slice(0,3)+(asl?' · night':'')+'</small></span>';});
+  const A=s.a,L=[['urg','Urgency'],['conf','Confidentiality'],['aud','Audience'],['rec','Written record'],['att','Attachments'],['disc','Discussion / feedback'],['cost','Cost'],['form','Formality']];
+  const heat=(k,v)=>(k==='urg'&&/Critical|High/.test(v))||(k==='conf'&&/Restricted|Confidential/.test(v))?' hot':(k==='urg'&&v==='Medium')||(k==='conf'&&v==='Internal')?' warm':'';
+  let h=hqTop()+'<h2 class="h2">'+esc(s.title)+'</h2><p class="lead" style="margin-bottom:4px">'+esc(fill(s.text,g))+'</p><div class="places">'+places+'</div>';
+  h+='<div class="attrs">'+L.map(([k,n])=>'<div class="attr'+heat(k,A[k])+'"><i>'+n+'</i><b>'+esc(A[k])+'</b></div>').join('')+'</div>';
+  h+='<p class="sstep" id="medLbl"><em>Step 1.</em> Choose the best electronic medium</p><div class="media" role="group" aria-labelledby="medLbl">'+MEDIA.map(m=>'<button class="med" data-m="'+m.k+'" aria-pressed="false">'+m.i+'<span>'+m.n+'</span></button>').join('')+'</div>';
+  h+='<p class="sstep" id="facLbl"><em>Step 2.</em> Tick the factors that drove your choice (Section 2)</p><div class="facts" role="group" aria-labelledby="facLbl">'+FACTORS.map(f=>'<label class="fact" data-f="'+f.k+'"><input type="checkbox" value="'+f.k+'"><span><b>'+f.n+'</b><span>'+f.d+'</span></span></label>').join('')+'</div>';
+  h+='<div id="hqFb" aria-live="polite"></div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="hqSend" disabled>Send it ▸</button></div>';
+  P.innerHTML=h;
+  P.querySelectorAll('.med').forEach(b=>b.addEventListener('click',()=>{if(HQ.done)return;HQ.pick=b.dataset.m;SFX.click();P.querySelectorAll('.med').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.getElementById('hqSend').disabled=false;}));
+  document.getElementById('hqSend').addEventListener('click',sendHq);
+}
+function hqJudge(s,pick,ticks){
+  const u=hqUtc(s),asleep=s.to.filter(id=>id!=='sxm').filter(id=>NIGHT(parts(u,C[id].tz)));
+  let v=s.best.includes(pick)?'best':s.acc.includes(pick)?'acc':'poor';
+  let night=false;
+  if(REALTIME.has(pick)&&asleep.length&&!s.sched&&!/Critical/.test(s.a.urg)){night=true;v='poor';}
+  let pts=v==='best'?6:v==='acc'?3:0;
+  const c=ticks.filter(t=>s.f.includes(t)).length,w=ticks.filter(t=>!s.f.includes(t)).length;
+  const fp=Math.round(4*Math.max(0,c-w)/s.f.length);
+  pts+=fp;if(night)pts=Math.max(0,pts-2);
+  return {v,pts,fp,night,asleep};
+}
+function sendHq(){
+  if(HQ.done){nextHq();return;}
+  const s=HQ.list[HQ.i],g=GD[HQ.genre],P=document.getElementById('hqPanel');
+  const ticks=[...P.querySelectorAll('.fact input:checked')].map(x=>x.value);
+  if(!ticks.length){document.getElementById('hqFb').innerHTML='<div class="fb bad"><strong>Tick at least one factor to justify your choice.</strong></div>';P.querySelector('.fact input').focus();return;}
+  const J=hqJudge(s,HQ.pick,ticks);HQ.done=true;HQ.scores[HQ.i]=J.pts;HQ.verdicts[HQ.i]={title:s.title,pick:HQ.pick,v:J.v,best:s.best};
+  P.querySelectorAll('.med').forEach(b=>{const k=b.dataset.m;b.disabled=true;if(s.best.includes(k))b.classList.add('best');else if(s.acc.includes(k))b.classList.add('acc');else if(k===HQ.pick)b.classList.add('poor');});
+  P.querySelectorAll('.fact').forEach(l=>{const k=l.dataset.f,inp=l.querySelector('input');inp.disabled=true;if(s.f.includes(k))l.classList.add(inp.checked?'key':'miss');else if(inp.checked)l.classList.add('extra');});
+  const VT={best:['v-best','Best choice'],acc:['v-acc','Acceptable'],poor:['v-poor','Poor choice']}[J.v];
+  let extra='';
+  if(J.night){const u=hqUtc(s);extra='<p style="margin:6px 0 0;color:var(--coral)"><b>Night-time penalty:</b> '+J.asleep.map(id=>{const p=parts(u,C[id].tz);return 'it is '+t24(p.h,p.mi)+' in '+C[id].name;}).join(', ')+'. This is not urgent, so a '+MD[HQ.pick].n.toLowerCase()+' would wake people up. Use a medium they can read in the morning.</p>';}
+  if(s.sched){const o=overlapSlot(s.to);const r=o.ev.per;extra+='<p style="margin:6px 0 0"><b>'+(o.perfect?'Overlapping office hours on '+longDate(r[0].p0)+':':'No slot fits everyone’s office hours, so the best compromise on '+longDate(r[0].p0)+' is:')+'</b> '+r.map(x=>C[x.id].name+' '+t24(x.p0.h,x.p0.mi)).join(' · ')+'</p>';}
+  document.getElementById('hqFb').innerHTML='<div class="fb '+(J.v==='poor'?'bad':'ok')+'"><strong><span class="verdict '+VT[0]+'">'+VT[1]+'</span>You chose '+MD[HQ.pick].n+'. Best: '+s.best.map(k=>MD[k].n).join(' or ')+(s.acc.length?'; acceptable: '+s.acc.map(k=>MD[k].n).join(', '):'')+'.</strong>'+esc(fill(s.why,g))+extra+'<p style="margin:6px 0 0" class="muted">Key factors: '+s.f.map(k=>FN[k]).join(', ')+'. <span class="mono" style="color:var(--amber)">+'+J.pts+'/10</span> (medium '+(J.v==='best'?6:J.v==='acc'?3:0)+(J.night?' − 2 night penalty':'')+', factors '+J.fp+'/4)</p></div>';
+  P.querySelector('.hqtop .score').textContent=HQ.scores.reduce((a,b)=>a+b,0)+' pts';
+  if(J.v==='poor')SFX.bad();else SFX.ok();
+  say(VT[1]+'. '+J.pts+' points.');
+  const b=document.getElementById('hqSend');b.textContent=HQ.i<HQ.list.length-1?'Next message ▸':'See my rating ▸';b.focus({preventScroll:true});document.getElementById('hqFb').scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
+}
+function nextHq(){
+  SFX.click();
+  if(HQ.i<HQ.list.length-1){HQ.i++;renderHq();document.getElementById('hqPanel').scrollIntoView({block:'start',behavior:reduceMotion?'auto':'smooth'});return;}
+  const tot=HQ.scores.reduce((a,b)=>a+b,0),pct=Math.round(tot*100/(10*HQ.list.length)),g=GD[HQ.genre];
+  const rank=pct>=90?'Communications Director':pct>=75?'Senior Communications Manager':pct>=60?'Communications Officer':pct>=40?'Communications Assistant':'Communications Trainee';
+  const nb=BEST.hq;const r=resultHTML('Communications Director rating',pct,'hq','<div class="rank">'+rank+'</div><p>'+g.co+' · '+['best','acc','poor'].map(k=>HQ.verdicts.filter(v=>v.v===k).length+' '+{best:'best',acc:'acceptable',poor:'poor'}[k]).join(', ')+' (out of '+HQ.verdicts.length+' messages)</p>','hqAgain');
+  let recap='<div class="tblscroll"><table class="mt"><thead><tr><th>Message</th><th>Your choice</th><th>Verdict</th><th>Best</th></tr></thead><tbody>'+HQ.verdicts.map(v=>'<tr><td style="white-space:normal">'+esc(v.title)+'</td><td>'+MD[v.pick].n+'</td><td><span class="verdict '+(v.v==='best'?'v-best':v.v==='acc'?'v-acc':'v-poor')+'">'+(v.v==='best'?'Best':v.v==='acc'?'Acceptable':'Poor')+'</span></td><td>'+v.best.map(k=>MD[k].n).join(' or ')+'</td></tr>').join('')+'</tbody></table></div>';
+  let table='<div class="tblscroll"><table class="mt"><thead><tr><th>Medium</th><th>Best uses</th></tr></thead><tbody>'+MEDIA.map(m=>'<tr><td>'+m.i+m.n+'</td><td>'+m.use+'</td></tr>').join('')+'</tbody></table></div>';
+  document.getElementById('hqPanel').innerHTML=hqTop().replace(/Message \d+ of \d+/,'End of day report')+r+'<h3 class="h2" style="margin-top:8px">Your messages</h3>'+recap+'<h3 class="h2" style="margin-top:16px">Which medium for which job?</h3>'+table+'<p class="muted" style="font-size:13px;margin-top:10px">The seven factors for choosing a communication tool (Section 2): degree of urgency; genre (oral, written, visual); level of confidentiality; location / time zone; cost; efficiency; and effectiveness. In practice they are weighed together.</p>';
+  starFx(starsFor(pct));const a=document.getElementById('hqAgain');a.addEventListener('click',()=>{renderHqIntro();});a.focus();
+}
+
+/* ===== boot ===== */
+renderStars();renderMissions();renderWorld();
+window.TZN={HQ,HQ_SCN,GENRES,hqUtc,hqJudge,NIGHT,MEDIA,parts,offsetMin,toUtc,isDST,CITIES,FLIGHTS,SCENARIOS,evalSlot,bestSlot,genQuick,QS,CALL,IT,QZ,WC,renderWorld,buildEntries};
+
+/* ===== saved progress (GameSave) =====
+   tzn.best (best scores, stars and world-clock missions) and tzn.mute were already kept. tzn.play adds the tab you were on, the
+   world-clock date, time and 12/24-hour choice, and the round in progress in every mode: What time is it there? and the Quiz
+   (the same questions and options, question reached, score), Book the call (meeting reached, scores, the slot you chose),
+   the Itinerary builder (arrival times solved, heading and date points, the rows you laid out) and Global HQ (company,
+   messages drawn, scores, the medium and factors chosen). Start over clears it all. */
+(function(){
+ if(!window.GameSave)return;
+ const KEY='tzn.play';
+ const isO=o=>!!o&&typeof o==='object'&&!Array.isArray(o),int=(v,lo,hi)=>Number.isInteger(v)&&v>=lo&&v<=hi,num=v=>typeof v==='number'&&isFinite(v);
+ const curTab=()=>{const t=tabs.find(b=>b.getAttribute('aria-selected')==='true');return t?t.id:null;};
+ const hqTicks=()=>[...document.querySelectorAll('#hqPanel .fact input:checked')].map(x=>x.value);
+ function snap(){
+  const d={v:1,tab:curTab(),wc:{date:WC.date,min:WC.min,h12:!!WC.h12,touched:!!WC.touched}};
+  if(QS.started&&QS.qs.length)d.qs={qs:QS.qs.map(q=>({type:q.type,src:q.src.id,dst:q.dst.id,u:q.u,h12:!!q.h12,ov:q.opts?q.opts.map(o=>o.v):null})),i:QS.i,score:QS.score,res:QS.res.slice(),answered:!!QS.answered};
+  if(CALL.started)d.call={i:CALL.i,scores:CALL.scores.slice(),start:CALL.start,booked:!!CALL.booked};
+  if(IT.started)d.it={step:IT.step,a:IT.a.slice(),aTries:IT.aTries.slice(),aScore:IT.aScore,hScore:IT.hScore,dScore:IT.dScore,rows:IT.rows.map(r=>({id:r.id,date:r.date})),tScore:IT.tScore,checks:IT.checks,pool:IT._pool||null};
+  if(QZ.started&&QZ.qs.length)d.qz={qs:QZ.qs.map(q=>({q:q.q,opts:q.opts.slice()})),i:QZ.i,score:QZ.score,res:QZ.res.slice()};
+  if(HQ.started&&HQ.list.length)d.hq={genre:HQ.genre,base:HQ.base,ids:HQ.list.map(s=>s.id),i:HQ.i,scores:HQ.scores.slice(),verdicts:HQ.verdicts.slice(),done:!!HQ.done,pick:HQ.pick,ticks:hqTicks()};
+  return d;
+ }
+ function rWc(o){
+  if(!isO(o))return;
+  if(typeof o.date==='string'&&/^\d{4}-\d\d-\d\d$/.test(o.date)){WC.date=o.date;wcDate.value=o.date;}
+  if(int(o.min,0,1439))WC.min=o.min;
+  WC.h12=o.h12===true;document.getElementById('f24').setAttribute('aria-pressed',String(!WC.h12));document.getElementById('f12').setAttribute('aria-pressed',String(WC.h12));
+  WC.touched=o.touched===true;renderWorld();
+ }
+ function rQs(o){
+  if(!Array.isArray(o.qs)||o.qs.length!==10||!int(o.i,0,9)||!int(o.score,0,100)||!Array.isArray(o.res))throw 0;
+  const qs=o.qs.map(x=>{
+   if(!isO(x)||!C[x.src]||!C[x.dst]||!num(x.u)||(x.type!=='mc'&&x.type!=='typed'))throw 0;
+   const src=C[x.src],dst=C[x.dst],u=x.u,sp=parts(u,src.tz),dp=parts(u,dst.tz),so=offsetMin(u,src.tz),do_=offsetMin(u,dst.tz),diff=do_-so,srcMin=sp.h*60+sp.mi;
+   if(sp.y!==2026)throw 0;
+   return {type:x.type,src,dst,u,sp,dp,so,do_,diff,srcMin,ans:srcMin+diff,dayRel:dayNum(dp)-dayNum(sp),h12:x.h12===true,ov:Array.isArray(x.ov)?x.ov:null};
+  });
+  QS.started=true;QS.qs=qs;QS.score=o.score;QS.res=o.res.slice(0,10).map(v=>v===true);
+  const i=o.i+(o.answered?1:0);
+  if(i>=10){QS.i=9;quickResult();}else{QS.i=i;renderQuick();}
+ }
+ function rCall(o){
+  if(!int(o.i,0,SCENARIOS.length-1)||!Array.isArray(o.scores)||o.scores.length>SCENARIOS.length||!int(o.start,0,1440))throw 0;
+  CALL.started=true;CALL.i=o.i;CALL.scores=o.scores.map(v=>num(v)?v:0);CALL.booked=false;CALL.start=Math.min(o.start,1440-SCENARIOS[o.i].dur);
+  renderScn();if(o.booked)bookCall();
+ }
+ function rIt(o){
+  if(!int(o.step,0,4)||!Array.isArray(o.a)||o.a.length!==3||!Array.isArray(o.aTries)||o.aTries.length!==3||!Array.isArray(o.rows))throw 0;
+  const E=buildEntries(),ids=E.map(e=>e.id),seen=new Set(),rows=[];
+  o.rows.forEach(r=>{if(isO(r)&&ids.includes(r.id)&&!seen.has(r.id)&&(r.date===''||TRIP_DAYS.includes(r.date))){seen.add(r.id);rows.push({id:r.id,date:r.date});}});
+  Object.assign(IT,{started:true,step:o.step,a:o.a.map(x=>x?true:null),aTries:o.aTries.map(n=>int(n,0,99)?n:0),aScore:int(o.aScore,0,30)?o.aScore:0,hScore:int(o.hScore,0,10)?o.hScore:0,dScore:int(o.dScore,0,10)?o.dScore:0,head:null,dateStyle:null,rows,tScore:int(o.tScore,0,50)?o.tScore:null,checks:int(o.checks,0,9999)?o.checks:0,entries:E});
+  if(Array.isArray(o.pool)&&o.pool.length===ids.length&&ids.every(id=>o.pool.includes(id)))IT._pool=o.pool.slice();
+  if(IT.step===3&&IT.tScore!==null)IT.step=4;
+  renderItin();
+  if(IT.step===0&&IT.a.every(Boolean))checkA();
+ }
+ function rQz(o){
+  if(!Array.isArray(o.qs)||o.qs.length!==10||!int(o.i,0,9)||!int(o.score,0,10)||!Array.isArray(o.res))throw 0;
+  const pool=quizPool();
+  const qs=o.qs.map(x=>{const p=isO(x)&&pool.find(z=>z.q===x.q);if(!p)throw 0;const want=[p.right,...p.wrong.slice(0,3)];
+   return {...p,opts:Array.isArray(x.opts)&&x.opts.length===want.length&&want.every(w=>x.opts.includes(w))?x.opts.slice():shuffle(want)};});
+  QZ.started=true;QZ.qs=qs;QZ.score=o.score;QZ.res=o.res.slice(0,10).map(v=>v===true?true:v===false?false:undefined);
+  const i=o.i+(QZ.res[o.i]!==undefined?1:0);
+  if(i<10){QZ.i=i;renderQuizQ();return;}
+  QZ.i=9;const P=document.getElementById('quizPanel'),pct=QZ.score*10;
+  P.innerHTML=resultHTML('Quiz complete',pct,'quiz','<p>'+QZ.score+' out of 10 correct.</p>','qzAgain');
+  document.getElementById('qzAgain').addEventListener('click',startQuiz);
+ }
+ function rHq(o){
+  if(!GD[o.genre]||typeof o.base!=='string'||!/^\d{4}-\d\d-\d\d$/.test(o.base)||!Array.isArray(o.ids)||!o.ids.length||!int(o.i,0,o.ids.length-1)||!Array.isArray(o.scores)||o.scores.length>o.ids.length||!Array.isArray(o.verdicts)||o.verdicts.length>o.ids.length)throw 0;
+  const g=GD[o.genre];
+  const list=o.ids.map(id=>{if(id==='special')return Object.assign({id:'special'},g.special);const s=HQ_SCN.find(x=>x.id===id);if(!s)throw 0;return s;});
+  const verdicts=o.verdicts.map(v=>{if(!isO(v)||typeof v.title!=='string'||!MD[v.pick]||!['best','acc','poor'].includes(v.v)||!Array.isArray(v.best)||!v.best.every(k=>MD[k]))throw 0;return {title:v.title,pick:v.pick,v:v.v,best:v.best.slice()};});
+  Object.assign(HQ,{genre:o.genre,started:true,base:o.base,list,i:o.i,scores:o.scores.map(v=>num(v)?v:0),verdicts});
+  const P=document.getElementById('hqPanel');P.style.setProperty('--g',g.c);
+  renderHq();
+  if(MD[o.pick]){const b=P.querySelector('.med[data-m="'+o.pick+'"]');if(b)b.click();}
+  (Array.isArray(o.ticks)?o.ticks:[]).forEach(k=>{const x=FACTORS.some(f=>f.k===k)&&P.querySelector('.fact input[value="'+k+'"]');if(x)x.checked=true;});
+  if(o.done&&HQ.pick&&P.querySelector('.fact input:checked'))sendHq();
+ }
+ let saved=null,back=false;
+ GameSave.register(['tzn.best','tzn.mute',KEY]);
+ GameSave.persist({key:KEY,welcome:false,get:snap,set:v=>{saved=v;}});
+ const run=(fn,o,reset)=>{if(!isO(o))return;try{fn(o);back=true;}catch(e){try{reset();}catch(_){}}};
+ if(isO(saved)&&saved.v===1){
+  try{rWc(saved.wc);}catch(e){}
+  run(rQs,saved.qs,()=>{QS.started=false;QS.qs=[];renderQuickIntro();});
+  run(rCall,saved.call,()=>{CALL.started=false;CALL.booked=false;renderCallIntro();});
+  run(rIt,saved.it,()=>{IT.started=false;renderItinIntro();});
+  run(rQz,saved.qz,()=>{QZ.started=false;QZ.qs=[];renderQuizIntro();});
+  run(rHq,saved.hq,()=>{HQ.started=false;HQ.list=[];renderHqIntro();});
+  const t=tabs.find(b=>b.id===saved.tab);if(t&&t.id!=='tab-world'){openTab(t);back=true;}
+ }
+ let tmr=null;const later=()=>{clearTimeout(tmr);tmr=setTimeout(GameSave.save,300);};
+ ['click','input','change','keyup','pointerup'].forEach(e=>document.addEventListener(e,later));
+ if(back||Object.keys(BEST).some(k=>BEST[k]>0))setTimeout(()=>GameSave.toast('Welcome back! Your progress was restored.'),400);
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

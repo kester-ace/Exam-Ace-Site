@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IP Court: Protect the Idea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Courier+Prime:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Courtroom: mahogany panelling, brass trim, parchment case files. One warm theme by design. */
+:root{
+  --wood:#3a160d; --wood-2:#5a2414; --wood-3:#7a3520; --wood-line:#2a0f08;
+  --brass:#c9a24a; --brass-hi:#ecd18a; --brass-lo:#8f6d26;
+  --parchment:#f5ecd6; --parchment-2:#eadbb5; --parchment-3:#dcc794;
+  --ink:#2b1d14; --ink-soft:#5d4835; --rule:#c9b48a;
+  --pad:#fbf4c4; --pad-line:#a9c3df; --pad-margin:#d9827a;
+  --good:#2f7d4f; --bad:#b0302a; --focus:#ffd75e;
+  --c-copyright:#a8322b; --c-patent:#1f4e8c; --c-trademark:#2c7650; --c-design:#74399a; --c-secret:#3b3b3b; --c-gi:#a65c0c;
+  --serif:"DM Serif Display",Georgia,"Times New Roman",serif;
+  --sans:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Courier Prime","Courier New",ui-monospace,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background-color:var(--wood);
+  background-image:
+    repeating-linear-gradient(92deg,rgba(0,0,0,.08) 0 2px,transparent 2px 9px,rgba(255,255,255,.025) 9px 11px,transparent 11px 23px),
+    linear-gradient(180deg,var(--wood-2),var(--wood) 60%);
+  color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;min-height:100vh;
+  overflow-x:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+[tabindex="-1"]:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px 10px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+
+/* Header */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  border-bottom:2px solid var(--brass-lo);padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand svg{flex:none}
+h1{font-family:var(--serif);font-weight:400;color:var(--brass-hi);font-size:clamp(1.5rem,3.6vw,2.2rem);line-height:1;margin:0;letter-spacing:.01em}
+.subtitle{display:block;font-family:var(--mono);font-size:.78rem;color:#e7d3b0;letter-spacing:.06em;margin-top:5px}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.tbtn{background:linear-gradient(#6b2f1b,#4a1d10);border:1px solid var(--brass-lo);color:var(--parchment);
+  border-radius:8px;padding:7px 11px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;min-height:38px}
+.tbtn:hover{border-color:var(--brass-hi);color:#fff}
+.tbtn svg{width:16px;height:16px}
+
+main{flex:1;min-width:0}
+section.screen{animation:fade .35s ease both}
+section.screen[hidden]{display:none}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Parchment panels */
+.parch{background:var(--parchment);background-image:radial-gradient(ellipse at 20% 0,rgba(255,255,255,.6),transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(160,120,50,.16),transparent 55%);
+  border-radius:10px;box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 10px 26px rgba(0,0,0,.45);border:1px solid #c7ad74;color:var(--ink)}
+.brassframe{border:3px solid var(--brass);box-shadow:0 0 0 1px var(--brass-lo),0 10px 26px rgba(0,0,0,.45)}
+h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.4rem,3vw,1.9rem);margin:0 0 4px;line-height:1.1}
+h3{font-family:var(--serif);font-weight:400;font-size:1.25rem;margin:0 0 6px;line-height:1.15}
+.kicker{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.lead{color:var(--ink-soft);margin:0 0 10px}
+
+/* Buttons */
+.btn{background:linear-gradient(var(--brass-hi),var(--brass));border:1px solid var(--brass-lo);color:#2a1a06;font-weight:700;
+  border-radius:9px;padding:10px 16px;min-height:44px;box-shadow:0 2px 0 var(--brass-lo);display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--brass-lo)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:#a88c54;box-shadow:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Menu */
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:stretch}
+.hero .intro{padding:18px 20px}
+.hero .intro p{margin:6px 0}
+.hero .scene-mini{border-radius:10px;overflow:hidden;background:#2a0f08;min-height:200px}
+.hero .scene-mini svg{display:block;width:100%;height:100%}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.mode{position:relative;text-align:left;padding:14px 14px 12px;border-radius:10px;border:1px solid #c7ad74;background:var(--parchment);
+  box-shadow:0 8px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:6px;min-height:170px;transition:transform .15s}
+.mode:hover{transform:translateY(-3px)}
+.mode .num{font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;color:var(--ink-soft)}
+.mode .t{font-family:var(--serif);font-size:1.3rem;line-height:1.1}
+.mode .d{font-size:.9rem;color:var(--ink-soft);flex:1}
+.mode .meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:.78rem;border-top:1px dashed var(--rule);padding-top:6px}
+.mode .tab{position:absolute;top:-1px;right:14px;width:34px;height:8px;border-radius:0 0 4px 4px}
+.stars{display:inline-flex;gap:2px}
+.stars svg{width:16px;height:16px}
+.learned-link{margin-top:12px;display:flex;justify-content:center}
+
+/* Mode 1: Which protection */
+.m1{display:grid;grid-template-columns:150px 1fr 300px;grid-template-areas:"who card stamps" "who fb stamps";gap:14px;align-items:start}
+#m1who{grid-area:who}#m1card{grid-area:card}.stampcol{grid-area:stamps}#m1fb{grid-area:fb;margin-top:0}
+.presenter{background:linear-gradient(#5a2414,#3a160d);border:1px solid var(--brass-lo);border-radius:10px;padding:6px 6px 8px;text-align:center;color:var(--parchment)}
+.presenter svg{width:100%;height:auto;max-height:300px;display:block}
+.presenter .who{font-weight:700;font-size:.9rem;line-height:1.2}
+.presenter .role{font-size:.78rem;color:#e7d3b0}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--mono);font-size:.85rem;color:var(--parchment);margin-bottom:8px;flex-wrap:wrap}
+.hud b{color:var(--brass-hi)}
+.progress{height:6px;background:rgba(0,0,0,.35);border-radius:3px;overflow:hidden;flex:1;min-width:80px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--brass),var(--brass-hi));width:0;transition:width .3s}
+.pad{position:relative;background:var(--pad);border-radius:6px 6px 10px 10px;padding:30px 18px 14px 52px;min-height:250px;overflow:hidden;
+  background-image:linear-gradient(90deg,transparent 40px,var(--pad-margin) 40px,var(--pad-margin) 42px,transparent 42px),repeating-linear-gradient(180deg,transparent 0 27px,var(--pad-line) 27px 28px);
+  background-position:0 0,0 18px;box-shadow:0 12px 26px rgba(0,0,0,.45)}
+.pad::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:linear-gradient(#8c3b22,#6b2a16);border-bottom:2px solid #4a1d10}
+.pad .icon{float:right;width:84px;height:84px;margin:0 0 6px 10px;background:#fffbe0;border:1px solid #d9cf98;border-radius:8px;padding:6px}
+.pad h3{font-size:1.45rem;margin-top:4px}
+.pad p{margin:0 0 8px;font-size:1.02rem;line-height:28px}
+.pad .q{font-family:var(--mono);font-size:.9rem;color:var(--ink-soft)}
+.slide-in{animation:slidein .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes slidein{from{opacity:0;transform:translateX(60px) rotate(2deg)}to{opacity:1;transform:none}}
+.stamprow{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:flex-end;align-items:center;margin-top:6px;clear:both}
+.stampmark{display:inline-block;font-family:var(--mono);font-weight:700;font-size:1.1rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:6px 12px;border:4px double currentColor;border-radius:6px;transform:rotate(-9deg);opacity:.88;mix-blend-mode:multiply;animation:stamp .35s cubic-bezier(.3,1.6,.5,1) both;background:rgba(255,255,255,.15)}
+.stampmark.wrongst{text-decoration:line-through;opacity:.6}
+.stampmark.second{transform:rotate(4deg)}
+@keyframes stamp{from{transform:scale(2.4) rotate(-9deg);opacity:0}to{opacity:.88}}
+.stamps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stampbtn{background:var(--parchment);border:1px solid #b99c63;border-radius:10px;padding:8px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:96px;
+  box-shadow:0 4px 0 #8f7445,0 8px 14px rgba(0,0,0,.35);transition:transform .1s}
+.stampbtn:hover:not([disabled]){transform:translateY(-2px)}
+.stampbtn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 #8f7445}
+.stampbtn[disabled]{opacity:.55;cursor:default}
+.stampbtn .face{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:1.3rem;border:3px solid rgba(255,255,255,.5);box-shadow:0 0 0 2px currentColor}
+.stampbtn .lbl{font-weight:700;font-size:.9rem;line-height:1.1;text-align:center}
+.stampbtn .key{font-family:var(--mono);font-size:.7rem;color:var(--ink-soft)}
+.panel-title{font-family:var(--mono);color:var(--brass-hi);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px}
+.feedback{margin-top:12px;padding:14px 16px}
+.feedback .verdict{font-family:var(--serif);font-size:1.3rem}
+.feedback .verdict.ok{color:var(--good)} .feedback .verdict.no{color:var(--bad)}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.facts div{background:rgba(255,255,255,.5);border:1px solid var(--rule);border-radius:8px;padding:7px 9px;font-size:.88rem}
+.facts b{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* Mode 2: Venn */
+.m2head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;color:var(--parchment);margin-bottom:8px}
+.m2head h2{color:var(--brass-hi)}
+.m2head p{margin:0;color:#e7d3b0;font-size:.92rem}
+.tray{padding:10px;display:flex;flex-wrap:wrap;gap:8px;min-height:58px;margin-bottom:12px}
+.tray:empty::after{content:"All statements placed — press Check my chart.";font-family:var(--mono);font-size:.85rem;color:var(--ink-soft);padding:8px}
+.chip{background:#fffdf3;border:1px solid #b99c63;border-left:5px solid var(--brass);border-radius:7px;padding:7px 10px;font-size:.9rem;line-height:1.25;text-align:left;
+  max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 2px 4px rgba(0,0,0,.18)}
+.chip.sel{outline:3px solid var(--focus);background:#fff7cc}
+.chip.right{border-left-color:var(--good);background:#e9f5ec}
+.chip.wrong{border-left-color:var(--bad);background:#fbe9e6}
+.chip .mk{font-family:var(--mono);font-weight:700;margin-right:4px}
+.dragghost{position:fixed;pointer-events:none;z-index:50;opacity:.92;transform:rotate(-2deg);box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.venn{position:relative;display:grid;grid-template-columns:1fr .85fr 1fr;gap:0;min-height:300px}
+.venn-bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.zone{position:relative;z-index:1;padding:44px 12px 14px;display:flex;flex-direction:column;gap:6px;min-height:280px;border-radius:12px;transition:background .15s}
+.zone .zl{position:absolute;top:10px;left:0;right:0;text-align:center;font-family:var(--serif);font-size:1.15rem;color:var(--parchment);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.zone.hover,.zone:focus-visible{background:rgba(255,215,94,.18)}
+.zone.armed{cursor:copy}
+.tray[hidden]{display:none}
+.zone:has(.chip) .hint{display:none}
+.zone .hint{font-family:var(--mono);font-size:.74rem;color:#e7d3b0;text-align:center;opacity:.8}
+.neither{margin-top:10px;min-height:90px;border:2px dashed rgba(236,209,138,.6);background:rgba(0,0,0,.2);flex-direction:row;flex-wrap:wrap;align-items:flex-start;padding:40px 12px 12px}
+.zone .chip{font-size:.85rem}
+.chart{width:100%;border-collapse:collapse;font-size:.9rem}
+.chart th,.chart td{border-bottom:1px solid var(--rule);padding:7px 8px;text-align:left;vertical-align:top}
+.chart th{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);background:rgba(255,255,255,.35)}
+.chart td.ok{color:var(--good);font-weight:700} .chart td.no{color:var(--bad);font-weight:700}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.cmpgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0}
+.cmpgrid .col{background:rgba(255,255,255,.5);border:1px solid var(--rule);border-radius:8px;padding:10px}
+.cmpgrid .col h4{margin:0 0 6px;font-family:var(--serif);font-weight:400;font-size:1.1rem}
+.cmpgrid ul{margin:0;padding-left:18px;font-size:.88rem}
+.cmpgrid li{margin:3px 0}
+
+/* Mode 3: Court */
+.scene{border-radius:10px;overflow:hidden;border:2px solid var(--brass-lo);background:#2a0f08}
+.scene svg{display:block;width:100%;height:auto;max-height:250px}
+.court{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:12px;align-items:start}
+.casefile{padding:16px 18px;position:relative}
+.casefile::before{content:"";position:absolute;top:-10px;left:22px;width:120px;height:14px;background:var(--parchment-3);border:1px solid #c7ad74;border-bottom:none;border-radius:6px 6px 0 0}
+.caseno{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);letter-spacing:.06em}
+.parties{font-family:var(--mono);font-size:.88rem;margin:4px 0 8px;font-weight:700}
+.parties span{color:var(--bad)}
+.casefile p{margin:0 0 10px}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.ev{background:#fff;border:1px solid #cbbd98;border-radius:6px;font-size:.84rem;box-shadow:0 3px 8px rgba(0,0,0,.18);position:relative;overflow:hidden}
+.ev .evtag{position:absolute;top:6px;right:-26px;transform:rotate(35deg);background:var(--bad);color:#fff;font-family:var(--mono);font-size:.6rem;padding:2px 28px;letter-spacing:.08em}
+.ev .bar{display:flex;align-items:center;gap:4px;background:#e6e3dc;padding:5px 7px;border-bottom:1px solid #cfcac0;font-family:var(--mono);font-size:.7rem;color:#555}
+.ev .bar i{width:8px;height:8px;border-radius:50%;background:#c9c3b6;display:inline-block}
+.ev .body{padding:8px 10px}
+.ev.email .body .hd{font-family:var(--mono);font-size:.72rem;color:#555;border-bottom:1px dashed #ccc;padding-bottom:4px;margin-bottom:5px}
+.ev.licence{background:#f2f7f1;border-color:#9cc0a3}
+.ev.licence .lic{display:inline-block;font-family:var(--mono);font-weight:700;border:2px solid #2c7650;color:#2c7650;border-radius:4px;padding:2px 7px;margin-bottom:5px}
+.ev.doc{background:#fffdf3;font-family:var(--mono);font-size:.78rem}
+.ev.receipt{background:#fff;font-family:var(--mono);font-size:.78rem;border-style:dashed}
+.ev.msg .bubble{background:#dff1e2;border-radius:12px 12px 12px 2px;padding:6px 9px;display:inline-block}
+.verdicts{padding:14px}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vbtn{background:var(--parchment);border:1px solid #a88c54;border-radius:9px;padding:10px 8px;font-weight:700;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 3px 0 #8f7445;line-height:1.15}
+.vbtn small{font-weight:400;font-size:.74rem;color:var(--ink-soft);font-family:var(--mono)}
+.vbtn:hover:not([disabled]){background:#fff7dd}
+.vbtn[disabled]{opacity:.55;cursor:default}
+.vbtn.picked{outline:3px solid var(--ink)}
+.vbtn.correct{background:#dcefe2;border-color:var(--good)}
+.ruling{margin-top:12px;padding:12px;border-radius:8px;background:rgba(255,255,255,.55);border:1px solid var(--rule)}
+.ruling .verdict{font-family:var(--serif);font-size:1.25rem}
+.ruling .verdict.ok{color:var(--good)} .ruling .verdict.no{color:var(--bad)}
+#gavel{transform-box:fill-box;transform-origin:85% 85%}
+#gavel.strike{animation:strike .55s cubic-bezier(.5,0,.4,1)}
+@keyframes strike{0%{transform:rotate(0)}35%{transform:rotate(-38deg)}60%{transform:rotate(8deg)}75%{transform:rotate(-4deg)}100%{transform:rotate(0)}}
+.juror{transform-box:fill-box;transform-origin:50% 100%}
+.jury-yes .juror{animation:nod .6s ease 2}
+.jury-no .juror{animation:shake .5s ease 2}
+@keyframes nod{50%{transform:translateY(3px)}}
+@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.bubble-svg{opacity:0;transition:opacity .3s}
+.bubble-svg.show{opacity:1}
+
+/* Mode 4: Lightning */
+.m4{max-width:760px;margin:0 auto}
+.lcard{padding:22px 22px 18px;text-align:center;position:relative;min-height:200px;display:flex;flex-direction:column;justify-content:center}
+.lcard .stmt{font-family:var(--serif);font-size:clamp(1.25rem,3vw,1.7rem);line-height:1.2;margin:8px 0 6px}
+.timer{height:10px;border-radius:5px;background:rgba(0,0,0,.35);overflow:hidden;margin:10px 0}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,#d9534f,var(--brass-hi));width:100%}
+.lbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.lbtn{border-radius:12px;padding:14px 10px;font-size:1.1rem;font-weight:700;min-height:72px;border:2px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.lbtn small{font-family:var(--mono);font-weight:400;font-size:.75rem}
+.lbtn.yes{background:#dcefe2;border-color:var(--good);color:#164a2c}
+.lbtn.no{background:#f8dfdb;border-color:var(--bad);color:#6d1a14}
+.lbtn[disabled]{opacity:.55;cursor:default}
+.lfb{min-height:52px;margin-top:10px;font-size:.98rem;color:var(--parchment);text-align:center}
+.lfb b.ok{color:#8fe0ae} .lfb b.no{color:#ffab9e}
+.flash-ok{animation:flashok .5s} .flash-no{animation:flashno .5s}
+@keyframes flashok{30%{box-shadow:0 0 0 6px var(--good),0 10px 26px rgba(0,0,0,.45)}}
+@keyframes flashno{30%{box-shadow:0 0 0 6px var(--bad),0 10px 26px rgba(0,0,0,.45)}}
+.review{margin-top:14px;padding:14px}
+.review li{margin:6px 0;font-size:.9rem}
+
+/* Results */
+.results{max-width:760px;margin:0 auto;padding:22px;text-align:center}
+.results .big{font-family:var(--serif);font-size:3rem;line-height:1;margin:6px 0}
+.results .stars svg{width:42px;height:42px}
+.results .row{justify-content:center;margin-top:14px}
+
+/* Learned */
+.learned{padding:18px}
+.learned .bars{display:grid;gap:8px;margin:8px 0 14px}
+.barrow{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;font-size:.9rem}
+.barrow .track{height:18px;background:rgba(0,0,0,.08);border-radius:4px;overflow:hidden;border:1px solid var(--rule)}
+.barrow .fill{height:100%;background:linear-gradient(90deg,var(--brass-lo),var(--brass));}
+.ipt td:first-child{font-weight:700;white-space:nowrap}
+.ipt .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.cards3 > div{background:rgba(255,255,255,.5);border:1px solid var(--rule);border-radius:8px;padding:10px;font-size:.9rem}
+.cards3 h4{margin:0 0 4px;font-family:var(--serif);font-weight:400;font-size:1.1rem}
+.cc{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cc span{font-family:var(--mono);font-size:.8rem;border:2px solid var(--ink);border-radius:4px;padding:1px 6px}
+
+footer{text-align:center;font-family:var(--mono);font-size:.8rem;color:#e7d3b0;border-top:1px solid var(--brass-lo);padding-top:8px}
+
+/* Responsive */
+@media (max-width:960px){
+  .modes{grid-template-columns:repeat(2,1fr)}
+  .m1{grid-template-columns:120px 1fr;grid-template-areas:"who card" "stamps stamps" "fb fb"}
+  .stamps{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:720px){
+  .hero{grid-template-columns:1fr}
+  .hero .scene-mini{min-height:0}
+  .court{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr}
+  .cards3,.cmpgrid{grid-template-columns:1fr}
+  .venn{grid-template-columns:1fr;min-height:0}
+  .venn-bg{display:none}
+  .zone{min-height:90px;border:2px solid rgba(236,209,138,.55);background:rgba(0,0,0,.18);margin-bottom:8px}
+  .barrow{grid-template-columns:110px 1fr 70px}
+}
+@media (max-width:520px){
+  .modes{grid-template-columns:1fr}
+  .mode{min-height:0}
+  .m1{grid-template-columns:1fr;grid-template-areas:"who" "card" "stamps" "fb"}
+  .presenter{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;text-align:left;padding:6px 10px}
+  .presenter svg{max-height:110px}
+  .stamps{grid-template-columns:1fr 1fr}
+  .stampbtn{min-height:78px;flex-direction:row;justify-content:flex-start;padding:8px 10px}
+  .stampbtn .face{width:38px;height:38px;font-size:1.05rem;flex:none}
+  .stampbtn .lbl{text-align:left}
+  .stampbtn .key{display:none}
+  .pad{padding:26px 12px 14px 46px}
+  .pad .icon{width:62px;height:62px}
+  .stampmark{font-size:.85rem;padding:4px 8px;letter-spacing:.04em}
+  .stamprow{justify-content:center}
+  .brand svg{width:40px;height:40px}
+  .tbtn .txt{display:none}
+  .vgrid{grid-template-columns:1fr 1fr}
+  .vbtn .k,.lbtn small{display:none}
+  .lbtns{grid-template-columns:1fr 1fr}
+  .results .big{font-size:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="#4a1d10" stroke="#c9a24a" stroke-width="3"/>
+      <path d="M32 14v34M20 48h24M18 22h28" stroke="#ecd18a" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M18 22l-7 14h14zM46 22l-7 14h14z" fill="none" stroke="#ecd18a" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M11 36a7 4 0 0 0 14 0zM39 36a7 4 0 0 0 14 0z" fill="#c9a24a"/>
+      <circle cx="32" cy="13" r="3" fill="#ecd18a"/>
+    </svg>
+    <div>
+      <h1>IP Court: Protect the Idea</h1>
+      <span class="subtitle">Intellectual property and ethics · EDPM</span>
+    </div>
+  </div>
+  <nav class="tools" aria-label="Game controls">
+    <button class="tbtn" id="homeBtn" type="button" aria-label="Back to main menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></svg><span class="txt">Menu</span></button>
+    <button class="tbtn" id="learnBtn" type="button" aria-label="What you learned summary">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10h3v10zm6 0V4h3v16zm6 0v-7h3v7z" fill="currentColor"/></svg><span class="txt">What you learned</span></button>
+    <button class="tbtn" id="muteBtn" type="button" aria-pressed="false" aria-label="Mute sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true" id="muteIcon"></svg><span class="txt" id="muteTxt">Sound on</span></button>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="sr" aria-live="polite" id="live"></div>
+
+  <!-- MENU -->
+  <section class="screen" id="menu" aria-labelledby="menuTitle">
+    <div class="hero">
+      <div class="intro parch brassframe">
+        <div class="kicker">Court is now in session</div>
+        <h2 id="menuTitle" tabindex="-1">All rise for the creations of the mind</h2>
+        <p><b>Intellectual property</b> refers to the creations of the mind — such as inventions, literary and artistic works, designs and symbols, and names and images — along with the legal protections given to the people who create them.</p>
+        <p>Stamp the right protection, build comparison charts, rule on real-looking case files and make quick ethical calls. Earn up to three stars in each chamber.</p>
+      </div>
+      <div class="scene-mini brassframe" id="miniScene" aria-hidden="true"></div>
+    </div>
+    <div class="modes" id="modeCards"></div>
+    <div class="learned-link"><button class="btn" type="button" id="learnBtn2">Open the “What you learned” chart</button></div>
+  </section>
+
+  <!-- MODE 1 -->
+  <section class="screen" id="m1" hidden aria-labelledby="m1Title">
+    <h2 id="m1Title" tabindex="-1" class="sr">Which protection?</h2>
+    <div class="hud"><span>Which protection? · Case <b id="m1n">1</b> of <b id="m1t">14</b></span><span class="progress" aria-hidden="true"><i id="m1bar"></i></span><span>Score <b id="m1s">0</b></span></div>
+    <div class="m1">
+      <div class="presenter" id="m1who"></div>
+      <div class="pad" id="m1card" aria-live="polite"></div>
+      <div class="stampcol">
+        <p class="panel-title">Choose a stamp</p>
+        <div class="stamps" id="m1stamps" role="group" aria-label="Intellectual property stamps"></div>
+      </div>
+      <div class="feedback parch" id="m1fb" hidden></div>
+    </div>
+  </section>
+
+  <!-- MODE 2 -->
+  <section class="screen" id="m2" hidden aria-labelledby="m2Title">
+    <div class="m2head">
+      <div><div class="kicker" style="color:#e7d3b0">Compare &amp; Contrast · Round <span id="m2r">1</span> of 2</div><h2 id="m2Title" tabindex="-1">Copyright vs Patent</h2>
+      <p>Drag each statement into the chart — or select it, then select a zone. Select a placed statement to move it again.</p></div>
+      <div class="row"><button class="btn ghost" style="color:var(--parchment);border-color:var(--brass-lo)" type="button" id="m2reset">Reset</button><button class="btn" type="button" id="m2check" disabled>Check my chart</button></div>
+    </div>
+    <div class="tray parch" id="m2tray" aria-label="Statements to sort"></div>
+    <div id="m2board"></div>
+    <div id="m2result"></div>
+  </section>
+
+  <!-- MODE 3 -->
+  <section class="screen" id="m3" hidden aria-labelledby="m3Title">
+    <h2 id="m3Title" tabindex="-1" class="sr">IP Court</h2>
+    <div class="hud"><span>IP Court · Case <b id="m3n">1</b> of <b id="m3t">6</b></span><span class="progress" aria-hidden="true"><i id="m3bar"></i></span><span>Score <b id="m3s">0</b></span></div>
+    <div class="scene" id="courtScene" aria-hidden="true"></div>
+    <div class="court">
+      <article class="casefile parch" id="m3case"></article>
+      <div class="verdicts parch">
+        <p class="kicker" style="margin:0 0 6px">Your ruling, Your Honour</p>
+        <div class="vgrid" id="m3btns" role="group" aria-label="Verdict options"></div>
+        <div id="m3ruling" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 4 -->
+  <section class="screen" id="m4" hidden aria-labelledby="m4Title">
+    <div class="m4">
+      <h2 id="m4Title" tabindex="-1" class="sr">Ethics lightning round</h2>
+      <div class="hud"><span>Ethics lightning round · <b id="m4n">1</b> / <b>15</b></span><span>Streak <b id="m4k">0</b></span><span>Score <b id="m4s">0</b></span></div>
+      <div class="lcard parch brassframe" id="m4card">
+        <div class="kicker">Acceptable or not acceptable?</div>
+        <div class="stmt" id="m4stmt"></div>
+        <div class="timer" aria-hidden="true"><i id="m4timer"></i></div>
+        <div class="lbtns">
+          <button class="lbtn yes" type="button" id="m4yes">Acceptable<small>key A or ←</small></button>
+          <button class="lbtn no" type="button" id="m4no">Not acceptable<small>key N or →</small></button>
+        </div>
+      </div>
+      <div class="lfb" id="m4fb" aria-live="polite"></div>
+      <div class="row" style="justify-content:center"><label style="color:#e7d3b0;font-size:.85rem;display:flex;gap:6px;align-items:center"><input type="checkbox" id="m4relax"> Relaxed mode (no timer, I press Next)</label></div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen" id="results" hidden aria-labelledby="resTitle">
+    <div class="results parch brassframe" id="resBox"></div>
+  </section>
+
+  <!-- LEARNED -->
+  <section class="screen" id="learned" hidden aria-labelledby="learnTitle">
+    <div class="learned parch brassframe" id="learnBox"></div>
+  </section>
+</main>
+
+<footer>Kester Small</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const live=t=>{const l=$('#live');l.textContent='';setTimeout(()=>{l.textContent=t;},30);};
+
+/* ---------- Storage ---------- */
+const KEY='ipcourt.v1';
+let store={best:{},muted:false};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object')store=Object.assign(store,s);}catch(e){}
+if(!store.best||typeof store.best!=='object'||Array.isArray(store.best))store.best={};
+Object.keys(store.best).forEach(k=>{const b=store.best[k];if(!b||typeof b!=='object'||!isFinite(b.score)||!isFinite(b.max))delete store.best[k];});
+store.muted=!!store.muted;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+/* saved progress (GameSave): best scores, stars and sound (ipcourt.v1), the relaxed-timer choice (ipcourt.relax) and the chamber in
+   progress (ipcourt.round: the cases drawn, the case reached and the score, or the statements placed) survive a reload. The timed
+   lightning round restarts. Start over clears them. */
+let RUN=null,RESUME=null;
+if(window.GameSave){GameSave.register([KEY,'ipcourt.relax','ipcourt.round']);GameSave.persist({key:'ipcourt.round',get:()=>RUN,set:v=>{RESUME=v;},welcome:false});}
+function keepRun(r){RUN=r;if(window.GameSave)GameSave.save();}
+const okInt=(v,lo,hi)=>Number.isInteger(v)&&v>=lo&&v<=hi;
+const okIx=(a,len,n)=>Array.isArray(a)&&a.length===n&&a.every((k,j)=>okInt(k,0,len-1)&&a.indexOf(k)===j);
+
+/* ---------- Audio ---------- */
+let actx=null;
+function ac(){if(store.muted)return null;try{if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}if(actx.state==='suspended')actx.resume();return actx;}catch(e){return null;}}
+function tone(f,d,type,v,delay,f2){const c=ac();if(!c)return;const t=c.currentTime+(delay||0);const o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v||.2,t+.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.05);}
+function noise(d,v,fc,delay){const c=ac();if(!c)return;const t=c.currentTime+(delay||0);const n=Math.floor(c.sampleRate*d);const b=c.createBuffer(1,n,c.sampleRate);const ch=b.getChannelData(0);for(let i=0;i<n;i++)ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);const s=c.createBufferSource();s.buffer=b;const fl=c.createBiquadFilter();fl.type='lowpass';fl.frequency.value=fc||1200;const g=c.createGain();g.gain.value=v||.5;s.connect(fl).connect(g).connect(c.destination);s.start(t);}
+const sfx={
+  gavel(){noise(.12,.9,900);tone(150,.18,'sine',.5,0,55);noise(.1,.6,900,.22);tone(150,.16,'sine',.4,.22,55);},
+  stamp(){noise(.09,.7,600);tone(110,.12,'triangle',.35,0,60);},
+  good(){tone(660,.14,'sine',.18);tone(880,.22,'sine',.18,.1);},
+  bad(){tone(196,.28,'sawtooth',.09,0,150);},
+  tick(){tone(1200,.03,'square',.03);},
+  click(){tone(520,.05,'triangle',.08);},
+  fanfare(){[523,659,784,1047].forEach((f,i)=>tone(f,.25,'triangle',.14,i*.12));}
+};
+function renderMute(){
+  const m=store.muted;$('#muteBtn').setAttribute('aria-pressed',String(m));$('#muteBtn').setAttribute('aria-label',m?'Unmute sound':'Mute sound');
+  $('#muteTxt').textContent=m?'Sound off':'Sound on';
+  $('#muteIcon').innerHTML=m?'<path d="M4 9h4l5-4v14l-5-4H4zM16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="currentColor"/>':'<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8a5 5 0 0 1 0 8M18.5 5.5a8.5 8.5 0 0 1 0 13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>';
+}
+$('#muteBtn').addEventListener('click',()=>{store.muted=!store.muted;save();renderMute();if(!store.muted)sfx.click();});
+renderMute();
+
+/* ---------- Characters ---------- */
+const SK=['#3b2219','#55331f','#734429','#93603b','#b07a52','#cf9e74','#e6c19b'];
+function person(o){
+  const s=o.skin, hc=o.hair||'#1b120c', j=o.suit||'#23324f', sh=o.shirt||'#f3f0e8', tr=o.trousers||j;
+  const dk=o.dark||'rgba(0,0,0,.25)';
+  let back='',front='',body='';
+  // back hair
+  if(o.style==='afro')back=`<circle cx="50" cy="26" r="21" fill="${hc}"/>`;
+  if(o.style==='locs')back=`<path d="M34 24 Q33 60 30 84 L38 84 L40 44 L60 44 L62 84 L70 84 Q67 60 66 24 Z" fill="${hc}"/><path d="M33 40v40M37 42v42M63 42v42M67 40v40" stroke="rgba(255,255,255,.12)" stroke-width="1.2"/>`;
+  if(o.style==='long')back=`<path d="M34 26 Q31 58 33 76 L67 76 Q69 58 66 26 Z" fill="${hc}"/>`;
+  if(o.style==='bun')back=`<circle cx="50" cy="10" r="7.5" fill="${hc}"/>`;
+  // legs & shoes
+  if(o.skirt){
+    body+=`<rect x="39" y="196" width="7" height="70" rx="3" fill="${s}"/><rect x="54" y="196" width="7" height="70" rx="3" fill="${s}"/>`;
+    body+=`<path d="M32 146 L68 146 L72 204 L28 204 Z" fill="${tr}"/>`;
+    body+=`<path d="M36 266 h12 l2 6 h-16 z M52 266 h12 l2 6 h-16 z" fill="#1a1110"/>`;
+  }else{
+    body+=`<path d="M33 146 L67 146 L66 266 L52.5 266 L50 172 L47.5 266 L34 266 Z" fill="${tr}"/><path d="M50 172 L50 260" stroke="${dk}" stroke-width="1"/>`;
+    body+=`<path d="M32 266 h16 q2 0 2 3 v3 h-20 q-2 0 -1 -3 z M52 266 h16 q3 0 3 3 v3 h-21 v-3 q0-3 2-3 z" fill="#1a1110"/>`;
+  }
+  if(o.robe){
+    body+=`<path d="M22 64 Q26 55 40 53 L60 53 Q74 55 78 64 L84 236 L16 236 Z" fill="${j}"/><path d="M50 60 L50 236" stroke="rgba(255,255,255,.08)" stroke-width="2"/>`;
+    body+=`<path d="M22 64 Q12 70 12 100 L10 168 L26 168 L30 100 Z M78 64 Q88 70 88 100 L90 168 L74 168 L70 100 Z" fill="${j}"/>`;
+    body+=`<circle cx="18" cy="172" r="5.5" fill="${s}"/><circle cx="82" cy="172" r="5.5" fill="${s}"/>`;
+    body+=`<path d="M41 52 L50 58 L59 52 L56 74 L50 70 L44 74 Z" fill="#fff" stroke="#ddd" stroke-width=".6"/><path d="M46 60h8M46 65h8" stroke="#ccc" stroke-width=".8"/>`;
+  }else{
+    // torso jacket
+    body+=`<rect x="44" y="44" width="12" height="13" fill="${s}"/>`;
+    body+=`<path d="M24 64 Q26 55 39 53 L61 53 Q74 55 76 64 L71 150 L29 150 Z" fill="${j}"/>`;
+    body+=`<path d="M41 53 L50 82 L59 53 Z" fill="${sh}"/>`;
+    if(o.tie)body+=`<path d="M48.5 56 L51.5 56 L53 78 L50 84 L47 78 Z" fill="${o.tie}"/>`;
+    body+=`<path d="M39 53 L47 86 L44 64 Z M61 53 L53 86 L56 64 Z" fill="rgba(0,0,0,.18)"/>`;
+    body+=`<circle cx="50" cy="104" r="1.6" fill="rgba(0,0,0,.35)"/><circle cx="50" cy="118" r="1.6" fill="rgba(0,0,0,.35)"/>`;
+    // arms
+    const pose=o.pose||'down';
+    body+=`<path d="M26 62 Q17 66 17 92 L19 150 L28 150 L31 94 Z" fill="${j}"/><circle cx="23.5" cy="155" r="5.4" fill="${s}"/>`;
+    if(pose==='point'){
+      body+=`<path d="M74 62 Q83 64 86 76 L98 104 L91 109 L77 86 Z" fill="${j}"/><circle cx="96" cy="108" r="5" fill="${s}"/>`;
+    }else if(pose==='hold'){
+      body+=`<path d="M74 62 Q83 66 83 92 L80 118 L64 116 L70 96 Z" fill="${j}"/><rect x="52" y="96" width="22" height="28" rx="2" fill="${o.prop||'#f5ecd6'}" stroke="#b99c63"/><circle cx="66" cy="118" r="5" fill="${s}"/>`;
+    }else{
+      body+=`<path d="M74 62 Q83 66 83 92 L81 150 L72 150 L69 94 Z" fill="${j}"/><circle cx="76.5" cy="155" r="5.4" fill="${s}"/>`;
+    }
+  }
+  // front hair
+  if(o.style==='crop')front=`<path d="M35.5 30 Q34 12 50 11.5 Q66 12 64.5 30 Q63 21 56 19 Q50 22 42 19 Q37 22 35.5 30 Z" fill="${hc}"/>`;
+  else if(o.style==='fade')front=`<path d="M36 26 Q37 13 50 13 Q63 13 64 26 Q60 18 50 18 Q40 18 36 26 Z" fill="${hc}"/>`;
+  else if(o.style==='bun')front=`<path d="M35.5 32 Q34 13 50 13 Q66 13 64.5 32 Q62 20 50 19 Q38 20 35.5 32 Z" fill="${hc}"/>`;
+  else if(o.style==='afro')front=`<path d="M34 30 Q32 10 50 9 Q68 10 66 30 Q60 18 50 19 Q40 18 34 30Z" fill="${hc}"/>`;
+  else if(o.style==='locs')front=`<path d="M35 32 Q34 12 50 12 Q66 12 65 32 Q62 18 54 18 L50 24 L46 18 Q38 18 35 32Z" fill="${hc}"/>`;
+  else if(o.style==='long')front=`<path d="M35 34 Q33 12 50 12 Q67 12 65 34 Q63 20 52 18 Q44 26 35 34Z" fill="${hc}"/>`;
+  const mouth=o.mouth==='smile'?'M44.5 43.5 Q50 48 55.5 43.5':'M45.5 44.5 Q50 46 54.5 44.5';
+  let face;
+  face=`<ellipse cx="35.5" cy="33" rx="2.6" ry="4" fill="${s}"/><ellipse cx="64.5" cy="33" rx="2.6" ry="4" fill="${s}"/><ellipse cx="50" cy="31" rx="14.5" ry="18" fill="${s}"/>`;
+  let feat=`<path d="M41 26.5 Q44 25 47 26.5 M53 26.5 Q56 25 59 26.5" stroke="${hc==='#d9d6cf'?'#8a857c':'#1b120c'}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`+
+   `<ellipse cx="44" cy="30.5" rx="1.9" ry="1.3" fill="#1a0f0a"/><ellipse cx="56" cy="30.5" rx="1.9" ry="1.3" fill="#1a0f0a"/><circle cx="44.6" cy="30" r=".45" fill="#fff"/><circle cx="56.6" cy="30" r=".45" fill="#fff"/>`+
+   `<path d="M50 31 Q48.3 37 48 38.2 Q50 39.6 52 38.2" fill="none" stroke="${dk}" stroke-width="1" stroke-linecap="round"/>`+
+   `<path class="mouth" d="${mouth}" fill="none" stroke="#5a2a22" stroke-width="1.4" stroke-linecap="round"/>`;
+  if(o.beard)feat+=`<path d="M37 36 Q38 50 50 51 Q62 50 63 36 Q61 46 55 46 Q50 44 45 46 Q39 46 37 36Z" fill="${hc}" opacity=".9"/><path class="mouth" d="${mouth}" fill="none" stroke="#5a2a22" stroke-width="1.4" stroke-linecap="round"/>`;
+  if(o.glasses)feat+=`<circle cx="44" cy="30.5" r="4.2" fill="none" stroke="#7a5a1a" stroke-width="1"/><circle cx="56" cy="30.5" r="4.2" fill="none" stroke="#7a5a1a" stroke-width="1"/><path d="M48.2 30.5h3.6" stroke="#7a5a1a" stroke-width="1"/>`;
+  if(o.earrings)feat+=`<circle cx="35.5" cy="38" r="1.3" fill="#ecd18a"/><circle cx="64.5" cy="38" r="1.3" fill="#ecd18a"/>`;
+  return back+body+face+front+feat;
+}
+const CAST={
+  judge:{skin:SK[1],hair:'#d9d6cf',style:'bun',suit:'#151214',robe:true,glasses:true,earrings:true},
+  lawA:{skin:SK[3],hair:'#22150e',style:'locs',suit:'#1f3557',shirt:'#f6efe0',skirt:true,trousers:'#1f3557',pose:'point',earrings:true},
+  lawB:{skin:SK[5],hair:'#2a1b12',style:'crop',suit:'#4a4d55',shirt:'#eef1f6',tie:'#7a2a24',beard:true,pose:'hold'},
+};
+const PRESENTERS=[
+  {skin:SK[2],hair:'#1b120c',style:'fade',suit:'#2c5d63',shirt:'#f3f0e8',pose:'hold',prop:'#cfe3ea',beard:true},
+  {skin:SK[4],hair:'#2a1b12',style:'afro',suit:'#8a3b2c',shirt:'#f6efe0',skirt:true,pose:'hold'},
+  {skin:SK[6],hair:'#4a2e1a',style:'long',suit:'#3d5a2e',shirt:'#f4f1e6',pose:'hold'},
+  {skin:SK[0],hair:'#111',style:'crop',suit:'#29304a',shirt:'#e9eef6',tie:'#c9a24a',pose:'hold'},
+  {skin:SK[3],hair:'#1b120c',style:'bun',suit:'#5b3a6e',shirt:'#f6efe0',skirt:true,pose:'hold',earrings:true},
+  {skin:SK[5],hair:'#3a2615',style:'fade',suit:'#6b5a3a',shirt:'#f3f0e8',pose:'hold',glasses:true},
+  {skin:SK[1],hair:'#1b120c',style:'locs',suit:'#2c7650',shirt:'#f3f0e8',pose:'hold'},
+];
+const JURY=[
+  {skin:SK[0],hair:'#111',style:'fade',suit:'#3d4a6b'},{skin:SK[5],hair:'#5a3a1e',style:'long',suit:'#7a3b4a'},
+  {skin:SK[2],hair:'#1b120c',style:'afro',suit:'#2c6a5a'},{skin:SK[4],hair:'#bdb7ae',style:'crop',suit:'#5a4a30',glasses:true},
+  {skin:SK[6],hair:'#2a1b12',style:'bun',suit:'#4a3a6e'},{skin:SK[3],hair:'#1b120c',style:'locs',suit:'#6b2f1b',beard:true},
+];
+
+function courtSVG(mini){
+  const P=mini?'n':'c';
+  const panels=[...Array(10)].map((_,i)=>`<rect x="${i*100+8}" y="12" width="84" height="170" rx="4" fill="url(#${P}pnl)" stroke="#2a0f08" stroke-width="2"/>`).join('');
+  const jurors=JURY.map((p,i)=>{const col=i%3,row=Math.floor(i/3);const x=752+col*76+(row?38:0)-(row?20:0),y=118+row*46;
+    return `<g transform="translate(${x},${y}) scale(.62)"><g class="juror">${person(p)}</g></g>`;}).join('');
+  return `<svg viewBox="${mini?'40 40 700 270':'0 30 1000 270'}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Courtroom">
+  <defs>
+    <linearGradient id="${P}pnl" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6b2d1c"/><stop offset="1" stop-color="#4a1d10"/></linearGradient>
+    <linearGradient id="${P}bench" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7a3520"/><stop offset="1" stop-color="#3a160d"/></linearGradient>
+    <linearGradient id="${P}brass" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ecd18a"/><stop offset="1" stop-color="#8f6d26"/></linearGradient>
+    <clipPath id="${P}juryclip"><rect x="730" y="80" width="270" height="150"/></clipPath>
+  </defs>
+  <rect width="1000" height="320" fill="#3a160d"/>
+  ${panels}
+  <rect x="0" y="190" width="1000" height="6" fill="url(#${P}brass)"/>
+  <g transform="translate(395,62)">
+    <circle r="26" fill="#4a1d10" stroke="url(#${P}brass)" stroke-width="5"/>
+    <path d="M0 -22v40M-14 18h28M-22 -12h44" stroke="#ecd18a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-22 -12l-8 16h16zM22 -12l-8 16h16z" fill="none" stroke="#ecd18a" stroke-width="2"/>
+  </g>
+  <!-- judge -->
+  <g transform="translate(350,72) scale(.95)">${person(CAST.judge)}</g>
+  <rect x="262" y="160" width="266" height="170" fill="url(#${P}bench)" stroke="#2a0f08" stroke-width="2"/>
+  <rect x="254" y="152" width="282" height="12" rx="3" fill="url(#${P}brass)"/>
+  <rect x="300" y="190" width="190" height="90" rx="4" fill="none" stroke="#2a0f08" stroke-width="2" opacity=".6"/>
+  <rect x="335" y="172" width="120" height="18" rx="2" fill="url(#${P}brass)"/><text x="395" y="185" text-anchor="middle" font-family="Courier Prime,monospace" font-size="11" font-weight="700" fill="#2a1a06">JUDGE · YOU</text>
+  <g id="${mini?'gavelMini':'gavel'}">
+    <rect x="474" y="137" width="40" height="5" rx="2" fill="#6b2f1b" transform="rotate(-25 474 140)"/>
+    <rect x="455" y="128" width="22" height="13" rx="3" fill="#4a1d10" stroke="#c9a24a" stroke-width="1.5" transform="rotate(-25 466 134)"/>
+  </g>
+  <ellipse cx="462" cy="151" rx="13" ry="3" fill="#2a1a06" opacity=".6"/>
+  <!-- lawyers -->
+  <g transform="translate(110,64) scale(.86)">${person(CAST.lawA)}</g>
+  <g transform="translate(590,64) scale(.86)">${person(CAST.lawB)}</g>
+  <rect x="40" y="236" width="220" height="90" fill="url(#${P}bench)" stroke="#2a0f08" stroke-width="2"/><rect x="34" y="230" width="232" height="9" rx="3" fill="url(#${P}brass)"/>
+  <rect x="540" y="236" width="190" height="90" fill="url(#${P}bench)" stroke="#2a0f08" stroke-width="2"/><rect x="534" y="230" width="202" height="9" rx="3" fill="url(#${P}brass)"/>
+  <text x="150" y="268" text-anchor="middle" font-family="Courier Prime,monospace" font-size="13" fill="#ecd18a">CLAIMANT</text>
+  <text x="635" y="268" text-anchor="middle" font-family="Courier Prime,monospace" font-size="13" fill="#ecd18a">DEFENDANT</text>
+  <!-- jury -->
+  <g clip-path="url(#${P}juryclip)" id="${mini?'juryMini':'jury'}">${jurors}</g>
+  <rect x="740" y="214" width="260" height="110" fill="url(#${P}bench)" stroke="#2a0f08" stroke-width="2"/><rect x="734" y="208" width="270" height="9" rx="3" fill="url(#${P}brass)"/>
+  <text x="870" y="250" text-anchor="middle" font-family="Courier Prime,monospace" font-size="13" fill="#ecd18a">JURY</text>
+  <g class="bubble-svg" id="${mini?'bubbleMini':'bubble'}"><rect x="772" y="56" width="196" height="44" rx="12" fill="#f5ecd6" stroke="#c9a24a" stroke-width="2"/><path d="M850 100 l10 14 l6 -14z" fill="#f5ecd6" stroke="#c9a24a" stroke-width="2"/><rect x="851" y="96" width="16" height="6" fill="#f5ecd6"/>
+    <text id="${mini?'bubbleTxtMini':'bubbleTxt'}" x="870" y="85" text-anchor="middle" font-family="DM Serif Display,serif" font-size="22" fill="#2b1d14">Agreed!</text></g>
+  </svg>`;
+}
+
+/* ---------- Icons ---------- */
+const ICONS={
+  cooler:'<rect x="10" y="30" width="60" height="38" rx="5" fill="#2c7fb8"/><rect x="10" y="24" width="60" height="10" rx="3" fill="#1f5f8c"/><rect x="18" y="8" width="44" height="14" fill="#1a2a3a" stroke="#c9a24a"/><path d="M22 10v10M30 10v10M38 10v10M46 10v10M54 10v10" stroke="#7fb3d9"/><circle cx="64" cy="10" r="5" fill="#f2c230"/><path d="M28 48c6-6 14-6 20 0-6 6-14 6-20 0z" fill="#fff"/>',
+  music:'<path d="M28 58V18l32-8v40" stroke="#2b1d14" stroke-width="4" fill="none"/><ellipse cx="22" cy="58" rx="8" ry="6" fill="#2b1d14"/><ellipse cx="54" cy="50" rx="8" ry="6" fill="#2b1d14"/><path d="M28 26l32-8" stroke="#a8322b" stroke-width="4"/>',
+  logo:'<circle cx="40" cy="40" r="30" fill="#2c7650"/><path d="M24 46c6-14 18-20 30-14l6-4-2 8c-4 10-18 16-34 10z" fill="#f5ecd6"/><circle cx="49" cy="34" r="1.8" fill="#2b1d14"/><path d="M56 46v14M53 46v6M59 46v6" stroke="#ecd18a" stroke-width="2"/>',
+  sauce:'<rect x="30" y="8" width="20" height="10" rx="2" fill="#2b1d14"/><path d="M28 18h24l4 14v34a4 4 0 0 1-4 4H28a4 4 0 0 1-4-4V32z" fill="#c0392b"/><rect x="26" y="38" width="28" height="18" fill="#f5ecd6"/><path d="M34 47c4-6 8-6 12 0" stroke="#c0392b" stroke-width="3" fill="none"/><rect x="56" y="50" width="16" height="14" rx="2" fill="#555"/><path d="M60 50v-4a4 4 0 0 1 8 0v4" stroke="#555" stroke-width="2" fill="none"/>',
+  book:'<path d="M14 16h24a6 6 0 0 1 6 6v44a5 5 0 0 0-5-5H14z" fill="#74399a"/><path d="M66 16H48a6 6 0 0 0-6 6v44a5 5 0 0 1 5-5h19z" fill="#9b59b6"/><path d="M50 28h10M50 34h10M50 40h8" stroke="#f5ecd6" stroke-width="2"/>',
+  code:'<rect x="20" y="6" width="40" height="68" rx="6" fill="#29304a"/><rect x="24" y="14" width="32" height="50" fill="#0f1a2a"/><path d="M33 32l-6 6 6 6M47 32l6 6-6 6M42 28l-4 20" stroke="#7fd99a" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+  bottle:'<path d="M34 6h12v12c0 4 8 6 8 14 0 6-6 8-6 14s8 8 8 16v8a4 4 0 0 1-4 4H28a4 4 0 0 1-4-4v-8c0-8 8-10 8-16s-6-8-6-14c0-8 8-10 8-14z" fill="#f2a33a" stroke="#a65c0c" stroke-width="2"/><rect x="33" y="2" width="14" height="6" rx="2" fill="#2c7650"/>',
+  slogan:'<path d="M8 20h64v32H38l-12 12V52H8z" fill="#f5ecd6" stroke="#2c7650" stroke-width="3"/><path d="M18 32h44M18 42h30" stroke="#2c7650" stroke-width="3" stroke-linecap="round"/><text x="64" y="18" font-size="12" font-family="serif" fill="#2c7650">™</text>',
+  salt:'<path d="M6 58c10-6 20-6 34 0s24 6 34 0v16H6z" fill="#7fb3d9"/><path d="M18 52l10-18 10 18zM40 52l8-14 8 14z" fill="#fff" stroke="#bbb"/><circle cx="62" cy="16" r="8" fill="#f2c230"/>',
+  process:'<circle cx="40" cy="40" r="16" fill="none" stroke="#1f4e8c" stroke-width="8" stroke-dasharray="8 5"/><circle cx="40" cy="40" r="6" fill="#1f4e8c"/><path d="M6 66c8-10 16 4 24-4M50 66c8-10 16 4 24-4" stroke="#8a6a1a" stroke-width="4" fill="none"/>',
+  chair:'<path d="M24 8h32v32H24z" fill="#a65c0c"/><path d="M30 14c4 8 4 14 0 22M40 12v26M50 14c-4 8-4 14 0 22" stroke="#f2c230" stroke-width="3" fill="none"/><rect x="20" y="40" width="40" height="8" fill="#7a3e0c"/><path d="M24 48v24M56 48v24" stroke="#7a3e0c" stroke-width="5"/>',
+  list:'<rect x="14" y="6" width="44" height="64" rx="3" fill="#fff" stroke="#999"/><path d="M22 20h28M22 30h28M22 40h20M22 50h24" stroke="#888" stroke-width="2.5"/><rect x="44" y="44" width="26" height="26" rx="4" fill="#3b3b3b"/><path d="M50 52v-4a7 7 0 0 1 14 0v4" stroke="#3b3b3b" stroke-width="3" fill="none"/><circle cx="57" cy="58" r="3" fill="#ecd18a"/>',
+  camera:'<rect x="8" y="22" width="64" height="44" rx="6" fill="#3b3b3b"/><rect x="26" y="14" width="22" height="10" rx="2" fill="#3b3b3b"/><circle cx="40" cy="44" r="14" fill="#f2a33a" stroke="#ddd" stroke-width="3"/><path d="M28 48h24" stroke="#c0392b" stroke-width="3"/>',
+  cheese:'<path d="M8 52l48-30 16 10v26H8z" fill="#f2c230" stroke="#a65c0c" stroke-width="2"/><path d="M8 52h64" stroke="#a65c0c" stroke-width="2"/><circle cx="26" cy="60" r="3" fill="#d9a520"/><circle cx="50" cy="56" r="4" fill="#d9a520"/><path d="M6 20l12-12 12 12" fill="#2c7650"/>'
+};
+const icon=k=>`<svg viewBox="0 0 80 80" width="100%" height="100%" aria-hidden="true">${ICONS[k]||''}</svg>`;
+
+/* ---------- IP types ---------- */
+const IP={
+  copyright:{name:'Copyright',sym:'©',col:'var(--c-copyright)',protects:'Original creative works — writing, music, art, photographs, films and software code. It protects the expression of an idea, not the idea itself.',how:'Automatic: protection arises as soon as an original work is created and recorded in some form. No registration is needed in most countries.',dur:'Usually the creator’s life plus a number of years (often 50 to 70), depending on the country.',symbol:'©',ex:'A novel, a song, a photograph, an app’s source code'},
+  patent:{name:'Patent',sym:'P',col:'var(--c-patent)',protects:'Inventions — new products or processes and how they work. The invention must be new, inventive and useful in industry.',how:'Registration: the inventor must apply to a patent office and publicly explain how the invention works. It must be granted.',dur:'Typically 20 years from the filing date (fees are usually needed to keep it in force). Then it enters the public domain.',symbol:'“Patent” or “Patent pending” — no single symbol',ex:'A new solar-powered cooler mechanism'},
+  trademark:{name:'Trademark',sym:'™',col:'var(--c-trademark)',protects:'Signs that identify a business’s goods or services — names, logos, slogans and sometimes shapes, colours or sounds.',how:'Strongest when registered with a trademark office. Some countries give limited protection to marks that are used but not registered.',dur:'Often granted for 10 years at a time and renewable again and again, for as long as it is used and renewed.',symbol:'™ (claimed, not necessarily registered) · ® (registered)',ex:'A restaurant logo, a company slogan'},
+  design:{name:'Industrial design',sym:'D',col:'var(--c-design)',protects:'The appearance of a product — its shape, lines, pattern or decoration — not how it works.',how:'Usually registered with an intellectual property office.',dur:'A limited period that varies by country — often around 10 to 25 years in total, with renewals.',symbol:'No universal symbol',ex:'A distinctive bottle shape, a decorated chair'},
+  secret:{name:'Trade secret',sym:'TS',col:'var(--c-secret)',protects:'Confidential business information that is valuable because it is kept secret — recipes, formulas, methods, customer lists.',how:'No registration: it is protected by actually keeping it secret — limited access and confidentiality agreements.',dur:'As long as it stays secret. It does not stop someone who discovers the same thing fairly and independently.',symbol:'None',ex:'A secret hot-sauce recipe'},
+  gi:{name:'Geographical indication',sym:'GI',col:'var(--c-gi)',protects:'Names or signs used on products whose qualities or reputation come from a particular place.',how:'Usually registered or recognised under a special law, and shared by the producers of that place who follow the agreed rules.',dur:'Can last indefinitely, as long as the link to the place and the product standards are kept.',symbol:'Often an official GI label',ex:'Salt named after the island pond where it is harvested'},
+};
+const ART={copyright:'',patent:'a ',trademark:'a ',design:'an ',secret:'a ',gi:'a '};
+const IPKEYS=['copyright','patent','trademark','design','secret','gi'];
+
+/* ---------- Mode 1 data ---------- */
+const CASES1=[
+  {a:'patent',icon:'cooler',t:'The solar-powered fish cooler',who:'Dario Hodge',p:0,role:'Inventor, Couva',d:'Dario has built a cooler with a brand-new solar-powered cooling mechanism that keeps a fisherman’s catch cold for three days at sea. Nothing that works this way existed before.',why:'A new, inventive device that works in a new way is an invention, so it needs a patent. Dario must apply and have it granted — it is not automatic.'},
+  {a:'copyright',icon:'music',t:'The band’s new song',who:'Shanice Lake',p:1,role:'Singer, The Salt Pond Collective',d:'A Kingstown band wrote and recorded an original song about Carnival. They want to stop others copying the lyrics and the recording.',why:'Lyrics, music and sound recordings are creative works. Copyright protects them automatically once they are written down or recorded.'},
+  {a:'trademark',icon:'logo',t:'The restaurant logo',who:'Andre Richardson',p:3,role:'Owner, Pelican Plate',d:'A seafood restaurant uses a logo of a pelican holding a fork on its signs, menus and boxes so that customers recognise it instantly.',why:'A logo identifies a business — that is the job of a trademark. Once registered, the restaurant may use the ® symbol.'},
+  {a:'secret',icon:'sauce',t:'Grandma’s hot sauce',who:'Mavis Arrindell',p:4,role:'Hot-sauce maker',d:'Her scotch-bonnet sauce sells out every week. Only she and her son know the exact recipe, which is kept in a locked box.',why:'A valuable recipe that is kept confidential is a trade secret. There is no registration and no end date — but the protection is lost if the secret gets out.'},
+  {a:'copyright',icon:'book',t:'A debut novel',who:'Keisha Peters',p:2,role:'Author',d:'Keisha has just finished a mystery novel set during hurricane season in Bequia.',why:'Novels are literary works, protected by copyright automatically. Her words, characters and story are protected — but not the general idea of “a hurricane mystery”.'},
+  {a:'copyright',icon:'code',t:'The bus app’s code',who:'Jaden Gumbs',p:5,role:'Student developer',d:'Two students wrote the source code for a phone app that shows when the next bus will arrive.',why:'Software source code is treated like a literary work, so copyright protects the code automatically. (In some countries a truly new technical method might also be patentable — but the code itself is copyright.)'},
+  {a:'design',icon:'bottle',t:'The wave-shaped bottle',who:'Renée Brooks',p:1,role:'Designer, Island Squeeze juices',d:'The company’s new bottle has a curved, wave-like shape. It holds juice like any other bottle — it simply looks unique.',why:'Protecting the look of a product — its shape, lines or pattern — is an industrial design. It covers appearance, not how the product works.'},
+  {a:'trademark',icon:'slogan',t:'The catchy slogan',who:'Renée Brooks',p:1,role:'Designer, Island Squeeze juices',d:'The juice company wants to stop competitors using its slogan “Squeeze the Sunshine” on their own drinks.',why:'A slogan that identifies a company’s products can be a trademark. ™ can be used while it is claimed; ® only after it is registered.'},
+  {a:'gi',icon:'salt',t:'Salt from the old pond',who:'Calvin Hodge',p:6,role:'Salt harvester',d:'Salt gathered by traditional methods from a historic island salt pond is sold under the pond’s name. Only producers from that area who follow the agreed methods may use the name.',why:'A name that tells buyers a product comes from a specific place — with qualities linked to that place — is a geographical indication.'},
+  {a:'patent',icon:'process',t:'Seaweed into fertiliser',who:'Nadia Flanders',p:4,role:'Engineer',d:'Nadia invented a new process that turns sargassum seaweed washed up on beaches into garden fertiliser.',why:'Processes, not just objects, can be patented if they are new and inventive. A patent must be applied for and typically lasts about 20 years.'},
+  {a:'design',icon:'chair',t:'The Carnival-feather chair',who:'Winston Carty',p:3,role:'Furniture maker',d:'Winston created a chair with a striking new pattern of carved Carnival feathers on its back. It is just as comfortable as any chair; its look is what is new.',why:'The decorative pattern and shape are the product’s appearance, which is what industrial design protection covers.'},
+  {a:'secret',icon:'list',t:'The confidential client list',who:'Priya Bryson',p:2,role:'Manager, a tour company',d:'The company keeps a confidential list of its cruise-ship clients and the special prices it charges each one. Staff sign confidentiality agreements.',why:'Confidential business information that is valuable because it is secret is a trade secret. Confidentiality agreements help keep it protected.'},
+  {a:'copyright',icon:'camera',t:'The sunset photograph',who:'Marco Lake',p:5,role:'Photographer',d:'Marco took a stunning photo of the sunset over the Pitons and posted it online.',why:'Photographs are artistic works protected by copyright from the moment they are taken. Posting online does not make them free for anyone to use.'},
+  {a:'gi',icon:'cheese',t:'The village cheese',who:'Elena Rossi-Hodge',p:2,role:'Food importer',d:'A cheese is named after the mountain village abroad where it has been made for 200 years. Only cheese made there using the traditional method may carry the name.',why:'The name links the product’s qualities to its place of origin and is shared by local producers — a geographical indication.'},
+];
+
+/* ---------- Mode 2 data ---------- */
+const ROUNDS=[
+  {a:'Copyright',b:'Patent',ka:'A',kb:'B',items:[
+    ['Protects original creative works such as songs, books and photos','A','Creative works are copyright territory.'],
+    ['Protects new inventions and how they work','B','Inventions are protected by patents.'],
+    ['Arises automatically once the work is created','A','No application is needed for copyright in most countries.'],
+    ['Must be applied for and granted by an office','B','A patent is only obtained through registration.'],
+    ['Typically lasts about 20 years from filing','B','Patents are time-limited, typically 20 years.'],
+    ['Usually lasts the creator’s life plus a number of years','A','The exact number of years depends on the country.'],
+    ['Is a type of intellectual property','Both','Both protect creations of the mind.'],
+    ['Rights can be sold or licensed to others','Both','Economic rights in both can be transferred or licensed.'],
+    ['When it ends, the work or invention enters the public domain','Both','After protection expires, anyone may use it.'],
+    ['Protects a bare idea that has never been expressed or developed','Neither','Copyright protects expression; patents need a worked-out invention. A bare idea is not protected.'],
+    ['Protects a business’s name or logo','Neither','That is the job of a trademark.'],
+    ['Lasts forever once granted','Neither','Both are time-limited.'],
+  ]},
+  {a:'Trademark',b:'Copyright',ka:'A',kb:'B',items:[
+    ['Identifies whose goods or services you are buying','A','Trademarks distinguish one business from another.'],
+    ['Protects names, logos and slogans of a business','A','These are classic trademarks.'],
+    ['Can be renewed again and again for as long as it is used','A','Trademark registrations are renewable, often every 10 years.'],
+    ['Uses the ® symbol when registered and ™ when claimed','A','® should only be used for registered marks.'],
+    ['Uses the © symbol','B','© signals copyright, although protection exists even without it.'],
+    ['Protects novels, music and artwork','B','Creative works are covered by copyright.'],
+    ['Protection arises automatically when the work is created','B','Copyright needs no registration in most countries.'],
+    ['A drawn logo can be protected by it','Both','The artwork of a logo can attract copyright, and the logo as a brand sign is a trademark.'],
+    ['Using it without permission can lead to legal action','Both','Infringing either right can lead to court.'],
+    ['Protects how a new machine works','Neither','Technical function is protected by a patent.'],
+    ['Protects a secret recipe kept confidential','Neither','That is a trade secret.'],
+    ['Protects facts such as today’s date or a bus timetable’s times','Neither','Plain facts are not protected — though a creative arrangement of them might be.'],
+  ]},
+];
+
+/* ---------- Mode 3 data ---------- */
+const VERDICTS=[['inf','Infringement','rights were broken'],['fair','Fair use / fair dealing','limited, allowed use'],['not','Not infringement','no rights broken'],['plag','Plagiarism','no proper credit']];
+const CASES3=[
+  {id:'01',t:'Music in the advert',c:'The Salt Pond Collective (band)',d:'Seaside Grill Ltd',a:'inf',
+   s:'Seaside Grill used the band’s full recorded song as the soundtrack of a paid TV and social-media advert. The band says nobody ever asked them.',
+   ev:[{k:'email',from:'Band manager',to:'Seaside Grill',sub:'Our song in your advert',b:'We have no licence agreement with you and have received no payment. Please remove the advert.'},
+       {k:'shot',url:'social.example/seasidegrill',b:'“Fresh fish Fridays! Music: The Salt Pond Collective” — sponsored post'},
+       {k:'msg',b:'Grill owner: “I gave them credit in the caption. Isn’t that enough?”'}],
+   why:'Using a whole recording in an advert without permission infringes copyright. Credit does not replace permission or payment — the band’s economic rights (the right to be paid for use) were ignored.'},
+  {id:'02',t:'The book review',c:'Keisha Peters (author)',d:'Amara Brooks (student blogger)',a:'fair',
+   s:'Amara reviewed Keisha’s novel on her blog and criticised its ending. She quoted two short sentences from the book, in quotation marks, naming the title and author.',
+   ev:[{k:'shot',url:'amarareads.example/review',b:'“The detective ‘walked into the storm without looking back’ (Peters, 2026) — a weak ending.”'},
+       {k:'email',from:'Keisha Peters',to:'Amara Brooks',sub:'Your review',b:'I did not give you permission to quote my book, and I do not like what you wrote.'}],
+   why:'Quoting a short extract for criticism or review, with the source named, is the kind of limited use that fair use or fair dealing allows (the exact rules vary by country). Disliking a review does not make it infringement.'},
+  {id:'03',t:'Same idea, different book',c:'Jerome Hodge (novelist)',d:'Keisha Peters (author)',a:'not',
+   s:'Jerome says Keisha stole his idea for a mystery set during hurricane season. Experts compared the two books: different characters, plot, setting details and wording.',
+   ev:[{k:'doc',b:'COMPARISON REPORT\nShared sentences: 0\nShared characters: 0\nShared idea: “mystery in hurricane season”'},
+       {k:'email',from:'Jerome Hodge',to:'Court clerk',sub:'Stolen idea',b:'I told people about this idea first. It belongs to me!'}],
+   why:'Copyright protects the expression of an idea — the actual words, characters and story — not the bare idea itself. Two original books on the same theme do not infringe each other.'},
+  {id:'04',t:'The SBA research',c:'Bayview Secondary School',d:'Tyrese M. (student)',a:'plag',
+   s:'Tyrese’s EDPM SBA contains three paragraphs copied word for word from an online article — no quotation marks, no citation, no bibliography entry. The article is licensed CC BY.',
+   ev:[{k:'shot',url:'similarity-check.example',b:'Similarity report: 87% match with one online article. Citations found: 0'},
+       {k:'licence',lic:'CC BY 4.0',b:'Free to share and adapt — provided you give appropriate credit to the creator.'}],
+   why:'Presenting someone else’s words as your own without credit is plagiarism — even when the source is free to use. The BY condition requires credit, so Tyrese also broke the licence terms.'},
+  {id:'05',t:'The bakery’s beach photo',c:'Marco Lake (photographer)',d:'Sweet Breeze Bakery',a:'not',
+   s:'Marco released a beach photo under a CC BY-SA licence. The bakery used it unchanged on its website, credited him by name and linked to the licence.',
+   ev:[{k:'licence',lic:'CC BY-SA 4.0',b:'Share and adapt, even commercially — give credit, and share any adaptations under the same licence.'},
+       {k:'shot',url:'sweetbreeze.example/about',b:'Caption: “Photo: Marco Lake, licensed CC BY-SA 4.0”'},
+       {k:'msg',b:'Marco: “I didn’t expect a business to use it!”'}],
+   why:'The bakery followed every condition of the licence Marco chose: it gave credit and did not change the photo. Creative Commons lets creators give permission in advance, so there was no infringement.'},
+  {id:'06',t:'Shirts for sale',c:'Simone Flanders (illustrator)',d:'Tee Time Prints',a:'inf',
+   s:'Simone shared a hummingbird illustration under CC BY-NC. Tee Time Prints printed it on shirts and sold them, with a small credit to Simone on the tag.',
+   ev:[{k:'licence',lic:'CC BY-NC 4.0',b:'Share and adapt — give credit — NON-COMMERCIAL use only.'},
+       {k:'receipt',b:'TEE TIME PRINTS\nHummingbird Tee x 40\n@ $25.00\nTOTAL $1,000.00'}],
+   why:'NC means non-commercial. Selling shirts is commercial use, so credit alone is not enough — the shop needed Simone’s separate permission. This infringes her copyright.'},
+  {id:'07',t:'The lookalike logo',c:'Frigate Tours N.V.',d:'FastFrigate Taxis',a:'inf',
+   s:'Frigate Tours has a registered ® logo of a frigatebird. A new taxi firm began using an almost identical bird in the same colours. Customers are confused.',
+   ev:[{k:'shot',url:'side-by-side comparison',b:'Left: Frigate Tours ® logo. Right: FastFrigate logo — same bird outline, same blue and gold.'},
+       {k:'email',from:'A tourist',to:'Frigate Tours',sub:'My booking?',b:'I booked your taxi at the port, but the driver said he wasn’t from your company.'}],
+   why:'A confusingly similar sign used for related services infringes a registered trademark. Trademarks exist so customers can tell businesses apart.'},
+  {id:'08',t:'The old island map',c:'Map Art Co.',d:'Leon Carty (designer)',a:'not',
+   s:'Leon used a scan of a map drawn in the 1700s in his heritage poster. The archive that holds it released the scan into the public domain. Map Art Co., which sells its own prints of the same map, says no one else may use it.',
+   ev:[{k:'doc',b:'ARCHIVE NOTE\nItem: Island map, c. 1750\nStatus: PUBLIC DOMAIN\nNo restrictions on use.'},
+       {k:'shot',url:'poster proof',b:'Poster footer: “Map courtesy of the island archive (public domain).”'}],
+   why:'Any copyright in a map from the 1700s expired long ago, and the archive released the scan to the public domain. Anyone may use it. Leon still credited the archive — good practice.'},
+  {id:'09',t:'Last year’s essay',c:'Bayview Secondary School',d:'Priya S. (student)',a:'plag',
+   s:'Priya handed in an essay for EDPM that is the same, word for word, as the essay she wrote for another subject last year. She did not tell her teacher.',
+   ev:[{k:'doc',b:'Essay A (last year) and Essay B (this term):\nIdentical text: 100%'},
+       {k:'msg',b:'Priya: “But it’s my own work, so how can it be plagiarism?”'}],
+   why:'This is self-plagiarism: reusing your own previous work without acknowledging it, so the teacher is misled into thinking it is new. You must acknowledge your own earlier work.'},
+  {id:'10',t:'The cracked software',c:'PixelForge Ltd (software maker)',d:'Copy Corner Print Shop',a:'inf',
+   s:'An inspection found a paid design program running on five shop computers. No licences were bought; it had been unlocked with a “crack” downloaded online.',
+   ev:[{k:'shot',url:'Help › About',b:'Licence status: ACTIVATED (key generator). Registered to: crack-team'},
+       {k:'receipt',b:'Licences purchased: 0\nComputers using software: 5'}],
+   why:'This is software piracy — using unlicensed copies of software. It infringes the maker’s copyright and denies the developers payment for their work.'},
+];
+
+/* ---------- Mode 4 data ---------- */
+const LIGHT=[
+  ['Copying a classmate’s SBA and handing it in as your own',false,'That is plagiarism — and cheating your classmate too.'],
+  ['Using a CC BY photo in your project and crediting the photographer',true,'BY only asks for credit. You gave it.'],
+  ['Installing cracked software downloaded from a file-sharing site',false,'That is software piracy.'],
+  ['Quoting a sentence from a textbook in quotation marks, with a citation',true,'Quotation marks plus a citation is how to use someone’s words properly.'],
+  ['Changing a few words of a website’s paragraph and not citing it',false,'Close paraphrasing without credit is still plagiarism.'],
+  ['Using a public-domain image of a very old painting',true,'Public-domain works may be used freely — crediting them is still good practice.'],
+  ['Sharing your paid app’s activation key with the whole class',false,'Sharing a licence beyond what it allows is piracy.'],
+  ['Reusing your old essay for a new assignment without telling the teacher',false,'That is self-plagiarism.'],
+  ['Asking a photographer for permission before using a photo on a flyer',true,'Getting permission respects the creator’s rights.'],
+  ['Remixing a CC BY-ND image into a collage',false,'ND means no derivatives — you may not change it.'],
+  ['Using a CC BY-NC song, with credit, in a school video that is not for sale',true,'Non-commercial use with credit fits the licence.'],
+  ['Selling T-shirts printed with a CC BY-NC drawing',false,'NC means non-commercial — selling needs extra permission.'],
+  ['Adding a bibliography listing every source you used',true,'Acknowledge references in the text and in a bibliography.'],
+  ['Streaming a new film from an illegal pirate website',false,'Unauthorised copies deny creators their economic rights.'],
+  ['Putting a well-known business’s logo on your own product to make it look official',false,'That misuses someone else’s trademark.'],
+  ['Adapting a CC BY-SA diagram, crediting it, and sharing your version under CC BY-SA',true,'SA means share alike — you did exactly that.'],
+  ['Taking credit for a slide a group member made',false,'Presenting someone else’s work as your own is plagiarism.'],
+  ['Editing an artist’s photo to change its message, then posting it with their name on it',false,'That can damage the creator’s moral rights — the integrity of their work.'],
+  ['Using free, open-source software as its licence allows',true,'Open licences give permission in advance — follow their terms.'],
+  ['Briefly quoting a news article, with the source named, in a class debate critiquing it',true,'Short, credited extracts for criticism are typical fair use / fair dealing.'],
+];
+
+/* ---------- Helpers ---------- */
+function starsFor(p){return p>=.9?3:p>=.7?2:p>=.5?1:0;}
+function starSVG(n,label){let h=`<span class="stars" role="img" aria-label="${label||(n+' of 3 stars')}">`;for(let i=0;i<3;i++)h+=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z" fill="${i<n?'#c9a24a':'none'}" stroke="${i<n?'#8f6d26':'#a88c54'}" stroke-width="1.4"/></svg>`;return h+'</span>';}
+const MODES=[
+  {id:'m1',num:'Chamber I',t:'Which protection?',d:'Cases slide onto the legal pad. Stamp the right type of intellectual property.',col:'var(--c-patent)'},
+  {id:'m2',num:'Chamber II',t:'Compare & Contrast',d:'Sort statements into a Venn chart: Copyright vs Patent, then Trademark vs Copyright.',col:'var(--c-design)'},
+  {id:'m3',num:'Chamber III',t:'IP Court',d:'You are the judge. Study the evidence and rule: infringement, fair use, not infringement or plagiarism.',col:'var(--c-copyright)'},
+  {id:'m4',num:'Chamber IV',t:'Ethics lightning round',d:'15 quick calls: acceptable or not acceptable? Beat the clock.',col:'var(--c-trademark)'},
+];
+function record(mode,score,max){
+  const pct=max?score/max:0, st=starsFor(pct);
+  const b=store.best[mode]||{score:0,max:max,stars:0,pct:0};
+  const isBest=score>b.score||!store.best[mode];
+  if(isBest)store.best[mode]={score,max,stars:Math.max(st,b.stars||0),pct};
+  else if(st>b.stars){b.stars=st;}
+  save();return {pct,st,isBest,best:store.best[mode]};
+}
+
+/* ---------- Screens ---------- */
+let current='menu';let timers=[];
+function clearTimers(){timers.forEach(t=>clearTimeout(t));timers=[];if(m4.raf){cancelAnimationFrame(m4.raf);m4.raf=0;}}
+function later(fn,ms){const t=setTimeout(fn,ms);timers.push(t);return t;}
+function show(id,focusSel){
+  clearTimers();current=id;
+  if(!/^m[123]$/.test(id)&&RUN)keepRun(null);
+  $$('section.screen').forEach(s=>s.hidden=s.id!==id);
+  window.scrollTo({top:0,behavior:RM?'auto':'smooth'});
+  const f=focusSel?$(focusSel):$('#'+id+' h2[tabindex]');
+  if(f)setTimeout(()=>f.focus({preventScroll:true}),40);
+}
+$('#homeBtn').addEventListener('click',()=>{sfx.click();renderMenu();show('menu');});
+$('#learnBtn').addEventListener('click',()=>{sfx.click();renderLearned();show('learned');});
+$('#learnBtn2').addEventListener('click',()=>{sfx.click();renderLearned();show('learned');});
+
+function renderMenu(){
+  $('#miniScene').innerHTML=courtSVG(true);
+  $('#modeCards').innerHTML=MODES.map(m=>{const b=store.best[m.id];
+    return `<button type="button" class="mode" data-mode="${m.id}" aria-label="${m.t}. ${m.d} ${b?'Best '+b.score+' of '+b.max+', '+b.stars+' stars':'Not played yet'}">
+      <span class="tab" style="background:${m.col}"></span>
+      <span class="num">${m.num}</span><span class="t">${m.t.replace('&','&amp;')}</span><span class="d">${m.d}</span>
+      <span class="meta"><span>${b?'Best '+b.score+'/'+b.max:'Not played'}</span>${starSVG(b?b.stars:0)}</span></button>`;}).join('');
+  $$('#modeCards .mode').forEach(b=>b.addEventListener('click',()=>{sfx.click();start(b.dataset.mode);}));
+}
+function start(m){({m1:startM1,m2:startM2,m3:startM3,m4:startM4})[m]();}
+
+function results(mode,score,max,lines,extra){
+  const r=record(mode,score,max);const M=MODES.find(x=>x.id===mode);
+  if(r.st>=2)sfx.fanfare();else sfx.gavel();
+  $('#resBox').innerHTML=`<div class="kicker">${M.num} · ${M.t.replace('&','&amp;')}</div>
+    <h2 id="resTitle" tabindex="-1">${r.st===3?'Case closed — outstanding!':r.st===2?'Well argued!':r.st===1?'A fair start':'Court adjourned — try again'}</h2>
+    <div class="big">${score} <span style="font-size:.45em;color:var(--ink-soft)">/ ${max}</span></div>
+    ${starSVG(r.st,r.st+' of 3 stars earned')}
+    <p class="lead" style="margin-top:8px">${lines||''}</p>
+    <p class="kicker">${r.isBest?'New best score saved':'Best: '+r.best.score+' / '+r.best.max}</p>
+    ${extra||''}
+    <div class="row"><button class="btn" type="button" id="again">Play again</button><button class="btn ghost" type="button" id="toMenu">Main menu</button><button class="btn ghost" type="button" id="toLearn">What you learned</button></div>`;
+  show('results');
+  $('#again').onclick=()=>{sfx.click();start(mode);};
+  $('#toMenu').onclick=()=>{sfx.click();renderMenu();show('menu');};
+  $('#toLearn').onclick=()=>{sfx.click();renderLearned();show('learned');};
+  live('Score '+score+' out of '+max+'. '+r.st+' stars.');
+}
+
+/* ---------- MODE 1 ---------- */
+const m1={};
+function startM1(R){
+  m1.ix=shuffle(CASES1.map((c,k)=>k));m1.i=0;m1.score=0;m1.right=0;m1.done=false;
+  if(R){if(!(okIx(R.ix,CASES1.length,CASES1.length)&&okInt(R.i,0,CASES1.length)&&okInt(R.score,0,1e5)&&okInt(R.right,0,CASES1.length)))throw new Error('bad save');m1.ix=R.ix;m1.i=R.i;m1.score=R.score;m1.right=R.right;}
+  m1.deck=m1.ix.map(k=>CASES1[k]);
+  $('#m1t').textContent=m1.deck.length;
+  $('#m1stamps').innerHTML=IPKEYS.map((k,i)=>`<button type="button" class="stampbtn" data-k="${k}" aria-label="Stamp ${IP[k].name} (key ${i+1})"><span class="face" style="background:${IP[k].col};color:${IP[k].col}"><span style="color:#fff">${IP[k].sym}</span></span><span class="lbl">${IP[k].name}</span><span class="key">key ${i+1}</span></button>`).join('');
+  $$('#m1stamps .stampbtn').forEach(b=>b.addEventListener('click',()=>stampM1(b.dataset.k)));
+  show('m1');keepRun({mode:'m1',ix:m1.ix,i:m1.i,score:m1.score,right:m1.right});
+  if(m1.i>=m1.deck.length){m1.i--;nextM1();return;}
+  renderM1();
+}
+function renderM1(){
+  const c=m1.deck[m1.i];m1.done=false;
+  $('#m1n').textContent=m1.i+1;$('#m1s').textContent=m1.score;$('#m1bar').style.width=(m1.i/m1.deck.length*100)+'%';
+  const p=PRESENTERS[c.p||0];
+  $('#m1who').innerHTML=`<svg viewBox="0 0 100 280" aria-hidden="true">${person(p)}</svg><div><div class="who">${c.who}</div><div class="role">${c.role}</div></div>`;
+  const card=$('#m1card');card.classList.remove('slide-in');void card.offsetWidth;card.classList.add('slide-in');
+  card.innerHTML=`<div class="icon">${icon(c.icon)}</div><div class="kicker">Exhibit ${String(m1.i+1).padStart(2,'0')}</div><h3>${c.t}</h3><p>${c.d}</p><p class="q">Which protection fits best?</p>`;
+  $('#m1fb').hidden=true;
+  $$('#m1stamps .stampbtn').forEach(b=>b.disabled=false);
+  sfx.click();
+}
+function stampM1(k){
+  if(m1.done)return;m1.done=true;
+  const c=m1.deck[m1.i],ok=k===c.a;
+  $$('#m1stamps .stampbtn').forEach(b=>b.disabled=true);
+  const card=$('#m1card');
+  card.insertAdjacentHTML('beforeend',`<div class="stamprow"><div class="stampmark${ok?'':' wrongst'}" style="color:${IP[k].col}">${IP[k].name}</div></div>`);
+  sfx.stamp();
+  if(ok){m1.score+=10;m1.right++;later(sfx.good,180);}
+  else{later(()=>{const sr=card.querySelector('.stamprow');if(sr)sr.insertAdjacentHTML('beforeend',`<div class="stampmark second" style="color:${IP[c.a].col}">✓ ${IP[c.a].name}</div>`);sfx.bad();},350);}
+  $('#m1s').textContent=m1.score;
+  keepRun({mode:'m1',ix:m1.ix,i:m1.i+1,score:m1.score,right:m1.right});
+  const T=IP[c.a];
+  const fb=$('#m1fb');fb.hidden=false;
+  fb.innerHTML=`<div class="verdict ${ok?'ok':'no'}">${ok?'Correct — '+T.name+'!':'Not quite — this is '+ART[c.a]+T.name.toLowerCase()+'.'}</div>
+   <p style="margin:6px 0 0">${c.why}</p>
+   <div class="facts"><div><b>How it is obtained</b>${T.how}</div><div><b>Typical duration</b>${T.dur}</div><div><b>Symbol</b>${T.symbol}</div></div>
+   <button class="btn" type="button" id="m1next">${m1.i+1<m1.deck.length?'Next case →':'See my results'}</button>`;
+  $('#m1next').addEventListener('click',nextM1);
+  later(()=>{$('#m1next').focus({preventScroll:true});fb.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'});},60);
+  live((ok?'Correct. ':'Not quite. The answer is '+T.name+'. ')+c.why);
+}
+function nextM1(){
+  m1.i++;
+  if(m1.i>=m1.deck.length){results('m1',m1.score,m1.deck.length*10,`You stamped ${m1.right} of ${m1.deck.length} cases correctly.`);return;}
+  renderM1();window.scrollTo({top:0,behavior:RM?'auto':'smooth'});
+  $$('#m1stamps .stampbtn')[0].focus({preventScroll:true});
+}
+
+/* ---------- MODE 2 ---------- */
+const m2={r:0,total:0,max:0,place:{},sel:null,checked:false};
+function startM2(R){m2.r=0;m2.total=0;m2.max=0;let keep=false;
+ if(R){if(!(okInt(R.r,0,ROUNDS.length)&&okInt(R.total,0,1e4)&&okInt(R.max,0,1e4)))throw new Error('bad save');m2.r=R.r;m2.total=R.total;m2.max=R.max;
+  const n=m2.r<ROUNDS.length?ROUNDS[m2.r].items.length:0;
+  if(n&&okIx(R.order,n,n)&&R.place&&typeof R.place==='object'){m2.order=R.order;m2.place={};Object.keys(R.place).forEach(k=>{if(okInt(+k,0,n-1)&&['A','B','Both','Neither'].includes(R.place[k]))m2.place[+k]=R.place[k];});keep=true;}}
+ show('m2');
+ if(m2.r>=ROUNDS.length){results('m2',m2.total,m2.max,`You placed ${m2.total} of ${m2.max} statements correctly across both rounds.`);return;}
+ renderM2(keep);}
+function keepM2(){keepRun({mode:'m2',r:m2.r,total:m2.total,max:m2.max,order:m2.order,place:m2.place});}
+function zoneName(R,z){return z==='A'?R.a+' only':z==='B'?R.b+' only':z==='Both'?'Both':'Neither';}
+function renderM2(keep){
+  const R=ROUNDS[m2.r];if(!keep){m2.place={};m2.order=shuffle(R.items.map((_,i)=>i));}m2.sel=null;m2.checked=false;
+  $('#m2r').textContent=m2.r+1;$('#m2Title').textContent=R.a+' vs '+R.b;
+  $('#m2result').innerHTML='';$('#m2tray').hidden=false;$('#m2check').hidden=false;$('#m2reset').hidden=false;
+  const colA=R.a==='Copyright'?'#a8322b':'#2c7650', colB=R.b==='Patent'?'#1f4e8c':'#a8322b';
+  $('#m2board').innerHTML=`<div class="venn">
+    <svg class="venn-bg" viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true">
+      <ellipse cx="350" cy="150" rx="345" ry="146" fill="${colA}" fill-opacity=".35" stroke="${colA}" stroke-width="4"/>
+      <ellipse cx="650" cy="150" rx="345" ry="146" fill="${colB}" fill-opacity=".35" stroke="${colB}" stroke-width="4"/>
+    </svg>
+    ${['A','Both','B'].map(z=>`<div class="zone" data-z="${z}" tabindex="0" role="button" aria-label="Place selected statement in ${zoneName(R,z)}"><div class="zl">${zoneName(R,z)}</div><div class="hint">drop here</div></div>`).join('')}
+  </div>
+  <div class="zone neither" data-z="Neither" tabindex="0" role="button" aria-label="Place selected statement in Neither"><div class="zl">Neither</div></div>`;
+  $$('#m2board .zone').forEach(z=>{
+    z.addEventListener('click',e=>{if(e.target.closest('.chip'))return;placeSel(z.dataset.z);});
+    z.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();placeSel(z.dataset.z);}});
+  });
+  drawChips();keepM2();
+}
+function chipHTML(i){const R=ROUNDS[m2.r];return `<button type="button" class="chip${m2.sel===i?' sel':''}" data-i="${i}" aria-pressed="${m2.sel===i}">${R.items[i][0]}</button>`;}
+function drawChips(){
+  const tray=$('#m2tray');const inTray=m2.order.filter(i=>m2.place[i]===undefined);
+  tray.innerHTML=inTray.map(chipHTML).join('');
+  $$('#m2board .zone').forEach(z=>{z.querySelectorAll('.chip').forEach(c=>c.remove());
+    m2.order.filter(i=>m2.place[i]===z.dataset.z).forEach(i=>z.insertAdjacentHTML('beforeend',chipHTML(i)));
+    z.classList.toggle('armed',m2.sel!==null);});
+  $$('#m2tray .chip, #m2board .chip').forEach(bindChip);
+  $('#m2check').disabled=inTray.length>0||m2.checked;
+}
+function placeSel(z){
+  if(m2.sel===null||m2.checked)return;
+  const i=m2.sel;m2.place[i]=z;m2.sel=null;sfx.stamp();drawChips();keepM2();
+  live('Placed in '+zoneName(ROUNDS[m2.r],z));
+  const next=$('#m2tray .chip');if(next)next.focus({preventScroll:true});else $('#m2check').focus({preventScroll:true});
+}
+function bindChip(c){
+  const i=+c.dataset.i;
+  c.addEventListener('click',e=>{ if(e.detail!==0)return; // keyboard activation only
+    e.stopPropagation();toggleSel(i);});
+  c.addEventListener('pointerdown',e=>{
+    if(m2.checked||e.button>0)return;
+    const sx=e.clientX,sy=e.clientY;let ghost=null,over=null;
+    try{c.setPointerCapture(e.pointerId);}catch(_){}
+    const move=ev=>{
+      if(!ghost&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){
+        ghost=c.cloneNode(true);ghost.classList.add('dragghost');const r=c.getBoundingClientRect();ghost.style.width=r.width+'px';
+        document.body.appendChild(ghost);c.style.opacity='.35';
+      }
+      if(ghost){ghost.style.left=(ev.clientX-20)+'px';ghost.style.top=(ev.clientY-16)+'px';
+        const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest('.zone');
+        if(over&&over!==z)over.classList.remove('hover');over=z;if(z)z.classList.add('hover');
+        if(ev.clientY>window.innerHeight-40)window.scrollBy(0,12);else if(ev.clientY<40)window.scrollBy(0,-12);}
+    };
+    const up=ev=>{
+      c.removeEventListener('pointermove',move);c.removeEventListener('pointerup',up);c.removeEventListener('pointercancel',up);
+      if(over)over.classList.remove('hover');
+      if(ghost){ghost.remove();c.style.opacity='';
+        const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest('.zone');const tr=t&&t.closest('#m2tray');
+        if(z){m2.sel=i;placeSel(z.dataset.z);}else if(tr){delete m2.place[i];m2.sel=null;drawChips();keepM2();}
+      }else if(ev.type==='pointerup'){toggleSel(i);}
+    };
+    c.addEventListener('pointermove',move);c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+  });
+}
+function toggleSel(i){
+  if(m2.checked)return;
+  m2.sel=m2.sel===i?null:i;sfx.click();drawChips();
+  const again=document.querySelector(`.chip[data-i="${i}"]`);if(again)again.focus({preventScroll:true});
+  if(m2.sel!==null)live('Selected: '+ROUNDS[m2.r].items[i][0]+'. Now choose a zone.');
+}
+$('#m2reset').addEventListener('click',()=>{if(m2.checked)return;m2.place={};m2.sel=null;sfx.click();drawChips();keepM2();});
+$('#m2check').addEventListener('click',()=>{
+  const R=ROUNDS[m2.r];m2.checked=true;let right=0;
+  R.items.forEach((it,i)=>{if(m2.place[i]===it[1])right++;});
+  m2.total+=right;m2.max+=R.items.length;
+  keepRun({mode:'m2',r:m2.r+1,total:m2.total,max:m2.max});
+  $$('#m2board .chip').forEach(c=>{const i=+c.dataset.i,ok=m2.place[i]===R.items[i][1];c.classList.add(ok?'right':'wrong');c.insertAdjacentHTML('afterbegin',`<span class="mk" aria-label="${ok?'correct':'incorrect'}">${ok?'✓':'✗'}</span>`);c.disabled=true;});
+  $('#m2check').disabled=true;$('#m2reset').hidden=true;$('#m2tray').hidden=true;sfx.gavel();if(right>=R.items.length*.75)later(sfx.good,400);
+  const cols={A:[],Both:[],B:[],Neither:[]};R.items.forEach(it=>cols[it[1]].push(it[0]));
+  const rows=R.items.map((it,i)=>{const ok=m2.place[i]===it[1];return `<tr><td>${it[0]}</td><td>${zoneName(R,it[1])}</td><td class="${ok?'ok':'no'}">${ok?'✓':'✗ '+zoneName(R,m2.place[i])}</td><td>${it[2]}</td></tr>`;}).join('');
+  $('#m2result').innerHTML=`<div class="parch" style="padding:16px;margin-top:12px">
+    <h3 id="m2resH" tabindex="-1">Completed comparison chart · ${right} / ${R.items.length} correct</h3>
+    <div class="cmpgrid">
+      <div class="col" style="border-top:5px solid ${R.a==='Copyright'?'#a8322b':'#2c7650'}"><h4>${R.a} only</h4><ul>${cols.A.map(x=>'<li>'+x+'</li>').join('')}</ul></div>
+      <div class="col" style="border-top:5px solid #c9a24a"><h4>Both</h4><ul>${cols.Both.map(x=>'<li>'+x+'</li>').join('')}</ul></div>
+      <div class="col" style="border-top:5px solid ${R.b==='Patent'?'#1f4e8c':'#a8322b'}"><h4>${R.b} only</h4><ul>${cols.B.map(x=>'<li>'+x+'</li>').join('')}</ul></div>
+    </div>
+    <p style="margin:0 0 8px;font-size:.9rem"><b>Neither:</b> ${cols.Neither.join(' · ')}</p>
+    <details><summary style="cursor:pointer;font-weight:700">Review every statement</summary>
+    <div class="tablewrap"><table class="chart"><thead><tr><th>Statement</th><th>Correct</th><th>You</th><th>Why</th></tr></thead><tbody>${rows}</tbody></table></div></details>
+    <div class="row" style="margin-top:12px"><button class="btn" type="button" id="m2next">${m2.r===0?'Next round: Trademark vs Copyright →':'See my results'}</button></div></div>`;
+  $('#m2next').onclick=()=>{sfx.click();if(m2.r===0){m2.r=1;renderM2();window.scrollTo({top:0,behavior:RM?'auto':'smooth'});$('#m2Title').focus({preventScroll:true});}
+    else results('m2',m2.total,m2.max,`You placed ${m2.total} of ${m2.max} statements correctly across both rounds.`);};
+  live(right+' of '+R.items.length+' correct. The completed comparison chart is below.');
+  later(()=>{$('#m2resH').focus({preventScroll:true});$('#m2result').scrollIntoView({behavior:RM?'auto':'smooth',block:'start'});},200);
+});
+
+/* ---------- MODE 3 ---------- */
+const m3={};
+function startM3(R){
+  m3.ix=shuffle(CASES3.map((c,k)=>k)).slice(0,6);m3.i=0;m3.score=0;m3.right=0;
+  if(R){if(!(okIx(R.ix,CASES3.length,Math.min(6,CASES3.length))&&okInt(R.i,0,6)&&okInt(R.score,0,1e5)&&okInt(R.right,0,6)))throw new Error('bad save');m3.ix=R.ix;m3.i=R.i;m3.score=R.score;m3.right=R.right;}
+  m3.deck=m3.ix.map(k=>CASES3[k]);
+  $('#m3t').textContent=m3.deck.length;
+  $('#courtScene').innerHTML=courtSVG(false);
+  $('#m3btns').innerHTML=VERDICTS.map((v,i)=>`<button type="button" class="vbtn" data-v="${v[0]}" aria-label="${v[1]}: ${v[2]} (key ${i+1})">${v[1]}<small>${v[2]}<span class="k"> · key ${i+1}</span></small></button>`).join('');
+  $$('#m3btns .vbtn').forEach(b=>b.addEventListener('click',()=>ruleM3(b.dataset.v)));
+  show('m3');keepRun({mode:'m3',ix:m3.ix,i:m3.i,score:m3.score,right:m3.right});
+  if(m3.i>=m3.deck.length){results('m3',m3.score,m3.deck.length*20,`You ruled correctly in ${m3.right} of ${m3.deck.length} cases.`);return;}
+  renderM3();
+}
+function evHTML(e){
+  if(e.k==='email')return `<div class="ev email"><div class="bar">E-mail</div><div class="body"><div class="hd">From: ${e.from}<br>To: ${e.to}<br>Subject: ${e.sub}</div>${e.b}</div></div>`;
+  if(e.k==='shot')return `<div class="ev shot"><span class="evtag">EXHIBIT</span><div class="bar"><i></i><i></i><i></i> ${e.url}</div><div class="body">${e.b}</div></div>`;
+  if(e.k==='licence')return `<div class="ev licence"><div class="bar">Licence tag</div><div class="body"><span class="lic">${e.lic}</span><br>${e.b}</div></div>`;
+  if(e.k==='receipt')return `<div class="ev receipt"><div class="bar">Receipt / record</div><div class="body">${e.b.replace(/\n/g,'<br>')}</div></div>`;
+  if(e.k==='doc')return `<div class="ev doc"><div class="bar">Document</div><div class="body">${e.b.replace(/\n/g,'<br>')}</div></div>`;
+  return `<div class="ev msg"><div class="bar">Message</div><div class="body"><span class="bubble">${e.b}</span></div></div>`;
+}
+function setJury(state){
+  const j=$('#jury');if(!j)return;
+  j.classList.remove('jury-yes','jury-no');void j.getBoundingClientRect();
+  const d=state==='yes'?'M44.5 43.5 Q50 48 55.5 43.5':state==='no'?'M45.5 46 Q50 43 54.5 46':'M45.5 44.5 Q50 46 54.5 44.5';
+  j.querySelectorAll('.mouth').forEach(m=>m.setAttribute('d',d));
+  if(state)j.classList.add(state==='yes'?'jury-yes':'jury-no');
+  const b=$('#bubble');if(b){b.classList.toggle('show',!!state);$('#bubbleTxt').textContent=state==='yes'?'The jury agrees!':'Murmurs…';}
+}
+function renderM3(){
+  const c=m3.deck[m3.i];m3.done=false;
+  $('#m3n').textContent=m3.i+1;$('#m3s').textContent=m3.score;$('#m3bar').style.width=(m3.i/m3.deck.length*100)+'%';
+  setJury(null);
+  $('#m3case').innerHTML=`<div class="caseno">CASE FILE No. CAR-IP-2026-${c.id}</div><h3>${c.t}</h3>
+   <div class="parties">${c.c} <span>v.</span> ${c.d}</div><p>${c.s}</p>
+   <div class="kicker" style="margin-bottom:6px">Evidence</div><div class="evidence">${c.ev.map(evHTML).join('')}</div>
+   `;
+  $('#m3case').classList.remove('slide-in');void $('#m3case').offsetWidth;$('#m3case').classList.add('slide-in');
+  $('#m3ruling').innerHTML='';
+  $$('#m3btns .vbtn').forEach(b=>{b.disabled=false;b.classList.remove('picked','correct');});
+}
+function ruleM3(v){
+  if(m3.done)return;m3.done=true;
+  const c=m3.deck[m3.i],ok=v===c.a;
+  $$('#m3btns .vbtn').forEach(b=>{b.disabled=true;if(b.dataset.v===v)b.classList.add('picked');if(b.dataset.v===c.a)b.classList.add('correct');});
+  const g=$('#gavel');g.classList.remove('strike');void g.getBoundingClientRect();g.classList.add('strike');sfx.gavel();
+  if(ok){m3.score+=20;m3.right++;}
+  keepRun({mode:'m3',ix:m3.ix,i:m3.i+1,score:m3.score,right:m3.right});
+  later(()=>{setJury(ok?'yes':'no');ok?sfx.good():sfx.bad();},450);
+  $('#m3s').textContent=m3.score;
+  const name=VERDICTS.find(x=>x[0]===c.a)[1];
+  $('#m3ruling').innerHTML=`<div class="ruling"><div class="verdict ${ok?'ok':'no'}">${ok?'Sustained! The jury agrees.':'Overruled on appeal.'}</div>
+    <p style="margin:4px 0"><b>Correct ruling: ${name}.</b> ${c.why}</p>
+    <button class="btn" type="button" id="m3next" style="margin-top:6px">${m3.i+1<m3.deck.length?'Next case →':'See my results'}</button></div>`;
+  $('#m3next').onclick=()=>{sfx.click();m3.i++;if(m3.i>=m3.deck.length){results('m3',m3.score,m3.deck.length*20,`You ruled correctly in ${m3.right} of ${m3.deck.length} cases.`);return;}renderM3();window.scrollTo({top:0,behavior:RM?'auto':'smooth'});$$('#m3btns .vbtn')[0].focus({preventScroll:true});};
+  later(()=>$('#m3next').focus({preventScroll:true}),80);
+  live((ok?'Correct. ':'Incorrect. ')+'Correct ruling: '+name+'. '+c.why);
+}
+
+/* ---------- MODE 4 ---------- */
+const m4={raf:0};
+const LTIME=10000;
+function startM4(){
+  m4.deck=shuffle(LIGHT).slice(0,15);m4.i=0;m4.score=0;m4.right=0;m4.streak=0;m4.log=[];
+  try{m4.relax=localStorage.getItem('ipcourt.relax')==='1';}catch(e){m4.relax=false;}
+  $('#m4relax').checked=!!m4.relax;
+  show('m4');renderM4();
+}
+$('#m4relax').addEventListener('change',e=>{m4.relax=e.target.checked;try{localStorage.setItem('ipcourt.relax',m4.relax?'1':'0');}catch(_){} if(current==='m4'&&!m4.done){if(m4.relax){if(m4.raf)cancelAnimationFrame(m4.raf);m4.raf=0;$('#m4timer').style.width='100%';}else{m4.t0=performance.now();tickM4();}}});
+function renderM4(){
+  const it=m4.deck[m4.i];m4.done=false;
+  $('#m4n').textContent=m4.i+1;$('#m4s').textContent=m4.score;$('#m4k').textContent=m4.streak;
+  $('#m4stmt').textContent=it[0];$('#m4fb').innerHTML='';
+  $('#m4yes').disabled=false;$('#m4no').disabled=false;
+  const card=$('#m4card');card.classList.remove('flash-ok','flash-no','slide-in');void card.offsetWidth;card.classList.add('slide-in');
+  $('#m4timer').style.width='100%';m4.t0=performance.now();m4.lastTick=10;
+  if(!m4.relax)tickM4();
+}
+function tickM4(){
+  if(m4.raf)cancelAnimationFrame(m4.raf);
+  const step=()=>{if(m4.done||current!=='m4')return;const el=performance.now()-m4.t0,left=Math.max(0,1-el/LTIME);
+    $('#m4timer').style.width=(left*100)+'%';const s=Math.ceil(left*10);if(s<=3&&s<m4.lastTick){m4.lastTick=s;sfx.tick();}
+    if(left<=0){answerM4(null);return;}m4.raf=requestAnimationFrame(step);};
+  m4.raf=requestAnimationFrame(step);
+}
+function answerM4(v){
+  if(m4.done)return;m4.done=true;if(m4.raf){cancelAnimationFrame(m4.raf);m4.raf=0;}
+  const it=m4.deck[m4.i],ok=v===it[1];
+  const el=performance.now()-m4.t0;const bonus=ok&&!m4.relax?Math.max(0,Math.round(5*(1-el/LTIME))):0;
+  if(ok){m4.right++;m4.streak++;m4.score+=10+bonus;sfx.good();}else{m4.streak=0;sfx.bad();}
+  m4.log.push({s:it[0],a:it[1],you:v,ok,why:it[2]});
+  $('#m4s').textContent=m4.score;$('#m4k').textContent=m4.streak;
+  $('#m4yes').disabled=true;$('#m4no').disabled=true;
+  const card=$('#m4card');card.classList.add(ok?'flash-ok':'flash-no');
+  const lab=it[1]?'Acceptable':'Not acceptable';
+  $('#m4fb').innerHTML=`<b class="${ok?'ok':'no'}">${v===null?'Time’s up!':ok?'Correct'+(bonus?' +'+bonus+' speed bonus':'')+'.':'Not quite.'}</b> ${lab}: ${it[2]}${m4.relax?' <button class="btn" type="button" id="m4next" style="margin-left:6px">Next</button>':''}`;
+  live((ok?'Correct. ':'Not quite. ')+lab+'. '+it[2]);
+  if(m4.relax){$('#m4next').onclick=nextM4;setTimeout(()=>{const n=$('#m4next');if(n)n.focus();},50);}
+  else later(nextM4,2600);
+}
+function nextM4(){
+  m4.i++;
+  if(m4.i>=m4.deck.length){
+    const list=m4.log.map(l=>`<li><b style="color:${l.ok?'var(--good)':'var(--bad)'}">${l.ok?'✓':'✗'}</b> ${l.s} — <i>${l.a?'Acceptable':'Not acceptable'}</i>. ${l.why}</li>`).join('');
+    results('m4',m4.score,225,`${m4.right} of 15 correct. Each correct call earns 10 points, plus up to 5 for speed.`,`<details class="review" style="text-align:left"><summary style="cursor:pointer;font-weight:700">Review all 15 calls</summary><ul style="padding-left:18px">${list}</ul></details>`);
+    return;}
+  renderM4();if(m4.relax)$('#m4yes').focus({preventScroll:true});
+}
+$('#m4yes').addEventListener('click',()=>answerM4(true));
+$('#m4no').addEventListener('click',()=>answerM4(false));
+
+/* ---------- Learned ---------- */
+function renderLearned(){
+  const bars=MODES.map(m=>{const b=store.best[m.id];const p=b?Math.round(b.pct*100):0;
+    return `<div class="barrow"><span>${m.t.replace('&','&amp;')}</span><span class="track" role="img" aria-label="${m.t}: best ${p} percent"><span class="fill" style="display:block;width:${p}%"></span></span><span>${b?p+'% '+starSVG(b.stars):'—'}</span></div>`;}).join('');
+  const total=MODES.reduce((a,m)=>a+((store.best[m.id]||{}).stars||0),0);
+  const rows=IPKEYS.map(k=>{const t=IP[k];return `<tr><td><span class="sw" style="background:${t.col}"></span>${t.name}</td><td>${t.protects}</td><td>${t.how}</td><td>${t.dur}</td><td>${t.symbol}</td><td>${t.ex}</td></tr>`;}).join('');
+  $('#learnBox').innerHTML=`<div class="kicker">Summary chart</div><h2 id="learnTitle" tabindex="-1">What you learned</h2>
+   <p class="lead">Stars earned: <b>${total} / 12</b>. Your best result in each chamber:</p>
+   <div class="bars">${bars}</div>
+   <h3>The six main types of intellectual property</h3>
+   <div class="tablewrap"><table class="chart ipt"><thead><tr><th>Type</th><th>What it protects</th><th>How it is obtained</th><th>Typical duration</th><th>Symbol</th><th>Example</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <p style="font-size:.8rem;color:var(--ink-soft)">Durations and rules differ from country to country — these are typical, general patterns.</p>
+   <div class="cards3">
+    <div><h4>Economic vs moral rights</h4><b>Economic rights:</b> the creator’s right to be paid when others use their work (royalties, licensing fees). They can be sold or licensed.<br><b>Moral rights:</b> the right to protect the integrity and reputation of the work — not misrepresented, altered without consent or misquoted. They usually stay with the creator.</div>
+    <div><h4>Public domain &amp; fair use</h4><b>Public domain:</b> works whose protection has expired or been given up — anyone may use them.<br><b>Fair use / fair dealing:</b> limited use without permission for purposes such as criticism, review, news reporting, research or teaching. Rules vary by country; credit the source.</div>
+    <div><h4>Creative Commons licences</h4>Producers can release Open Educational Resources under a licence that says how the work may be used, without asking each time.<div class="cc"><span>BY</span> give credit <span>NC</span> non-commercial only <span>ND</span> no changes <span>SA</span> share adaptations alike</div></div>
+    <div><h4>Plagiarism</h4>Using another person’s intellectual property — words, ideas, images or other work — without giving appropriate credit. <b>Self-plagiarism</b> is reusing your own previous work without acknowledging it.</div>
+    <div><h4>Avoiding plagiarism</h4>Acknowledge references in the text and in a bibliography; obtain approval to use others’ work where required; acknowledge your own previous work; paraphrase thoroughly and keep track of every source.</div>
+    <div><h4>Software piracy</h4>Copying, sharing or using software without a valid licence — cracked programs, shared activation keys, illegal downloads. It infringes copyright and denies developers payment.</div>
+   </div>
+   <div class="row" style="margin-top:14px"><button class="btn" type="button" id="lMenu">Back to the menu</button></div>`;
+  $('#lMenu').onclick=()=>{sfx.click();renderMenu();show('menu');};
+}
+
+/* ---------- Keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'&&e.target.type!=='checkbox')return;
+  if(current==='m1'&&!m1.done&&/^[1-6]$/.test(e.key)){e.preventDefault();stampM1(IPKEYS[+e.key-1]);}
+  else if(current==='m3'&&!m3.done&&/^[1-4]$/.test(e.key)){e.preventDefault();ruleM3(VERDICTS[+e.key-1][0]);}
+  else if(current==='m4'&&!m4.done){const k=e.key.toLowerCase();if(k==='a'||e.key==='ArrowLeft'){e.preventDefault();answerM4(true);}else if(k==='n'||e.key==='ArrowRight'){e.preventDefault();answerM4(false);}}
+  else if(current==='m2'&&e.key==='Escape'&&m2.sel!==null){m2.sel=null;drawChips();}
+});
+
+renderMenu();
+let resumed=false;
+if(RESUME&&typeof RESUME==='object'&&/^m[123]$/.test(RESUME.mode)){try{({m1:startM1,m2:startM2,m3:startM3})[RESUME.mode](RESUME);resumed=true;}catch(e){RUN=null;renderMenu();show('menu');}}
+if(window.GameSave&&GameSave.toast&&(resumed||Object.keys(store.best).length))setTimeout(()=>GameSave.toast('Welcome back! Your progress was restored.'),400);
+})();
+</script>
+</body>
+</html>

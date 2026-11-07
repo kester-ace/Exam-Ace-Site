@@ -1,0 +1,223 @@
+<!doctype html><html lang="en" data-gs-none><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Mic & Story: The NCD Challenge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+:root{--bg:#060D26;--surface:rgba(15,30,74,.9);--ink:#F1F4FF;--muted:#AEB9DD;--line:rgba(245,197,66,.25);--gold:#F5C542;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 600px at 80% -10%,#0B1A46,transparent 60%),#060D26;background-attachment:fixed;color:var(--ink);font:16.5px/1.65 "Atkinson Hyperlegible",Verdana,system-ui,sans-serif}
+main{max-width:880px;margin:0 auto;padding-block:70px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+article{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,34px);box-shadow:0 18px 40px -18px rgba(0,0,0,.85)}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4.5vw,2.4rem);color:#FFE38A;margin-top:0}
+h2{color:var(--gold);border-top:1px solid var(--line);padding-top:18px;margin-top:28px}
+a{color:#FFD766}
+.tw{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(245,197,66,.12)}
+li p{margin:.2em 0}
+[data-atom="mention"]{display:none}
+input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.credit{color:var(--muted);font-size:.85rem;text-align:center;margin-top:18px}
+</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body>
+<a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);border:1px solid rgba(245,197,66,.4)">← Back to course</a>
+<main><article><h1 id="communication-studies-assignment-non-communicable-diseases-in-children">Communication Studies Assignment: Non-Communicable Diseases in Children</h1>
+<p><time data-atom="date" datetime="2026-10-08">2026-10-08</time></p>
+<p>Students research non-communicable diseases (NCDs) in children, write a speech or short story for parents, then justify how it is organized and evaluate how well it works.</p>
+<p>CAPE Communication Studies</p>
+<h2 id="the-task">The task</h2>
+<p>You will research non-communicable diseases (NCDs) in children, turn that research into one persuasive piece for <strong>parents</strong>, and then explain and judge your own work. The assignment has four parts.</p>
+<div class="tw"><table><thead><tr><th>Part</th><th>What you submit</th><th>Length</th></tr></thead><tbody><tr><td>A. Research notes</td><td>Definition, examples, classification, causes, risk factors, prevention and at least six factual statistics, each with a credible source</td><td>1 page of notes plus a reference list</td></tr><tr><td>B. Creative piece</td><td>Either a speech (to be delivered to a parent meeting) or a short story</td><td>Speech: 550–700 words (about 4–5 minutes). Story: 700–900 words</td></tr><tr><td>C. Justification of organization</td><td>Why you ordered and structured the piece the way you did</td><td>250–300 words</td></tr><tr><td>D. Evaluation of effectiveness</td><td>How well the piece is likely to work on parents, judged against evidence</td><td>300–350 words</td></tr></tbody></table></div>
+<p><strong>Audience:</strong> parents and guardians of children aged 5–17 in your community. They are busy, they care deeply, and many may feel blamed when they hear about childhood illness. Your piece should inform and motivate without shaming.</p>
+<p><strong>Purpose:</strong> to help parents understand what NCDs are, how common they are in children, which risk factors they can influence, and what small, realistic steps they can take.</p>
+<p><strong>Requirements for Part B</strong></p>
+<ul><li><p>Use at least <strong>four different literary techniques</strong> and label them in your Part C.</p></li><li><p>Include at least <strong>four statistics</strong> from your research, each woven into the piece, not listed.</p></li><li><p>Name the source of each statistic in the piece (&quot;UNICEF reports…&quot;) so parents can trust it.</p></li><li><p>Be accurate: do not suggest that every NCD is preventable or caused by parenting.</p></li><li><p>End with a clear, realistic call to action.</p></li></ul>
+<h2 id="part-a-research-pack">Part A: Research pack</h2>
+<p>Use this pack as a starting point. Open the linked sources, confirm each figure yourself, and add at least two sources of your own (for example your Ministry of Health or a Caribbean agency).</p>
+<div class="tw"><table><thead><tr><th>Element</th><th>What to cover</th><th>Evidence from credible sources</th></tr></thead><tbody><tr><td>Definition</td><td>What an NCD is and why &quot;non-communicable&quot; matters</td><td>NCDs are also called chronic diseases: they are not passed from person to person and are often long-lasting (<a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF</a>).</td></tr><tr><td>Examples in children</td><td>Conditions parents may meet</td><td>WHO lists anaemia, asthma, cancers, diabetes, heart diseases, obesity, and injuries and accidents as common conditions in children (<a target="_blank" rel="noopener" href="https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/prevention-of-noncommunicable-diseases">WHO</a>). Mental health conditions are the largest share of the NCD burden in adolescents (<a target="_blank" rel="noopener" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7734741/">Akseer et al., 2020</a>).</td></tr><tr><td>Classification</td><td>Group the examples</td><td>Group them by body system: metabolic (type 1 and type 2 diabetes, obesity), respiratory (asthma), cancers, cardiovascular (heart disease), and mental health. Confirm the grouping against WHO&#39;s NCD fact sheet and say which grouping you used.</td></tr><tr><td>Causes</td><td>Why children develop NCDs</td><td>Causes combine genetics and biology with behaviour and environment. Some NCDs, such as type 1 diabetes and childhood cancers, are not caused by lifestyle, so avoid blaming parents. Others, such as obesity and type 2 diabetes, are strongly shaped by diet, activity and surroundings.</td></tr><tr><td>Risk factors</td><td>What raises the chance</td><td>WHO names physical inactivity, unhealthy diets, exposure to alcohol and tobacco, and unhealthy or unsafe environments as important risk factors (<a target="_blank" rel="noopener" href="https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/prevention-of-noncommunicable-diseases">WHO</a>). Exposure to tobacco smoke is a risk factor for childhood asthma (<a target="_blank" rel="noopener" href="https://www.annalsofglobalhealth.org/en/articles/2416">Serebrisky and Wiznia, 2019</a>). UNICEF links rising obesity to ultra-processed food and aggressive marketing (<a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF coverage</a>).</td></tr><tr><td>Prevention</td><td>What families, schools and governments can do</td><td>WHO says life-long health behaviours are shaped in childhood and adolescence, and that schools and educators have a responsibility to protect children&#39;s health (<a target="_blank" rel="noopener" href="https://uniatf.who.int/publications/i/item/noncommunicable-diseases-what-ministries-of-education-need-to-know">WHO</a>). The Caribbean Public Health Agency (CARPHA) recommends mandatory food labelling, nutrition standards for schools and less marketing of unhealthy foods (<a target="_blank" rel="noopener" href="https://www.iwnsvg.com/2021/03/04/obesity-in-caricom-highest-compared-to-the-world-carpha/">CARPHA</a>). At home: more active play, fewer sugary drinks, no smoking around children and support for children to talk about their feelings.</td></tr></tbody></table></div>
+<h3 id="statistics-bank">Statistics bank</h3>
+<p>Use at least four of these in Part B, and check each against its source first.</p>
+<div class="tw"><table><thead><tr><th>Statistic</th><th>Figure</th><th>Source</th></tr></thead><tbody><tr><td>Children aged 5–19 living with obesity worldwide, 2025</td><td>9.4%, about 188 million, now more than the 9.2% who are underweight</td><td><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF via allAfrica</a></td></tr><tr><td>Growth in obesity among 5–19-year-olds since 2000</td><td>From 3% to 9.4%</td><td><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100292.html">UNICEF via allAfrica</a></td></tr><tr><td>Young people who saw ads for sugary drinks, snacks or fast food in the past week</td><td>75% of 64,000 young people surveyed in 170 countries</td><td><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF via allAfrica</a></td></tr><tr><td>Children in the Caribbean who are overweight or obese</td><td>1 in 3</td><td><a target="_blank" rel="noopener" href="https://www.ttt.live/?p=144537">CARPHA, World Obesity Day 2026</a></td></tr><tr><td>Overweight and obesity among children aged 5–9 in CARICOM countries</td><td>26.1% (Saint Lucia, lowest) to 39.5% (Bahamas, highest)</td><td><a target="_blank" rel="noopener" href="https://www.iwnsvg.com/2021/03/04/obesity-in-caricom-highest-compared-to-the-world-carpha/">CARPHA</a></td></tr><tr><td>Adolescents aged 11–17 not meeting the 60 minutes of daily activity guideline, 2016</td><td>81% (77.6% of boys, 84.7% of girls)</td><td><a target="_blank" rel="noopener" href="https://pubmed.ncbi.nlm.nih.gov/31761562/">Guthold et al., Lancet Child &amp; Adolescent Health</a></td></tr><tr><td>Adolescents aged 10–19 living with a mental health condition</td><td>1 in 7 (about 14%), 15% of the disease burden in this age group</td><td><a target="_blank" rel="noopener" href="https://www.who.int/news-room/fact-sheets/detail/mental-health-of-adolescents">WHO</a></td></tr><tr><td>Children and adolescents under 20 with type 1 diabetes</td><td>About 1.2 million; 149,500 new cases estimated in 2021</td><td><a target="_blank" rel="noopener" href="https://lifeforachild.org/wp-content/uploads/2022/05/G.-D.-Ogle-S.-James-D.-Dabelea-et-al.-Global-estimates-of-incidence-of-type-1-diabetes-in-children-and-adolescents_Results-from-the-Inter-national-Diabetes-Federation-Atlas-10th-edition.pdf">IDF Diabetes Atlas, 10th edition</a></td></tr><tr><td>Children who develop cancer each year</td><td>About 400,000 (WHO estimate); 377,000 new cases and 144,000 deaths in 2023 (Global Burden of Disease analysis, ages 0–19)</td><td><a target="_blank" rel="noopener" href="https://knowledge-action-portal.com/en/content/gicc-cureall-country-showcase-road-2030">WHO</a>, <a target="_blank" rel="noopener" href="https://papers.sze.hu/research-portal/authors/58955491100">GBD 2023</a></td></tr><tr><td>Share of adolescent disability-affected life years caused by NCDs, 2019</td><td>Over half; about 1 in 5 adolescent deaths</td><td><a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF</a></td></tr><tr><td>Asthma</td><td>The most common chronic disease in children; prevalence varies up to 13-fold between countries</td><td><a target="_blank" rel="noopener" href="https://www.annalsofglobalhealth.org/en/articles/2416">Serebrisky and Wiznia, 2019</a></td></tr></tbody></table></div>
+<p><strong>Reading the numbers:</strong> the physical activity figure is from 2016 surveys, and the Caribbean percentages come from CARPHA statements of different years. Say which year a figure comes from when you use it.</p>
+<h2 id="part-b-writing-your-piece-for-parents">Part B: Writing your piece for parents</h2>
+<p>Choose <strong>one</strong> form. Both must carry the same research and the same call to action.</p>
+<ul><li><p><strong>Speech:</strong> written to be heard at a parent-teacher meeting. Use short sentences, repetition and direct address (&quot;you&quot;, &quot;your child&quot;). Include delivery notes in brackets if they help (pause, slow down).</p></li><li><p><strong>Short story:</strong> told through one character, such as a parent noticing a change in their child, a child at a school canteen, or a nurse at a clinic. Weave the facts into dialogue, thought or setting. Do not stop the story to lecture.</p></li></ul>
+<p><strong>Choose at least four techniques</strong> from the menu below. Use each one on purpose and be ready to explain it in Part C.</p>
+<div class="tw"><table><thead><tr><th>Technique</th><th>What it does</th><th>Example of use in this topic</th></tr></thead><tbody><tr><td>Anecdote or opening scene</td><td>Hooks attention and builds empathy</td><td>A child running home for a sugary drink after school</td></tr><tr><td>Rhetorical question</td><td>Makes the audience think</td><td>&quot;Who is really choosing what our children eat?&quot;</td></tr><tr><td>Tricolon (rule of three)</td><td>Makes advice memorable</td><td>&quot;Move more, drink water, talk openly.&quot;</td></tr><tr><td>Anaphora (repeated opening words)</td><td>Builds rhythm and emphasis</td><td>&quot;Not because we do not care. Not because we do not try.&quot;</td></tr><tr><td>Metaphor or simile</td><td>Makes an abstract idea concrete</td><td>Habits as footprints that follow a child into adulthood</td></tr><tr><td>Direct address</td><td>Creates a personal link</td><td>&quot;As a parent, you already…&quot;</td></tr><tr><td>Contrast (antithesis)</td><td>Sharpens a point</td><td>&quot;Small choices today, big consequences tomorrow.&quot;</td></tr><tr><td>Imagery and sensory detail</td><td>Makes a scene vivid</td><td>The fizz, the colours and the wrappers on the school bus</td></tr><tr><td>Foreshadowing or flashback (story)</td><td>Shows cause and effect over time</td><td>A parent recalls the habits that started years earlier</td></tr><tr><td>Appeals to ethos, pathos and logos</td><td>Builds trust, feeling and reason together</td><td>Credible sources, a family moment, a clear statistic</td></tr></tbody></table></div>
+<p><strong>Tone checklist for this audience</strong></p>
+<ul><li><p>Inform and encourage; never blame. Some NCDs, such as type 1 diabetes and childhood cancers, are not caused by anything a parent did.</p></li><li><p>Use plain language. Explain &quot;non-communicable&quot; in your first minute.</p></li><li><p>Offer small, realistic actions, not a complete lifestyle change.</p></li><li><p>Respect families who face cost, time or safety barriers to healthy choices.</p></li></ul>
+<h2 id="parts-c-and-d-justify-and-evaluate">Parts C and D: Justify and evaluate</h2>
+<h3 id="part-c-justification-of-organization-250300-words">Part C: Justification of organization (250–300 words)</h3>
+<p>Explain why your piece is built the way it is. Address each prompt with evidence from your own text.</p>
+<ol><li><p><strong>Opening:</strong> Why did you begin as you did, and what did you want parents to feel or do in the first 30 seconds?</p></li><li><p><strong>Sequence:</strong> Why is the information in this order (for example, scene, then definition, then statistics, then causes, then action)? What would be lost if you swapped two sections?</p></li><li><p><strong>Techniques:</strong> Name each literary technique, quote where it appears and say what it does for this audience.</p></li><li><p><strong>Language and tone:</strong> Which word choices, sentence lengths and forms of address suit parents, and why?</p></li><li><p><strong>Closing:</strong> How does your ending leave the audience with a clear next step?</p></li></ol>
+<h3 id="part-d-evaluation-of-effectiveness-300350-words">Part D: Evaluation of effectiveness (300–350 words)</h3>
+<p>Judge how well your piece is likely to work. A good evaluation weighs strengths against weaknesses and gives reasons.</p>
+<ol><li><p><strong>Purpose and audience:</strong> Does the piece inform, persuade and motivate parents without blaming them? Give two pieces of evidence from your text.</p></li><li><p><strong>Evidence:</strong> Are the statistics accurate, current, sourced and easy to understand? Which would you update or double-check?</p></li><li><p><strong>Feedback:</strong> Read or tell your piece to at least one parent or guardian and record two specific comments they made.</p></li><li><p><strong>Weaknesses:</strong> Name one thing that does not work as well as you hoped (too many figures, a confusing section, a missing barrier such as cost) and explain why.</p></li><li><p><strong>Revision:</strong> State two changes you would make, and say how each would improve the effect on parents.</p></li></ol>
+<h2 id="model-speech-for-teachers-not-for-copying">Model speech for teachers (not for copying)</h2>
+<p>This short exemplar shows the standard expected. It is about 400 words, below the student minimum, so students must go further in depth and in their own voice.</p>
+<h3 id="small-plates-big-futures">Small Plates, Big Futures</h3>
+<p>Good evening, parents.</p>
+<p>Picture your child at nine years old, running home from school, backpack bouncing, calling out the first thing she wants: a cold drink and a bag of chips. It feels like the smallest moment of the day. But the smallest moments are where the biggest health stories begin.</p>
+<p>Tonight I want to talk about non-communicable diseases, or NCDs. These are long-lasting conditions, such as asthma, diabetes, heart disease, cancer, obesity and mental health conditions, that cannot be passed from one child to another like a cold. We think of them as grown-up problems. They are not. The World Health Organization says many of them have their origins in childhood.</p>
+<p>Consider the numbers. UNICEF reports that one in ten children aged five to nineteen now lives with obesity, about 188 million young people, and for the first time that is more than the number who are underweight. Here in the Caribbean, the regional health agency CARPHA says one in three children is overweight or obese. Worldwide, 81 percent of adolescents do not get the hour of daily activity they need. And one in seven young people aged ten to nineteen lives with a mental health condition.</p>
+<p>Why? Not because parents do not care. Not because parents do not try. But because the world around our children has changed. Ultra-processed food is everywhere. Screens are easier than playgrounds. In a UNICEF poll of 64,000 young people, three in four had seen an advertisement for sugary drinks, snacks or fast food in a single week. Your child is being marketed to, every day.</p>
+<p>Now, not every NCD can be prevented. Type 1 diabetes and childhood cancers are not caused by anything a parent did. But many risk factors can be changed: what is on the plate, how much our children move, whether they breathe smoke, and whether they feel safe to say how they really feel.</p>
+<p>So here is my invitation. Tonight, choose three small changes. Water before soda. Sixty minutes of movement a day. And one question at the dinner table: &quot;How are you really feeling?&quot;</p>
+<p>Small plates. Big futures. The habits our children form today will walk beside them for the rest of their lives. Let us walk with them.</p>
+<h3 id="annotation-of-techniques">Annotation of techniques</h3>
+<div class="tw"><table><thead><tr><th>Technique</th><th>Where it appears</th><th>Effect on parents</th></tr></thead><tbody><tr><td>Anecdote and imagery</td><td>The child running home with her backpack</td><td>Creates an instant, relatable picture before any data</td></tr><tr><td>Antithesis</td><td>&quot;Not every NCD can be prevented… But many risk factors can be changed&quot;</td><td>Balances honesty with hope</td></tr><tr><td>Anaphora</td><td>&quot;Not because parents do not care. Not because parents do not try.&quot;</td><td>Removes blame and builds rhythm</td></tr><tr><td>Tricolon</td><td>&quot;Water before soda. Sixty minutes of movement a day. And one question…&quot;</td><td>Makes the action steps easy to remember</td></tr><tr><td>Direct address</td><td>&quot;your child&quot;, &quot;Your child is being marketed to&quot;</td><td>Personalizes the issue</td></tr><tr><td>Logos</td><td>UNICEF, CARPHA, WHO statistics named in the text</td><td>Builds credibility through sources</td></tr><tr><td>Closing refrain and metaphor</td><td>&quot;Small plates. Big futures… walk beside them&quot;</td><td>Leaves a memorable image and motive</td></tr></tbody></table></div>
+<p><strong>Organization:</strong> hook (scene), definition, evidence (statistics), causes without blame, honest limits, call to action, refrain. This moves parents from curiosity to concern to confidence.</p>
+<h2 id="rubric-50-marks">Rubric (50 marks)</h2>
+<div class="tw"><table><thead><tr><th>Criterion</th><th>Excellent</th><th>Proficient</th><th>Developing</th><th>Beginning</th></tr></thead><tbody><tr><td><strong>Research and accuracy</strong> (10)</td><td><strong>9–10:</strong> Covers all six elements (definition, examples, classification, causes, risk factors, prevention). Four or more correct, current statistics from credible, named sources. Distinguishes preventable from non-preventable NCDs.</td><td><strong>7–8:</strong> Covers five or six elements with minor gaps. At least four sound statistics, mostly sourced. Small imprecision in dates or wording.</td><td><strong>4–6:</strong> Covers three or four elements. Fewer than four statistics, or sources vague. Some inaccuracies or over-generalization.</td><td><strong>0–3:</strong> Covers two or fewer elements. Few or no statistics, unsourced or inaccurate.</td></tr><tr><td><strong>Audience awareness and tone</strong> (6)</td><td><strong>6:</strong> Language, examples and tone are clearly shaped for parents. Informs and motivates without blame. Acknowledges real barriers.</td><td><strong>4–5:</strong> Mostly suited to parents. Tone is supportive, with occasional lapses into jargon or blame.</td><td><strong>2–3:</strong> Audience is unclear or too technical or too general. Tone is uneven.</td><td><strong>0–1:</strong> Little sign of a parent audience. Tone is inappropriate or confusing.</td></tr><tr><td><strong>Organization of the piece</strong> (6)</td><td><strong>6:</strong> Compelling opening, logical progression, smooth transitions and a strong close with a clear call to action.</td><td><strong>4–5:</strong> Clear structure with minor weaknesses in transitions, opening or close.</td><td><strong>2–3:</strong> Some structure, but sequence is uneven or the ending is weak.</td><td><strong>0–1:</strong> Disorganized. No clear opening, development or close.</td></tr><tr><td><strong>Literary techniques</strong> (8)</td><td><strong>7–8:</strong> Four or more techniques used purposefully and skilfully. Each one strengthens meaning and persuasion.</td><td><strong>5–6:</strong> Four techniques used correctly, with some less effective.</td><td><strong>3–4:</strong> Two or three techniques, or used mechanically or incorrectly.</td><td><strong>0–2:</strong> One or no technique, or used without purpose.</td></tr><tr><td><strong>Language, style and mechanics</strong> (6)</td><td><strong>6:</strong> Precise, vivid, varied language. Spelling, grammar and punctuation are virtually error-free. Suits the form (spoken rhythm or narrative voice).</td><td><strong>4–5:</strong> Clear, controlled language with few errors that do not hinder meaning.</td><td><strong>2–3:</strong> Language is basic or repetitive. Errors sometimes distract.</td><td><strong>0–1:</strong> Frequent errors impede understanding.</td></tr><tr><td><strong>Justification of organization</strong> (7)</td><td><strong>6–7:</strong> Explains clearly why each structural and language choice was made, quoting the text and linking choices to the audience and purpose.</td><td><strong>4–5:</strong> Explains most choices with some evidence from the text. Links to audience are present but uneven.</td><td><strong>2–3:</strong> Describes what was done more than why. Little textual evidence.</td><td><strong>0–1:</strong> Little or no justification. Incomplete.</td></tr><tr><td><strong>Evaluation of effectiveness</strong> (7)</td><td><strong>6–7:</strong> Balanced, evidence-based judgement of strengths and weaknesses. Uses real audience feedback and proposes specific, sensible revisions.</td><td><strong>4–5:</strong> Reasonable judgement with some evidence. Feedback or revisions are present but general.</td><td><strong>2–3:</strong> Mostly opinion or description. Little evidence, feedback or revision.</td><td><strong>0–1:</strong> No real evaluation.</td></tr><tr><td><strong>Total</strong></td><td><strong>45–50</strong></td><td><strong>35–44</strong></td><td><strong>20–34</strong></td><td><strong>0–19</strong></td></tr></tbody></table></div>
+<p><strong>Using the rubric:</strong> mark each criterion by choosing the band that best fits, then award a mark within it. Deduct up to 3 marks from Research and accuracy if the reference list is missing or sources are not credible (for example, unsourced social media posts).</p>
+<h2 id="sources">Sources</h2>
+<p>Figures were taken from search results in October 2026. Students should open each page and confirm the figure before quoting it.</p>
+<ul><li><p><a target="_blank" rel="noopener" href="https://data.unicef.org/topic/child-health/noncommunicable-diseases/">UNICEF Data: Noncommunicable diseases</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/prevention-of-noncommunicable-diseases">WHO: Prevention of noncommunicable diseases (Child Health and Development)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://uniatf.who.int/publications/i/item/noncommunicable-diseases-what-ministries-of-education-need-to-know">WHO: Noncommunicable diseases: what ministries of education need to know</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.who.int/news-room/fact-sheets/detail/mental-health-of-adolescents">WHO: Mental health of adolescents</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7734741/">Akseer et al. (2020), Non-communicable diseases among adolescents, BMC Public Health</a></p></li><li><p><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100185.html">UNICEF report coverage: obesity surpasses underweight (allAfrica, 10 September 2025)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://allafrica.com/stories/202509100292.html">UNICEF report coverage: obesity rates rise from 3% to 9.4% (allAfrica, 10 September 2025)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.ttt.live/?p=144537">CARPHA: Champions urgent regional action to prevent childhood obesity (World Obesity Day 2026)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.iwnsvg.com/2021/03/04/obesity-in-caricom-highest-compared-to-the-world-carpha/">CARPHA: Obesity in CARICOM highest compared to the world (2021)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://pubmed.ncbi.nlm.nih.gov/31761562/">Guthold et al. (2020), Global trends in insufficient physical activity among adolescents, Lancet Child &amp; Adolescent Health</a></p></li><li><p><a target="_blank" rel="noopener" href="https://lifeforachild.org/wp-content/uploads/2022/05/G.-D.-Ogle-S.-James-D.-Dabelea-et-al.-Global-estimates-of-incidence-of-type-1-diabetes-in-children-and-adolescents_Results-from-the-Inter-national-Diabetes-Federation-Atlas-10th-edition.pdf">Ogle et al., Global estimates of incidence of type 1 diabetes in children and adolescents, IDF Atlas 10th edition</a></p></li><li><p><a target="_blank" rel="noopener" href="https://www.annalsofglobalhealth.org/en/articles/2416">Serebrisky and Wiznia (2019), Pediatric asthma: a global epidemic, Annals of Global Health</a></p></li><li><p><a target="_blank" rel="noopener" href="https://knowledge-action-portal.com/en/content/gicc-cureall-country-showcase-road-2030">WHO Global Initiative for Childhood Cancer (February 2024)</a></p></li><li><p><a target="_blank" rel="noopener" href="https://papers.sze.hu/research-portal/authors/58955491100">Global Burden of Disease Study 2023: cancer in children and adolescents aged 0–19 (listing)</a></p></li></ul>
+</article><p class="credit">CAPE Communication Studies</p></main>
+<script>document.querySelectorAll('input[type=checkbox][disabled]').forEach(function(c,i){c.disabled=false;var k='chk-'+location.pathname+'-'+i;try{c.checked=localStorage.getItem(k)==='1'}catch(e){}c.addEventListener('change',function(){try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});</script>
+</body></html>

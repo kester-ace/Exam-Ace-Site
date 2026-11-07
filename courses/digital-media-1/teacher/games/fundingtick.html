@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en-GB" data-gs-own>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funding Methods Tick Table</title>
+<meta name="description" content="Tick the funding methods that match each feature, then read why. From the Funding Models exercise. Kester Small">
+<style>
+:root{
+  --bg:#12141c; --panel:#1b1e2a; --panel2:#232738; --ink:#f2f3f8; --muted:#b4b9cc; --line:#363b52;
+  --gold:#f5c542; --gold-ink:#1b1400; --ok:#5fd39a; --bad:#ff8a7a; --miss:#ffb454; --focus:#8fc2ff;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
+body{min-width:320px}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 8px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px;margin-bottom:12px}
+h1{margin:0;font-size:1.45rem}
+h1 span{color:var(--gold)}
+.sub{margin:2px 0 0;color:var(--muted);font-size:.92rem;max-width:62ch}
+.credit{margin:4px 0 0;color:var(--muted);font-size:.82rem;font-style:italic}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;min-width:0;margin-bottom:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-size:.92rem;font-weight:700;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer;min-height:40px}
+.btn:hover{border-color:#5a6080}
+.btn.go{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn[aria-pressed="true"]{background:#3a3f58;border-color:var(--gold)}
+button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+.score{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;color:var(--muted);font-size:.85rem;margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:center;vertical-align:middle}
+thead th{position:sticky;top:0;background:var(--panel2);font-size:.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;z-index:1}
+th.feat,td.feat{text-align:left;min-width:220px}
+td.feat b{display:block}
+.rhint{display:block;color:var(--muted);font-size:.82rem;margin-top:2px}
+.tick{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;border-radius:10px;border:2px solid transparent;cursor:pointer}
+.tick input{width:22px;height:22px;accent-color:var(--gold);cursor:pointer;margin:0}
+.tick .nm{display:none}
+.tick.right{border-color:var(--ok);background:rgba(95,211,154,.12)}
+.tick.wrong{border-color:var(--bad);background:rgba(255,138,122,.12)}
+.tick.missed{border-color:var(--miss);border-style:dashed}
+tr.fbrow td{text-align:left;border-bottom:1px solid var(--line);padding:0 8px 10px}
+.fb{background:var(--panel2);border-radius:12px;padding:10px 12px;border-left:4px solid var(--gold);font-size:.92rem}
+.fb.good{border-left-color:var(--ok)} .fb.bad{border-left-color:var(--bad)}
+.fb p{margin:4px 0 0}
+.fb .key{font-weight:800}
+.fixnote{display:inline-block;margin-top:6px;font-size:.82rem;color:var(--gold);font-weight:700}
+.result{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--panel2);border-left:4px solid var(--gold)}
+.hint{color:var(--muted);font-size:.86rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+footer{max-width:1180px;margin:8px auto 0;padding:12px 16px 18px;color:var(--muted);font-size:.85rem;text-align:center;border-top:1px solid var(--line)}
+/* Narrow screens: each feature becomes a card with labelled tick chips */
+@media (max-width:980px){
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr.frow{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:10px}
+  tr.frow td{border:0;padding:4px 0;text-align:left}
+  td.feat{min-width:0}
+  td.cell{display:inline-block;width:auto;margin:3px 4px 3px 0}
+  .tick{border:1px solid var(--line);background:var(--panel);padding:6px 10px;justify-content:flex-start}
+  .tick .nm{display:inline;font-size:.88rem;font-weight:700}
+  tr.fbrow td{padding:6px 0 0}
+  .score{margin-left:0}
+}
+@media print{
+  body,html{background:#fff;color:#000}
+  .card,.fb,.score{background:#fff;color:#000;border-color:#999}
+  .bar .btn{display:none}
+  thead th{background:#eee;color:#000}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Funding Methods <span>Tick Table</span></h1>
+      <p class="sub">Tick every funding method that matches each feature. Some rows have more than one correct box. Check your answers to see per-row feedback explaining each answer.</p>
+      <p class="credit">From the Funding Models exercise · Module 2, project funding opportunities</p>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="bar">
+      <button type="button" class="btn go" id="checkBtn">Check answers</button>
+      <button type="button" class="btn" id="hintBtn" aria-pressed="false">Show how many ticks per row</button>
+      <button type="button" class="btn" id="showBtn" aria-pressed="false">Show the answer key</button>
+      <button type="button" class="btn" id="resetBtn">Reset</button>
+      <button type="button" class="btn" id="printBtn">Print</button>
+      <span class="score" id="score" role="status" aria-live="polite">Score: not checked yet</span>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i style="background:var(--ok)"></i>Correct tick</span>
+      <span><i style="background:var(--bad)"></i>Should not be ticked</span>
+      <span><i style="border:2px dashed var(--miss)"></i>Missed: should be ticked</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tablewrap">
+      <table id="tbl">
+        <caption class="sr">Funding methods tick table: twelve features against seven funding methods</caption>
+        <thead><tr id="headRow"><th class="feat" scope="col">Feature</th></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <div class="result" id="result" hidden></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:1rem">About the answer key</h2>
+    <p class="hint" style="margin:0">This key was reviewed for accuracy against the Module 2 notes. Rows 1 and 10 were corrected, and rows 2 and 3 have a short clarifying hint. Each corrected row explains the change in its feedback. Remember the exceptions: <b>equity crowdfunding</b> does give away shares, and some <b>partnerships</b> share control, but the table tests the usual form of each method.</p>
+  </div>
+</div>
+<footer>Funding Methods Tick Table · Digital Media Unit 1 · Kester Small</footer>
+
+<script>
+(function () {
+  var COLS = ['Crowdfunding', 'Grants', 'Angel investors', 'Loans', 'Venture capital', 'Sponsorships / partnerships', 'Bootstrapping'];
+  // key: 0-based column indexes
+  var ROWS = [
+    { t: 'Builds an early audience and community around your idea', h: 'often on platforms like Kickstarter', key: [0], fixed: 'Corrected: the original key also ticked bootstrapping.',
+      why: 'Only <b>crowdfunding</b>. Backers who pledge become your first fans and share the campaign, and the campaign page itself is marketing. <b>Bootstrapping</b> (self-funding) gives you freedom but no built-in audience, so it was removed from the key. Sponsors give you exposure to <i>their</i> audience, which is not the same as building a community around your own idea.' },
+    { t: 'Non-repayable funding; no debt to pay back', h: 'money awarded for a purpose, with nothing owed in return except reporting', key: [1], fixed: 'Clarified: a hint was added so the row has one clear answer.',
+      why: '<b>Grants</b> are the classic non-repayable funding: you report on how the money was spent, but you repay nothing and give away nothing. Loans must be repaid. Angels and venture capitalists are not repaid either, but they take equity. Reward-based crowdfunding and sponsorship create no debt, but backers expect rewards and sponsors expect promotion in return.' },
+    { t: 'May require giving up equity or partial control', h: 'equity = a share of ownership', key: [2, 4], fixed: '',
+      why: '<b>Angel investors</b> and <b>venture capital</b> both buy a share (equity) of the business, and with it some say in decisions. Loans, grants and sponsorship take no ownership. Watch for the exception: <i>equity crowdfunding</i> also gives shares to backers, and some partnerships share control, but the usual answer is angels and VC.' },
+    { t: 'Must be repaid with interest regardless of success', h: '', key: [3], fixed: '',
+      why: '<b>Loans</b> (debt funding) must be repaid with interest even if the project fails. That is the main risk of debt. Equity investors share the risk: if the business fails, their money is lost.' },
+    { t: 'Targeted at high-growth projects; can scale fast with firm support', h: '', key: [4], fixed: '',
+      why: '<b>Venture capital</b> firms invest large sums in businesses that could grow quickly, then support that growth. The word <i>firm</i> is the clue: angels are individuals investing their own money, usually smaller amounts at an earlier stage.' },
+    { t: 'Funding in exchange for visibility; may need to fit a brand’s image', h: '', key: [5], fixed: '',
+      why: '<b>Sponsorships and partnerships</b>: a business pays in cash or kind in return for exposure, for example its logo on a web series. The sponsor will want your content to match its brand values.' },
+    { t: 'Self-funded; full creative freedom but budget can be limited', h: '', key: [6], fixed: '',
+      why: '<b>Bootstrapping</b> means funding the project from your own savings or early sales. Nobody else owns a share or sets conditions, but the budget is only as big as your own resources.' },
+    { t: 'Competitive application process with proposals and reporting', h: '', key: [1], fixed: '',
+      why: '<b>Grants</b> are awarded through a competitive application with a written proposal, a budget and reports afterwards. Investors also judge pitches, but formal proposals with set criteria and reporting are the mark of grant funding (and of the proposal skills in Unit 7).' },
+    { t: 'Requires strong marketing and consistent public updates to hit target', h: '', key: [0], fixed: '',
+      why: '<b>Crowdfunding</b> campaigns have a public target and a deadline. Without steady promotion and regular updates to backers, they stall. On an all-or-nothing platform such as Kickstarter, missing the target means receiving nothing.' },
+    { t: 'Often comes with mentorship and industry contacts', h: '', key: [2, 4], fixed: 'Corrected: venture capital was added to the key.',
+      why: '<b>Angel investors</b> are often experienced entrepreneurs who mentor the founders. <b>Venture capital</b> firms do the same and more: they usually take a seat on the board and open their networks of contacts, partners and future investors. That is why VC was added to the key.' },
+    { t: 'No equity required (you keep ownership)', h: '', key: [0, 1, 3, 5, 6], fixed: '',
+      why: 'You keep full ownership with <b>crowdfunding</b> (reward or donation based), <b>grants</b>, <b>loans</b>, <b>sponsorships</b> and <b>bootstrapping</b>. Only angels and venture capital take a share of the business.' },
+    { t: 'Investors expect influence over major decisions', h: '', key: [2, 4], fixed: '',
+      why: 'Because <b>angel investors</b> and <b>venture capitalists</b> own part of the business, they expect a say in major decisions such as hiring, spending and selling the company. Lenders and grant-givers set conditions but do not own the business.' }
+  ];
+  if (window.GameSave) GameSave.register(['fundingtick_v1']);
+  var LS = 'fundingtick_v1', state = load(), checked = false, showKey = false, showHint = false;
+  function load() { try { var s = JSON.parse(localStorage.getItem(LS) || 'null'); if (s && s.t && s.t.length === ROWS.length) return s; } catch (e) { } return { t: ROWS.map(function () { return []; }) }; }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) { } }
+  var head = document.getElementById('headRow');
+  COLS.forEach(function (c) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = c; head.appendChild(th); });
+  var body = document.getElementById('body');
+  function render() {
+    var h = '';
+    ROWS.forEach(function (r, ri) {
+      h += '<tr class="frow"><td class="feat"><b>' + (ri + 1) + '. ' + r.t + '</b>' + (r.h ? '<span class="rhint">(' + r.h + ')</span>' : '') +
+        (showHint ? '<span class="rhint">Ticks needed: ' + r.key.length + '</span>' : '') + '</td>';
+      COLS.forEach(function (c, ci) {
+        var on = state.t[ri].indexOf(ci) > -1, inKey = r.key.indexOf(ci) > -1, cls = '';
+        if (checked) cls = on && inKey ? 'right' : on && !inKey ? 'wrong' : !on && inKey ? 'missed' : '';
+        if (showKey && !checked) cls = inKey ? 'right' : '';
+        h += '<td class="cell"><label class="tick ' + cls + '"><input type="checkbox" data-r="' + ri + '" data-c="' + ci + '"' + (on ? ' checked' : '') +
+          ' aria-label="Row ' + (ri + 1) + ': ' + c + '"><span class="nm">' + c + '</span></label></td>';
+      });
+      h += '</tr>';
+      if (checked || showKey) {
+        var ok = rowRight(ri);
+        h += '<tr class="fbrow"><td colspan="' + (COLS.length + 1) + '"><div class="fb ' + (checked ? (ok ? 'good' : 'bad') : '') + '">' +
+          (checked ? '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' : '') + '<span class="key">Answer: ' + r.key.map(function (k) { return COLS[k]; }).join(', ') + '.</span>' +
+          '<p>' + r.why + '</p>' + (r.fixed ? '<span class="fixnote">' + r.fixed + '</span>' : '') + '</div></td></tr>';
+      }
+    });
+    body.innerHTML = h;
+  }
+  function rowRight(ri) { var a = state.t[ri].slice().sort(), k = ROWS[ri].key.slice().sort(); return a.length === k.length && a.every(function (v, i) { return v === k[i]; }); }
+  body.addEventListener('change', function (e) {
+    var x = e.target; if (!x.matches('input[type=checkbox]')) return;
+    var ri = +x.dataset.r, ci = +x.dataset.c, arr = state.t[ri], i = arr.indexOf(ci);
+    if (x.checked && i < 0) arr.push(ci); if (!x.checked && i > -1) arr.splice(i, 1);
+    if (checked) state.ck = false;
+    save();
+    if (checked) { checked = false; document.getElementById('score').textContent = 'Score: changed since last check'; document.getElementById('result').hidden = true; render(); var el = body.querySelector('input[data-r="' + ri + '"][data-c="' + ci + '"]'); if (el) el.focus(); }
+  });
+  function doCheck() {
+    checked = true; state.ck = true; save(); showKey = false; document.getElementById('showBtn').setAttribute('aria-pressed', 'false');
+    var rows = 0, boxes = 0, total = ROWS.length * COLS.length;
+    ROWS.forEach(function (r, ri) { if (rowRight(ri)) rows++; COLS.forEach(function (c, ci) { if ((state.t[ri].indexOf(ci) > -1) === (r.key.indexOf(ci) > -1)) boxes++; }); });
+    var pct = Math.round(rows / ROWS.length * 100);
+    document.getElementById('score').textContent = 'Score: ' + rows + ' / ' + ROWS.length + ' rows (' + pct + '%)';
+    var res = document.getElementById('result'); res.hidden = false;
+    res.innerHTML = '<b>' + rows + ' of ' + ROWS.length + ' rows fully correct</b> · ' + boxes + ' of ' + total + ' boxes right. ' +
+      (rows === ROWS.length ? 'Excellent: you can tell every funding method apart.' : 'Read the feedback under each row marked "Not quite", fix your ticks and check again.');
+    render();
+  }
+  document.getElementById('checkBtn').onclick = doCheck;
+  document.getElementById('showBtn').onclick = function () { showKey = !showKey; if (showKey) { checked = false; state.ck = false; save(); } this.setAttribute('aria-pressed', String(showKey)); render(); };
+  document.getElementById('hintBtn').onclick = function () { showHint = !showHint; state.hint = showHint; save(); this.setAttribute('aria-pressed', String(showHint)); render(); };
+  document.getElementById('resetBtn').onclick = function () { if (window.GameSave) { GameSave.startOver(); return; } state = { t: ROWS.map(function () { return []; }) }; save(); checked = false; showKey = false; document.getElementById('showBtn').setAttribute('aria-pressed', 'false'); document.getElementById('score').textContent = 'Score: not checked yet'; document.getElementById('result').hidden = true; render(); };
+  document.getElementById('printBtn').onclick = function () { window.print(); };
+  /* saved progress (GameSave): the ticks were already kept; the checked results and the hint setting now come back too, and Reset clears everything */
+  if (state.hint === true) { showHint = true; document.getElementById('hintBtn').setAttribute('aria-pressed', 'true'); }
+  if (state.ck === true) doCheck(); else render();
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

@@ -1,0 +1,1662 @@
+(window.COURSE_MODULES = window.COURSE_MODULES || []).push({
+  id: `S1`,
+  code: `Section I`,
+  title: `Fundamentals of Computing`,
+  overview: `<p>Section I gives you the foundation for everything else in EDPM. Before you can key in, format and manage an electronic document with confidence, you need to know what a computer is, how computers have evolved from room-sized <b>mainframes</b> to the smartphone in your pocket, what the parts of a computer system are called, and how to choose, use and care for devices, storage media and software responsibly. You will also weigh up the <b>advantages and disadvantages</b> of computer usage and the <b>health, ergonomic, safety and environmental</b> factors linked to working at a computer.</p>
+<p>In the examination, this section is tested mainly in <b>Paper 01</b> through multiple-choice items that check your definitions, your ability to classify devices, media and software, and your judgement in short workplace situations. The same knowledge supports <b>Paper 02</b> and your <b>SBA</b>: every time you choose an application, save to a suitable storage medium, back up your files or set up your workstation safely, you are using Section I.</p>
+<p>Work through the six units in order. Each unit follows Chapter 1: read the short lessons, try the games and checks (switch to the easier version if you need to), then finish with the short written task. Keep your own glossary as you go, and answer each <b>ITQ</b> (In-Text Question) in your notebook before you check it.</p>`,
+  objectives: [
+    `By the end you will be able to describe the computer as an electronic machine or device that accepts and processes data to produce information.`,
+    `By the end you will be able to discuss the evolution of the computer from mainframe to minicomputer to microcomputer, including laptops, desktops, smartphones and other current devices.`,
+    `By the end you will be able to identify the main components of a computer system: hardware and software, analog and digital media, input and output devices and processes, storage systems and peripherals.`,
+    `By the end you will be able to discuss the advantages and disadvantages of computer usage in terms of speed, accuracy, storage and retrieval, reliability, ergonomics, ethics, cyber security and e-commerce.`,
+    `By the end you will be able to explain the use of modern input and output devices, including accessibility and specialised devices.`,
+    `By the end you will be able to explain the functionality of devices used for both input and output: tablets, smartphones, touchscreens and phablets.`,
+    `By the end you will be able to discuss current storage media and choose a suitable medium for a practical situation.`,
+    `By the end you will be able to distinguish between operating system software, computer-based application software and web-based application software.`,
+    `By the end you will be able to describe ways of caring for computers and peripherals in the working environment.`,
+    `By the end you will be able to discuss the positive and negative effects of health, accessibility, ergonomics and safety, and environmental factors associated with computer use.`
+  ],
+  glossary: [
+    {term:`Computer`, def:`An electronic machine or device that accepts and processes data to produce information.`},
+    {term:`Data`, def:`Raw facts and figures supplied to a computer by a user or another device, before they are processed.`},
+    {term:`Information`, def:`Processed data presented in a meaningful form that the user can act upon.`},
+    {term:`Input`, def:`The first stage of the computing cycle, in which data is accepted into the computer.`},
+    {term:`Processing`, def:`The stage in which the computer applies a set of instructions to organise, calculate or transform data.`},
+    {term:`Output`, def:`The stage in which processed data is presented to the user as meaningful information.`},
+    {term:`Storage`, def:`Keeping data and information available for later use, after the task is finished or the device is switched off.`},
+    {term:`Input device`, def:`A hardware component through which data enters a computer system, e.g. a keyboard or mouse.`},
+    {term:`Output device`, def:`A hardware component through which processed information is delivered back to the user, e.g. a monitor or printer.`},
+    {term:`Mainframe`, def:`A large, powerful and expensive computer that supports hundreds or thousands of users and processes at the same time, used by banks, governments and airlines.`},
+    {term:`Minicomputer`, def:`A computer smaller and less costly than a mainframe but more powerful than a personal computer, historically used by medium-sized businesses and university departments.`},
+    {term:`Microcomputer`, def:`A small, relatively inexpensive computer built around a single microprocessor chip, e.g. a desktop, laptop, tablet or smartphone.`},
+    {term:`Hardware`, def:`The physical, tangible parts of a computer system that you can see and touch.`},
+    {term:`Software`, def:`The intangible programs and instructions that tell the hardware what to do.`},
+    {term:`Analog media`, def:`Media that store and transmit information as a continuously variable signal, e.g. a vinyl record.`},
+    {term:`Digital media`, def:`Media that store and transmit information as discrete values, usually binary digits (0s and 1s).`},
+    {term:`Central processing unit (CPU)`, def:`The part of the computer that interprets instructions, performs calculations and logical comparisons, and manages the flow of data.`},
+    {term:`Peripheral`, def:`Any hardware device connected to a computer that is not part of its essential core (the CPU, motherboard and main memory).`},
+    {term:`Garbage in, garbage out`, def:`The principle that a computer is only as accurate as the data and instructions it is given.`},
+    {term:`Malware`, def:`Malicious software, such as viruses and ransomware, designed to damage a device or steal data.`},
+    {term:`Phishing`, def:`A trick in which a criminal poses as a trusted organisation to get a user to reveal passwords or personal details.`},
+    {term:`E-commerce`, def:`Buying and selling goods and services using computers and the internet.`},
+    {term:`Ergonomics`, def:`The design and arrangement of equipment and workstations so that people can work comfortably, safely and efficiently.`},
+    {term:`Biometric device`, def:`An input device that reads a unique physical characteristic (fingerprint, face or iris) to input identity data, usually for secure authentication.`},
+    {term:`GPS receiver`, def:`An input device that determines the geographic location of a device for navigation and location-based services.`},
+    {term:`Graphics tablet`, def:`A flat, pressure-sensitive surface on which an artist or designer draws or traces using a pen-like stylus.`},
+    {term:`Braille reader (Braille display)`, def:`A device that converts on-screen text into raised Braille characters and, on some models, allows Braille entry.`},
+    {term:`Video card (graphics card)`, def:`An internal component that processes image and video data and generates the visual output sent to the monitor.`},
+    {term:`Sound card`, def:`An internal component that processes and manages audio data flowing into and out of the computer.`},
+    {term:`Phablet`, def:`A device that blends a smartphone and a tablet, with a larger touchscreen than a typical phone but more portable than a full tablet.`},
+    {term:`Optical disc`, def:`A storage disc read by a laser, such as a CD-ROM, DVD or CD-RW; now considered legacy technology in most everyday settings.`},
+    {term:`CD-RW`, def:`A rewritable optical disc that can be erased and reused many times.`},
+    {term:`Flash drive`, def:`A small, portable solid-state storage device connected by USB, used for quick file transfer.`},
+    {term:`Memory card`, def:`A small removable storage card, such as microSD, used in phones, tablets and cameras to expand storage.`},
+    {term:`Cloud storage`, def:`Remote storage accessed via the internet, allowing files to be saved, synced and shared across devices from any location.`},
+    {term:`Operating system software`, def:`Programs that coordinate activities among a computer's hardware devices and contain the instructions that allow a user to run application software.`},
+    {term:`Computer-based application software`, def:`Programs installed on a computer's hard drive that perform specific tasks for users, e.g. word processing or spreadsheet software.`},
+    {term:`Web-based application software`, def:`Any software application that is not installed on the hard drive but is accessed via the web, including collaborative tools.`},
+    {term:`Firewall`, def:`A security feature that helps block unauthorised access to a device or network.`},
+    {term:`Defragment`, def:`To reorganise the scattered pieces of files on a hard disk so the system runs more efficiently.`},
+    {term:`Surge protector`, def:`A device that shields a computer and its peripherals from sudden spikes in electrical power.`},
+    {term:`Repetitive strain injury (RSI)`, def:`Pain or damage to muscles, tendons or nerves caused by repeating the same movements, such as typing or using a mouse, for long periods.`},
+    {term:`E-waste`, def:`Electronic waste generated when computers and devices are thrown away.`},
+    {term:`Accessibility`, def:`The design of devices and software so that differently abled persons can use them independently and effectively.`}
+  ],
+  units: [
+    // ===================== UNIT 1 =====================
+    {
+      id: `S1U1`,
+      title: `What is a computer? and the evolution of the computer`,
+      objectives: [
+        `Define a computer using the syllabus definition.`,
+        `Explain the input, process, output and storage cycle.`,
+        `Distinguish between data and information.`,
+        `Compare mainframes, minicomputers and microcomputers by size, cost, users and use.`
+      ],
+      videos: [
+        {title:`What is a computer?`, q:`what is a computer input process output storage cycle for beginners`},
+        {title:`Data versus information`, q:`difference between data and information computer basics`},
+        {title:`Types of computers: mainframe, minicomputer, microcomputer`, q:`types of computers mainframe minicomputer microcomputer explained`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`What is a computer?`,
+          html:`<p>ICT (Information and Communication Technology) touches almost every part of your life: how you learn at school, how your family shops and pays bills, how you stay in touch with relatives in Curaçao or New York. At the centre of all this sits the <b>computer</b>.</p>
+<p class="passage"><b>Definition:</b> A computer is an <b>electronic machine or device</b> that <b>accepts</b> and <b>processes data</b> to <b>produce information</b>.</p>
+<p>Learn this definition word for word. Each part matters:</p>
+<ul>
+<li><b>Electronic</b> - it works with electrical signals, not gears and levers.</li>
+<li><b>Accepts data</b> - it takes in raw facts and figures.</li>
+<li><b>Processes</b> - it follows a set of instructions to organise, calculate or transform that data.</li>
+<li><b>Produces information</b> - it gives back a result that means something to the user.</li>
+</ul>
+<p><b>Data</b> are raw facts and figures, such as a list of test marks: 67, 82, 45, 91. <b>Information</b> is processed data that you can act upon, such as "The class average is 71.25 and one student needs extra help."</p>
+<p class="tip"><b>Teacher's tip:</b> If an examiner asks you to "describe the computer", write the full definition and then give the cycle: input, process, output and storage. That is an easy two or three marks.</p>`,
+          tutor:[
+            {h:`Four key words`, p:`<p>Electronic, accepts, processes, produces. If your definition has all four, it is complete.</p>`},
+            {h:`Data before, information after`, p:`<p>Data goes <b>in</b>. Information comes <b>out</b>. Processing is what turns one into the other.</p>`}
+          ],
+          plain: "<p>A computer is an <b>electronic machine</b> that takes in <b>data</b>, works on it, and gives back <b>information</b>. Data are raw facts. Information is what those facts mean once they have been worked on. At a fruit stall in Castries Market, the prices of a pineapple and a bunch of bananas are data. The total the vendor asks you to pay is information.</p>",
+          deeper: "<p>The difference between data and information depends on the task. The total from one till is information for the cashier, but it becomes <b>data</b> when head office adds every till together for the monthly report. Note too that a computer does not \"think\": it only follows its instructions, so wrong data in gives wrong information out. In the examination, each part of the definition (<b>electronic</b>, <b>accepts</b>, <b>processes data</b>, <b>produces information</b>) can carry a mark, so a vague answer such as \"a machine that does work\" scores little. Write the definition word for word, then add one short example that shows data turning into information.</p>"
+        },
+        {
+          type:'learn', title:`The input, process, output and storage cycle`,
+          html:`<p>Every computer, no matter its size or purpose, works through the same basic cycle.</p>
+<ol>
+<li><b>Input</b> - the computer accepts data supplied by a user or another device. You type your name, scan a barcode or tap a screen.</li>
+<li><b>Process</b> - the computer applies a set of instructions to the data to organise, calculate or transform it.</li>
+<li><b>Output</b> - the computer presents the processed data as meaningful information, for example on a screen or a printout.</li>
+<li><b>Storage</b> - many computers add this fourth step, keeping data and information available for later use.</li>
+</ol>
+<p class="passage"><b>Example:</b> At Hillview Mini Mart, the cashier scans each item (input). The till looks up the prices and adds them, including tax (process). The total appears on the display and a receipt is printed (output). The sale is saved so the owner can check the day's takings later (storage).</p>
+<p><b>Input devices</b> are the hardware components through which data <b>enters</b> a computer system. <b>Output devices</b> are the hardware components through which processed information is <b>delivered back</b> to the user. A keyboard and a mouse are common input devices; a monitor and a printer are common output devices. You will meet many more in Unit 4.</p>
+<p class="tip"><b>ITQ1:</b> In your own words, explain why a calculator that only performs arithmetic is generally not considered a computer in the fuller sense of the term. (Hint: think about whether it can be given new instructions for different tasks, and whether it stores data and information for later use.)</p>`,
+          tutor:[
+            {h:`Follow the data`, p:`<p>Ask: where does the data come in, where is it worked on, where does the result come out, and where is it kept?</p>`},
+            {h:`ITQ1 thinking`, p:`<p>A simple calculator does one fixed job. A computer can run many different programs and keep data and information in storage for later.</p>`}
+          ],
+          plain: "<p>Every computer follows four steps. <b>Input</b>: data goes in. <b>Process</b>: the computer works on it. <b>Output</b>: the result comes out. <b>Storage</b>: the result is saved for later. At a petrol station in Grenada, the attendant keys in the litres (input), the pump works out the cost (process), the price shows on the display (output) and the sale is saved (storage).</p>",
+          deeper: "<p>Two points lift an answer. First, <b>output and storage are different</b>: printing a receipt is output, but saving the sale to the hard disk or the cloud is storage. Second, cycles link together. A record saved today is read back next month to print a statement, so storage makes the next cycle possible. This is why a basic calculator is not a computer in the fuller sense (ITQ1): it cannot be given new instructions for different tasks and it keeps little or nothing for later use. In a \"describe\" question, name each stage <i>and</i> attach a specific example from the scenario. A list of stage names alone rarely earns full marks.</p>"
+        },
+        {
+          type:'order', game:true, title:`Put the cycle in order`,
+          intro:`<p>Shania is submitting her EDPM assignment through the school's online portal. Put what happens in the correct order of the computing cycle.</p>`,
+          blocks:[
+            {t:`Shania types her name and student number and attaches her file. (Input)`},
+            {t:`The portal checks her student number against the class list and records the time. (Process)`},
+            {t:`A message appears on screen: "Assignment received at 10:42 a.m." (Output)`},
+            {t:`The file is saved on the school's server so her teacher can mark it next week. (Storage)`}
+          ],
+          win:`Correct. Data goes in, it is processed, the result comes out as information, and it is stored for later. This is the input, process, output and storage cycle.`,
+          tutor:[
+            {h:`What comes first?`, p:`<p>Nothing can be processed until data has been put in.</p>`},
+            {h:`Output vs storage`, p:`<p>Output is what Shania sees now. Storage is what is kept for later.</p>`}
+          ],
+          easy:{
+            title:`Put the cycle in order (Foundation)`,
+            intro:`<p>Put the four stages of the computing cycle in order.</p>`,
+            blocks:[
+              {t:`Input`},
+              {t:`Process`},
+              {t:`Output`},
+              {t:`Storage`}
+            ]
+          },
+          up: {"title":"Put the cycle in order (Challenge)","intro":"<p>Jalisa pays her electricity bill on the utility company's app in Bridgetown. The stage names have been removed and there are more steps. Put them in the order they happen.</p>","blocks":[{"t":"Jalisa enters her account number and taps \"Pay US$25\"."},{"t":"The system checks that the account number exists and that her card has enough funds."},{"t":"The system subtracts US$25 from the amount owed and calculates the new balance."},{"t":"A confirmation appears on her screen: \"Payment received. New balance: US$41.60.\""},{"t":"The payment record is saved on the company's server."},{"t":"A month later, the saved record is read back so it can appear on her printed statement."}],"win":"Correct. Input (account number and tap), two processing steps (check, then calculate), output (the confirmation), storage (the saved record) and, later, retrieval of that stored record for a new output. Storage is what makes the next cycle possible."}
+        },
+        {
+          type:'multi', game:true, title:`Data or information?`,
+          intro:`<p>Decide whether each item is raw <b>data</b> or processed <b>information</b>.</p>`,
+          items:[
+            {text:`A list of the number of cruise passengers who arrived each day in March.`, options:[`Data`,`Information`], answer:0, fb:`These are raw figures that have not been worked on yet, so they are data.`},
+            {text:`A report stating that cruise arrivals rose by 12% compared with February.`, options:[`Data`,`Information`], answer:1, fb:`The figures have been processed (compared and calculated) into a meaningful result, so this is information.`},
+            {text:`The marks 14, 18, 9 and 20 typed into a spreadsheet.`, options:[`Information`,`Data`], answer:1, fb:`These marks are raw facts that have not yet been processed.`},
+            {text:`A bar chart showing which form group had the best attendance this term.`, options:[`Data`,`Information`], answer:1, fb:`The chart presents processed data in a meaningful form you can act on.`},
+            {text:`A receipt showing the total amount due after tax.`, options:[`Information`,`Data`], answer:0, fb:`The prices were added and the tax calculated, so the total is information.`}
+          ],
+          win:`Well done. Raw facts are data; once they are organised, calculated or summarised into something useful, they become information.`,
+          tutor:[
+            {h:`Has anything been done to it?`, p:`<p>If the figures have been added, compared, averaged or summarised, the result is information.</p>`},
+            {h:`Can you act on it?`, p:`<p>Information is meaningful. You can make a decision based on it.</p>`}
+          ],
+          easy:{
+            title:`Data or information? (Foundation)`,
+            items:[
+              {text:`The marks 14, 18, 9 and 20 typed into a spreadsheet.`, options:[`Information`,`Data`], answer:1, fb:`Raw marks that have not been processed are data.`},
+              {text:`A receipt showing the total amount due after tax.`, options:[`Information`,`Data`], answer:0, fb:`The prices were processed into a total, so this is information.`},
+              {text:`A list of daily cruise passenger numbers.`, options:[`Information`,`Data`], answer:1, fb:`These raw figures are data.`}
+            ]
+          },
+          up: {"title":"Data or information? (Challenge)","intro":"<p>These questions test whether you can explain the difference, not just spot it. Choose the BEST answer each time.</p>","items":[{"text":"At a Bridgetown supermarket, which of these is INFORMATION?","options":["\"Sales of bottled water rose 40% on the day before the storm warning.\"","The barcode numbers scanned at the till","A list of today's prices","The times at which each customer paid"],"answer":0,"fb":"Only the third item has been processed (compared and calculated) into a meaningful result the manager can act on. The others are raw facts."},{"text":"Which statement BEST explains why the marks 67, 82, 45 and 91 are data rather than information?","options":["They are stored on a computer.","There are only four of them.","They have not yet been processed into a result with meaning the user can act on.","They contain numbers."],"answer":2,"fb":"Numbers can be data or information. What matters is whether they have been processed into something meaningful."},{"text":"The school attendance system turns daily ticks into \"Form 4B attendance fell to 81% this week.\" Which stage of the cycle turned the data into information?","options":["Input","Output","Storage","Process"],"answer":3,"fb":"Processing (counting and calculating the percentage) is what turns raw ticks into information. Output only presents the result."},{"text":"Information from one task can become data for the next. Which example shows this?","options":["A monitor displays a spreadsheet.","A cashier types a price.","Each branch's daily sales total is fed into head office's monthly report.","A printer runs out of ink."],"answer":2,"fb":"The daily total is information for the branch, then raw input (data) for the monthly report."},{"text":"A clerk at a Kingston bank keys a deposit of US$5,000 as US$50,000, and the statement printed is wrong. This is an example of...","options":["a hardware fault","a storage failure","the CPU making a calculation error","garbage in, garbage out"],"answer":3,"fb":"The computer processed the wrong input perfectly. Wrong data in gives wrong information out."},{"text":"Which item is DATA?","options":["The number of passengers on each ship that docked today","A chart showing the busiest month for cruise arrivals in Bridgetown","A summary stating that arrivals rose by 12%","A report recommending extra taxis on Tuesdays"],"answer":0,"fb":"Today's passenger counts are raw figures. The chart, the report and the summary have all been processed."}],"win":"Excellent. You showed that information is data that has been processed into something meaningful, and that one task's information can become the next task's data."}
+        },
+        {
+          type:'learn', title:`The evolution of the computer`,
+          html:`<p>Computers have not always been small enough to fit in your pocket. Early machines filled entire rooms and were operated only by trained specialists. Over time, advances in electronics allowed computers to <b>shrink dramatically in size</b> while <b>growing enormously in processing power</b>. Today we group computers into three broad categories.</p>
+<p><b>Mainframes</b> are large, powerful and expensive computers that can support <b>hundreds or even thousands of users and processes at the same time</b>. They are found in large organisations such as banks, government agencies, airlines and insurance companies, where huge volumes of data must be processed reliably around the clock.</p>
+<p><b>Minicomputers</b> are smaller and less costly than mainframes but still considerably more powerful than the personal computers most people use. They were historically used by medium-sized businesses, university departments and research laboratories to serve a moderate number of users on a shared network.</p>
+<p><b>Microcomputers</b> are small, relatively inexpensive computers built around a <b>single microprocessor chip</b>. This is the category you use every day, and it keeps growing: desktop computers, laptops, tablets, smartphones, smartwatches and other current devices such as smart speakers and single-board computers.</p>
+<p class="tip"><b>Teacher's tip:</b> The word "micro" refers to the <b>microprocessor</b>, not to the number of users. A desktop in the school computer lab and the smartphone in your bag are both microcomputers.</p>`,
+          tutor:[
+            {h:`Big, middle, small`, p:`<p>Mainframe = very large, thousands of users. Minicomputer = mid-sized, tens to hundreds. Microcomputer = small, usually one user.</p>`},
+            {h:`The trend`, p:`<p>Over time: smaller, cheaper, more powerful, and used by more ordinary people.</p>`}
+          ],
+          plain: "<p>Computers began as huge machines that filled whole rooms. Over time they became <b>smaller, cheaper and far more powerful</b>. Today we group them into three families: <b>mainframes</b> (very large, many users at once), <b>minicomputers</b> (middle-sized) and <b>microcomputers</b> (small, usually one user). The smartphone a student in Basseterre carries to school is a microcomputer.</p>",
+          deeper: "<p>When asked to <b>discuss the evolution</b> of the computer, describe the trend in four directions: size went <b>down</b>, cost went <b>down</b>, processing power went <b>up</b>, and the number of people sharing one machine went <b>down</b>, from thousands of users on one mainframe to one person per smartphone. A common misconception is that mainframes are extinct. They are not: regional banks and airlines still rely on them because they handle huge numbers of transactions reliably, around the clock. The role of the minicomputer has largely passed to mid-range servers, but the syllabus still expects you to name all three categories and give an example of each.</p>"
+        },
+        {
+          type:'learn', title:`Comparing the three categories`,
+          html:`<p>Use this table to revise the three categories side by side.</p>
+<div class="tablewrap"><table>
+<tr><th>Category</th><th>Relative size / cost</th><th>Typical users</th><th>Example use</th></tr>
+<tr><td><b>Mainframe</b></td><td>Very large, very high cost</td><td>Hundreds to thousands, simultaneously</td><td>Bank transaction processing, national census data</td></tr>
+<tr><td><b>Minicomputer</b></td><td>Mid-sized, moderate cost</td><td>Tens to hundreds</td><td>University research computing, mid-sized business systems</td></tr>
+<tr><td><b>Microcomputer</b></td><td>Small to pocket-sized, low to moderate cost</td><td>One (or a small household or office group)</td><td>Word processing, browsing, gaming, mobile communication</td></tr>
+</table></div>
+<p><b>How has this evolution changed everyday life?</b> When computers cost millions and filled rooms, only large organisations could own them. As they shrank and became cheaper, they moved into small businesses, schools and homes. Now a student in Georgetown carries more processing power in a smartphone than early room-sized machines had, and uses it for school research, banking, photos and messaging.</p>
+<p class="tip"><b>Activity 1:</b> In small groups, research one real-world organisation that still relies on a mainframe computer today and one that relies mainly on microcomputers. Present your findings, explaining why each organisation's choice suits its needs.</p>`,
+          tutor:[
+            {h:`Read across the row`, p:`<p>For each category, remember one fact about size and cost, one about users, and one example.</p>`},
+            {h:`Explain the effect`, p:`<p>Smaller and cheaper meant more people could own computers, so they are now used for everyday tasks, not just big data jobs.</p>`}
+          ],
+          plain: "<p>To tell the three categories apart, ask three questions: How big and costly is it? How many people use it at the same time? What kind of job does it do? A bank in Port of Spain processing thousands of card payments at once uses a <b>mainframe</b>. A teacher typing lesson notes on a laptop is using a <b>microcomputer</b>.</p>",
+          deeper: "<p>Power alone does not decide the category. A top-of-the-range gaming desktop is still a <b>microcomputer</b>, because it is built around a single microprocessor and designed for one user. The key test is how many users and processes the machine serves at once. The evolution also had real social effects. When computers became cheap, a small guest house in Dominica or a hair salon in St. Kitts could own one, so record-keeping, invoices and online bookings moved out of large organisations and into everyday businesses. A Grade One answer to \"how has this changed everyday life?\" names a specific change (for example, mobile banking) and links it to the fall in size and cost.</p>"
+        },
+        {
+          type:'sort', game:true, title:`Mainframe, minicomputer or microcomputer?`,
+          intro:`<p>Sort each computer or situation into the correct category.</p>`,
+          main:`Which category does this belong to?`,
+          bins:[`Mainframe`,`Minicomputer`,`Microcomputer`],
+          items:[
+            {t:`A national census system storing data on every household`, bin:0, fb:`Huge volumes of data processed reliably for a whole country point to a mainframe.`},
+            {t:`A smartwatch that counts your steps`, bin:2, fb:`Smartwatches are among the newest members of the microcomputer family.`},
+            {t:`A university research department's shared computer used by about 40 researchers`, bin:1, fb:`A moderate number of users on a shared network in a department is typical of a minicomputer.`},
+            {t:`A medium-sized business system serving the staff of several branch offices`, bin:1, fb:`Mid-sized, moderate cost, tens to hundreds of users: a minicomputer.`},
+            {t:`A regional bank's central system processing thousands of card payments every second`, bin:0, fb:`Thousands of simultaneous transactions, around the clock, is the classic mainframe job.`},
+            {t:`A laptop used by a teacher to type lesson notes`, bin:2, fb:`Laptops are microcomputers.`},
+            {t:`An airline reservation system used by agents around the world at the same time`, bin:0, fb:`Many users at once, worldwide, needing reliability: a mainframe.`},
+            {t:`Your smartphone`, bin:2, fb:`A smartphone is built around a microprocessor and used by one person, so it is a microcomputer.`}
+          ],
+          win:`Excellent. You sorted by number of users, size, cost and type of task, which is exactly how the examiner expects you to distinguish the three categories.`,
+          tutor:[
+            {h:`Count the users`, p:`<p>Thousands at once = mainframe. Tens to hundreds = minicomputer. One person = microcomputer.</p>`},
+            {h:`Personal devices`, p:`<p>Anything you carry or use on your own desk is a microcomputer.</p>`}
+          ],
+          easy:{
+            title:`Mainframe or microcomputer? (Foundation)`,
+            items:[
+              {t:`A bank's central system processing thousands of payments at once`, bin:0, fb:`Thousands of users at once: mainframe.`},
+              {t:`A university department computer shared by 40 researchers`, bin:1, fb:`A moderate number of users on a shared network: minicomputer.`},
+              {t:`Your smartphone`, bin:2, fb:`Built around one microprocessor and used by one person: microcomputer.`},
+              {t:`A teacher's laptop`, bin:2, fb:`Laptops are microcomputers.`}
+            ]
+          },
+          up: {"title":"Mainframe, minicomputer or microcomputer? (Challenge)","intro":"<p>These cards are harder: some powerful machines are still microcomputers. Sort by how many users and processes each machine supports at once, not just by how impressive it sounds.</p>","items":[{"t":"A regional bank's system handling withdrawals from 900 ATMs on five islands at the same time","bin":0,"fb":"Hundreds of simultaneous transactions, around the clock: mainframe."},{"t":"A government system holding the tax records of every citizen and business, used by hundreds of officers","bin":0,"fb":"National-scale data and hundreds of users at once point to a mainframe."},{"t":"An airline system that must keep every seat booking safe 24 hours a day for agents worldwide","bin":0,"fb":"Worldwide users needing very high reliability: mainframe."},{"t":"A shared computer serving about 60 staff and students in a university engineering department","bin":1,"fb":"A moderate number of users on a shared departmental network: minicomputer."},{"t":"A mid-sized manufacturer's computer running stock control for staff in three warehouses","bin":1,"fb":"Tens of users in a medium-sized business: minicomputer."},{"t":"A powerful gaming desktop with a top-end graphics card, used by one player","bin":2,"fb":"Power does not change the category. One microprocessor and one user make it a microcomputer."},{"t":"A single-board computer that a robotics club uses to control a model car","bin":2,"fb":"A small, inexpensive board built around one microprocessor: microcomputer."},{"t":"A smart speaker answering questions in a kitchen in Castries","bin":2,"fb":"Smart speakers are among the newest members of the microcomputer family."},{"t":"A tablet a nurse uses to record patients' blood pressure on her rounds","bin":2,"fb":"A portable, single-user device: microcomputer."}],"win":"Excellent. You looked past size and price to the real test: how many users and processes a machine supports at once, and whether it is built around a single microprocessor for one user."}
+        },
+        {
+          type:'mcq', title:`Which is a microcomputer?`,
+          q:`Which of the following is an example of a microcomputer?`,
+          options:[
+            {t:`A personal laptop`, ok:true, fb:`Correct. A laptop is small, relatively inexpensive, built around a single microprocessor and used by one person.`},
+            {t:`A bank's central transaction server`, fb:`A central server processing a bank's transactions for thousands of customers is a mainframe.`},
+            {t:`A national census mainframe`, fb:`Census data for a whole country is processed on a mainframe.`},
+            {t:`A university research minicomputer`, fb:`The name tells you: this is a minicomputer, the middle category.`}
+          ],
+          tutor:[
+            {h:`Personal = micro`, p:`<p>If it is personal and portable, it is almost certainly a microcomputer.</p>`},
+            {h:`Eliminate`, p:`<p>Two options name their category already. Cross those out first.</p>`}
+          ],
+          easy:{
+            title:`Which is a microcomputer? (Foundation)`,
+            q:`Which of these is a microcomputer?`,
+            options:[
+              {t:`A personal laptop`, ok:true, fb:`Yes. A laptop is a microcomputer.`},
+              {t:`A national census mainframe`, fb:`That is a mainframe.`}
+            ]
+          },
+          up: {"title":"Which is a microcomputer? (Challenge)","q":"Ricardo in the British Virgin Islands has a US$3,500 gaming desktop with a top-end graphics card. He tells the class: \"It is too powerful to be a microcomputer, so it must be a minicomputer.\" Which response is MOST accurate?","options":[{"t":"It is a minicomputer, because it can connect to the internet.","fb":"Almost every category of computer can connect to the internet, so this does not decide anything."},{"t":"He is right. Any computer that costs more than US$3,000 is a minicomputer.","fb":"Price does not define the category. Many microcomputers are expensive."},{"t":"It is still a microcomputer, because it is built around a single microprocessor and designed for one user.","ok":true,"fb":"Correct. The category depends on the microprocessor design and the number of users served, not on how powerful the machine feels."},{"t":"It is a mainframe, because it has a powerful graphics card.","fb":"A mainframe supports hundreds or thousands of users at once. A graphics card does not change that."}]}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Describe the computer`, genre:`Structured short answer: definition and cycle`,
+          stimulus:`<p class="passage">The Speyside Dive Centre still records its bookings in a paper diary. The owner, Mr. Hodge, says: "I don't even know what a computer really does. Why would I need one?"</p>`,
+          prompt:`<p>Write a short explanation for Mr. Hodge. You must:</p><ul><li>define a <b>computer</b>;</li><li>explain the <b>four stages</b> of the computing cycle, using an example from his dive centre;</li><li>state which <b>category</b> of computer he would most likely buy and why.</li></ul>`,
+          min:80, max:200,
+          frame:`<p><b>Definition:</b> A computer is ...<br><b>Input:</b> At the dive centre, ... would be input when ...<br><b>Process:</b> The computer would ...<br><b>Output:</b> ... would appear / be printed ...<br><b>Storage:</b> The bookings would be kept ...<br><b>Category:</b> Mr. Hodge would most likely buy a ... because ...</p>`,
+          checklist:[
+            `I gave the full definition: electronic, accepts, processes data, produces information.`,
+            `I named all four stages: input, process, output, storage.`,
+            `I used a dive centre example for each stage.`,
+            `I named a category (microcomputer) and gave a reason.`
+          ],
+          rubric:[
+            {criterion:`Definition`, marks:2, look:[`electronic`, `accept|takes in|receive`, `process`, `information`], min:3,
+              strong:`Your definition contains the key ideas. Next step: make sure it is exactly the syllabus wording: "an electronic machine or device that accepts and processes data to produce information".`,
+              weak:`Use the syllabus definition: "A computer is an electronic machine or device that accepts and processes data to produce information."`},
+            {criterion:`Stages of the cycle`, marks:4, look:[`input`, `process`, `output`, `stor|save|kept`], min:4,
+              strong:`You named all four stages. Next step: make each example specific, e.g. "the customer's name and dive date are typed in (input)".`,
+              weak:`Name and explain all four stages: input, process, output and storage.`},
+            {criterion:`Applied example`, marks:2, look:[`booking|customer|dive|diver|tank|trip`, `type|enter|key|print|screen|display`], min:2,
+              strong:`Your examples fit the dive centre. Well done.`,
+              weak:`Link each stage to the dive centre, e.g. customer bookings typed in, a list of tomorrow's divers printed.`},
+            {criterion:`Category with reason`, marks:2, look:[`micro|laptop|desktop|tablet`, `because|since|as it|so that|affordable|small|cheap|inexpensive|one user`], min:2,
+              strong:`You chose a suitable category and justified it.`,
+              weak:`Say he would buy a microcomputer (desktop, laptop or tablet) because it is small, relatively inexpensive and suits a small business.`}
+          ],
+          model:`<p><b>Definition:</b> A computer is an electronic machine or device that accepts and processes data to produce information.</p><p><b>Input:</b> When a customer calls, the customer's name, phone number, dive date and number of tanks would be typed in using the keyboard.</p><p><b>Process:</b> The computer would sort the bookings by date, check how many places are left on each boat trip and calculate the amount due.</p><p><b>Output:</b> A list of tomorrow's divers would appear on the monitor and could be printed for the boat captain, and the customer could be e-mailed a receipt.</p><p><b>Storage:</b> All bookings would be saved on the hard disk and backed up to cloud storage, so Mr. Hodge can look up past customers at any time.</p><p><b>Category:</b> He would most likely buy a microcomputer, such as a laptop, because it is small, relatively inexpensive and designed for one user or a small office, which suits a small dive centre.</p>`,
+          teacherTip:`<p>Examiners award marks for <b>key terms</b>. Learn the definition exactly and always name all four stages of the cycle. A short, specific example for each stage shows that you understand, not just memorise.</p>`,
+          easy: {"genre":"Structured short answer: definition and cycle (8 marks)","prompt":"<p>Help Mr. Hodge understand computers. Answer each part in one or two sentences.</p><ol type=\"a\"><li><b>Complete</b> the definition: A computer is an ______ machine or device that accepts and ______ data to produce ______. <i>(2 marks)</i></li><li><b>List</b> the four stages of the computing cycle in the correct order. <i>(2 marks)</i></li><li><b>Give</b> ONE example of <b>input</b> and ONE example of <b>output</b> at the dive centre. <i>(2 marks)</i></li><li><b>Name</b> the category of computer Mr. Hodge should buy and give ONE reason. <i>(2 marks)</i></li></ol>","min":40,"max":120,"frame":"<p><b>(a)</b> A computer is an ... machine or device that accepts and ... data to produce ...<br><b>(b)</b> The four stages are ..., ..., ... and ...<br><b>(c)</b> Input: ... is typed in when a customer books. Output: ... is printed or shown on the screen.<br><b>(d)</b> Mr. Hodge should buy a ... because ...</p>","checklist":["I filled all three gaps in the definition.","I listed input, process, output and storage in order.","I gave one dive centre example of input and one of output.","I named a microcomputer (such as a laptop) and gave a reason."],"rubric":[{"criterion":"Definition","marks":2,"look":["electronic","process","information"],"min":2,"strong":"You completed the definition correctly.","weak":"The missing words are \"electronic\", \"processes\" and \"information\"."},{"criterion":"Four stages in order","marks":2,"look":["input","process","output","stor"],"min":4,"strong":"All four stages are there.","weak":"Write the four stages in order: input, process, output, storage."},{"criterion":"Dive centre examples","marks":2,"look":["name|booking|date|customer|phone|diver","list|receipt|screen|print|display"],"min":2,"strong":"Your examples fit the dive centre.","weak":"Input: the customer's name and dive date are typed in. Output: a list of tomorrow's divers is printed."},{"criterion":"Category with reason","marks":2,"look":["micro|laptop|desktop|tablet","because|small|cheap|inexpensive|afford|one user|one person"],"min":2,"strong":"Good choice with a reason.","weak":"Say a microcomputer such as a laptop, because it is small and inexpensive."}],"model":"<p><b>(a)</b> A computer is an <b>electronic</b> machine or device that accepts and <b>processes</b> data to produce <b>information</b>.</p><p><b>(b)</b> The four stages are input, process, output and storage.</p><p><b>(c)</b> Input: the customer's name and dive date are typed in when a customer books. Output: a list of tomorrow's divers is printed for the boat captain.</p><p><b>(d)</b> Mr. Hodge should buy a microcomputer, such as a laptop, because it is small, inexpensive and made for one user.</p>","key":"<p>Mark scheme (8): (a) 2 marks for all three gaps correct, 1 mark for two. (b) 2 marks for all four stages in order, 1 mark for three. (c) 1 mark for a valid input example, 1 mark for a valid output example. (d) 1 mark for microcomputer (or laptop, desktop, tablet), 1 mark for a reason.</p>","teacherTip":"<p>Let Foundation students say each answer aloud before they write it. Check that they write the stages in the right order and attach the examples to the dive centre. Once they score 6 or more, move them on to the Core task, which asks for an example at every stage.</p>","title":"Describe the computer (Foundation)"},
+          up: {"genre":"Structured response: the computer, the cycle and computer categories (15 marks)","stimulus":"<p class=\"passage\">Speyside Dive Centre takes about 40 bookings a week by telephone and records them in a paper diary. Last month two groups were booked onto the same boat at the same time, and a regular customer's diving certificate number could not be found. The owner, Mr. Hodge, says: \"A computer is just an expensive typewriter. My diary works fine.\" His nephew has suggested a laptop with booking software and cloud backup.</p>","prompt":"<p>Write a short report for Mr. Hodge. Answer all parts.</p><ol type=\"a\"><li><b>Define</b> a computer and <b>distinguish</b> between data and information, using an example from the dive centre. <i>(3 marks)</i></li><li><b>Explain</b> how a booking would pass through EACH stage of the computing cycle. <i>(4 marks)</i></li><li><b>Explain</b> why Mr. Hodge's description of a computer as \"just an expensive typewriter\" is inaccurate. <i>(2 marks)</i></li><li><b>Compare</b> a mainframe and a microcomputer, and <b>justify</b> which one suits the dive centre. <i>(3 marks)</i></li><li><b>Evaluate</b> the nephew's suggestion, giving ONE benefit, ONE limitation and a recommendation. <i>(3 marks)</i></li></ol>","min":180,"max":380,"frame":"<p><b>(a)</b> A computer is ... Data are ..., for example ... Information is ..., for example ...<br><b>(b)</b> Input: ... Process: ... Output: ... Storage: ...<br><b>(c)</b> A typewriter only ... whereas a computer ...<br><b>(d)</b> A mainframe ... whereas a microcomputer ... The dive centre needs a ... because ...<br><b>(e)</b> One benefit is ... One limitation is ... I recommend ... because ...</p>","checklist":["My definition is word for word, and I contrasted data with information using dive centre examples.","I explained all four stages with a booking example for each.","I explained what a computer can do that a typewriter cannot (process, store, retrieve).","I compared the two categories on more than one feature and justified my choice.","My evaluation has a benefit, a limitation and a recommendation linked to the double booking or the lost certificate number."],"rubric":[{"criterion":"Definition and data versus information","marks":3,"look":["electronic","accept|process","raw|fact","meaning|processed|act on|useful"],"min":3,"strong":"Precise definition and a clear contrast between data and information.","weak":"Give the syllabus definition, then contrast raw facts (data) with processed, meaningful results (information) using dive centre examples."},{"criterion":"Cycle applied to a booking","marks":4,"look":["input","process","output","stor|sav"],"min":4,"strong":"Every stage is explained with a booking example.","weak":"Explain input, process, output and storage, each with what happens to a booking."},{"criterion":"Why not a typewriter","marks":2,"look":["typewriter","process|calculat|check|sort|search|stor|retriev|instruction|program"],"min":2,"strong":"You showed what a computer does that a typewriter cannot.","weak":"Explain that a typewriter only produces text on paper, whereas a computer processes, stores and retrieves data and can run different programs."},{"criterion":"Mainframe versus microcomputer","marks":3,"look":["mainframe","micro|laptop|desktop","thousands|many users|hundreds|cost|expens","whereas|however|while|but"],"min":3,"strong":"A real comparison with a justified choice.","weak":"Compare users and cost using \"whereas\", then justify a microcomputer for a small business."},{"criterion":"Evaluation","marks":3,"look":["benefit|advantage|double|clash|search|find","limitation|disadvantage|power|cost|internet|training|data entry|garbage","recommend|on balance|overall|therefore"],"min":3,"strong":"Balanced evaluation that ends in a clear recommendation.","weak":"Give one benefit (e.g. no more double bookings), one limitation (e.g. power cuts, training) and a recommendation."}],"model":"<p><b>(a)</b> A computer is an electronic machine or device that accepts and processes data to produce information. Data are raw facts, such as a customer's name, a dive date and a certificate number. Information is processed data with meaning that the user can act on, such as \"Boat 1 is full on Saturday morning; offer the 2 p.m. trip.\"</p><p><b>(b)</b> Input: the customer's name, phone number, date and certificate number are typed in. Process: the software checks how many places are left on that boat and calculates the price. Output: a confirmation appears on screen and is e-mailed to the customer, and the next day's dive list is printed. Storage: the booking is saved on the laptop and backed up to the cloud.</p><p><b>(c)</b> A typewriter only puts characters onto paper, whereas a computer processes data, stores it and retrieves it. It can search 2,000 past bookings in seconds and run different programs for bookings, invoices and e-mail.</p><p><b>(d)</b> A mainframe supports hundreds or thousands of users at once and is very expensive, whereas a microcomputer is small, inexpensive and designed for one user. The dive centre needs a microcomputer, because it has one office, 40 bookings a week and a small budget.</p><p><b>(e)</b> One benefit is that the software would warn him before two groups were booked onto the same boat, and certificate numbers could be found by searching. One limitation is that power cuts could stop the laptop, and staff need training to avoid data entry errors. On balance, I recommend the laptop with cloud backup, because it solves both problems from last month, and the cloud copy protects the records if the laptop is damaged.</p>","key":"<p>Mark scheme (15): (a) 1 definition, 1 data with example, 1 information with example. (b) 1 per stage correctly applied to a booking. (c) 1 what a typewriter does, 1 what a computer does that it cannot (process, store, retrieve or run programs). (d) 1 mainframe feature, 1 microcomputer feature with a comparison word, 1 justified choice. (e) 1 benefit, 1 limitation, 1 recommendation justified by the scenario.</p>","teacherTip":"<p>Challenge students often lose marks in (d) by describing each category separately. Insist on a comparison word (\"whereas\", \"however\") and a choice that refers to the dive centre's size. In (e), the recommendation should answer the problems in the stimulus (double booking, lost certificate number), not repeat general advantages.</p>","title":"Describe the computer (Challenge)"}
+        }
+      ]
+    },
+    // ===================== UNIT 2 =====================
+    {
+      id: `S1U2`,
+      title: `Components of a computer system`,
+      objectives: [
+        `Distinguish between hardware and software.`,
+        `Explain the difference between analog and digital media.`,
+        `Describe the role of input devices, output devices, processes (the CPU) and storage systems.`,
+        `Define a peripheral and give examples.`
+      ],
+      videos: [
+        {title:`Hardware and software`, q:`hardware vs software explained for students`},
+        {title:`Analog vs digital`, q:`analog vs digital signals explained simply`},
+        {title:`What is a peripheral device?`, q:`what is a peripheral device computer basics`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`Hardware and software`,
+          html:`<p>A <b>computer system</b> is made up of several interdependent parts. Learning their names now will make the rest of this section much easier.</p>
+<div class="tablewrap"><table>
+<tr><th></th><th>Hardware</th><th>Software</th></tr>
+<tr><td><b>What it is</b></td><td>The <b>physical, tangible</b> parts of a computer system: components you can see and touch</td><td>The <b>intangible programs and instructions</b> that tell the hardware what to do</td></tr>
+<tr><td><b>Examples</b></td><td>Keyboard, monitor, circuit boards, cables, memory chip, graphics tablet</td><td>Windows, Android, a spreadsheet program, a web browser, anti-virus software</td></tr>
+<tr><td><b>Test</b></td><td>Could you drop it on your foot?</td><td>Can you only install, download or run it?</td></tr>
+</table></div>
+<p><b>Neither can function usefully without the other.</b> A brand-new laptop with no software cannot open a document. A word processing program with no hardware has nothing to run on. Think of hardware as the body and software as the instructions in the brain.</p>
+<p class="tip"><b>ITQ2:</b> Classify EACH of the following as hardware or software: (a) a spreadsheet program; (b) a graphics tablet; (c) an operating system; (d) a memory chip. Try it in your notebook, then check yourself in the next game.</p>`,
+          tutor:[
+            {h:`Touch test`, p:`<p>If you can touch it, it is hardware. If you can only run it, it is software.</p>`},
+            {h:`Careful with discs`, p:`<p>A disc or flash drive is hardware. The program saved on it is software.</p>`}
+          ],
+          plain: "<p><b>Hardware</b> is the part of a computer you can touch, such as the keyboard and the monitor. <b>Software</b> is the set of programs that tell the hardware what to do, such as Windows or a web browser. You need both. A new laptop bought in Oranjestad cannot open a school letter until a word processor is installed on it.</p>",
+          deeper: "<p>Watch for the classic trap: an installation DVD is <b>hardware</b>, but the program stored on it is <b>software</b>. In the same way, the start-up instructions kept on a chip on the motherboard (called <b>firmware</b>) are software, even though the chip itself is hardware. Another misconception is that a flash drive is software because it \"holds files\". It is a physical device, so it is hardware. When an examiner asks you to classify an item, add a reason using the key words: <b>tangible</b> (physical) or <b>intangible</b> (programs and instructions). In the workplace, the same idea affects budgets: a business must pay for software licences and updates as well as for the machines.</p>"
+        },
+        {
+          type:'sort', game:true, title:`Hardware or software?`,
+          intro:`<p>This sort includes all four parts of ITQ2. Place each card in the correct bin.</p>`,
+          main:`Is this hardware or software?`,
+          bins:[`Hardware`,`Software`],
+          items:[
+            {t:`A graphics tablet`, bin:0, fb:`ITQ2 (b). It is a physical device you can touch, so it is hardware.`},
+            {t:`A web browser`, bin:1, fb:`A browser is a program: software.`},
+            {t:`Anti-virus software`, bin:1, fb:`It is in the name. Anti-virus programs are software.`},
+            {t:`A USB cable`, bin:0, fb:`Cables are tangible parts of the system: hardware.`},
+            {t:`A memory chip`, bin:0, fb:`ITQ2 (d). A chip is a physical component on a circuit board, so it is hardware.`},
+            {t:`A spreadsheet program`, bin:1, fb:`ITQ2 (a). A spreadsheet program is a set of instructions, so it is software.`},
+            {t:`An operating system`, bin:1, fb:`ITQ2 (c). Windows, macOS and Android are programs, so they are software.`},
+            {t:`A monitor`, bin:0, fb:`You can see and touch a monitor: hardware.`}
+          ],
+          win:`Well done. You applied the touch test: tangible parts are hardware; programs and instructions are software. You have now answered ITQ2.`,
+          tutor:[
+            {h:`Touch test`, p:`<p>Could you hold it in your hand? Hardware. Can you only install or run it? Software.</p>`},
+            {h:`Clue words`, p:`<p>"Program", "system", "app" and "software" all point to software.</p>`}
+          ],
+          easy:{
+            title:`Hardware or software? (Foundation)`,
+            items:[
+              {t:`A spreadsheet program`, bin:1, fb:`A program is software.`},
+              {t:`A graphics tablet`, bin:0, fb:`A physical device is hardware.`},
+              {t:`An operating system`, bin:1, fb:`An operating system is software.`},
+              {t:`A memory chip`, bin:0, fb:`A chip is hardware.`}
+            ]
+          },
+          up: {"title":"Hardware or software? (Challenge)","intro":"<p>These cards include some classic traps. Ask: is it the physical object, or the program and instructions?</p>","items":[{"t":"The plastic installation DVD in its case","bin":0,"fb":"The disc is a physical object, so it is hardware."},{"t":"The photo-editing program stored on that DVD","bin":1,"fb":"The program on the disc is software, even though the disc is hardware."},{"t":"The start-up instructions stored on a chip on the motherboard (firmware)","bin":1,"fb":"The chip is hardware, but the instructions on it are software, known as firmware."},{"t":"A printer driver downloaded so the new printer works","bin":1,"fb":"A driver is a program that tells the operating system how to use the device: software."},{"t":"The printer's paper tray","bin":0,"fb":"You can touch it: hardware."},{"t":"A solid-state drive (SSD) inside a laptop","bin":0,"fb":"An SSD is a physical storage device: hardware."},{"t":"A mobile banking app","bin":1,"fb":"An app is a program: software."},{"t":"The touchscreen glass on a phone","bin":0,"fb":"The glass panel is a physical component: hardware."},{"t":"A security update for Windows","bin":1,"fb":"An update is a set of new instructions: software."},{"t":"A wireless network adapter","bin":0,"fb":"A physical communication device: hardware."}],"win":"Excellent. You separated the physical object from the instructions it carries, even when they come together, as with a DVD or a firmware chip."}
+        },
+        {
+          type:'learn', title:`Analog and digital media`,
+          html:`<p>Media used with computers may be described as <b>analog</b> or <b>digital</b>.</p>
+<ul>
+<li><b>Analog media</b> store and transmit information as a <b>continuously variable signal</b>. The groove on an old vinyl record rises and falls smoothly with the music. A traditional television broadcast and a cassette tape are also analog.</li>
+<li><b>Digital media</b> store and transmit information as <b>discrete values</b>, usually represented inside the computer as <b>binary digits (0s and 1s)</b>. A song streamed on your phone, a photo from a digital camera and a document saved in Word are all digital.</li>
+</ul>
+<p class="passage"><b>Think of it this way:</b> an analog signal is like a ramp, which can be at any height. A digital signal is like a staircase, which has separate, fixed steps.</p>
+<p>Virtually all modern computing devices, storage formats and networks operate <b>digitally</b>. Why? Because digital signals can be <b>copied, compressed and transmitted with far less loss of quality</b> than analog signals. A copy of a digital file is identical to the original, while each copy of a cassette tape sounded a little worse than the last.</p>
+<p class="tip"><b>Teacher's tip:</b> When a question asks how digital media differ from analog media, the key phrase is "<b>discrete (binary) values</b>". Digital media can certainly be copied, which is one of their main advantages.</p>`,
+          tutor:[
+            {h:`Ramp and staircase`, p:`<p>Analog = smooth and continuous. Digital = separate steps (0s and 1s).</p>`},
+            {h:`Why digital won`, p:`<p>Digital copies, compresses and travels with far less loss of quality.</p>`}
+          ],
+          plain: "<p><b>Analog</b> media record information as a smooth, continuous signal, like the groove on an old vinyl record. <b>Digital</b> media record it as separate values: 0s and 1s. A song you stream on your phone in Kingston is digital. Digital copies stay exactly as good as the original, which is why almost everything today is digital.</p>",
+          deeper: "<p>Much of computing is <b>conversion</b> between the two. Your voice is an analog sound wave; the microphone and sound card turn it into digital values, and the speaker turns the values back into sound. A scanner does the same for a printed page. Two misconceptions cost marks. First, digital media <b>can</b> be copied, and perfectly, which is one of their main advantages and also why copyright and plagiarism are such serious issues. Second, \"digital\" does not mean \"on the internet\": a file on a flash drive is digital too. In a \"distinguish\" question, use the paired key phrases <b>discrete (binary) values</b> and <b>continuously variable signal</b>.</p>"
+        },
+        {
+          type:'learn', title:`Input, output, processes, storage and peripherals`,
+          html:`<p><b>(b) Input devices, output devices and processes.</b> Input devices capture data for the computer to work with, and output devices present the processed results. The <b>processes</b> in between are carried out mainly by the <b>central processing unit (CPU)</b>, which:</p>
+<ul>
+<li>interprets instructions;</li>
+<li>performs calculations and logical comparisons (for example, "Is this mark greater than 50?");</li>
+<li>manages the flow of data through the system.</li>
+</ul>
+<p><b>(c) Storage systems</b> preserve data, programs and information so that they remain available after the task is finished or after the device is switched off. They range from the internal drive in a laptop to portable flash drives and remote cloud servers (see Unit 5).</p>
+<p><b>(d) Peripherals.</b> A <b>peripheral</b> is any hardware device connected to a computer that is <b>not part of its essential core</b>. The core is the <b>CPU, motherboard and main memory</b>. Peripherals include most input and output devices, external storage devices, and communication devices such as network adapters.</p>
+<p>Because peripherals can be <b>added, removed or replaced</b> without changing the core computer, they make a system flexible. The office at the Vieux Fort Insurance Agency can plug in a scanner when it starts going paperless, and swap the old printer for a faster one, without buying a new computer.</p>
+<p class="tip"><b>Teacher's tip:</b> Do not confuse the CPU with the system unit (the box). The CPU is a chip inside it.</p>`,
+          tutor:[
+            {h:`Core vs extra`, p:`<p>CPU, motherboard and main memory = the core. Everything plugged in around it = peripherals.</p>`},
+            {h:`What the CPU does`, p:`<p>Interprets instructions, calculates and compares, and manages the flow of data.</p>`}
+          ],
+          plain: "<p><b>Input devices</b> put data in. The <b>CPU</b>, a chip inside the system unit, does the processing. <b>Output devices</b> show the results. <b>Storage</b> keeps your work after the power goes off. <b>Peripherals</b> are extra devices you connect, like a printer. A small office in Nevis can swap its old printer for a faster one without buying a new computer.</p>",
+          deeper: "<p>Keep three ideas separate. The <b>CPU</b> is a chip, not the system unit (the box). Its work includes logical comparisons as well as sums: a school system deciding \"Is this mark below 50? Then flag it\" is the CPU comparing. <b>Main memory</b> is part of the core and holds your work only while the power is on; a <b>storage system</b> keeps it after shutdown, which is why you must save before a power cut. <b>Peripherals</b> sit outside the core (CPU, motherboard, main memory), so they can be added or swapped. A Grade One answer to \"explain why peripherals make a system flexible\" gives a business example, such as adding a scanner when an office goes paperless.</p>"
+        },
+        {
+          type:'match', game:true, title:`Match the component`,
+          intro:`<p>Match each component of a computer system to its description.</p>`,
+          pairs:[
+            {l:`Hardware`, r:`The physical, tangible parts you can see and touch`},
+            {l:`Software`, r:`The programs and instructions that tell the hardware what to do`},
+            {l:`Digital media`, r:`Information stored as discrete binary values (0s and 1s)`},
+            {l:`Analog media`, r:`Information stored as a continuously variable signal`},
+            {l:`CPU`, r:`Interprets instructions, performs calculations and manages the flow of data`},
+            {l:`Storage system`, r:`Keeps data available after the device is switched off`},
+            {l:`Peripheral`, r:`A device connected to the computer that is not part of its essential core`}
+          ],
+          win:`Excellent. You can now name every main component the syllabus lists and say what each one does.`,
+          tutor:[
+            {h:`Start with the pairs you know`, p:`<p>Hardware and software are opposites. So are analog and digital.</p>`},
+            {h:`Key words`, p:`<p>"Instructions and calculations" = CPU. "After switched off" = storage. "Not part of the core" = peripheral.</p>`}
+          ],
+          easy:{
+            title:`Match the component (Foundation)`,
+            pairs:[
+              {l:`Hardware`, r:`Physical parts you can touch`},
+              {l:`Software`, r:`Programs and instructions`},
+              {l:`CPU`, r:`Interprets instructions and performs calculations`},
+              {l:`Peripheral`, r:`A device connected to, but not part of, the core computer`}
+            ]
+          },
+          up: {"title":"Match the component (Challenge)","intro":"<p>Each card describes what happens at a Castries insurance office. Match each one to the component it shows. Watch out: main memory and storage are not the same thing.</p>","pairs":[{"l":"Hardware","r":"The office replaces a cracked monitor and a faulty keyboard"},{"l":"Software","r":"The office installs a new accounting program and updates Windows"},{"l":"Analog media","r":"An old cassette recording of a staff meeting, stored as a continuously varying signal"},{"l":"Digital media","r":"The same recording converted into an MP3 file that copies with no loss of quality"},{"l":"CPU","r":"Decides whether each claim is over the limit and calculates the total paid out"},{"l":"Main memory","r":"Holds the open claim form while you work, but loses it if the power fails before you save"},{"l":"Storage system","r":"Keeps every client file available after the computers are shut down for the night"},{"l":"Peripheral","r":"A scanner added when the office goes paperless, without changing the CPU, motherboard or memory"}],"win":"Excellent. You applied every component to a real office, and you kept main memory (lost when the power goes) separate from storage (kept after shutdown)."}
+        },
+        {
+          type:'pick', game:true, title:`Tap the peripherals`,
+          intro:`<p>The Bay Street Travel office has just set up a new desktop computer. Here is the list of everything on and in the desk.</p>`,
+          q:`Tap EVERY item that is a peripheral.`,
+          lines:[
+            `1. Laser printer`,
+            `2. Central processing unit (CPU) chip`,
+            `3. External portable hard disk`,
+            `4. Motherboard`,
+            `5. Webcam`,
+            `6. Main memory (RAM)`,
+            `7. USB wireless network adapter`,
+            `8. Scanner`
+          ],
+          correct:[0,2,4,6,7],
+          win:`Correct. The printer, portable hard disk, webcam, network adapter and scanner are peripherals: they connect to the computer and can be added or removed. The CPU, motherboard and main memory form the essential core.`,
+          miss:`Not quite. Remember: the CPU, motherboard and main memory are the core. Everything that connects to the core (input, output, external storage and communication devices) is a peripheral.`,
+          tutor:[
+            {h:`Find the core first`, p:`<p>Three items are the core: the CPU, the motherboard and the main memory. Do not tap those.</p>`},
+            {h:`Four groups of peripherals`, p:`<p>Input, output, external storage and communication devices.</p>`}
+          ],
+          easy:{
+            title:`Tap the peripherals (Foundation)`,
+            q:`Tap the TWO peripherals.`,
+            lines:[
+              `1. Laser printer`,
+              `2. CPU chip`,
+              `3. Webcam`,
+              `4. Motherboard`
+            ],
+            correct:[0,2],
+            win:`Yes. The printer and webcam are peripherals; the CPU and motherboard are part of the core.`,
+            miss:`The CPU and motherboard are the core. Tap the devices that plug in.`
+          },
+          up: {"title":"Tap the peripherals (Challenge)","intro":"<p>A travel agency in San Fernando is upgrading its computers. Here is the technician's full parts list.</p>","q":"Tap EVERY item that is a peripheral (not part of the essential core).","lines":["1. Wireless mouse","2. Main memory (RAM) modules on the motherboard","3. Graphics tablet for the design team","4. The CPU chip","5. External DVD writer connected by USB","6. The motherboard","7. Headset with microphone for video calls","8. USB fingerprint reader for staff log-in","9. Network adapter for connecting to the office Wi-Fi","10. Portable hard disk for weekly backups"],"correct":[0,2,4,6,7,8,9],"win":"Correct. Input devices (mouse, graphics tablet, fingerprint reader), an input/output headset, external storage (DVD writer, portable hard disk) and a communication device (network adapter) are all peripherals. The CPU, motherboard and main memory form the essential core.","miss":"Not quite. Only three items here are the core: the CPU, the motherboard and the main memory. Communication devices such as network adapters, and external storage such as portable hard disks, are peripherals too."}
+        },
+        {
+          type:'mcq', title:`Which is NOT a component?`,
+          q:`Which of the following is NOT one of the main components of a computer system?`,
+          options:[
+            {t:`Hardware`, fb:`Hardware is one of the main components: the physical parts of the system.`},
+            {t:`Peripherals`, fb:`Peripherals are listed in the syllabus as a main component of a computer system.`},
+            {t:`Internet service provider`, ok:true, fb:`Correct. An internet service provider is a company that supplies internet access. It is a service, not a component of the computer system itself.`},
+            {t:`Software`, fb:`Software is one of the main components: the programs that run the hardware.`}
+          ],
+          tutor:[
+            {h:`Recall the list`, p:`<p>Hardware/software; analog/digital media; input/output devices and processes; storage systems; peripherals.</p>`},
+            {h:`Is it part of the system?`, p:`<p>Which option is an outside company rather than a part of the computer?</p>`}
+          ],
+          easy:{
+            title:`Which is NOT a component? (Foundation)`,
+            q:`Which of these is NOT a component of a computer system?`,
+            options:[
+              {t:`Internet service provider`, ok:true, fb:`Yes. It is an outside company, not part of the computer.`},
+              {t:`Peripherals`, fb:`Peripherals are a component.`}
+            ]
+          },
+          up: {"title":"Which is NOT a component? (Challenge)","q":"An IT technician lists everything connected with the computer system at Vieux Fort Insurance Agency. Which item on her list is NOT a component of the computer system itself?","options":[{"t":"The digital photos of damaged cars attached to claims","fb":"Digital photos are digital media, which the syllabus lists as a component."},{"t":"The electricity company that supplies power to the building","ok":true,"fb":"Correct. The power company is an outside service. The system depends on it, but it is not a component of the computer system."},{"t":"The anti-virus program installed on each PC","fb":"Anti-virus is a program, so it is software: a component."},{"t":"The cloud storage folder where the agency's backups are kept","fb":"Storage systems range from internal drives to remote cloud servers, so this is a component."},{"t":"The scanner attached to the receptionist's PC","fb":"A scanner is a peripheral: a component."}]}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Components at Vieux Fort Insurance`, genre:`Structured short answer: components of a computer system`,
+          stimulus:`<p class="passage">A new office assistant at the Vieux Fort Insurance Agency is confused by the IT technician's words: "hardware", "software", "digital" and "peripheral".</p>`,
+          prompt:`<p>Write a short note to the assistant that:</p><ul><li>explains the difference between <b>hardware</b> and <b>software</b>, giving <b>TWO</b> examples of each;</li><li>explains how <b>digital</b> media differ from <b>analog</b> media;</li><li>defines a <b>peripheral</b> and gives <b>TWO</b> examples from the office.</li></ul>`,
+          min:80, max:200,
+          frame:`<p><b>Hardware</b> is ... for example ... and ...<br><b>Software</b> is ... for example ... and ...<br><b>Digital media</b> store information as ..., while <b>analog media</b> ...<br>A <b>peripheral</b> is ... In our office, the ... and the ... are peripherals.</p>`,
+          checklist:[
+            `I defined hardware and software and gave two examples of each.`,
+            `I used the words "discrete" or "binary" for digital and "continuous" for analog.`,
+            `I defined a peripheral as a device that is not part of the essential core.`,
+            `I gave two office peripherals.`
+          ],
+          rubric:[
+            {criterion:`Hardware and software`, marks:4, look:[`physical|tangible|touch`, `program|instruction`, `keyboard|monitor|mouse|printer|chip|cable|scanner`, `windows|word|excel|browser|operating system|anti-?virus|spreadsheet|android|macos`], min:3,
+              strong:`You explained both terms clearly with examples. Next step: add "neither can function usefully without the other".`,
+              weak:`Hardware is the physical, tangible parts (keyboard, monitor). Software is the programs and instructions (Windows, Microsoft Word).`},
+            {criterion:`Analog and digital`, marks:2, look:[`discrete|binary|0s and 1s|ones and zeros|0 and 1`, `continuous|variable|wave`], min:1,
+              strong:`You used the correct terms for both kinds of media.`,
+              weak:`Digital media store information as discrete binary values (0s and 1s); analog media store it as a continuously variable signal.`},
+            {criterion:`Peripherals`, marks:4, look:[`peripheral`, `core|not part|connected|attached|plug`, `printer|scanner|webcam|speaker|flash|external|headset|mouse|keyboard`], min:3,
+              strong:`Your definition and examples are accurate. Next step: mention that peripherals can be added or replaced without changing the core.`,
+              weak:`A peripheral is any hardware device connected to a computer that is not part of its essential core (CPU, motherboard, main memory), e.g. a printer or scanner.`}
+          ],
+          model:`<p>Hardware is the physical, tangible parts of the computer system that you can see and touch, for example the keyboard and the monitor on your desk. Software is the programs and instructions that tell the hardware what to do, for example Windows and Microsoft Word. Neither can function usefully without the other.</p><p>Digital media store and transmit information as discrete values, binary digits (0s and 1s), while analog media use a continuously variable signal, like an old cassette tape. Digital files can be copied and sent with far less loss of quality.</p><p>A peripheral is any hardware device connected to the computer that is not part of its essential core (the CPU, motherboard and main memory). In our office, the printer and the scanner are peripherals. They can be added, removed or replaced without changing the computer itself.</p>`,
+          teacherTip:`<p>When a question says "giving TWO examples", give exactly two clear ones for each term. Examiners do not award extra marks for long lists, but they do penalise wrong examples hidden in them.</p>`,
+          easy: {"genre":"Structured short answer: components of a computer system (8 marks)","prompt":"<p>Help the new office assistant at Vieux Fort Insurance Agency. Answer each part in one or two sentences.</p><ol type=\"a\"><li><b>State</b> what hardware is and give ONE example from the office. <i>(2 marks)</i></li><li><b>State</b> what software is and give ONE example. <i>(2 marks)</i></li><li><b>Complete</b>: Digital media store information as ______ (0s and 1s). Analog media use a ______ signal. <i>(2 marks)</i></li><li><b>Name</b> TWO peripherals the office might use. <i>(2 marks)</i></li></ol>","min":40,"max":120,"frame":"<p><b>(a)</b> Hardware is the ... parts of a computer that you can ... For example, ...<br><b>(b)</b> Software is the ... that tell the hardware what to do. For example, ...<br><b>(c)</b> Digital media store information as ... Analog media use a ... signal.<br><b>(d)</b> Two peripherals are the ... and the ...</p>","checklist":["I said hardware is physical and gave one example.","I said software is programs and gave one example.","I used \"binary\" or \"discrete\" for digital and \"continuous\" for analog.","I named two peripherals."],"rubric":[{"criterion":"Hardware","marks":2,"look":["physical|tangible|touch","keyboard|monitor|mouse|printer|scanner|cable|chip"],"min":2,"strong":"Clear definition and example.","weak":"Hardware is the physical parts you can touch, for example the keyboard."},{"criterion":"Software","marks":2,"look":["program|instruction","windows|word|excel|browser|anti-?virus|android|operating system"],"min":2,"strong":"Clear definition and example.","weak":"Software is the programs that tell the hardware what to do, for example Windows."},{"criterion":"Digital and analog","marks":2,"look":["binary|discrete|0s and 1s","continuous|variable"],"min":2,"strong":"Both gaps are correct.","weak":"Digital: discrete binary values (0s and 1s). Analog: a continuously variable signal."},{"criterion":"Peripherals","marks":2,"look":["printer|projector|speaker","scanner|webcam|microphone|mouse|keyboard","flash|external|portable hard|headset|network adapter"],"min":2,"strong":"Two suitable peripherals.","weak":"Name two devices that plug in, such as a printer and a scanner."}],"model":"<p><b>(a)</b> Hardware is the physical parts of a computer that you can touch. For example, the keyboard on the assistant's desk.</p><p><b>(b)</b> Software is the programs that tell the hardware what to do. For example, Microsoft Word.</p><p><b>(c)</b> Digital media store information as discrete binary values (0s and 1s). Analog media use a continuously variable signal.</p><p><b>(d)</b> Two peripherals are the printer and the scanner.</p>","key":"<p>Mark scheme (8): (a) 1 physical/tangible, 1 valid example. (b) 1 programs/instructions, 1 valid example. (c) 1 mark per gap (accept binary, discrete or 0s and 1s; continuous or continuously variable). (d) 1 mark per valid peripheral.</p>","teacherTip":"<p>Use the \"drop it on your foot\" test with Foundation students before they write: if you could drop it, it is hardware. Ask them to underline the key words physical, programs, binary and continuous in their answer. When they can do this confidently, move them to the Core note, which asks for two examples of each.</p>","title":"Components at Vieux Fort Insurance (Foundation)"},
+          up: {"genre":"Structured response: components of a computer system (15 marks)","stimulus":"<p class=\"passage\">The new office assistant at Vieux Fort Insurance Agency has written these notes after the IT technician's briefing:</p><ul><li>\"The CPU is the big box under the desk.\"</li><li>\"The printer is part of the computer's core.\"</li><li>\"Digital files cannot be copied without losing quality.\"</li><li>\"The accounting program on the installation DVD is hardware, because I can hold it.\"</li></ul><p class=\"passage\">The manager also plans to scan ten years of paper claim forms so that the office can go paperless.</p>","prompt":"<p>Write a short briefing note for the assistant. Answer all parts.</p><ol type=\"a\"><li><b>Identify</b> and <b>correct</b> the error in EACH of the four notes. <i>(4 marks)</i></li><li><b>Explain</b> why hardware and software depend on each other, using an office example. <i>(2 marks)</i></li><li><b>Distinguish</b> between analog and digital media, and <b>explain</b> ONE advantage of digital media for the agency. <i>(3 marks)</i></li><li><b>Explain</b> why peripherals make a computer system flexible, giving TWO peripherals the agency could add as it goes paperless. <i>(3 marks)</i></li><li>For the scanning project, <b>name</b> the input device and a suitable storage system, and <b>describe</b> the CPU's role. <i>(3 marks)</i></li></ol>","min":180,"max":380,"frame":"<p><b>(a)</b> Note 1 is wrong because ... In fact, ... Note 2 ... Note 3 ... Note 4 ...<br><b>(b)</b> Hardware cannot ... without software, and software ... For example, ...<br><b>(c)</b> Analog media ... whereas digital media ... One advantage for the agency is ...<br><b>(d)</b> Peripherals are not part of the core, so ... The agency could add ... and ...<br><b>(e)</b> The input device is ... The files would be stored on ... The CPU would ...</p>","checklist":["I corrected all four notes, not just said they were wrong.","I explained the two-way dependence of hardware and software with an office example.","I used \"discrete/binary\" and \"continuous\" and gave an advantage that fits an insurance agency.","I linked flexibility to the core and named two peripherals for going paperless.","I named a scanner, a storage system and the CPU's role in the scanning project."],"rubric":[{"criterion":"Errors corrected","marks":4,"look":["chip|inside","peripheral|not part of the core|outside the core","copied|copy|identical|no loss","software|program"],"min":4,"strong":"All four notes are corrected with the right terms.","weak":"Correct each note: the CPU is a chip inside the system unit; the printer is a peripheral; digital files copy perfectly; the program is software (only the disc is hardware)."},{"criterion":"Hardware and software depend on each other","marks":2,"look":["without|cannot|need|depend","word|excel|accounting|windows|program"],"min":2,"strong":"Clear two-way explanation with an example.","weak":"Explain that hardware cannot do anything without programs, and programs need hardware to run on, with an office example."},{"criterion":"Analog versus digital","marks":3,"look":["continuous|variable","discrete|binary|0s and 1s","whereas|however|while","copy|compress|send|e-?mail|search|share|quality"],"min":3,"strong":"A real contrast and a relevant advantage.","weak":"Contrast a continuously variable signal with discrete binary values, then give an advantage such as e-mailing claim files with no loss of quality."},{"criterion":"Peripherals and flexibility","marks":3,"look":["core|cpu|motherboard","add|remov|replac|swap|upgrad","scanner|portable hard|external|printer|webcam|tablet|signature pad"],"min":3,"strong":"You linked flexibility to the core and gave suitable peripherals.","weak":"Say peripherals are outside the core, so they can be added or replaced without a new computer; name e.g. a scanner and a portable hard disk."},{"criterion":"Scanning project","marks":3,"look":["scanner","cloud|hard disk|server|portable hard|external","cpu|process|instruction|manag"],"min":3,"strong":"All three parts of the project are correctly identified.","weak":"Name a scanner (input), a storage system such as cloud storage or a hard disk, and explain that the CPU processes the scanned data and manages its flow to storage."}],"model":"<p><b>(a)</b> Note 1: the CPU is not the box. It is a chip inside the system unit that interprets instructions and performs calculations. Note 2: the printer is not part of the core. It is a peripheral; the core is the CPU, motherboard and main memory. Note 3: digital files can be copied, and the copy is identical to the original with no loss of quality. Note 4: the disc is hardware, but the accounting program stored on it is software.</p><p><b>(b)</b> Hardware cannot do anything useful without software, and software needs hardware to run on. For example, the new laptop cannot produce a claim letter until Microsoft Word is installed, and Word cannot run without the laptop.</p><p><b>(c)</b> Analog media store information as a continuously variable signal, whereas digital media store it as discrete binary values (0s and 1s). One advantage for the agency is that digital claim files can be e-mailed to the head office and copied for backup with no loss of quality.</p><p><b>(d)</b> Peripherals are not part of the core (CPU, motherboard, main memory), so they can be added, removed or replaced without buying a new computer. As it goes paperless, the agency could add a document scanner and a portable hard disk for backups.</p><p><b>(e)</b> The input device is a scanner, which converts each paper form into digital form. The files would be stored on the office server's hard disk and copied to cloud storage. The CPU would process the scanned data, following the scanning software's instructions, and manage its flow from the scanner to storage.</p>","key":"<p>Mark scheme (15): (a) 1 per note correctly identified AND corrected (identification alone earns 0). (b) 1 two-way dependence, 1 relevant example. (c) 1 analog, 1 digital (with contrast), 1 relevant advantage. (d) 1 link to the core, 1 add/replace idea, 1 for two suitable peripherals. (e) 1 scanner, 1 storage system, 1 CPU role (process instructions or manage data flow).</p>","teacherTip":"<p>Error-correction items reward the <b>correction</b>, not just the spotting. Train Challenge students to write \"X is wrong because... In fact...\" for each note. In (c), push them to choose an advantage that fits an insurance agency (sending claims, backups) rather than a general one about music.</p>","title":"Components at Vieux Fort Insurance (Challenge)"}
+        }
+      ]
+    },
+    // ===================== UNIT 3 =====================
+    {
+      id: `S1U3`,
+      title: `Advantages and disadvantages of computer usage`,
+      objectives: [
+        `State an advantage and a disadvantage of computer usage in each of the eight areas.`,
+        `Explain the principle "garbage in, garbage out".`,
+        `Identify common cyber security threats.`,
+        `Weigh up the benefits and risks of e-commerce for a local business.`
+      ],
+      videos: [
+        {title:`Advantages and disadvantages of computers`, q:`advantages and disadvantages of using computers in business`},
+        {title:`Garbage in, garbage out`, q:`garbage in garbage out explained data accuracy`},
+        {title:`Cyber security basics: malware, phishing, ransomware`, q:`cyber security basics for students phishing malware ransomware`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`Weighing both sides`,
+          html:`<p>Computers offer real, measurable benefits over manual methods of working, but they also introduce new risks and responsibilities. The syllabus asks you to weigh both sides across <b>eight areas</b>. Learn them as a list:</p>
+<p class="passage"><b>S</b>peed, <b>A</b>ccuracy, <b>S</b>torage and retrieval, <b>R</b>eliability, <b>E</b>rgonomics, <b>E</b>thics, <b>C</b>yber security, <b>E</b>-commerce</p>
+<p><b>Speed.</b> Computers carry out <b>millions of instructions every second</b>, completing in moments tasks that would take a person hours or days by hand. <i>But</i> this speed can create unrealistic expectations of instant results, and a slow or malfunctioning system can bring an organisation's work to a frustrating halt.</p>
+<p><b>Accuracy.</b> Given correct instructions and reliable data, computers perform calculations and repetitive operations with a level of accuracy manual work struggles to match. <i>But</i> computers are only as accurate as the data and instructions they are given. This is summed up as <b>"garbage in, garbage out"</b>. An error in input can be reproduced accurately and repeatedly throughout a system.</p>
+<p class="passage"><b>Example:</b> A clerk types a price of $250 instead of $25 for a case of water at a Mandeville supermarket. The till will calculate every sale perfectly, and every customer will be overcharged. The computer was accurate; the input was garbage.</p>
+<p class="tip"><b>Teacher's tip:</b> In a "discuss" question, give the advantage, then the disadvantage, for the same area. That shows the examiner you can weigh both sides.</p>`,
+          tutor:[
+            {h:`Eight areas`, p:`<p>Speed, accuracy, storage/retrieval, reliability, ergonomics, ethics, cyber security, e-commerce.</p>`},
+            {h:`GIGO`, p:`<p>Wrong data in means wrong information out, every time, very fast.</p>`}
+          ],
+          plain: "<p>Computers bring benefits and problems. The syllabus lists <b>eight areas</b>: speed, accuracy, storage and retrieval, reliability, ergonomics, ethics, cyber security and e-commerce. Computers are fast and accurate, but only as accurate as the data typed in. If a cashier in Roseau keys US$250 instead of US$25 for a case of water, every customer that day is overcharged.</p>",
+          deeper: "<p>Speed and accuracy interact. Because a computer is fast, one input error can be repeated hundreds of times before anyone notices, so <b>garbage in, garbage out</b> gets worse, not better, with speed. Organisations reduce the risk with <b>validation</b> (the software rejects unreasonable entries, such as a price above a set limit) and <b>verification</b> (a person checks the entry against the source, or the data is keyed twice). A common misconception is that \"the computer made a mistake\". Usually the error came from the input or the program, not the machine. In a \"discuss\" question, give the advantage and the disadvantage for the <b>same area</b>, then add a short judgement or safeguard.</p>"
+        },
+        {
+          type:'learn', title:`Storage, reliability and ergonomics`,
+          html:`<p><b>Storage and retrieval.</b> Digital storage keeps vast quantities of information in a very small physical space and retrieves it almost instantly through searching and indexing. A whole filing room of student records fits on one drive and can be searched in seconds. <i>But</i> digital files can be <b>corrupted, accidentally deleted, or lost</b> if proper backup routines are not followed, and poorly organised digital storage can become just as hard to search as a disorganised filing cabinet.</p>
+<p><b>Reliability.</b> Modern computer systems, especially those supported by cloud infrastructure, can run for long periods with very little downtime and can automatically back up and recover data. <i>But</i> reliability can be undermined by <b>power outages, hardware failure, software bugs, or a lack of routine maintenance</b>. In the Caribbean, a hurricane season power cut is a very real threat.</p>
+<p><b>Ergonomics.</b> Well-designed hardware and workstations can be adapted to reduce physical strain and support long, comfortable periods of use: adjustable chairs, screens at eye level, ergonomic keyboards. <i>But</i> poorly designed or poorly arranged equipment can contribute to discomfort and injury (see Unit 6).</p>
+<div class="tablewrap"><table>
+<tr><th>Area</th><th>Advantage</th><th>Disadvantage</th></tr>
+<tr><td>Storage/retrieval</td><td>Huge amounts in a small space; found in seconds</td><td>Corruption, deletion or loss without backups</td></tr>
+<tr><td>Reliability</td><td>Runs for long periods; automatic backup and recovery</td><td>Power outages, hardware failure, bugs, poor maintenance</td></tr>
+<tr><td>Ergonomics</td><td>Equipment can be adjusted to reduce strain</td><td>Poor set-up causes discomfort and injury</td></tr>
+</table></div>`,
+          tutor:[
+            {h:`Two sides of storage`, p:`<p>Small space and fast search, but only safe if you back up.</p>`},
+            {h:`Local link`, p:`<p>Power cuts and storms are a good Caribbean example of a reliability disadvantage.</p>`}
+          ],
+          plain: "<p>Computers store huge amounts of information in a small space and find it in seconds, but files can be lost if you do not back them up. They can run for long periods, but power cuts and faults can stop them. Good chairs and screens prevent strain. During hurricane season in Antigua, a backup kept in the cloud keeps an office's records safe.</p>",
+          deeper: "<p>Reliability is something an organisation <b>plans for</b>. Surge protectors, a battery backup (UPS) or a generator, routine maintenance and backups kept in more than one location turn a fragile system into a dependable one. Do not assume the cloud means nothing can be lost: if a file is deleted by mistake, the deletion can sync to every device. Storage and retrieval also depend on organisation, which links directly to EDPM file management: clear folder structures and file names are what make a search take seconds rather than an afternoon. Ergonomics is the area that can be either side: the same desk is an advantage when adjusted well and a disadvantage when it is not.</p>"
+        },
+        {
+          type:'learn', title:`Ethics, cyber security and e-commerce`,
+          html:`<p><b>Ethics.</b> Computers make it easier to create, copy and distribute information for legitimate and beneficial purposes, such as education and creative work. <i>But</i> the same capabilities make it easier to <b>plagiarise</b> the work of others, <b>spread misinformation</b>, or use technology to <b>harass or deceive</b> people. Copying a classmate's EDPM file and submitting it as your own is an ethical misuse of a computer.</p>
+<p><b>Cyber security.</b> Connecting computers to networks allows extraordinary collaboration and access to information. <i>But</i> it also exposes systems to threats such as:</p>
+<ul>
+<li><b>malware</b> - malicious software such as viruses;</li>
+<li><b>phishing</b> - fake e-mails or messages that trick you into revealing passwords or details;</li>
+<li><b>data breaches</b> - private data being accessed or stolen;</li>
+<li><b>ransomware</b> - malware that locks your files until a payment is made.</li>
+</ul>
+<p>Security safeguards are now a <b>routine and necessary</b> part of computer usage, not an optional extra.</p>
+<p><b>E-commerce.</b> Computers and the internet let businesses reach customers far beyond their location, operate <b>around the clock</b>, and reduce the overhead costs of a purely physical storefront. A St. John's jewellery shop can sell to cruise visitors after they have gone home. <i>But</i> e-commerce brings the risk of <b>online fraud</b>, the challenge of building <b>customer trust without face-to-face contact</b>, and <b>dependency on stable internet</b>.</p>
+<p class="tip"><b>Activity 2:</b> Split the class into two groups to debate the advantages versus the disadvantages of computer usage. Each group must use at least one point from EACH of the eight areas and cite sources.</p>`,
+          tutor:[
+            {h:`Ethics = right and wrong use`, p:`<p>Plagiarism, misinformation, harassment and deception are the key ethical risks.</p>`},
+            {h:`Four threats`, p:`<p>Malware, phishing, data breaches, ransomware.</p>`}
+          ],
+          plain: "<p>Computers make it easy to share work, but also easy to copy someone else's work, which is an <b>ethics</b> problem. Being online brings <b>cyber security</b> threats such as viruses and fake e-mails that steal passwords. <b>E-commerce</b> lets a craft shop in St. John's sell to customers abroad at any hour, but buyers must trust a shop they have never visited.</p>",
+          deeper: "<p>In each of these areas, the <b>same capability</b> creates both the advantage and the disadvantage: easy copying helps learning but also enables plagiarism; connection allows collaboration but also exposes systems to attack; global reach brings customers but also fraud. Most security breaches start with a person, not a machine: one click on a <b>phishing</b> link can hand over a password, which is why staff training is a safeguard. Against <b>ransomware</b>, recent backups stored separately mean the business can restore its files instead of paying. In the examination, name the specific threat (phishing, malware, ransomware, data breach) rather than writing \"hackers\", and pair each e-commerce risk with a trust-building measure such as secure payment.</p>"
+        },
+        {
+          type:'sort', game:true, title:`Advantage or disadvantage?`,
+          intro:`<p>Turtle Cove Marine Supplies in Providenciales has just computerised its stock and sales. Sort each statement from the staff meeting.</p>`,
+          main:`Is this an advantage or a disadvantage of computer usage?`,
+          bins:[`Advantage`,`Disadvantage`],
+          items:[
+            {t:`A staff member clicked a fake "bank" e-mail and gave away the account password.`, bin:1, fb:`Cyber security: this is phishing.`},
+            {t:`The stock count that used to take two days now takes ten minutes.`, bin:0, fb:`Speed: computers complete in moments tasks that took people hours or days.`},
+            {t:`The cashier's new adjustable chair and screen stand have ended her neck pain.`, bin:0, fb:`Ergonomics: well-designed equipment reduces physical strain.`},
+            {t:`Five years of invoices now fit on one drive and can be searched by customer name.`, bin:0, fb:`Storage and retrieval: huge amounts in a small space, found almost instantly.`},
+            {t:`A power cut during a storm shut down the tills for the afternoon.`, bin:1, fb:`Reliability: power outages undermine computer systems.`},
+            {t:`Yacht owners in the lagoon can now order parts online at midnight.`, bin:0, fb:`E-commerce: the business can operate around the clock.`},
+            {t:`A wrong price keyed in on Monday was charged to every customer all week.`, bin:1, fb:`Accuracy: garbage in, garbage out. The error was repeated accurately throughout the system.`},
+            {t:`Some overseas customers do not trust paying a shop they have never visited.`, bin:1, fb:`E-commerce: building trust without face-to-face contact is a challenge.`}
+          ],
+          win:`Great work. Notice that some areas appeared on both sides: e-commerce is an advantage (open all night) and a disadvantage (trust). That is exactly the balance a "discuss" question wants.`,
+          tutor:[
+            {h:`Did it help or hurt?`, p:`<p>If the business saved time, money or effort, it is an advantage. If something went wrong, it is a disadvantage.</p>`},
+            {h:`Name the area`, p:`<p>For each card, try to name which of the eight areas it belongs to.</p>`}
+          ],
+          easy:{
+            title:`Advantage or disadvantage? (Foundation)`,
+            items:[
+              {t:`The stock count now takes ten minutes instead of two days.`, bin:0, fb:`Speed is an advantage.`},
+              {t:`A wrong price was charged to every customer all week.`, bin:1, fb:`Garbage in, garbage out: a disadvantage.`},
+              {t:`Customers can order parts online at midnight.`, bin:0, fb:`E-commerce lets the shop trade around the clock.`},
+              {t:`A power cut shut down the tills.`, bin:1, fb:`Power outages hurt reliability.`}
+            ]
+          },
+          up: {"title":"Advantage or disadvantage? (Challenge)","intro":"<p>These statements come from Turtle Cove Marine Supplies after its first year online. Some effects are less obvious. Decide whether each one shows a benefit or a problem of computer usage, and name the area to yourself as you sort.</p>","items":[{"t":"Orders are processed so quickly that customers now expect same-day delivery the shop cannot always provide.","bin":1,"fb":"Speed: fast systems can create unrealistic expectations of instant results."},{"t":"A validation check rejected a price of US$250 for a case of water, so the error was caught before any sale.","bin":0,"fb":"Accuracy: with the right checks built in, a computer catches input errors a busy person might miss."},{"t":"The till system has run for 14 months with no downtime, thanks to cloud backup and regular maintenance.","bin":0,"fb":"Reliability: a well-maintained system can run for long periods with very little downtime."},{"t":"Poorly named folders mean no one can find last year's tax file on the shared drive.","bin":1,"fb":"Storage and retrieval: badly organised digital storage is as hard to search as a messy filing cabinet."},{"t":"A competitor copied the shop's product photos and descriptions onto its own website.","bin":1,"fb":"Ethics: computers make it easy to copy and reuse other people's work without permission."},{"t":"Staff can check live stock levels on a phone while standing in the boatyard.","bin":0,"fb":"Storage and retrieval: information is available almost instantly, wherever it is needed."},{"t":"A badly placed monitor gives the stock clerk neck pain by the end of each day.","bin":1,"fb":"Ergonomics: poorly arranged equipment contributes to discomfort and injury."},{"t":"The online store reaches yacht owners in St. Barths and Anguilla without the cost of opening a branch.","bin":0,"fb":"E-commerce: a business can reach customers far away and avoid the overhead of a physical storefront."},{"t":"A faulty software update doubled every invoice total for a whole day.","bin":1,"fb":"Reliability: software bugs can undermine even a well-run system."},{"t":"Ransomware locked the stock database until a payment was demanded.","bin":1,"fb":"Cyber security: ransomware locks files until a payment is made."}],"win":"Excellent. You judged the effect, not the topic: the same area (speed, reliability, storage) can appear on either side depending on how the system is used and managed."}
+        },
+        {
+          type:'match', game:true, title:`Name the area`,
+          intro:`<p>Match each situation to the area of computer usage it illustrates.</p>`,
+          pairs:[
+            {l:`Speed`, r:`Payroll for 300 staff is calculated in under a minute.`},
+            {l:`Accuracy`, r:`A typing error in one student's date of birth appears on every report the school prints.`},
+            {l:`Storage and retrieval`, r:`A clerk finds a 2019 invoice in seconds by searching the customer's name.`},
+            {l:`Reliability`, r:`The hotel's booking system went down after a hard disk failed.`},
+            {l:`Ethics`, r:`A student copies a blog post into his assignment without credit.`},
+            {l:`Cyber security`, r:`Ransomware locks every file on the office server until a payment is made.`},
+            {l:`E-commerce`, r:`A local craft seller ships hand-made bags to customers in Canada.`}
+          ],
+          win:`Excellent. Being able to name the area quickly helps you organise your answers to "discuss" and essay questions.`,
+          tutor:[
+            {h:`Clue words`, p:`<p>"Under a minute" = speed. "Error appears on every report" = accuracy. "Finds in seconds" = storage/retrieval.</p>`},
+            {h:`Threat or misuse?`, p:`<p>An attack from outside (ransomware) is cyber security. Someone misusing information (plagiarism) is ethics.</p>`}
+          ],
+          easy:{
+            title:`Name the area (Foundation)`,
+            pairs:[
+              {l:`Speed`, r:`Payroll for 300 staff is done in under a minute.`},
+              {l:`Ethics`, r:`A student copies a blog post without credit.`},
+              {l:`Cyber security`, r:`Ransomware locks the office files.`},
+              {l:`E-commerce`, r:`A craft seller ships bags to Canada.`}
+            ]
+          },
+          up: {"title":"Name the area (Challenge)","intro":"<p>All eight areas appear here, and some situations show the disadvantage side. Match each situation to the area it BEST illustrates.</p>","pairs":[{"l":"Speed","r":"Customers now expect a reply within minutes because the booking system confirms in seconds."},{"l":"Accuracy","r":"An account number keyed with two digits swapped sends a payment to the wrong customer."},{"l":"Storage and retrieval","r":"Ten years of patient records fit on one server, but badly named files make some impossible to find."},{"l":"Reliability","r":"A clinic's appointment system crashes every time a power surge hits during a thunderstorm."},{"l":"Ergonomics","r":"A data-entry clerk develops wrist pain from a keyboard placed too high."},{"l":"Ethics","r":"A student shares edited photos of a classmate to embarrass her."},{"l":"Cyber security","r":"A fake courier text asks staff to \"confirm delivery\" by entering their e-mail password."},{"l":"E-commerce","r":"A Grenadian spice exporter sells online to buyers in Toronto but must win their trust without meeting them."}],"win":"Excellent. You named the area even when the situation showed the downside, which is exactly what a \"discuss\" question needs."}
+        },
+        {
+          type:'scenario', game:true, title:`Taking the bakery online`,
+          intro:`<p>Your aunt runs the Sweet Guavaberry Bakery on Back Street, Philipsburg. She wants to start taking orders online and asks for your advice. Make the best decisions.</p>`,
+          nodes:{
+            start:{text:`<p>Aunt Merle says: "If I sell online, I can stop worrying about anything going wrong. Computers never make mistakes." How do you respond?</p>`,
+              choices:[
+                {t:`"Computers are very accurate, but only if the data is correct. If a price is typed wrongly, every order will be wrong. We should double-check what we enter."`, to:`n2`, fb:`Exactly. You explained garbage in, garbage out and suggested a practical safeguard.`},
+                {t:`"You are right. Once it is set up you never need to check it."`, to:`bad1`, fb:`This ignores garbage in, garbage out. Errors in input are repeated through the whole system.`}
+              ]},
+            n2:{text:`<p>The online shop is ready. A week later, Aunt Merle gets an e-mail that looks like it is from her bank: "Your account is locked. Click here and enter your password." What do you advise?</p>`,
+              choices:[
+                {t:`"Click it quickly so the shop does not lose orders."`, to:`bad2`, fb:`This is a classic phishing trick. Entering the password could give criminals access to her account.`},
+                {t:`"Do not click the link. It may be phishing. Call the bank using the number on your card, and we will make sure the anti-virus and firewall are switched on."`, to:`n3`, fb:`Strong advice. You recognised a likely phishing attempt and recommended routine safeguards.`}
+              ]},
+            n3:{text:`<p>Some overseas customers are nervous about paying a small bakery they have never visited. How can the bakery build trust?</p>`,
+              choices:[
+                {t:`Ask customers to send cash by post first.`, to:`bad3`, fb:`This makes customers trust the bakery even less and gives up the convenience that makes e-commerce attractive.`},
+                {t:`Add clear contact details, photos of the real shop, honest customer reviews and a secure, well-known payment method.`, to:`good`, fb:`Good thinking. Building trust without face-to-face contact is one of the main challenges of e-commerce, and you addressed it.`}
+              ]},
+            good:{text:`<p><b>Success!</b> Sweet Guavaberry's online orders grow steadily, including cake orders from relatives overseas for birthdays on the island. You weighed accuracy, cyber security and e-commerce, and helped your aunt enjoy the advantages while managing the disadvantages.</p>`, end:'good'},
+            bad1:{text:`<p><b>Costly mistake.</b> A coconut tart was listed at $0.50 instead of $5.00. Dozens of orders came in before anyone noticed. Computers are only as accurate as their data. Try again.</p>`, end:'bad'},
+            bad2:{text:`<p><b>Account hacked.</b> The "bank" e-mail was phishing. Criminals used the password to steal from the account. Security safeguards are a routine part of computer usage. Try again.</p>`, end:'bad'},
+            bad3:{text:`<p><b>No sales.</b> Overseas customers lose interest. E-commerce needs secure online payment and visible signs of trust. Try again.</p>`, end:'bad'}
+          },
+          tutor:[
+            {h:`GIGO`, p:`<p>Computers are accurate only when the data and instructions are correct.</p>`},
+            {h:`Suspicious e-mail?`, p:`<p>Never click links asking for passwords. Contact the organisation directly.</p>`},
+            {h:`Trust online`, p:`<p>Clear contact details, real photos, reviews and secure payment help customers trust a business they cannot visit.</p>`}
+          ],
+          easy:{
+            title:`Taking the bakery online (Foundation)`,
+            intro:`<p>A shorter version: your aunt's bakery is starting to sell online.</p>`,
+            nodes:{
+              start:{text:`<p>She gets an e-mail that looks like it is from her bank asking her to click a link and enter her password. What do you advise?</p>`,
+                choices:[
+                  {t:`Click it quickly.`, to:`bad`, fb:`This could hand her password to criminals.`},
+                  {t:`Do not click. Call the bank on the number on her card.`, to:`good`, fb:`Yes. This is probably phishing.`}
+                ]},
+              good:{text:`<p><b>Well done.</b> You spotted a phishing attempt and protected the business.</p>`, end:'good'},
+              bad:{text:`<p><b>Account hacked.</b> That e-mail was phishing. Try again.</p>`, end:'bad'}
+            }
+          },
+          up: {"title":"Taking the bakery online (Challenge)","intro":"<p>Aunt Merle wants Sweet Guavaberry Bakery on Back Street, Philipsburg, to take online orders before Carnival. She has a budget of US$600 and trusts your judgement. Some choices are not simply right or wrong: pick the BEST one each time.</p>","nodes":{"start":{"text":"<p>Three options are on the table. Which do you recommend?</p>","choices":[{"t":"Wait until she can afford a custom app next year.","to":"ok1","fb":"Not dangerous, but she would miss the Carnival season, when the advantages of e-commerce matter most."},{"t":"Take orders by e-mail and ask customers to type their card numbers into the e-mail.","to":"bad1","fb":"E-mail is not a secure way to send card numbers. This invites fraud and a data breach."},{"t":"Set up an online order form linked to a secure, well-known payment provider.","to":"n2","fb":"Strong choice. It gives round-the-clock sales and keeps card details with a provider built to protect them."}]},"n2":{"text":"<p>Orders arrive. The assistant types each one into a spreadsheet that calculates the total. On day one, the price of a black cake (US$45) is keyed as US$4.50. Which safeguard do you add?</p>","choices":[{"t":"Stop using the spreadsheet and work out every total by hand.","to":"ok2","fb":"This gives up the speed and accuracy advantages instead of fixing the real problem: unchecked input."},{"t":"A validation rule that rejects prices outside a sensible range, plus a second person checking every new price.","to":"n3","fb":"Excellent. Validation and verification together tackle garbage in, garbage out."},{"t":"Nothing. The spreadsheet always calculates perfectly.","to":"bad2","fb":"The calculation is perfect; the input is not. Garbage in, garbage out."}]},"n3":{"text":"<p>A week before Carnival, ransomware locks the bakery laptop and demands US$500. A full backup of the order files was saved to cloud storage last night. What is the BEST response?</p>","choices":[{"t":"Ignore the message and keep taking orders on the same laptop.","to":"bad3","fb":"The malware is still active and could spread or steal customer data."},{"t":"Pay the US$500 so the files come back quickly.","to":"bad3","fb":"Paying offers no guarantee, uses most of the budget and funds the criminals. The backup made paying unnecessary."},{"t":"Do not pay. Disconnect the laptop, have a technician clean it, and restore the order files from last night's backup.","to":"n4","fb":"Exactly. A recent, separate backup is what makes recovery possible without paying criminals."}]},"n4":{"text":"<p>After Carnival, Aunt Merle asks: \"Was going online worth it?\" Which answer shows the BEST judgement?</p>","choices":[{"t":"\"Yes. Sales rose and overseas orders came in around the clock. It also brought new risks, so we must keep the backups, the price checks and the staff training going.\"","to":"good","fb":"A balanced judgement: you weighed the advantages and named the safeguards that keep the disadvantages under control."},{"t":"\"Yes. The computer solved every problem, so we can stop checking things now.\"","to":"bad4","fb":"Overconfident. The risks did not disappear; they were managed."},{"t":"\"No. The risks are too great, so we should close the online shop.\"","to":"ok3","fb":"Too cautious. Every risk you met had a practical safeguard, and the benefits were real."}]},"good":{"text":"<p><b>Grade One advice!</b> You chose a secure payment method, fixed garbage in with validation and verification, beat ransomware with a backup, and gave a balanced verdict. Sweet Guavaberry is now taking birthday-cake orders from relatives in Toronto and New York.</p>","end":"good"},"ok1":{"text":"<p><b>Safe but slow.</b> Nothing went wrong, but the Carnival rush passed and the overseas orders went to other bakeries. Waiting has a cost too. Try again.</p>","end":"ok"},"ok2":{"text":"<p><b>Back to paper.</b> The hand-written totals are slower and soon contain new mistakes. The answer was to check the input, not to abandon the computer. Try again.</p>","end":"ok"},"ok3":{"text":"<p><b>Over-cautious.</b> Closing the shop throws away the benefits you worked for. A good adviser manages risks rather than running from them. Try again.</p>","end":"ok"},"bad1":{"text":"<p><b>Card details stolen.</b> One customer's e-mail account was hacked and the card number was used fraudulently. Never collect card numbers by e-mail. Try again.</p>","end":"bad"},"bad2":{"text":"<p><b>Forty cakes at a loss.</b> Every black cake sold for US$4.50 until a customer pointed it out. The computer was accurate; the input was garbage. Try again.</p>","end":"bad"},"bad3":{"text":"<p><b>Budget gone, problem not solved.</b> The criminals did not unlock everything, and the laptop is still infected. Backups, not payments, are the defence against ransomware. Try again.</p>","end":"bad"},"bad4":{"text":"<p><b>Complacent.</b> Within a month, an unchecked price change and a phishing e-mail cause new losses. Safeguards are routine, not one-off. Try again.</p>","end":"bad"}}}
+        },
+        {
+          type:'multi', game:true, title:`Quick-fire: computer usage`,
+          intro:`<p>Answer each quick question about the advantages and disadvantages of computer usage.</p>`,
+          items:[
+            {text:`"Garbage in, garbage out" is most closely linked to...`, options:[`accuracy`,`speed`,`e-commerce`,`ergonomics`], answer:0, fb:`It describes how a computer is only as accurate as the data it is given.`},
+            {text:`Which is a DISADVANTAGE of digital storage?`, options:[`Files can be searched quickly`,`Files take up little physical space`,`Files can be corrupted or lost without backups`], answer:2, fb:`Corruption, accidental deletion and loss are the risks of digital storage if you do not back up.`},
+            {text:`A message pretending to be from a bank asking for your password is...`, options:[`phishing`,`ransomware`,`a data breach`], answer:0, fb:`Phishing tricks people into revealing private details.`},
+            {text:`Which is an ADVANTAGE of e-commerce?`, options:[`Risk of online fraud`,`Dependency on stable internet`,`The business can operate around the clock`], answer:2, fb:`An online shop never closes; the other two are disadvantages.`},
+            {text:`Submitting a classmate's work as your own is an issue of...`, options:[`reliability`,`ethics`,`speed`], answer:1, fb:`Plagiarism is an ethical misuse of computers.`},
+            {text:`A software bug that crashes the school's grading system affects...`, options:[`ergonomics`,`reliability`,`e-commerce`], answer:1, fb:`Software bugs, hardware failure and power outages undermine reliability.`}
+          ],
+          win:`Well done. You can link each example to the correct area and say whether it helps or harms.`,
+          tutor:[
+            {h:`Name the area first`, p:`<p>Decide which of the eight areas the question is about, then choose the answer.</p>`},
+            {h:`Watch for NOT and DISADVANTAGE`, p:`<p>Capital letters in a question tell you to look for the opposite.</p>`}
+          ],
+          easy:{
+            title:`Quick-fire (Foundation)`,
+            items:[
+              {text:`"Garbage in, garbage out" is linked to...`, options:[`speed`,`accuracy`], answer:1, fb:`It is about accuracy.`},
+              {text:`A fake bank e-mail asking for a password is...`, options:[`e-commerce`,`phishing`], answer:1, fb:`That is phishing.`},
+              {text:`Copying someone's work is an issue of...`, options:[`reliability`,`ethics`], answer:1, fb:`Plagiarism is an ethical issue.`}
+            ]
+          },
+          up: {"title":"Quick-fire: computer usage (Challenge)","intro":"<p>Each question is set in a real workplace. Choose the BEST answer; some distractors are partly true.</p>","items":[{"text":"A clinic in Georgetown books two patients into the same slot because a receptionist typed 10:30 instead of 11:30. Which area does this BEST illustrate?","options":["Storage and retrieval","Reliability","Accuracy (garbage in, garbage out)","Speed"],"answer":2,"fb":"The system worked perfectly with wrong input: an accuracy problem caused by garbage in."},{"text":"Which is the BEST safeguard against losing an office's files to ransomware?","options":["A larger monitor","Turning off the firewall to speed up the internet","A faster processor","Regular backups stored in a separate location"],"answer":3,"fb":"A recent backup kept apart from the infected computer lets the office restore its files without paying."},{"text":"A shop's website shows a padlock, a physical address and genuine customer reviews. Which e-commerce DISADVANTAGE is it trying to reduce?","options":["Slow processing","Building customer trust without face-to-face contact","Higher overhead costs","Dependency on stable internet"],"answer":1,"fb":"These are trust signals for customers who have never visited the shop. E-commerce usually lowers overheads rather than raising them."},{"text":"Which statement describes a DISADVANTAGE linked to computer speed?","options":["Payroll for 300 staff is calculated in minutes.","Reports print quickly.","Searches take seconds.","Customers come to expect instant results, and a slow system brings work to a halt."],"answer":3,"fb":"Speed can create unrealistic expectations, and an organisation that depends on it is stuck when the system slows down."},{"text":"Someone circulates a doctored screenshot to make people believe a false story about a local business. This is MAINLY an issue of...","options":["ethics (spreading misinformation)","storage and retrieval","reliability","cyber security"],"answer":0,"fb":"No system was broken into. Using computers to spread misinformation is an ethical misuse."},{"text":"A hotel's booking system runs for months without a fault but goes down in every hurricane power cut. Which pair of safeguards BEST protects its reliability?","options":["A faster internet plan on its own","A surge protector and a backup power supply (UPS or generator)","More printer paper and ink","A brighter monitor and a new mouse"],"answer":1,"fb":"Power problems are the weak point, so protect against spikes and provide backup power."},{"text":"Which of these is an ADVANTAGE of computer storage and retrieval?","options":["Files can be corrupted.","Files can be deleted by accident.","Badly organised folders are hard to search.","A whole filing room of records fits on one drive and can be searched in seconds."],"answer":3,"fb":"The other three are the risks of digital storage when it is not backed up or organised."}],"win":"Well done. You linked each workplace situation to the right area and chose safeguards that match the actual risk."}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Advise the guest house`, genre:`Structured short answer: advantages and disadvantages`,
+          stimulus:`<p class="passage">The owner of the Bathsheba Guest House keeps all guest records on paper cards. She is thinking of buying a computer and taking bookings online, but she is worried about "things going wrong".</p>`,
+          prompt:`<p>Write a short response to the owner. State and explain <b>TWO advantages</b> and <b>TWO disadvantages</b> of computer usage for her guest house. Use at least <b>THREE different areas</b> (for example, speed, accuracy, storage and retrieval, reliability, cyber security, e-commerce). For each disadvantage, suggest one way to reduce the risk.</p>`,
+          min:100, max:220,
+          frame:`<p><b>Advantage 1 (area):</b> ... This means the guest house can ...<br><b>Advantage 2 (area):</b> ...<br><b>Disadvantage 1 (area):</b> ... To reduce this risk, she should ...<br><b>Disadvantage 2 (area):</b> ... To reduce this risk, ...</p>`,
+          checklist:[
+            `I gave two advantages and two disadvantages.`,
+            `I named at least three different areas.`,
+            `I linked each point to the guest house.`,
+            `I suggested a way to reduce each disadvantage.`
+          ],
+          rubric:[
+            {criterion:`Advantages`, marks:4, look:[`speed|fast|quick|seconds`, `stor|retriev|search|find`, `around the clock|24|online|anywhere|e-?commerce`, `accura`], min:2,
+              strong:`You gave two clear advantages. Next step: say exactly how each helps the guest house.`,
+              weak:`Give two advantages from different areas, e.g. storage and retrieval (guest records found in seconds) and e-commerce (bookings taken around the clock).`},
+            {criterion:`Disadvantages`, marks:4, look:[`garbage|error|wrong data|input`, `power|outage|failure|bug|crash`, `phish|malware|virus|hack|ransomware|breach`, `fraud|trust|internet connection|connectivity`, `corrupt|delet|lost|loss`], min:2,
+              strong:`You gave two clear disadvantages from the chapter.`,
+              weak:`Give two disadvantages, e.g. a power outage could stop bookings (reliability) or a phishing e-mail could steal passwords (cyber security).`},
+            {criterion:`Ways to reduce risk`, marks:2, look:[`back ?up|backup`, `anti-?virus|firewall|password|update`, `surge|generator|ups|battery`, `check|verify|proofread`], min:1,
+              strong:`You suggested practical safeguards.`,
+              weak:`For each disadvantage, suggest a safeguard, e.g. regular backups, anti-virus software, a surge protector, or double-checking data.`}
+          ],
+          model:`<p><b>Advantage 1 (storage and retrieval):</b> All guest records could be stored on one computer and found in seconds by searching a guest's name, instead of looking through boxes of cards.</p><p><b>Advantage 2 (e-commerce):</b> Guests overseas could book and pay online at any time of day, so the guest house would not miss bookings while the office is closed.</p><p><b>Disadvantage 1 (reliability):</b> A power outage during a storm could shut down the computer and stop bookings. To reduce this risk, she should use a surge protector and keep backups in cloud storage so records can be recovered.</p><p><b>Disadvantage 2 (cyber security):</b> A phishing e-mail could trick staff into giving away the booking system password. To reduce this risk, she should install anti-virus software, activate the firewall and train staff never to click suspicious links.</p>`,
+          teacherTip:`<p>Label each point with its <b>area</b> in brackets. It keeps your answer organised and shows the examiner you know the syllabus terms. Always tie each point to the business in the question.</p>`,
+          easy: {"genre":"Structured short answer: advantages and disadvantages (8 marks)","prompt":"<p>Help the owner of Bathsheba Guest House decide. Use the word bank: <b>speed, storage and retrieval, e-commerce, reliability, cyber security</b>. Answer each part in one or two sentences.</p><ol type=\"a\"><li><b>Name</b> ONE advantage of using a computer and say how it helps the guest house. <i>(2 marks)</i></li><li><b>Name</b> ONE disadvantage and say how it could cause a problem. <i>(2 marks)</i></li><li><b>Suggest</b> ONE way to reduce the risk in (b). <i>(2 marks)</i></li><li><b>Complete</b>: \"Garbage in, garbage out\" means that if ______ data goes in, the computer gives ______ results. <i>(2 marks)</i></li></ol>","min":50,"max":130,"frame":"<p><b>(a)</b> One advantage is ... This helps the guest house because ...<br><b>(b)</b> One disadvantage is ... This could ...<br><b>(c)</b> To reduce this risk, she should ...<br><b>(d)</b> Garbage in, garbage out means that if ... data goes in, the computer gives ... results.</p>","checklist":["I named an advantage from the word bank and linked it to the guest house.","I named a disadvantage and said what could go wrong.","I gave one practical safeguard.","I completed the garbage in, garbage out sentence."],"rubric":[{"criterion":"Advantage","marks":2,"look":["speed|fast|stor|retriev|search|e-?commerce|online|accura","guest|booking|record|room"],"min":2,"strong":"A clear advantage linked to the guest house.","weak":"Name an advantage, e.g. storage and retrieval: guest records can be found in seconds."},{"criterion":"Disadvantage","marks":2,"look":["power|outage|reliab|crash|phish|virus|hack|cyber|lost|corrupt","stop|lose|steal|cannot|could"],"min":2,"strong":"A clear disadvantage and its effect.","weak":"Name a disadvantage, e.g. a power cut could stop the computer, so she could not take bookings."},{"criterion":"Safeguard","marks":2,"look":["back ?up|backup|surge|anti-?virus|firewall|password|generator|ups|train"],"min":1,"strong":"A practical safeguard.","weak":"Suggest a safeguard, e.g. back up the records to cloud storage, or use a surge protector."},{"criterion":"Garbage in, garbage out","marks":2,"look":["wrong|incorrect|bad|error","result|output|information"],"min":2,"strong":"You explained GIGO correctly.","weak":"If wrong (incorrect) data goes in, the computer gives wrong results."}],"model":"<p><b>(a)</b> One advantage is storage and retrieval. This helps the guest house because every guest record can be kept on one computer and found in seconds.</p><p><b>(b)</b> One disadvantage is reliability. A power cut during a storm could stop the computer, so she could not take bookings.</p><p><b>(c)</b> To reduce this risk, she should use a surge protector and back up the records to cloud storage.</p><p><b>(d)</b> Garbage in, garbage out means that if wrong data goes in, the computer gives wrong results.</p>","key":"<p>Mark scheme (8): (a) 1 valid advantage, 1 link to the guest house. (b) 1 valid disadvantage, 1 effect. (c) 2 for a practical safeguard that matches (b); 1 if it does not match. (d) 1 mark per gap.</p>","teacherTip":"<p>Foundation students do best when they choose ONE area from the word bank and stay with it for (b) and (c). Check that the safeguard in (c) matches the disadvantage in (b): a surge protector does not stop phishing. Then move them to the Core task, which asks for two of each.</p>","title":"Advise the guest house (Foundation)"},
+          up: {"genre":"Extended response: evaluating computer usage for a small business (15 marks)","stimulus":"<p class=\"passage\">Mrs. Daniel, 64, owns Bathsheba Guest House, which has 8 rooms. About 60% of her guests come from the United States and Canada and currently book by telephone or e-mail. All records are on paper cards. Power cuts are common in hurricane season. Last year a rival guest house had its online booking page hacked, and guests' card details were stolen. Mrs. Daniel says: \"I like my cards. Computers are for big hotels.\"</p>","prompt":"<p>Write a short report advising Mrs. Daniel. Answer all parts.</p><ol type=\"a\"><li><b>Explain</b> TWO advantages of computer usage for her guest house, from different areas. <i>(4 marks)</i></li><li><b>Explain</b> TWO disadvantages, from different areas, that she should be aware of. <i>(4 marks)</i></li><li><b>Recommend</b> a safeguard for EACH disadvantage and <b>justify</b> it. <i>(4 marks)</i></li><li><b>Evaluate</b> whether the advantages outweigh the disadvantages for a guest house of this size, and reach a justified conclusion. <i>(3 marks)</i></li></ol>","min":200,"max":400,"frame":"<p><b>(a)</b> (Storage and retrieval) ... This would ... (E-commerce) ...<br><b>(b)</b> (Reliability) ... (Cyber security) ...<br><b>(c)</b> To protect against ..., she should ..., because ... To protect against ..., ...<br><b>(d)</b> On one hand, ... On the other hand, ... Overall, I conclude that ... because ...</p>","checklist":["I labelled each point with its area and used two different areas for each side.","Every point is linked to Mrs. Daniel's guest house (8 rooms, overseas guests, power cuts, the rival's hack).","Each safeguard matches its disadvantage and has a reason.","My evaluation weighs both sides and ends with a clear conclusion.","I answered her claim that computers are only for big hotels."],"rubric":[{"criterion":"Advantages explained","marks":4,"look":["stor|retriev|search|find","e-?commerce|online|around the clock|24|any time","speed|fast|quick|accura","guest|booking|overseas|canada|united states"],"min":3,"strong":"Two developed advantages tied to the guest house.","weak":"Explain two advantages from different areas, each with a specific benefit for an 8-room guest house with overseas guests."},{"criterion":"Disadvantages explained","marks":4,"look":["power|outage|reliab","phish|hack|breach|malware|cyber|fraud|card","garbage|error|input","trust|internet|corrupt|lost|cost|training"],"min":2,"strong":"Two developed disadvantages tied to the scenario.","weak":"Explain two disadvantages, e.g. power cuts (reliability) and a hacked booking page (cyber security), linked to the stimulus."},{"criterion":"Safeguards justified","marks":4,"look":["surge|ups|generator|battery","back ?up|backup|cloud","payment provider|secure payment|anti-?virus|firewall|password|update|train","because|so that|this means|which"],"min":3,"strong":"Each safeguard matches its risk and is justified.","weak":"Pair each disadvantage with a matching safeguard and say why it works."},{"criterion":"Evaluation and conclusion","marks":3,"look":["on one hand|on the other hand|however|although|while","overall|on balance|conclude|therefore","small|8 rooms|size|big hotel"],"min":3,"strong":"A balanced evaluation with a justified conclusion about a business of this size.","weak":"Weigh both sides, then conclude, referring to the size of the guest house and her \"big hotels\" claim."}],"model":"<p><b>(a)</b> <i>Storage and retrieval:</i> all guest records could be kept on one computer and found in seconds by searching a guest's name, so returning guests' preferences would never be lost among paper cards. <i>E-commerce:</i> guests in the United States and Canada could book and pay online at any time of day, so she would no longer lose bookings while the office is closed or because of time differences.</p><p><b>(b)</b> <i>Reliability:</i> a power cut in hurricane season could shut down the computer and stop bookings, and a power surge could damage it. <i>Cyber security:</i> as the rival guest house found, an online booking page can be hacked and guests' card details stolen, which would damage her reputation.</p><p><b>(c)</b> To protect against power problems, she should use a surge protector and a battery backup (UPS), and back up the records to cloud storage every night, because the bookings could then be reached from a phone even if the office computer is down. To protect against hacking, she should take payments only through a secure, well-known payment provider, so card details are never stored on her own system, and keep anti-virus software and updates current.</p><p><b>(d)</b> On one hand, computers bring new risks that she must manage. On the other hand, each risk has a low-cost safeguard, while the benefits answer her biggest need: reaching overseas guests. Overall, I conclude that the advantages outweigh the disadvantages, because a single computer with secure online booking suits an 8-room guest house; computers are no longer only for big hotels.</p>","key":"<p>Mark scheme (15): (a) 2 per advantage (1 identified with area, 1 developed for this guest house). (b) 2 per disadvantage (1 identified, 1 developed with the scenario). (c) 2 per safeguard (1 matching measure, 1 justification). (d) 1 weighing both sides, 1 judgement linked to the size of the business, 1 clear conclusion. Points from the same area on both sides of (a) or (b) score once.</p>","teacherTip":"<p>The Challenge task rewards <b>use of the stimulus</b>. Ask students to highlight four details before writing (8 rooms, 60% overseas, power cuts, the rival's hack) and to use each one at least once. In (d), a conclusion without a reason earns 1 mark at most; the reason should answer Mrs. Daniel's \"big hotels\" claim.</p>","title":"Advise the guest house (Challenge)"}
+        }
+      ]
+    },
+    // ===================== UNIT 4 =====================
+    {
+      id: `S1U4`,
+      title: `Modern input and output devices`,
+      objectives: [
+        `Identify modern input and output devices and state the function of each.`,
+        `Explain how accessibility devices such as the Braille reader support users.`,
+        `Explain the role of the sound card and video card.`,
+        `Explain why tablets, smartphones, touchscreens and phablets are both input and output devices.`
+      ],
+      videos: [
+        {title:`Input and output devices`, q:`input and output devices of a computer with examples`},
+        {title:`How a Braille display works`, q:`how does a refreshable braille display work`},
+        {title:`What does a graphics card do?`, q:`what does a graphics card do explained simply`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`Modern input devices`,
+          html:`<p>Beyond the familiar keyboard and mouse, a wide range of specialised input devices now support tasks from graphic design to navigation to security.</p>
+<div class="tablewrap"><table>
+<tr><th>Input device</th><th>Function</th></tr>
+<tr><td><b>Keyboard</b></td><td>Allows the user to type text, numbers and commands into the computer.</td></tr>
+<tr><td><b>Touchscreen</b></td><td>Allows the user to select and manipulate items directly on the display using taps and gestures.</td></tr>
+<tr><td><b>Mouse</b></td><td>Allows the user to point, select and manipulate items on the screen.</td></tr>
+<tr><td><b>Microphone</b></td><td>Captures sound and speech for recording, communication or voice-command input.</td></tr>
+<tr><td><b>Digital pen / stylus</b></td><td>Allows precise handwriting, drawing and annotation on a touchscreen or graphics tablet.</td></tr>
+<tr><td><b>Scanner</b></td><td>Converts printed text, images or documents into digital form.</td></tr>
+<tr><td><b>Camera</b></td><td>Captures still images and video for input into the computer system.</td></tr>
+<tr><td><b>GPS receiver</b></td><td>Determines and inputs the geographic location of a device for navigation and location-based services.</td></tr>
+<tr><td><b>Biometric device</b> (fingerprint / facial / iris scanner)</td><td>Reads a unique physical characteristic of the user to input identity data, typically for secure authentication.</td></tr>
+<tr><td><b>Graphics tablet</b></td><td>Allows an artist or designer to draw or trace an image using a pen-like stylus on a flat, pressure-sensitive surface.</td></tr>
+</table></div>
+<p class="tip"><b>Teacher's tip:</b> For a "state the function" question, begin with a verb: "Converts...", "Captures...", "Allows the user to...". A graphics tablet would be relied on by a graphic designer, an illustrator or an architect.</p>`,
+          tutor:[
+            {h:`Input = into the computer`, p:`<p>Every device here sends data <b>into</b> the computer: keys, clicks, sound, pictures, location, fingerprints.</p>`},
+            {h:`Biometric`, p:`<p>"Bio" = life, "metric" = measure. It measures a part of your body to confirm who you are.</p>`}
+          ],
+          plain: "<p><b>Input devices</b> send data into the computer. Besides the keyboard and mouse, there are scanners, cameras, microphones, GPS receivers, digital pens, graphics tablets and <b>biometric</b> scanners that read a fingerprint, face or iris. At an airport in St. Lucia, a passport scanner and a camera capture each traveller's details as they arrive.</p>",
+          deeper: "<p>Choose an input device by the <b>kind of data</b> it captures: text (keyboard), sound (microphone), images (camera, scanner), location (GPS receiver), identity (biometric device) or precise strokes (stylus, graphics tablet). Devices that capture data automatically, such as GPS receivers and barcode scanners, also reduce typing errors, which links back to garbage in, garbage out. A common misconception is that a webcam is an output device because you can see yourself. The camera captures the picture (input); the monitor shows it (output). Biometric devices raise a real-world issue too: fingerprints and face data are personal, so organisations must store them securely. In a \"state the function\" question, start with a verb.</p>"
+        },
+        {
+          type:'learn', title:`Output devices and internal support`,
+          html:`<div class="tablewrap"><table>
+<tr><th>Category</th><th>Device</th><th>Function</th></tr>
+<tr><td>Output</td><td><b>Monitor</b></td><td>Displays visual output such as text, images and video.</td></tr>
+<tr><td>Output</td><td><b>Speaker</b></td><td>Produces audio output such as sound effects, music or spoken feedback.</td></tr>
+<tr><td>Output</td><td><b>Projector</b></td><td>Enlarges and displays visual output onto a screen or wall for group viewing.</td></tr>
+<tr><td>Output</td><td><b>Printer</b></td><td>Produces a permanent, physical (<b>hard copy</b>) version of a digital document or image.</td></tr>
+<tr><td>Input / Output</td><td><b>Braille reader</b> (Braille display)</td><td>Converts on-screen text into raised Braille characters (output) and, on some models, allows Braille entry (input), supporting users who are blind or visually impaired.</td></tr>
+<tr><td>Internal / processing support</td><td><b>Sound card</b></td><td>Processes and manages audio data flowing into and out of the computer.</td></tr>
+<tr><td>Internal / processing support</td><td><b>Video card</b> (graphics card)</td><td>Processes and manages image and video data, generating the visual output sent to the monitor.</td></tr>
+</table></div>
+<p>Notice that the <b>sound card</b> and <b>video card</b> sit <i>inside</i> the computer. You do not look at a video card or listen to a sound card. They prepare the data that the monitor and speakers then present.</p>
+<p class="tip"><b>ITQ3:</b> Explain why a video card is sometimes described as supporting output, even though it is not, strictly speaking, an output device itself. (Think: what does it generate, and which device actually shows it to the user?)</p>`,
+          tutor:[
+            {h:`ITQ3 answer`, p:`<p>The video card processes image data and generates the signal sent to the monitor. The <b>monitor</b> is what displays it to the user, so the card supports output without being the output device.</p>`},
+            {h:`Soft copy vs hard copy`, p:`<p>A monitor gives a soft copy on screen. A printer gives a hard copy on paper.</p>`}
+          ],
+          plain: "<p><b>Output devices</b> give you the results. A monitor displays, a speaker plays sound, a projector shows a large picture for a group, and a printer makes a <b>hard copy</b> on paper. The sound card and video card sit inside the computer and prepare the sound and pictures. A church in Belmopan uses a projector so the whole congregation can read the hymn words.</p>",
+          deeper: "<p>ITQ3 in one sentence: the video card <b>generates</b> the image signal, but the monitor is the device that actually <b>presents</b> it to the user, so the card supports output without being an output device. Learn the difference between a <b>soft copy</b> (on screen) and a <b>hard copy</b> (printed). A frequent error is calling the printer a storage device because paper \"keeps\" the information; printing is output, not a storage system. When choosing, match the device to the audience: a monitor suits one user, a projector a room, and a Braille display a user who is blind. In a \"describe\" question, say what the device produces <i>and</i> who it serves.</p>"
+        },
+        {
+          type:'pick', game:true, title:`Tap every input device`,
+          intro:`<p>The library at Sea-Almond Secondary School is ordering new equipment. Here is the list.</p>`,
+          q:`Tap EVERY input device.`,
+          lines:[
+            `1. Flatbed scanner for digitising old yearbooks`,
+            `2. Projector for the reading room`,
+            `3. Fingerprint scanner for staff sign-in`,
+            `4. Colour laser printer`,
+            `5. Microphone for recording a school podcast`,
+            `6. Pair of speakers`,
+            `7. Graphics tablet for the art club`,
+            `8. Webcam for video calls`
+          ],
+          correct:[0,2,4,6,7],
+          win:`Correct. The scanner, fingerprint scanner (biometric), microphone, graphics tablet and webcam all send data into the computer. The projector, printer and speakers present output.`,
+          miss:`Not quite. Ask of each device: does it send data INTO the computer, or present information OUT to the user? Only tap the ones that send data in.`,
+          tutor:[
+            {h:`Into or out of?`, p:`<p>Input devices capture something: an image, a sound, a fingerprint, a drawing.</p>`},
+            {h:`Two scanners`, p:`<p>Both the flatbed scanner and the fingerprint scanner are input devices.</p>`}
+          ],
+          easy:{
+            title:`Tap the input devices (Foundation)`,
+            q:`Tap the TWO input devices.`,
+            lines:[
+              `1. Microphone`,
+              `2. Projector`,
+              `3. Scanner`,
+              `4. Speaker`
+            ],
+            correct:[0,2],
+            win:`Yes. The microphone and scanner send data into the computer.`,
+            miss:`Tap the devices that capture data and send it into the computer.`
+          },
+          up: {"title":"Tap every input device (Challenge)","intro":"<p>The Sea-Almond Secondary School library is ordering equipment for its new media room. Some items are tricky: a few do both input and output, and some sit inside the computer.</p>","q":"Tap EVERY device that sends data INTO the computer (include devices that do both input and output).","lines":["1. Barcode scanner at the issue desk","2. Video card in the media-room PC","3. Interactive touchscreen board","4. Sound card","5. Iris scanner on the server-room door","6. Projector","7. GPS receiver in the school bus tracker","8. Laser printer","9. Digital pen for annotating notes on a tablet","10. Braille display that also allows Braille entry","11. Speakers"],"correct":[0,2,4,6,8,9],"win":"Correct. The barcode scanner, iris scanner, GPS receiver and digital pen send data in, and the touchscreen board and Braille display with entry keys do both input and output. The video card and sound card are internal support; the projector, printer and speakers present output.","miss":"Not quite. Sound and video cards sit inside the computer and prepare data; they are not input devices. A touchscreen board and a Braille display with entry keys DO accept input, so they count."}
+        },
+        {
+          type:'match', game:true, title:`Device and function`,
+          intro:`<p>This is based on the Device Category, Device and Function table in your chapter. Match each device to its function.</p>`,
+          pairs:[
+            {l:`Microphone`, r:`Captures sound and speech for recording, communication or voice commands`},
+            {l:`Projector`, r:`Enlarges and displays visual output onto a screen or wall for group viewing`},
+            {l:`Fingerprint scanner`, r:`Reads a unique physical characteristic to confirm the user's identity`},
+            {l:`Graphics tablet`, r:`Lets an artist draw or trace with a stylus on a pressure-sensitive surface`},
+            {l:`Video card`, r:`Processes image and video data and generates the output sent to the monitor`},
+            {l:`Printer`, r:`Produces a permanent, physical (hard copy) version of a document`},
+            {l:`GPS receiver`, r:`Determines and inputs the geographic location of a device`}
+          ],
+          win:`Excellent. You have completed the chapter's device table. Learn these functions word for word; they appear often in Paper 01.`,
+          tutor:[
+            {h:`Look for the key verb`, p:`<p>"Captures sound" = microphone. "Enlarges" = projector. "Hard copy" = printer.</p>`},
+            {h:`Location and identity`, p:`<p>Location = GPS. Identity = biometric (fingerprint scanner).</p>`}
+          ],
+          easy:{
+            title:`Device and function (Foundation)`,
+            pairs:[
+              {l:`Microphone`, r:`Captures sound and speech`},
+              {l:`Projector`, r:`Enlarges visual output for group viewing`},
+              {l:`Printer`, r:`Produces a hard copy`},
+              {l:`GPS receiver`, r:`Inputs the geographic location of a device`}
+            ]
+          },
+          up: {"title":"Device and function (Challenge)","intro":"<p>Some of these functions are close. Read each one carefully and match it to the exact device.</p>","pairs":[{"l":"Scanner","r":"Converts printed text, images or documents into digital form"},{"l":"Camera","r":"Captures still images and video for input into the computer"},{"l":"Digital pen / stylus","r":"Allows precise handwriting and annotation directly on a touchscreen"},{"l":"Graphics tablet","r":"Provides a flat, pressure-sensitive surface for drawing or tracing"},{"l":"Biometric device","r":"Reads a unique physical characteristic to input identity data"},{"l":"Sound card","r":"Processes and manages audio data flowing into and out of the computer"},{"l":"Video card","r":"Generates the image signal that the monitor then displays"},{"l":"Projector","r":"Enlarges visual output onto a screen or wall for a group"},{"l":"Braille reader","r":"Converts on-screen text into raised characters for users who are blind"}],"win":"Excellent. You separated close pairs: scanner from camera, stylus from graphics tablet, and sound card from video card."}
+        },
+        {
+          type:'mcq', title:`What is a biometric device?`,
+          q:`A biometric device is BEST described as a device that`,
+          options:[
+            {t:`projects an image onto a screen`, fb:`That describes a projector, an output device.`},
+            {t:`reads a unique physical characteristic to confirm identity`, ok:true, fb:`Correct. Fingerprint, facial and iris scanners read a unique physical characteristic to input identity data for secure authentication.`},
+            {t:`stores files in the cloud`, fb:`Cloud storage is a storage service, not a biometric device.`},
+            {t:`prints documents wirelessly`, fb:`That describes a wireless printer, an output device.`}
+          ],
+          tutor:[
+            {h:`Break the word`, p:`<p>Bio = life (the body). Metric = measurement. It measures part of your body.</p>`},
+            {h:`Why use it?`, p:`<p>To prove who you are, e.g. unlocking your phone with your face.</p>`}
+          ],
+          easy:{
+            title:`What is a biometric device? (Foundation)`,
+            q:`A biometric device...`,
+            options:[
+              {t:`reads a fingerprint, face or iris to confirm identity`, ok:true, fb:`Yes. That is a biometric device.`},
+              {t:`prints documents wirelessly`, fb:`That is a printer.`}
+            ]
+          },
+          up: {"title":"What is a biometric device? (Challenge)","q":"An airport in St. Lucia plans automated immigration gates that check each traveller's face against the passport photo. Which reason BEST explains why a biometric check is more secure than asking travellers to type a PIN?","options":[{"t":"It reads a unique physical characteristic that cannot easily be shared, guessed or forgotten.","ok":true,"fb":"Correct. A PIN can be told to someone else or guessed; a face or fingerprint belongs to one person."},{"t":"It is an output device, so it can display the traveller's details.","fb":"A biometric scanner is an input device. Displaying details is the monitor's job."},{"t":"It stores every traveller's files in cloud storage.","fb":"Storage is a different function. A biometric device reads identity data."},{"t":"It is faster than every other input device in every situation.","fb":"Speed may be a benefit, but it does not explain why the check is more secure."}]}
+        },
+        {
+          type:'learn', title:`Devices used for both input and output`,
+          html:`<p>Some devices cannot be placed in a single category, because they perform <b>input and output at the same time, through the same physical component</b>.</p>
+<ul>
+<li><b>Tablets</b> - flat, portable touchscreen computers that accept input through taps, gestures and an on-screen keyboard, while displaying output on that same screen.</li>
+<li><b>Smartphones</b> - pocket-sized mobile computers that combine a touchscreen, microphone and camera for input with a screen and speaker for output, all in one handheld device.</li>
+<li><b>Touchscreens</b> - display panels that also act as an input surface, accepting direct contact from a finger or stylus while continuing to show visual output. You see them on bank machines and self-check-in kiosks at Douglas–Charles Airport.</li>
+<li><b>Phablets</b> - devices that blend a smartphone and a tablet, offering a larger touchscreen than a typical phone while remaining more portable than a full-sized tablet.</li>
+</ul>
+<p>The <b>Braille reader</b> can also work both ways on some models: it outputs raised Braille characters and accepts Braille entry.</p>
+<p class="passage"><b>Example:</b> When you tap "Send" on a WhatsApp message, the touchscreen takes in your tap (input). A moment later the same screen shows two ticks (output). One component, two jobs.</p>
+<p class="tip"><b>Teacher's tip:</b> A keyboard, scanner or microphone is input only. A speaker or monitor (without touch) is output only. Only touch-based screens do both through the same surface.</p>`,
+          tutor:[
+            {h:`Same component, two jobs`, p:`<p>The screen receives your touch and shows the result. That is why touchscreens count as both.</p>`},
+            {h:`Four to remember`, p:`<p>Tablets, smartphones, touchscreens, phablets.</p>`}
+          ],
+          plain: "<p>Some devices do input and output <b>through the same part</b>. A touchscreen takes in your tap and also shows the result. Tablets, smartphones, phablets and touchscreen kiosks all work this way. When you tap the self check-in kiosk at the airport in Antigua, the screen takes in your choice and then shows your boarding pass details.</p>",
+          deeper: "<p>The test is the <b>same physical component</b>. A laptop has a keyboard (input) and a screen (output), but they are separate parts, so it does not make the screen an input device. A monitor without touch is output only, even though you see what you type. A smartphone combines several separate input parts (camera, microphone) and output parts (speaker) with a touchscreen that does both jobs. A phablet sits between a phone and a tablet: a larger screen than a typical phone, but still easy to carry. To earn both marks in an \"explain\" question, write the pattern: the touchscreen <b>accepts</b> ... (input) and <b>displays</b> ... (output) through the same screen.</p>"
+        },
+        {
+          type:'sort', game:true, title:`Input, output or both?`,
+          intro:`<p>Sort each device into the correct category.</p>`,
+          main:`Is this device input, output or both?`,
+          bins:[`Input`,`Output`,`Both input and output`],
+          items:[
+            {t:`Microphone`, bin:0, fb:`A microphone captures sound: input.`},
+            {t:`Phablet`, bin:2, fb:`A phablet's large touchscreen handles both input and output.`},
+            {t:`Speaker`, bin:1, fb:`A speaker produces audio output.`},
+            {t:`Projector`, bin:1, fb:`A projector enlarges and displays visual output.`},
+            {t:`Printer`, bin:1, fb:`A printer produces hard copy output.`},
+            {t:`Keyboard`, bin:0, fb:`A keyboard only sends data into the computer.`},
+            {t:`Tablet`, bin:2, fb:`A tablet accepts taps and displays output on the same screen.`},
+            {t:`Scanner`, bin:0, fb:`A scanner converts printed documents into digital form: input.`},
+            {t:`Touchscreen kiosk at the airport`, bin:2, fb:`The touchscreen accepts your tap and shows your boarding pass details.`}
+          ],
+          win:`Well done. Input devices take data in, output devices present information, and touch-based devices do both through the same component.`,
+          tutor:[
+            {h:`Ask two questions`, p:`<p>Does it take data in? Does it show or play information out? If both, through the same part, it is both.</p>`},
+            {h:`Touch is the clue`, p:`<p>Every "both" device here has a touchscreen.</p>`}
+          ],
+          easy:{
+            title:`Input, output or both? (Foundation)`,
+            items:[
+              {t:`Keyboard`, bin:0, fb:`Input only.`},
+              {t:`Speaker`, bin:1, fb:`Output only.`},
+              {t:`Printer`, bin:1, fb:`Output only.`},
+              {t:`Tablet`, bin:2, fb:`Both, through the touchscreen.`}
+            ]
+          },
+          up: {"title":"Input, output or both? (Challenge)","intro":"<p>A fourth bin has been added: some components support input or output from inside the computer but are neither. Sort each card.</p>","main":"Is this input, output, both, or internal support?","bins":["Input","Output","Both input and output","Internal support (inside the computer)"],"items":[{"t":"Projector","bin":1,"fb":"It enlarges visual output for a group."},{"t":"Webcam","bin":0,"fb":"It captures images: input. The monitor shows them."},{"t":"Printer","bin":1,"fb":"It produces hard copy output."},{"t":"Graphics tablet","bin":0,"fb":"It captures the designer's strokes: input."},{"t":"Phablet","bin":2,"fb":"Its touchscreen accepts taps and shows output through the same screen."},{"t":"Braille display with Braille entry keys","bin":2,"fb":"It outputs raised characters and accepts Braille entry."},{"t":"Speaker","bin":1,"fb":"It produces audio output."},{"t":"Video card","bin":3,"fb":"It generates the image signal inside the computer; the monitor presents it."},{"t":"Sound card","bin":3,"fb":"It processes audio data inside the computer; the speakers present it."},{"t":"Fingerprint scanner","bin":0,"fb":"It reads identity data into the computer: input."},{"t":"Interactive touchscreen whiteboard","bin":2,"fb":"It takes touches and shows the lesson on the same surface."},{"t":"GPS receiver","bin":0,"fb":"It inputs the device's location."}],"win":"Excellent. You separated devices that present information from the internal cards that prepare it, and you recognised every device that does both jobs through one component."}
+        },
+        {
+          type:'multi', game:true, title:`Which device would you choose?`,
+          intro:`<p>Choose the BEST device for each situation.</p>`,
+          items:[
+            {text:`Ms. Richardson wants to show a slideshow to the whole Form 4 class at once.`, options:[`Projector`,`Scanner`,`Printer`,`Monitor`], answer:0, fb:`A projector enlarges visual output onto a screen or wall for group viewing.`},
+            {text:`A taxi company wants each car's location to appear on the dispatcher's map.`, options:[`Sound card`,`GPS receiver`,`Speaker`,`Graphics tablet`], answer:1, fb:`A GPS receiver determines and inputs the device's geographic location.`},
+            {text:`A blind office worker needs to read e-mails without sound.`, options:[`Braille reader`,`Projector`,`Scanner`,`Webcam`], answer:0, fb:`A Braille reader converts on-screen text into raised Braille characters.`},
+            {text:`A bank wants staff to unlock their computers without typing a password.`, options:[`Microphone`,`Printer`,`Biometric device`], answer:2, fb:`A fingerprint or facial scanner reads a unique physical characteristic for secure authentication.`},
+            {text:`The school office needs to turn paper report cards from 2010 into digital files.`, options:[`Scanner`,`Printer`,`Speaker`], answer:0, fb:`A scanner converts printed documents into digital form.`},
+            {text:`A Carnival costume designer wants to sketch designs directly into the computer with pressure-sensitive strokes.`, options:[`Graphics tablet`,`Mouse`,`Keyboard`], answer:0, fb:`A graphics tablet lets designers draw with a stylus on a pressure-sensitive surface.`}
+          ],
+          win:`Excellent. Choosing the right device for a task is a common Paper 01 skill, and you have it.`,
+          tutor:[
+            {h:`What is the task?`, p:`<p>Is the user putting data in (input) or getting information out (output)?</p>`},
+            {h:`Look for clue words`, p:`<p>"Whole class" = projector. "Location" = GPS. "Blind" = Braille. "Without a password" = biometric.</p>`}
+          ],
+          easy:{
+            title:`Which device? (Foundation)`,
+            items:[
+              {text:`Showing slides to the whole class at once.`, options:[`Printer`,`Projector`], answer:1, fb:`A projector displays output for group viewing.`},
+              {text:`Turning paper report cards into digital files.`, options:[`Scanner`,`Speaker`], answer:0, fb:`A scanner converts printed documents into digital form.`},
+              {text:`Helping a blind worker read text.`, options:[`Webcam`,`Braille reader`], answer:1, fb:`A Braille reader produces raised Braille characters.`}
+            ]
+          },
+          up: {"title":"Which device would you choose? (Challenge)","intro":"<p>More than one option could work in some cases. Choose the BEST device for each situation.</p>","items":[{"text":"A volcano monitoring team in Montserrat must record the exact location of every ash sample they collect on the hillside.","options":["Projector","Keyboard","Scanner","GPS receiver"],"answer":3,"fb":"Only a GPS receiver determines and inputs an exact geographic location automatically."},{"text":"A pharmacy in Bridgetown wants only the pharmacist to open the controlled-drugs record, and staff keep forgetting passwords.","options":["Graphics tablet","Microphone","Biometric fingerprint scanner","Webcam for video calls"],"answer":2,"fb":"A fingerprint cannot be forgotten or easily shared, which solves both problems."},{"text":"An architect in Nassau wants to sketch plans by hand and have them appear in the design software with varying line thickness.","options":["Graphics tablet with a pressure-sensitive stylus","Mouse","Touchscreen kiosk","Scanner"],"answer":0,"fb":"Pressure sensitivity gives varying line thickness as she draws. A scanner would only copy a finished paper sketch."},{"text":"A lawyer in Kingston who is blind needs to read long contracts silently during a court hearing.","options":["Larger monitor","Speakers with a screen reader","Braille reader","Projector"],"answer":2,"fb":"\"Silently\" rules out speakers. A Braille reader gives raised characters she can read with her fingers."},{"text":"A hotel lobby in Ocho Rios wants guests to check themselves in, choose a room and see the bill without staff.","options":["Projector","Microphone","Keyboard and printer","Touchscreen kiosk"],"answer":3,"fb":"One touchscreen accepts the guest's choices and displays the bill."},{"text":"A school must keep exact, readable digital copies of 400 signed paper consent forms.","options":["Document scanner","Camera on a phone","Printer","Keyboard"],"answer":0,"fb":"A phone camera could work for a few forms, but a document scanner gives clear, consistent copies of hundreds."},{"text":"A student's new monitor shows choppy, low-quality 3D graphics. Which component should be upgraded?","options":["Sound card","Printer","Keyboard","Video card"],"answer":3,"fb":"The video card generates the image data sent to the monitor, so it limits graphics quality."}],"win":"Excellent. You chose devices by weighing the exact need: location, identity, precision, silence, self-service, volume and graphics quality."}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Equip the reception desk`, genre:`Structured short answer: choosing input and output devices`,
+          stimulus:`<p class="passage">The Portsmouth Beach Resort is setting up a new reception desk. Staff must check in guests, scan passports, print receipts and show guests a map of the resort. One receptionist, Mr. Arrindell, is visually impaired.</p>`,
+          prompt:`<p>Recommend devices for the reception desk. You must:</p><ul><li>name <b>TWO input devices</b> and state the function of each in this setting;</li><li>name <b>TWO output devices</b> and state the function of each;</li><li>recommend <b>ONE device</b> that would support Mr. Arrindell and explain how;</li><li>explain why a <b>tablet</b> could act as both an input and an output device at the desk.</li></ul>`,
+          min:100, max:220,
+          frame:`<p><b>Input device 1:</b> A ... would ... <br><b>Input device 2:</b> ...<br><b>Output device 1:</b> A ... would ...<br><b>Output device 2:</b> ...<br><b>Accessibility:</b> A ... would help Mr. Arrindell because ...<br><b>Tablet:</b> A tablet is both input and output because ...</p>`,
+          checklist:[
+            `I named two input devices with their functions.`,
+            `I named two output devices with their functions.`,
+            `I recommended an accessibility device and explained how it helps.`,
+            `I explained why a tablet is both input and output.`
+          ],
+          rubric:[
+            {criterion:`Input devices`, marks:3, look:[`scanner|keyboard|mouse|camera|webcam|biometric|fingerprint|microphone|touchscreen`, `convert|type|enter|capture|scan|select|read`], min:2,
+              strong:`You chose suitable input devices and explained their functions.`,
+              weak:`Name two input devices, e.g. a scanner (converts passports into digital form) and a keyboard (types guest details).`},
+            {criterion:`Output devices`, marks:3, look:[`printer|monitor|speaker|projector|screen`, `hard copy|receipt|display|show|print|sound`], min:2,
+              strong:`You chose suitable output devices with clear functions.`,
+              weak:`Name two output devices, e.g. a printer (produces a hard copy receipt) and a monitor (displays the resort map).`},
+            {criterion:`Accessibility device`, marks:2, look:[`braille|screen reader|voice|speech|microphone|speaker`, `blind|visual|impair|read|raised`], min:2,
+              strong:`You recommended a suitable assistive device and explained how it helps.`,
+              weak:`Recommend a Braille reader, which converts on-screen text into raised Braille characters, or a screen reader with speakers.`},
+            {criterion:`Both input and output`, marks:2, look:[`tablet|touchscreen`, `same screen|same component|both|tap|touch|display`], min:2,
+              strong:`You explained clearly why the tablet does both jobs.`,
+              weak:`Explain that the tablet's touchscreen accepts taps (input) and displays information (output) through the same screen.`}
+          ],
+          model:`<p><b>Input device 1:</b> A scanner would convert each guest's printed passport page into digital form for the guest record.</p><p><b>Input device 2:</b> A keyboard would allow the receptionist to type the guest's name, room number and dates into the booking system.</p><p><b>Output device 1:</b> A printer would produce a hard copy receipt for the guest to keep.</p><p><b>Output device 2:</b> A monitor would display the guest's booking details and a map of the resort.</p><p><b>Accessibility:</b> A Braille reader would help Mr. Arrindell, because it converts the text on screen into raised Braille characters he can read with his fingers, and some models let him type in Braille.</p><p><b>Tablet:</b> A tablet is both an input and an output device because its touchscreen accepts the guest's taps and signature (input) and displays the check-in form and map (output) through the same screen.</p>`,
+          teacherTip:`<p>Always give the <b>function in this setting</b>, not just the device name. "Printer - produces a hard copy receipt for the guest" earns more than "printer - prints".</p>`,
+          easy: {"genre":"Structured short answer: choosing input and output devices (8 marks)","prompt":"<p>Help Portsmouth Beach Resort set up its reception desk. Word bank: <b>scanner, keyboard, printer, monitor, Braille reader, tablet</b>. Answer each part in one or two sentences.</p><ol type=\"a\"><li><b>Name</b> TWO input devices for the desk. <i>(2 marks)</i></li><li><b>Name</b> TWO output devices for the desk. <i>(2 marks)</i></li><li><b>Name</b> ONE device that would help Mr. Arrindell, who is visually impaired, and say how. <i>(2 marks)</i></li><li><b>Complete</b>: A tablet is both input and output because its touchscreen ______ the guest's taps and ______ the check-in form. <i>(2 marks)</i></li></ol>","min":40,"max":120,"frame":"<p><b>(a)</b> Two input devices are the ... and the ...<br><b>(b)</b> Two output devices are the ... and the ...<br><b>(c)</b> A ... would help Mr. Arrindell because it ...<br><b>(d)</b> A tablet is both input and output because its touchscreen ... the guest's taps and ... the check-in form.</p>","checklist":["I named two input devices.","I named two output devices.","I named a device for Mr. Arrindell and said how it helps.","I completed the tablet sentence with \"accepts\" and \"displays\" (or similar)."],"rubric":[{"criterion":"Input devices","marks":2,"look":["scanner","keyboard|tablet|mouse|camera|webcam"],"min":2,"strong":"Two correct input devices.","weak":"Choose input devices from the word bank: scanner and keyboard."},{"criterion":"Output devices","marks":2,"look":["printer","monitor|screen|speaker"],"min":2,"strong":"Two correct output devices.","weak":"Choose output devices from the word bank: printer and monitor."},{"criterion":"Device for Mr. Arrindell","marks":2,"look":["braille|screen reader","raised|fingers|read|touch"],"min":2,"strong":"Good choice and a clear reason.","weak":"A Braille reader turns the text on screen into raised characters he can read with his fingers."},{"criterion":"Tablet: both input and output","marks":2,"look":["accept|take|receive|input","display|show|output"],"min":2,"strong":"You completed the sentence correctly.","weak":"The touchscreen accepts the taps (input) and displays the form (output)."}],"model":"<p><b>(a)</b> Two input devices are the scanner and the keyboard.</p><p><b>(b)</b> Two output devices are the printer and the monitor.</p><p><b>(c)</b> A Braille reader would help Mr. Arrindell because it turns the text on the screen into raised characters he can read with his fingers.</p><p><b>(d)</b> A tablet is both input and output because its touchscreen accepts the guest's taps and displays the check-in form.</p>","key":"<p>Mark scheme (8): (a) 1 per correct input device. (b) 1 per correct output device. (c) 1 Braille reader or screen reader, 1 how it helps. (d) 1 per gap (accept takes in/receives; shows/displays).</p>","teacherTip":"<p>Before writing, ask Foundation students to sort the word bank into IN and OUT on scrap paper; the tablet goes in the middle. Once they can do this quickly, ask them to add a function for each device, which is what the Core task requires.</p>","title":"Equip the reception desk (Foundation)"},
+          up: {"genre":"Structured response: specifying input and output devices (15 marks)","stimulus":"<p class=\"passage\">The Portsmouth Beach Resort is setting up a new reception desk beside the airport road, so the lobby is often noisy. Staff must check in up to 60 guests a day, scan passports, print receipts, show a map of the resort to families at the desk, and let guests sign their registration card. One receptionist, Mr. Arrindell, is blind. The manager is considering replacing the desk PC with two tablets.</p>","prompt":"<p>Write a short equipment report for the manager. Answer all parts.</p><ol type=\"a\"><li><b>Recommend</b> TWO input devices, state the function of each in this setting and <b>justify</b> each choice. <i>(4 marks)</i></li><li><b>Recommend</b> how the resort map should be shown to families at the desk, comparing TWO output devices. <i>(3 marks)</i></li><li><b>Compare</b> a Braille reader with a screen reader using speakers for Mr. Arrindell, and <b>recommend</b> one for this lobby. <i>(3 marks)</i></li><li><b>Explain</b> the role of the video card and the sound card in the reception computer. <i>(2 marks)</i></li><li><b>Evaluate</b> the plan to replace the desk PC with tablets, giving ONE advantage, ONE disadvantage and a recommendation. <i>(3 marks)</i></li></ol>","min":200,"max":400,"frame":"<p><b>(a)</b> A ... would ... This is better than ... because ... A ... would ...<br><b>(b)</b> A monitor ... whereas a ... I recommend ... because ...<br><b>(c)</b> A Braille reader ... whereas a screen reader ... In a noisy lobby, I recommend ... because ...<br><b>(d)</b> The video card ... The sound card ...<br><b>(e)</b> One advantage of tablets is ... One disadvantage is ... I recommend ...</p>","checklist":["Each input device has a function in THIS setting and a reason.","I compared two ways of showing the map and made a choice.","I compared the two accessibility options and used the noisy lobby in my recommendation.","I explained that the cards prepare data that the monitor and speakers present.","My evaluation of the tablets has an advantage, a disadvantage and a recommendation."],"rubric":[{"criterion":"Input devices justified","marks":4,"look":["scanner","keyboard|signature pad|stylus|digital pen|touchscreen|camera|webcam","convert|capture|type|enter|sign|read","because|better than|faster|fewer errors|accura"],"min":3,"strong":"Two suitable input devices with functions and reasons.","weak":"Recommend e.g. a passport scanner (converts the page into digital form, fewer typing errors) and a signature pad or stylus (captures the guest's signature)."},{"criterion":"Showing the map","marks":3,"look":["monitor|screen","projector|large display|tv|second monitor|tablet","whereas|however|while|but","recommend|best|choose"],"min":3,"strong":"A real comparison and a sensible choice.","weak":"Compare e.g. a guest-facing monitor with a projector and choose one for a small family at a desk."},{"criterion":"Accessibility comparison","marks":3,"look":["braille","screen reader|speaker|audio","noisy|noise|hear|silent|quiet|privacy|guest","recommend|best|choose"],"min":3,"strong":"You compared both options and used the noisy lobby to decide.","weak":"Contrast raised characters with spoken audio, then recommend the Braille reader because speech is hard to hear in a noisy lobby."},{"criterion":"Video card and sound card","marks":2,"look":["video card|graphics card","sound card","monitor|speaker|generat|prepar|process"],"min":3,"strong":"You explained that the cards prepare data for the output devices.","weak":"The video card generates the image signal the monitor displays; the sound card processes audio for the speakers."},{"criterion":"Evaluation of tablets","marks":3,"look":["advantage|sign|portable|carry|touch|space","disadvantage|keyboard|typing|small|stolen|drop|battery|braille","recommend|on balance|overall|therefore"],"min":3,"strong":"Balanced evaluation with a clear recommendation.","weak":"Give one advantage (e.g. guests sign on screen), one disadvantage (e.g. slow typing for 60 check-ins) and a recommendation."}],"model":"<p><b>(a)</b> A passport scanner would convert each guest's passport page into digital form for the guest record. This is better than typing the details because it is faster with 60 guests a day and avoids typing errors. A signature pad with a digital pen would capture each guest's signature on the registration card directly into the system, so no paper forms need to be stored.</p><p><b>(b)</b> A guest-facing monitor on the desk shows the map clearly to one family at close range, whereas a projector needs a wall, a dim room and space, and is designed for large groups. I recommend a second monitor facing the guests, because families stand right at the desk.</p><p><b>(c)</b> A Braille reader converts on-screen text into raised characters that Mr. Arrindell reads with his fingers, whereas a screen reader reads the text aloud through speakers or headphones. In a noisy lobby next to the airport road, speech would be hard to hear and guests might overhear private details, so I recommend the Braille reader.</p><p><b>(d)</b> The video card generates the image signal that the monitors display, and the sound card processes audio so the speakers can play system alerts. Neither is an output device itself; they prepare data that the output devices present.</p><p><b>(e)</b> One advantage of tablets is that guests could sign and check details on the same touchscreen. One disadvantage is that typing 60 check-ins a day on an on-screen keyboard is slow, and a Braille reader is easier to connect to a desk PC. I recommend keeping the desk PC for the receptionists and adding one tablet only for guest signatures.</p>","key":"<p>Mark scheme (15): (a) 1 per suitable device with its function in context (2), 1 per justification (2). (b) 1 per output device described (2), 1 justified choice. (c) 1 Braille reader, 1 screen reader (with contrast), 1 recommendation using the noisy lobby or privacy. (d) 1 video card role, 1 sound card role. (e) 1 advantage, 1 disadvantage, 1 recommendation linked to the scenario.</p>","teacherTip":"<p>Challenge students must use the stimulus details (60 guests, noisy lobby, families at the desk, Mr. Arrindell) to justify every choice. A device named without a reason linked to the setting should not earn the justification mark. In (d), accept \"graphics card\" for video card.</p>","title":"Equip the reception desk (Challenge)"}
+        }
+      ]
+    },
+    // ===================== UNIT 5 =====================
+    {
+      id: `S1U5`,
+      title: `Storage media and software`,
+      objectives: [
+        `Describe current storage media and their practical applications.`,
+        `Choose a suitable storage medium for a given situation.`,
+        `Distinguish operating system software from application software.`,
+        `Distinguish computer-based from web-based application software.`
+      ],
+      videos: [
+        {title:`Types of storage media`, q:`types of computer storage media optical magnetic flash cloud`},
+        {title:`What is cloud storage?`, q:`what is cloud storage explained for beginners`},
+        {title:`Operating system vs application software`, q:`operating system vs application software difference`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`Storage media and their applications`,
+          html:`<p><b>Storage media</b> hold data, programs and information for future use. Some are now legacy technology; others are in everyday use or growing in importance.</p>
+<div class="tablewrap"><table>
+<tr><th>Storage medium</th><th>Description and typical application</th></tr>
+<tr><td><b>Compact Disc (CD-ROM)</b></td><td>An optical disc that can be read but <b>not rewritten</b> by the user; historically used to distribute software, music and reference material.</td></tr>
+<tr><td><b>Digital Versatile Disc (DVD)</b></td><td>An optical disc with <b>greater capacity than a CD-ROM</b>; historically used to distribute video and larger software packages.</td></tr>
+<tr><td><b>CD-RW</b></td><td>A <b>rewritable</b> optical disc that can be erased and reused many times; once used for creating and updating backups.</td></tr>
+<tr><td><b>Hard disk (fixed)</b></td><td>The main internal drive in a desktop or laptop; stores the operating system, installed software and personal files.</td></tr>
+<tr><td><b>Hard disk (portable)</b></td><td>An external hard disk connected by cable (commonly USB); stores large backups or transfers big files.</td></tr>
+<tr><td><b>Flash drive</b></td><td>A small, portable <b>solid-state</b> device connected by USB; quick file transfer and short-term portable storage.</td></tr>
+<tr><td><b>Memory card</b></td><td>A small removable card (e.g. microSD) used in smartphones, tablets and cameras to expand storage.</td></tr>
+<tr><td><b>Cloud storage</b></td><td>Remote storage accessed via the internet (e.g. Google Drive, OneDrive, iCloud, Dropbox); files are saved, synced and shared across devices from any location.</td></tr>
+</table></div>
+<p class="tip"><b>Note:</b> Optical storage (CD-ROM, DVD, CD-RW) is now considered <b>legacy technology</b> in most everyday settings. It has largely been replaced by flash drives, portable hard disks and, increasingly, cloud storage, which offer greater capacity, convenience and durability.</p>`,
+          tutor:[
+            {h:`Three families`, p:`<p>Optical (CD-ROM, DVD, CD-RW), hard disks (fixed, portable) and solid-state/remote (flash drive, memory card, cloud).</p>`},
+            {h:`ROM vs RW`, p:`<p>ROM = read only. RW = rewritable.</p>`}
+          ],
+          plain: "<p><b>Storage media</b> keep your files for later. CDs and DVDs are older optical discs. The <b>hard disk</b> inside a computer holds the operating system and your files. <b>Flash drives</b> and <b>memory cards</b> are small and portable. <b>Cloud storage</b> keeps files on servers you reach over the internet. A wedding photographer in Tobago saves pictures to a memory card, then copies them to the cloud.</p>",
+          deeper: "<p>Compare media on five points: <b>capacity, portability, durability, cost and access</b>. Optical discs became legacy technology mainly because of capacity: a CD holds about 700 MB and a single-layer DVD about 4.7 GB, while an ordinary flash drive holds many times more. Watch the exam trap between <b>CD-ROM</b> (the user can read it but not rewrite it) and <b>CD-RW</b> (rewritable). Flash drives, memory cards and SSDs are <b>solid-state</b>, with no moving parts, so they survive bumps better than a spinning hard disk. Remember too that cloud storage is not a device you own: your files sit on another company's servers, and you need an internet connection to reach them.</p>"
+        },
+        {
+          type:'learn', title:`Choosing the right storage`,
+          html:`<p>No single storage medium is best for everything. Ask four questions: <b>How much</b> data? <b>How portable</b> must it be? <b>Who else</b> needs it? <b>What if</b> the device is lost or damaged?</p>
+<div class="tablewrap"><table>
+<tr><th>Situation</th><th>Good choice</th><th>Why</th></tr>
+<tr><td>Taking a slideshow from home to school</td><td>Flash drive or cloud storage</td><td>Small, portable, quick to transfer</td></tr>
+<tr><td>Backing up a whole office's files every week</td><td>Portable hard disk and cloud storage</td><td>Large capacity; a copy kept in a second place</td></tr>
+<tr><td>Adding space for photos on a phone or camera</td><td>Memory card (microSD)</td><td>Small card made for these devices</td></tr>
+<tr><td>A group editing the same SBA file from different homes</td><td>Cloud storage</td><td>Saved, synced and shared from any location</td></tr>
+<tr><td>Storing the operating system and installed programs</td><td>Fixed hard disk</td><td>Main internal drive of the computer</td></tr>
+</table></div>
+<p class="passage"><b>Caribbean reality:</b> In hurricane season, a single laptop in an office in Bodden Town could be damaged by water or a power surge. Keeping backups in <b>more than one location</b>, for example a portable hard disk stored safely plus cloud storage, means the work survives.</p>
+<p class="tip"><b>Teacher's tip:</b> Many new computers use a solid-state drive (SSD) as the fixed internal drive. It does the same job as a fixed hard disk but has no moving parts, so it is faster and more durable. <b>Activity 3:</b> In groups of three, prepare a short presentation on each storage medium, stating its approximate capacity, one advantage, and one situation where it would (or would not) be the best choice.</p>`,
+          tutor:[
+            {h:`Four questions`, p:`<p>How much? How portable? Who else? What if it is lost?</p>`},
+            {h:`Never one copy`, p:`<p>Important files should be backed up in more than one place.</p>`}
+          ],
+          plain: "<p>Choose storage by asking four questions. How much data is there? Does it need to travel? Who else needs it? What happens if the device is lost? To share an SBA with classmates in different villages in St. Vincent, use cloud storage. To back up a whole office, use a portable hard disk as well as the cloud.</p>",
+          deeper: "<p>A sound backup plan keeps <b>at least two copies in different places</b>, with one away from the office, so a single flood, fire or theft cannot destroy everything. Every medium has a trade-off. Flash drives are easily lost and can carry malware from one computer to another. Cloud storage depends on an internet connection, and its sharing settings decide who can see or edit your files, so \"anyone with the link\" is a privacy risk. In a \"recommend and justify\" question, name the medium <b>and</b> link one of its properties (capacity, portability, shared access, durability) to the scenario. Writing \"cloud storage\" for every situation, without a reason, will not earn the justification marks.</p>"
+        },
+        {
+          type:'match', game:true, title:`Match the storage medium`,
+          intro:`<p>Match each storage medium to its description or practical application.</p>`,
+          pairs:[
+            {l:`CD-ROM`, r:`An optical disc that can be read but not rewritten, once used to distribute software`},
+            {l:`DVD`, r:`An optical disc with more capacity than a CD, once used to distribute films`},
+            {l:`CD-RW`, r:`An optical disc that can be erased and reused many times`},
+            {l:`Fixed hard disk`, r:`The main internal drive holding the operating system and installed programs`},
+            {l:`Flash drive`, r:`A small solid-state USB device for quick file transfer`},
+            {l:`Memory card`, r:`A small removable card that expands storage in a phone or camera`},
+            {l:`Cloud storage`, r:`Remote storage reached over the internet and synced across devices`}
+          ],
+          win:`Well done. You can describe each medium and say where it is used, which is exactly what objective 6 asks.`,
+          tutor:[
+            {h:`Optical trio`, p:`<p>CD-ROM = read only. DVD = more capacity. CD-RW = rewritable.</p>`},
+            {h:`Where does it live?`, p:`<p>Inside the computer = fixed hard disk. In a phone or camera = memory card. On the internet = cloud.</p>`}
+          ],
+          easy:{
+            title:`Match the storage medium (Foundation)`,
+            pairs:[
+              {l:`CD-ROM`, r:`Optical disc that cannot be rewritten`},
+              {l:`Flash drive`, r:`Small USB device for quick file transfer`},
+              {l:`Memory card`, r:`Expands storage in a phone or camera`},
+              {l:`Cloud storage`, r:`Remote storage reached over the internet`}
+            ]
+          },
+          up: {"title":"Match the storage medium (Challenge)","intro":"<p>Each card describes a real use. Match it to the medium that BEST fits; two of the optical discs are easy to confuse.</p>","pairs":[{"l":"CD-ROM","r":"A 2008 encyclopaedia disc the library can read but never update"},{"l":"DVD","r":"An old disc holding a full-length film of a Carnival parade"},{"l":"CD-RW","r":"An optical disc the office once erased and reused for each week's backup"},{"l":"Fixed hard disk","r":"Holds Windows and every installed program on the reception PC"},{"l":"Portable hard disk","r":"Holds a 1 TB copy of the whole office, kept in a safe at the manager's home"},{"l":"Flash drive","r":"Carries a slideshow from home to a presentation in the school hall"},{"l":"Memory card","r":"Expands the storage of a drone camera filming the coastline"},{"l":"Cloud storage","r":"Lets three volunteers on different islands open and update the same file"}],"win":"Excellent. You matched each medium to its best use by thinking about capacity, portability, rewritability and shared access."}
+        },
+        {
+          type:'scenario', game:true, title:`Saving the SBA`,
+          intro:`<p>You and two classmates are preparing your EDPM SBA documents. Each of you works at home in a different town: Grand Anse, Grenville and Gouyave. Make the best storage decisions.</p>`,
+          nodes:{
+            start:{text:`<p>All three of you need to edit and check the same set of files during the week. Where should the main working copy be kept?</p>`,
+              choices:[
+                {t:`Only on your own laptop's hard disk.`, to:`bad2`, fb:`Your classmates could not reach the files from their homes, and there would be only one copy.`},
+                {t:`In a shared cloud storage folder that all three of you can open.`, to:`n2`, fb:`Good choice. Cloud storage lets files be saved, synced and shared across devices from any location.`},
+                {t:`On one CD-ROM that you pass around at school.`, to:`bad1`, fb:`A CD-ROM cannot be rewritten by the user, and it is legacy technology. Nobody could save their changes.`}
+              ]},
+            n2:{text:`<p>The night before a storm is forecast, your teacher reminds the class to back up their SBA work. What do you do?</p>`,
+              choices:[
+                {t:`Nothing. It is in the cloud, so it can never be lost.`, to:`bad3`, fb:`Cloud storage is reliable, but you still need internet access to reach it and files can be deleted by mistake. A second copy is safer.`},
+                {t:`Copy the files onto a flash drive or portable hard disk as well, so there is a second copy in another location.`, to:`n3`, fb:`Exactly. Secure backups ideally live in more than one location.`}
+              ]},
+            n3:{text:`<p>After copying, you are ready to take the flash drive out of the laptop. What do you do?</p>`,
+              choices:[
+                {t:`Use "Safely Remove Hardware" or "Eject" first, wait for the message, then pull it out.`, to:`good`, fb:`Correct. Safely removing external storage avoids data loss or corruption.`},
+                {t:`Pull it out straight away while the light is still flashing.`, to:`bad4`, fb:`Removing a device while it is still writing can corrupt the files.`}
+              ]},
+            good:{text:`<p><b>Success!</b> The storm causes a power cut that lasts two days, but your group's SBA is safe in the cloud and on the flash drive. You chose storage to suit the task, backed up in two places and handled the device correctly.</p>`, end:'good'},
+            bad1:{text:`<p><b>Stuck.</b> A CD-ROM is read-only, so no one can save changes. Try again and choose a medium that supports sharing and editing.</p>`, end:'bad'},
+            bad2:{text:`<p><b>Locked out.</b> Your classmates cannot reach the files, and when your laptop battery dies the night before the deadline, the whole group is stuck. Try again.</p>`, end:'bad'},
+            bad3:{text:`<p><b>Risky.</b> The storm knocks out the internet for two days, and you cannot reach your files to finish the last section. Try again and think about backups in more than one place.</p>`, end:'bad'},
+            bad4:{text:`<p><b>Corrupted file.</b> The flash drive was still writing when you pulled it out, and the main document will not open. Try again.</p>`, end:'bad'}
+          },
+          tutor:[
+            {h:`Sharing`, p:`<p>When several people in different places need the same file, think cloud storage.</p>`},
+            {h:`Backups`, p:`<p>Keep important work in more than one location.</p>`},
+            {h:`Removing devices`, p:`<p>Always eject or safely remove before unplugging.</p>`}
+          ],
+          easy:{
+            title:`Saving the SBA (Foundation)`,
+            intro:`<p>A shorter version: three group members in different districts need to edit the same SBA files.</p>`,
+            nodes:{
+              start:{text:`<p>Where should you keep the shared working copy?</p>`,
+                choices:[
+                  {t:`On one CD-ROM.`, to:`bad`, fb:`A CD-ROM cannot be rewritten.`},
+                  {t:`In a shared cloud storage folder.`, to:`good`, fb:`Yes. Everyone can open and save it from home.`}
+                ]},
+              good:{text:`<p><b>Well done.</b> Cloud storage lets the group save, sync and share files from any location.</p>`, end:'good'},
+              bad:{text:`<p><b>Stuck.</b> No one can save changes to a CD-ROM. Try again.</p>`, end:'bad'}
+            }
+          },
+          up: {"title":"Saving the SBA (Challenge)","intro":"<p>Your group of three works from Grand Anse, Grenville and Gouyave on a 12-page EDPM SBA. Your teacher wants the final files and evidence of each member's work. Choose the BEST option each time; some options are not wrong, just weaker.</p>","nodes":{"start":{"text":"<p>Where should the working copy be kept?</p>","choices":[{"t":"Each member keeps a section on a flash drive, and you combine them the night before.","to":"ok1","fb":"Possible, but there is no single up-to-date copy, and the merge happens at the last minute."},{"t":"A shared cloud folder set to \"anyone with the link can edit\", so it is easy to open.","to":"bad1","fb":"Easy, but anyone who gets the link could change or delete your work. Sharing settings matter."},{"t":"A shared cloud folder with version history, shared only with the three of you and your teacher.","to":"n2","fb":"Best choice. Everyone can edit from home, version history records each member's changes, and access is limited to the people who need it."}]},"n2":{"text":"<p>Kemba accidentally deletes two pages, and the change syncs to everyone's laptop. What do you do?</p>","choices":[{"t":"Copy the file onto a CD-ROM so no one can delete it again.","to":"bad2","fb":"A CD-ROM cannot be written to by the user, and a disc you cannot edit is no use for a draft."},{"t":"Tell the teacher the work is lost and start the two pages again.","to":"ok2","fb":"You would recover, but you are wasting hours. The cloud kept the earlier version."},{"t":"Restore the earlier version from the cloud folder's version history.","to":"n3","fb":"Exactly. Version history lets you roll back a mistake that has synced to every device."}]},"n3":{"text":"<p>A storm warning is issued: power and internet may be off for days, and the SBA is due in four days. Which backup plan is BEST?</p>","choices":[{"t":"Print the whole SBA as your backup.","to":"ok3","fb":"A hard copy is output, not an editable backup. You could not keep working on it."},{"t":"Download a copy to each laptop's hard disk and to a flash drive or portable hard disk, and keep the cloud copy as well.","to":"n4","fb":"Strong plan. You can work offline, and copies now exist in several places."},{"t":"Rely on the cloud copy alone. The cloud is always safe.","to":"bad3","fb":"The files may be safe, but without internet you cannot reach them to finish the work."}]},"n4":{"text":"<p>The power flickers. Your flash drive's light is flashing and the laptop battery shows 3%. What do you do?</p>","choices":[{"t":"Save and close the file, eject the drive, wait for the safe-to-remove message, remove it, then shut down.","to":"good","fb":"Correct. Safe removal makes sure nothing is still being written when the drive comes out."},{"t":"Pull the drive out immediately before the battery dies.","to":"bad4","fb":"A flashing light means data is being written. Pulling it out now can corrupt the file."}]},"good":{"text":"<p><b>Grade One planning!</b> The storm cuts power for two days, but your group keeps working from local copies, the cloud copy and version history protect the shared file, and your teacher can see each member's contribution.</p>","end":"good"},"ok1":{"text":"<p><b>Last-minute scramble.</b> The three sections use different fonts and one flash drive is left at school. You submit late. A single shared copy would have avoided this. Try again.</p>","end":"ok"},"ok2":{"text":"<p><b>Hours lost.</b> You rewrite the pages, but the earlier version was in the version history all along. Try again.</p>","end":"ok"},"ok3":{"text":"<p><b>Stuck on paper.</b> You have a copy you can read, but you cannot edit it, and the final changes must be retyped. Try again.</p>","end":"ok"},"bad1":{"text":"<p><b>Unwanted visitor.</b> The link is forwarded in a group chat, and someone outside the group deletes your title page. Share only with the people who need access. Try again.</p>","end":"bad"},"bad2":{"text":"<p><b>Read-only dead end.</b> You cannot save changes to a CD-ROM, and the two pages are still missing. Try again.</p>","end":"bad"},"bad3":{"text":"<p><b>Cut off.</b> The internet is down for three days and you cannot open the file to finish it. Try again.</p>","end":"bad"},"bad4":{"text":"<p><b>Corrupted.</b> The drive was still writing, and the SBA file will no longer open. Try again.</p>","end":"bad"}}}
+        },
+        {
+          type:'learn', title:`Operating system software`,
+          html:`<p class="passage"><b>Definition:</b> Operating system software consists of programs that <b>coordinate activities among a computer's hardware devices</b>. It contains the instructions that <b>allow a user to run application software</b>.</p>
+<p>Without an operating system, a computer's hardware would have no way of communicating with itself or with the programs you want to run. The operating system:</p>
+<ul>
+<li><b>manages memory</b>;</li>
+<li><b>schedules processing tasks</b>;</li>
+<li><b>controls input and output devices</b>;</li>
+<li>provides the <b>interface</b> (icons, windows, menus, touch gestures) through which you interact with the device.</li>
+</ul>
+<p><b>Examples:</b> Windows, macOS and Linux (on computers); Android and iOS (on phones and tablets).</p>
+<p class="passage"><b>Think of it this way:</b> the operating system is the manager of a busy Frederick Street store. It does not sell anything itself, but it decides which worker does what, keeps the stockroom organised and makes sure customers can reach the counter. The application software is the staff who actually serve the customers.</p>
+<p class="tip"><b>Teacher's tip:</b> When you turn on a computer, the operating system loads first. Only then can you open Word or Excel.</p>`,
+          tutor:[
+            {h:`Two jobs in the definition`, p:`<p>It coordinates the hardware, and it lets you run application software.</p>`},
+            {h:`Five names`, p:`<p>Windows, macOS, Linux, Android, iOS.</p>`}
+          ],
+          plain: "<p>The <b>operating system</b> (OS) is the main program that runs the computer. It manages the hardware, the memory and the devices, and it lets you open other programs. Windows, macOS, Android and iOS are operating systems. When a student in Paramaribo switches on her laptop, Windows loads first; only then can she open Word.</p>",
+          deeper: "<p>The operating system is <b>system software</b>, not application software. A common trap: the Google Chrome browser is an application, while ChromeOS is an operating system. Link each syllabus function to something you can see: <b>managing memory</b> (deciding which open program uses main memory), <b>scheduling processing tasks</b> (letting music play while you type), <b>controlling input and output devices</b> (using drivers so a new printer works) and providing the <b>interface</b> (icons, windows, menus or touch gestures). When asked to \"state two functions\", use these phrases rather than \"it runs the computer\". Keeping the OS updated also closes security gaps, which links to computer care in Unit 6.</p>"
+        },
+        {
+          type:'learn', title:`Computer-based and web-based application software`,
+          html:`<p><b>Computer-based application software</b> consists of programs <b>installed on a computer's hard drive</b> that perform specific tasks for users.</p>
+<div class="tablewrap"><table>
+<tr><th>Type</th><th>Function</th><th>Examples</th></tr>
+<tr><td>Word processing</td><td>Creates, edits and formats text-based documents.</td><td>Microsoft Word, Apple Pages</td></tr>
+<tr><td>Spreadsheet</td><td>Organises data into rows and columns and performs calculations.</td><td>Microsoft Excel, Apple Numbers</td></tr>
+<tr><td>Database management</td><td>Stores, organises and retrieves large, structured collections of data.</td><td>Microsoft Access, FileMaker</td></tr>
+<tr><td>Presentation</td><td>Creates slide-based presentations combining text, images and multimedia.</td><td>Microsoft PowerPoint, Apple Keynote</td></tr>
+<tr><td>Graphic manipulation</td><td>Creates and edits digital images and artwork.</td><td>Adobe Photoshop, GIMP</td></tr>
+<tr><td>Anti-virus</td><td>Detects, blocks and removes malicious software (malware).</td><td>Norton, McAfee, Microsoft Defender</td></tr>
+</table></div>
+<p class="passage"><b>Definition:</b> Web-based application software is any software application that is <b>not installed on the hard drive</b> of the computer but is instead <b>accessed via the web</b>, including collaborative tools.</p>
+<p>Web-based applications run inside a web browser and usually store data on remote servers. They can be reached from <b>any device with a browser and a connection</b>, and often let several users view or edit the same file at the same time. Examples: Google Docs, Google Sheets, Microsoft 365 online, and cloud-based project management or messaging platforms.</p>
+<p class="tip"><b>ITQ4:</b> State ONE similarity and ONE difference between computer-based and web-based application software. (Similarity: both perform specific tasks for users. Difference: one is installed on the hard drive; the other is accessed via the web in a browser.)</p>`,
+          tutor:[
+            {h:`Installed or accessed?`, p:`<p>Installed on the hard drive = computer-based. Opened in a browser over the internet = web-based.</p>`},
+            {h:`Collaboration`, p:`<p>Web-based tools let several people edit the same file at once.</p>`}
+          ],
+          plain: "<p><b>Application software</b> does a particular job for you, like typing letters or working out totals. <b>Computer-based</b> applications, such as Microsoft Word, are installed on the computer. <b>Web-based</b> applications, such as Google Docs, open in a browser over the internet. A youth group in Basseterre can edit the same Google Doc together from different homes.</p>",
+          deeper: "<p>Classify by <b>how the software is reached</b>, not by its brand name. Microsoft Excel installed from a download is computer-based; the same Excel opened at office.com in a browser is web-based. Each has trade-offs. Web-based tools work on any device with a browser, update automatically and allow live collaboration, but they need a connection (unless an offline mode is set up) and keep your data on someone else's servers. Computer-based tools work offline and often have more advanced features, but must be installed and licensed on each machine. For ITQ4, give a similarity (both perform specific tasks for users) and a difference stated for <b>both</b> sides.</p>"
+        },
+        {
+          type:'sort', game:true, title:`Which kind of software?`,
+          intro:`<p>Sort each item into the correct kind of software.</p>`,
+          main:`What kind of software is this?`,
+          bins:[`Operating system`,`Computer-based application`,`Web-based application`],
+          items:[
+            {t:`Google Docs opened in a browser`, bin:2, fb:`It is accessed via the web, not installed: a web-based application.`},
+            {t:`Android on a smartphone`, bin:0, fb:`Android is the operating system for many phones and tablets.`},
+            {t:`An online tool where your group edits the same slideshow at the same time`, bin:2, fb:`Collaborative tools accessed through the web are web-based applications.`},
+            {t:`Windows 11`, bin:0, fb:`Windows coordinates the hardware and lets you run applications: an operating system.`},
+            {t:`Adobe Photoshop installed on a designer's desktop`, bin:1, fb:`Installed graphic manipulation software is a computer-based application.`},
+            {t:`Microsoft Excel installed on the lab computers`, bin:1, fb:`It is installed on the hard drive and performs a specific task: computer-based application.`},
+            {t:`macOS`, bin:0, fb:`macOS is Apple's computer operating system.`},
+            {t:`Norton anti-virus installed on a laptop`, bin:1, fb:`Anti-virus software installed on the device is a computer-based application.`}
+          ],
+          win:`Excellent. The operating system runs the computer; computer-based applications are installed to do specific tasks; web-based applications are accessed through the web.`,
+          tutor:[
+            {h:`Does it run the whole device?`, p:`<p>If yes, it is an operating system.</p>`},
+            {h:`Installed or in a browser?`, p:`<p>Installed = computer-based. Browser and internet = web-based.</p>`}
+          ],
+          easy:{
+            title:`Which kind of software? (Foundation)`,
+            items:[
+              {t:`Windows 11`, bin:0, fb:`An operating system.`},
+              {t:`Microsoft Excel installed on the computer`, bin:1, fb:`A computer-based application.`},
+              {t:`Google Docs in a browser`, bin:2, fb:`A web-based application.`},
+              {t:`Android`, bin:0, fb:`An operating system.`}
+            ]
+          },
+          up: {"title":"Which kind of software? (Challenge)","intro":"<p>Some names here are deliberately similar. Classify each item by what it does and how it is reached, not by its brand.</p>","items":[{"t":"ChromeOS on a school Chromebook","bin":0,"fb":"ChromeOS manages the Chromebook's hardware and runs its applications: an operating system."},{"t":"iOS on an iPhone","bin":0,"fb":"iOS is Apple's operating system for the iPhone."},{"t":"Linux running the school's web server","bin":0,"fb":"Linux is an operating system, widely used on servers."},{"t":"The Google Chrome browser installed on a laptop","bin":1,"fb":"Chrome the browser is installed and performs a specific task: a computer-based application. Do not confuse it with ChromeOS."},{"t":"The desktop version of Microsoft Word, installed from a download","bin":1,"fb":"Installed on the hard drive: computer-based."},{"t":"GIMP installed on a designer's PC","bin":1,"fb":"Installed graphic manipulation software: computer-based."},{"t":"Microsoft Defender scanning the laptop for malware","bin":1,"fb":"Anti-virus software running on the device is treated as a computer-based application."},{"t":"Microsoft Word opened at office.com in a browser","bin":2,"fb":"Same brand, different access: through the web, so it is web-based."},{"t":"A poster designed in Canva in a browser","bin":2,"fb":"Used through the browser and saved online: web-based."},{"t":"An online spreadsheet the whole class updates at the same time","bin":2,"fb":"A collaborative tool accessed via the web: web-based."}],"win":"Excellent. You classified by role and by how the software is reached: the same brand (Word) can be computer-based or web-based, and Chrome the browser is not ChromeOS."}
+        },
+        {
+          type:'mcq', title:`Spot the web-based application`,
+          q:`Which of the following is an example of web-based application software?`,
+          options:[
+            {t:`A word processor installed on a laptop's hard drive`, fb:`It is installed on the hard drive, so it is computer-based application software.`},
+            {t:`An operating system`, fb:`An operating system coordinates the hardware. It is system software, not application software.`},
+            {t:`Anti-virus software installed on a desktop`, fb:`Installed anti-virus software is computer-based application software.`},
+            {t:`An online collaborative document editor accessed through a browser`, ok:true, fb:`Correct. It is not installed on the hard drive; it is accessed via the web and lets several people work together.`}
+          ],
+          tutor:[
+            {h:`Look for "installed"`, p:`<p>Any option that says "installed" is computer-based.</p>`},
+            {h:`Look for "browser"`, p:`<p>Accessed through a browser over the web = web-based.</p>`}
+          ],
+          easy:{
+            title:`Spot the web-based application (Foundation)`,
+            q:`Which one is web-based application software?`,
+            options:[
+              {t:`A document editor opened in a browser`, ok:true, fb:`Yes. It is accessed via the web.`},
+              {t:`A word processor installed on the hard drive`, fb:`That is computer-based.`}
+            ]
+          },
+          up: {"title":"Spot the web-based application (Challenge)","q":"Shanice uses Microsoft Excel in two places. At home it is installed on her laptop. At school she opens Excel at office.com in a browser and shares the file with her group. Which statement is MOST accurate?","options":[{"t":"Both are web-based, because Excel is made by a company that offers cloud services.","fb":"The home copy is installed on the hard drive, so it is computer-based."},{"t":"At home she uses computer-based application software; at school she uses web-based application software, because it is reached through a browser.","ok":true,"fb":"Correct. Installed on the hard drive = computer-based; accessed via the web in a browser = web-based."},{"t":"The school version is an operating system, because it runs inside Windows.","fb":"Excel performs a specific task for the user, so it is application software, not an operating system."},{"t":"Both are computer-based application software, because the brand is the same.","fb":"Brand does not decide the category. How the software is reached does."}]}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Software and storage for the office`, genre:`Structured short answer: software and storage media`,
+          stimulus:`<p class="passage">The Dangriga Youth Sports League has two staff members who share one office computer. They prepare letters and fixture lists, keep a register of 400 players, and need to work on documents with volunteer coaches who live in different parts of the island.</p>`,
+          prompt:`<p>Write a short answer that:</p><ul><li>distinguishes between <b>operating system software</b> and <b>application software</b>, giving ONE example of each;</li><li>recommends <b>TWO</b> computer-based applications the League needs and states what each would be used for;</li><li>explains why a <b>web-based application</b> would help them work with the coaches;</li><li>recommends <b>TWO</b> storage media for backing up the player register and gives a reason for each.</li></ul>`,
+          min:110, max:240,
+          frame:`<p><b>Operating system software</b> ... e.g. ... <b>Application software</b> ... e.g. ...<br><b>Applications:</b> The League needs ... to ... and ... to ...<br><b>Web-based:</b> A web-based application such as ... would help because ...<br><b>Storage:</b> I recommend ... because ... and ... because ...</p>`,
+          checklist:[
+            `I explained what the operating system does and gave an example.`,
+            `I named two suitable applications and their uses.`,
+            `I explained the benefit of a web-based application for working with coaches.`,
+            `I recommended two storage media with reasons.`
+          ],
+          rubric:[
+            {criterion:`Operating system vs application`, marks:3, look:[`coordinat|manage|control|hardware`, `run application|specific task|perform`, `windows|macos|linux|android|ios`], min:2,
+              strong:`You distinguished the two kinds of software clearly.`,
+              weak:`Operating system software coordinates the hardware and lets you run applications (e.g. Windows). Application software performs specific tasks (e.g. Microsoft Word).`},
+            {criterion:`Suitable applications`, marks:3, look:[`word process|microsoft word|pages`, `spreadsheet|excel|database|access`, `letter|fixture|register|record|calculat`], min:2,
+              strong:`Your applications match the League's tasks.`,
+              weak:`Recommend word processing software (letters) and database or spreadsheet software (the player register).`},
+            {criterion:`Web-based application`, marks:2, look:[`web|browser|online|internet`, `same time|collaborat|share|any device|anywhere|location`], min:2,
+              strong:`You explained the collaboration benefit.`,
+              weak:`Explain that a web-based tool such as Google Docs lets coaches open and edit the same file from any device with internet, at the same time.`},
+            {criterion:`Storage media`, marks:2, look:[`cloud|flash|portable hard|external hard|memory card`, `because|so that|in case|backup|back up|second|another location`], min:2,
+              strong:`You gave two suitable media with reasons.`,
+              weak:`Recommend, e.g., cloud storage (reached from anywhere, survives damage to the office) and a portable hard disk (large capacity backup kept in a second location).`}
+          ],
+          model:`<p>Operating system software is the set of programs that coordinates the computer's hardware and lets the user run application software, for example Windows. Application software performs specific tasks for the user, for example Microsoft Word.</p><p>The League needs word processing software, such as Microsoft Word, to type letters and fixture lists, and database management software, such as Microsoft Access, to store and search the register of 400 players.</p><p>A web-based application such as Google Docs would help because it is accessed through a browser, so coaches in different districts could open and edit the same fixture list from any device with internet, at the same time.</p><p>For backups, I recommend cloud storage, because the register could be reached from anywhere and would survive damage to the office computer, and a portable hard disk, because it holds large backups and can be stored safely in a second location.</p>`,
+          teacherTip:`<p>"Distinguish between" means say what <b>each</b> one is, so the difference is clear. Do not describe only one side. Use the syllabus phrases: "coordinate activities among hardware devices" and "perform specific tasks for users".</p>`,
+          easy: {"genre":"Structured short answer: software and storage media (8 marks)","prompt":"<p>Help the Dangriga Youth Sports League. Word bank: <b>Windows, Microsoft Word, Microsoft Access, Google Docs, cloud storage, portable hard disk</b>. Answer each part in one or two sentences.</p><ol type=\"a\"><li><b>Complete</b>: Operating system software ______ the computer's hardware and lets you run ______ software. ONE example is ______. <i>(2 marks)</i></li><li><b>Name</b> the application the League should use for (i) letters and (ii) the register of 400 players. <i>(2 marks)</i></li><li><b>Name</b> ONE web-based application and give ONE reason it helps the coaches. <i>(2 marks)</i></li><li><b>Name</b> TWO storage media for backing up the player register. <i>(2 marks)</i></li></ol>","min":40,"max":130,"frame":"<p><b>(a)</b> Operating system software ... the computer's hardware and lets you run ... software. One example is ...<br><b>(b)</b> (i) For letters: ... (ii) For the player register: ...<br><b>(c)</b> ... would help the coaches because ...<br><b>(d)</b> Two storage media are ... and ...</p>","checklist":["I completed the operating system sentence and gave an example.","I matched an application to the letters and to the register.","I named a web-based application and gave a reason.","I named two storage media."],"rubric":[{"criterion":"Operating system","marks":2,"look":["coordinat|manage|control|run","application","windows|macos|linux|android|ios"],"min":2,"strong":"Sentence completed with a correct example.","weak":"The OS manages (coordinates) the hardware and lets you run application software, e.g. Windows."},{"criterion":"Applications for the tasks","marks":2,"look":["word","access|database|excel|spreadsheet"],"min":2,"strong":"Both applications fit the tasks.","weak":"Use Microsoft Word for letters and Microsoft Access for the player register."},{"criterion":"Web-based application","marks":2,"look":["google docs|google sheets|office\\.com|online|web","same time|share|anywhere|any device|together|home"],"min":2,"strong":"Good example and reason.","weak":"Google Docs, because coaches can open and edit the same file from home."},{"criterion":"Storage media","marks":2,"look":["cloud","portable hard|external hard|flash|memory card"],"min":2,"strong":"Two suitable storage media.","weak":"Cloud storage and a portable hard disk."}],"model":"<p><b>(a)</b> Operating system software manages the computer's hardware and lets you run application software. One example is Windows.</p><p><b>(b)</b> (i) For letters: Microsoft Word. (ii) For the player register: Microsoft Access.</p><p><b>(c)</b> Google Docs would help the coaches because they can open and edit the same file from home.</p><p><b>(d)</b> Two storage media are cloud storage and a portable hard disk.</p>","key":"<p>Mark scheme (8): (a) 1 for managing/coordinating hardware and running applications, 1 for a valid OS example. (b) 1 each. (c) 1 web-based example, 1 reason. (d) 1 each for two suitable media (accept flash drive as the second medium).</p>","teacherTip":"<p>Ask Foundation students to sort the word bank into three groups first: operating system, applications, storage. Most errors at this level come from calling Windows an application. When they are secure, move them to the Core task, which asks them to distinguish and justify.</p>","title":"Software and storage for the office (Foundation)"},
+          up: {"genre":"Structured response: recommending software and a backup plan (15 marks)","stimulus":"<p class=\"passage\">The Dangriga Youth Sports League has two staff who share one office computer running Windows. They write letters to sponsors, keep a register of 400 players that must be searched by age group and district, and produce league tables that add up points each week. Twelve volunteer coaches across the island need to update fixture lists. The office still has a box of CD-RW discs from an old backup routine, and last year a burst pipe flooded the office.</p>","prompt":"<p>Write a short technology plan for the League. Answer all parts.</p><ol type=\"a\"><li><b>Distinguish</b> between operating system software and application software, stating TWO functions of the operating system. <i>(3 marks)</i></li><li><b>Recommend</b> a computer-based application for EACH of the three office tasks and <b>justify</b> each choice. <i>(3 marks)</i></li><li><b>Evaluate</b> using a web-based application for the coaches' fixture lists, giving ONE advantage and ONE limitation. <i>(3 marks)</i></li><li><b>Design</b> a backup plan for the player register, stating TWO media, how often to back up and where each copy is kept, with reasons. <i>(4 marks)</i></li><li><b>Explain</b> why the CD-RW discs are no longer a suitable backup medium. <i>(2 marks)</i></li></ol>","min":220,"max":420,"frame":"<p><b>(a)</b> Operating system software ..., for example it ... and ... Application software, however, ...<br><b>(b)</b> Letters: ... because ... Register: ... because ... League tables: ... because ...<br><b>(c)</b> One advantage is ... One limitation is ... Overall ...<br><b>(d)</b> Copy 1: ... every ..., kept ... because ... Copy 2: ...<br><b>(e)</b> CD-RW discs are unsuitable because ...</p>","checklist":["I stated what EACH kind of software does and gave two OS functions in syllabus words.","I matched three different applications to the three tasks with a reason each.","My evaluation has an advantage, a limitation and a short judgement.","My backup plan names two media, a frequency and two locations, one of them away from the office.","I explained the CD-RW problem using capacity or legacy technology."],"rubric":[{"criterion":"OS versus application","marks":3,"look":["memory","schedul|task","input and output|device|interface","specific task|application software"],"min":3,"strong":"A clear distinction with two syllabus functions.","weak":"Say the OS coordinates hardware (e.g. manages memory, controls devices) and lets applications run, while application software performs specific tasks."},{"criterion":"Applications justified","marks":3,"look":["word process|microsoft word","database|access","spreadsheet|excel","because|since|so that"],"min":4,"strong":"Three well-matched applications with reasons.","weak":"Word processing for letters, a database for the searchable register, a spreadsheet for calculating points, each with a reason."},{"criterion":"Web-based evaluation","marks":3,"look":["web|browser|online|google","same time|any device|anywhere|update|collaborat","internet|connection|offline|privacy|sharing setting|access","overall|on balance|therefore|recommend"],"min":3,"strong":"Balanced evaluation with a judgement.","weak":"Give an advantage (coaches update the list from any device), a limitation (needs internet; sharing settings must be controlled) and a judgement."},{"criterion":"Backup plan","marks":4,"look":["cloud","portable hard|external hard|flash","daily|every day|weekly|every week|each week|after each","home|off-?site|away from the office|another location|second location|safe","flood|pipe|water"],"min":4,"strong":"A complete plan: media, frequency and separate locations, linked to the flood risk.","weak":"Name two media (e.g. cloud and a portable hard disk), say how often, and keep one copy away from the office because of the flood."},{"criterion":"Why not CD-RW","marks":2,"look":["legacy|old|outdated|replaced","capacity|700|small|space|slow|scratch|drive"],"min":2,"strong":"You explained the CD-RW problem clearly.","weak":"CD-RW is legacy technology with a small capacity (about 700 MB); many new computers have no optical drive."}],"model":"<p><b>(a)</b> Operating system software, such as Windows, coordinates activities among the hardware devices and lets the user run applications. For example, it manages memory and controls input and output devices such as the printer. Application software, however, performs specific tasks for users, such as writing a letter.</p><p><b>(b)</b> Letters: Microsoft Word, because word processing software creates, edits and formats text documents. Register: Microsoft Access, because database software stores 400 records and can search them by age group and district. League tables: Microsoft Excel, because spreadsheet software calculates the weekly points automatically.</p><p><b>(c)</b> One advantage of a web-based application such as Google Sheets is that all twelve coaches could update the same fixture list from any device, at the same time, so there would be one up-to-date copy. One limitation is that it needs an internet connection, and the sharing settings must be controlled so that only the coaches can edit. Overall it is a good choice, provided access is limited to named coaches.</p><p><b>(d)</b> Copy 1: back up the register to cloud storage every day, because the copy is kept off-site and survives another flood. Copy 2: back up to a portable hard disk every week, kept at the manager's home, because it can be restored without internet. Neither copy stays in the office, where the burst pipe caused the flood.</p><p><b>(e)</b> CD-RW discs are legacy technology: they hold only about 700 MB, are slow and scratch easily, and many new computers have no optical drive to read them.</p>","key":"<p>Mark scheme (15): (a) 1 OS role, 1 for two correct OS functions, 1 application role. (b) 1 per task correctly matched AND justified. (c) 1 advantage, 1 limitation, 1 judgement. (d) 1 two suitable media, 1 frequency, 1 separate locations, 1 justification linked to the flood. (e) 1 legacy/replaced, 1 capacity, speed or drive-availability reason.</p>","teacherTip":"<p>The backup plan in (d) is where Challenge students separate themselves. Insist on the four parts: <b>what</b> media, <b>how often</b>, <b>where</b> each copy lives, and <b>why</b> (the flood). In (b), each of the three tasks needs a different application; accept a spreadsheet for the register only if the student explains how it will be searched or filtered.</p>","title":"Software and storage for the office (Challenge)"}
+        }
+      ]
+    },
+    // ===================== UNIT 6 =====================
+    {
+      id: `S1U6`,
+      title: `Caring for computers and factors associated with computer use`,
+      objectives: [
+        `Describe ways of caring for computers and peripherals in the working environment.`,
+        `Discuss the positive and negative effects of computer use on physical, mental, emotional and social health.`,
+        `Explain how accessibility features support differently abled persons.`,
+        `Discuss ergonomics, safety, environmental impact and sustainability.`
+      ],
+      videos: [
+        {title:`How to take care of your computer`, q:`how to take care of your computer maintenance tips`},
+        {title:`Setting up an ergonomic workstation`, q:`ergonomic computer workstation setup posture`},
+        {title:`What happens to e-waste?`, q:`e-waste explained environmental impact recycling electronics`}
+      ],
+      screens: [
+        {
+          type:'learn', title:`Caring for computers and peripherals`,
+          html:`<p>Computers and peripherals are expensive. Good care keeps them working, keeps your data safe and extends their working life.</p>
+<p><b>Caring for computers</b></p>
+<ul>
+<li><b>Keep software up to date</b>, including the operating system and installed applications, to close known security gaps.</li>
+<li><b>Install antivirus software</b> and keep its virus definitions current.</li>
+<li><b>Maintain secure, regular backups</b> of important files, ideally in more than one location.</li>
+<li><b>Defragment hard drives</b> periodically (where applicable) to keep the system running efficiently.</li>
+<li><b>Activate firewalls</b> to help block unauthorised access to the device or network.</li>
+<li><b>Clean computer screens</b> regularly using appropriate, non-abrasive materials.</li>
+<li><b>Avoid eating and drinking</b> close to computers, to reduce the risk of spills and debris damaging the equipment.</li>
+</ul>
+<p><b>Caring for peripherals</b></p>
+<ul>
+<li><b>Safely remove</b> external storage devices (flash drives, portable hard disks) before disconnecting them, to avoid data loss or corruption.</li>
+<li><b>Use a surge protector</b> to shield peripherals and the main computer unit from sudden power spikes.</li>
+</ul>
+<p class="tip"><b>Teacher's tip:</b> "Where applicable" matters. Defragmenting helps traditional hard disks with spinning platters. Solid-state drives do not need it, and modern operating systems manage this automatically. In Dominica, where power can flicker during storms, a surge protector is one of the most important things on an office desk.</p>`,
+          tutor:[
+            {h:`Software care`, p:`<p>Update, antivirus, backup, defragment, firewall.</p>`},
+            {h:`Physical care`, p:`<p>Clean screens gently, keep food and drinks away, safely remove devices, use a surge protector.</p>`}
+          ],
+          plain: "<p>Look after computers so they last and your files stay safe. Keep software updated, use antivirus software and a firewall, back up your work, clean screens gently and keep food and drink away. Always eject a flash drive before you unplug it. In Trinidad, where storms can cause power spikes, plug every computer and printer into a surge protector.</p>",
+          deeper: "<p>Organise a \"describe ways of caring\" answer into two groups: practices that protect the <b>data and software</b> (updates, antivirus, firewall, backups) and practices that protect the <b>hardware</b> (gentle cleaning, no food or drink, surge protection, safe removal). Two common confusions cost marks. First, defragmenting helps traditional spinning hard disks; it is not needed on solid-state drives. Second, a <b>surge protector</b> blocks sudden power spikes but does not keep a computer running in a power cut; a <b>UPS</b> (uninterruptible power supply) gives battery time to save work and shut down safely. Good care is also sustainability: a computer that lasts five years instead of three creates less e-waste.</p>"
+        },
+        {
+          type:'pick', game:true, title:`Tap the good practices`,
+          intro:`<p>Mrs. Martis, the office manager at Kralendijk Shipping Agency, listed what her staff did this week.</p>`,
+          q:`Tap EVERY action that is good care for computers and peripherals.`,
+          lines:[
+            `1. Installed the latest operating system updates on Monday.`,
+            `2. Turned off the firewall because it "slowed down" the internet.`,
+            `3. Plugged the computer and printer into a surge protector.`,
+            `4. Cleaned the monitor with a kitchen scouring sponge.`,
+            `5. Backed up the shipping records to cloud storage and a portable hard disk.`,
+            `6. Ate lunch over the keyboard to save time.`,
+            `7. Ejected the flash drive safely before unplugging it.`,
+            `8. Updated the antivirus virus definitions.`
+          ],
+          correct:[0,2,4,6,7],
+          win:`Correct. Updates, a surge protector, backups in two locations, safe removal and current virus definitions are all good care. Turning off the firewall, using an abrasive sponge and eating over the keyboard put the equipment and data at risk.`,
+          miss:`Look again. Good care protects the software (updates, antivirus, firewall, backups) and the hardware (gentle cleaning, no food or drink, safe removal, surge protector).`,
+          tutor:[
+            {h:`Does it protect or risk?`, p:`<p>For each action, ask: does this protect the computer and data, or put them at risk?</p>`},
+            {h:`Watch the details`, p:`<p>Cleaning is good, but only with non-abrasive materials.</p>`}
+          ],
+          easy:{
+            title:`Tap the good practices (Foundation)`,
+            q:`Tap the TWO good practices.`,
+            lines:[
+              `1. Installed the latest updates.`,
+              `2. Turned off the firewall.`,
+              `3. Used a surge protector.`,
+              `4. Ate lunch over the keyboard.`
+            ],
+            correct:[0,2],
+            win:`Yes. Updates and a surge protector are good care.`,
+            miss:`Tap the actions that protect the computer.`
+          },
+          up: {"title":"Tap the good practices (Challenge)","intro":"<p>The IT technician at Kralendijk Shipping Agency kept a log of what staff did this month. Some mistakes look like good ideas.</p>","q":"Tap EVERY action that is genuinely good care for computers and peripherals.","lines":["1. Scheduled antivirus scans every Friday and set virus definitions to update automatically.","2. Switched off and unplugged the computers before a thunderstorm, and used surge protectors at all other times.","3. Defragmented the new solid-state drive every day to speed it up.","4. Kept the only backup on a flash drive left plugged into the computer all the time.","5. Cleaned the switched-off monitor with a soft, slightly damp microfibre cloth.","6. Sprayed glass cleaner directly onto the laptop keyboard.","7. Installed operating system updates, even though they needed a restart.","8. Gave every staff member the same administrator password to save time.","9. Ejected the portable hard disk and waited for the message before unplugging it.","10. Moved the water bottles from beside the keyboards to a shelf away from the desks."],"correct":[0,1,4,6,8,9],"win":"Correct. Automatic antivirus updates, storm precautions, gentle cleaning, installing updates, safe removal and keeping drinks away are all good care. Defragmenting an SSD is unnecessary, a single backup in the same place as the computer is not secure, spraying liquid onto a keyboard can damage it, and a shared administrator password weakens security.","miss":"Look again. Some actions sound careful but are not: SSDs do not need defragmenting, a backup must be kept in a separate location, liquids should never be sprayed onto equipment, and passwords must not be shared."}
+        },
+        {
+          type:'order', game:true, title:`Safely remove a flash drive`,
+          intro:`<p>Kemar has finished saving his EDPM letter onto a flash drive in the computer lab. Put the steps in the correct order.</p>`,
+          blocks:[
+            {t:`Save the document and close the file.`},
+            {t:`Click the "Safely Remove Hardware and Eject Media" icon (or right-click the drive and choose Eject).`},
+            {t:`Select the flash drive from the list.`},
+            {t:`Wait for the message that it is safe to remove the hardware.`},
+            {t:`Gently pull the flash drive out of the USB port.`}
+          ],
+          win:`Correct. Closing the file and ejecting first makes sure nothing is still being written, so the file is not corrupted.`,
+          tutor:[
+            {h:`Finish the work first`, p:`<p>Save and close before you touch the device.</p>`},
+            {h:`Wait for the message`, p:`<p>Only unplug once the computer says it is safe.</p>`}
+          ],
+          easy:{
+            title:`Safely remove a flash drive (Foundation)`,
+            intro:`<p>Put these three steps in order.</p>`,
+            blocks:[
+              {t:`Save and close the file.`},
+              {t:`Eject the flash drive and wait for the safe-to-remove message.`},
+              {t:`Pull the flash drive out.`}
+            ]
+          },
+          up: {"title":"Back up and safely remove a flash drive (Challenge)","intro":"<p>Kemar is making a backup copy of his finished EDPM SBA. The flash drive is already plugged in. Put the full routine in the correct order, from saving to storing the backup.</p>","blocks":[{"t":"Save the final version of the SBA and close Word, so the file is complete."},{"t":"Copy the saved file from the hard disk onto the flash drive."},{"t":"Open the copy on the flash drive to check that it opens correctly, then close it."},{"t":"Click the \"Safely Remove Hardware and Eject Media\" icon (or right-click the drive and choose Eject)."},{"t":"Select the flash drive from the list."},{"t":"Wait for the message that it is safe to remove the hardware."},{"t":"Gently pull the flash drive out of the USB port."},{"t":"Store the flash drive away from the computer, so the backup is kept in a second place."}],"win":"Correct. A backup is only useful if it is complete, checked, removed safely and kept somewhere other than beside the computer it protects."}
+        },
+        {
+          type:'learn', title:`Health and accessibility`,
+          html:`<p>Computer use affects people in ways that go beyond the technology itself. Each factor can have <b>positive and negative effects</b>, depending on how computers are used.</p>
+<div class="tablewrap"><table>
+<tr><th>Health</th><th>Positive effects</th><th>Negative effects</th></tr>
+<tr><td><b>Physical</b></td><td>Assistive tools support independence for users with disabilities</td><td>Eye strain, headaches, musculoskeletal discomfort from poor posture or repetitive movement</td></tr>
+<tr><td><b>Mental and emotional</b></td><td>Supports learning, creativity and connection with others</td><td>Excessive or poorly regulated use is linked to difficulty concentrating, anxiety and disrupted sleep</td></tr>
+<tr><td><b>Social</b></td><td>Easy to stay in touch with distant family and friends and to build online communities</td><td>Can reduce face-to-face interaction if not balanced with other activities</td></tr>
+</table></div>
+<p><b>Accessibility.</b> Features built into modern computers and devices allow <b>differently abled persons</b> to use technology independently and effectively:</p>
+<ul>
+<li><b>screen readers</b> and <b>Braille displays</b> for users who are blind or visually impaired;</li>
+<li><b>voice recognition</b> for users who cannot use a keyboard;</li>
+<li><b>adjustable text size and colour contrast</b> for users with low vision;</li>
+<li><b>switch-based controls</b> for users with limited movement.</li>
+</ul>
+<p>Used well, the computer becomes <b>a powerful tool for inclusion rather than a barrier</b>.</p>
+<p class="tip"><b>Activity 4:</b> Research one assistive technology used by a specific group of differently abled persons. Prepare a short poster, slide deck or video explaining how it works and the difference it makes.</p>`,
+          tutor:[
+            {h:`Four kinds of health`, p:`<p>Physical, mental, emotional and social. Give a positive and a negative for each.</p>`},
+            {h:`Match the feature to the need`, p:`<p>Blind = screen reader or Braille. Cannot type = voice recognition. Low vision = larger text and contrast. Limited movement = switch controls.</p>`}
+          ],
+          plain: "<p>Computers can help or harm health. Sitting badly can cause pain, and too much screen time can affect sleep and mood. But computers also help people learn and keep in touch with family abroad. <b>Accessibility</b> features, such as screen readers and voice typing, let differently abled people use computers. A student in Guyana with low vision can simply make the text bigger.</p>",
+          deeper: "<p>Each factor has <b>both</b> positive and negative effects, so a \"discuss\" question needs both sides and a judgement: the effect depends on how, and how long, computers are used. Accessibility is wider than tools for users who are blind. It covers hearing (captions), movement (voice recognition, switch controls), low vision (magnifiers, high contrast) and reading difficulties (text-to-speech). Many features are already built into the operating system, so the cost is often just knowing where the settings are. There is a direct EDPM link: documents you produce should be accessible too, with clear fonts, strong colour contrast and alternative text on images, so that a screen reader can describe them.</p>"
+        },
+        {
+          type:'learn', title:`Ergonomics, safety and the environment`,
+          html:`<p><b>Ergonomics and safety.</b> Extended, uninterrupted use of computers and mobile devices can contribute to:</p>
+<ul>
+<li><b>repetitive strain injury (RSI)</b> - pain in the wrists, hands or arms from repeating the same movements;</li>
+<li><b>back and neck pain</b> from poor posture;</li>
+<li><b>eye strain</b> from staring at a screen.</li>
+</ul>
+<p>To reduce these risks, use <b>ergonomically designed furniture and equipment</b>, keep a <b>proper posture</b> (feet flat, back supported, wrists straight), use <b>adjustable screens</b> placed at about eye level and an arm's length away, and take <b>regular breaks</b>. A useful habit is the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds. Safety also means keeping cables tidy so no one trips, and not overloading power outlets.</p>
+<p><b>Environmental impact and sustainability.</b> Making, using and throwing away computers carries an environmental cost:</p>
+<ul>
+<li>the <b>energy</b> consumed while equipment is running;</li>
+<li><b>electronic waste (e-waste)</b> generated when devices are discarded. On a small island with limited landfill space, this matters a great deal.</li>
+</ul>
+<p><b>Positive practices</b> help offset these impacts: extend the working life of a device through proper care, <b>recycle electronics responsibly</b>, choose <b>energy-efficient equipment</b>, and <b>reduce unnecessary printing</b> (proofread on screen first).</p>
+<p class="tip"><b>Teacher's tip:</b> Notice the link: caring for your computer (this unit's first lesson) is also a sustainability practice, because a device that lasts longer creates less e-waste.</p>`,
+          tutor:[
+            {h:`Three risks`, p:`<p>RSI, back and neck pain, eye strain.</p>`},
+            {h:`Four green habits`, p:`<p>Make devices last, recycle responsibly, choose energy-efficient equipment, print less.</p>`}
+          ],
+          plain: "<p>Long hours at a computer can cause wrist pain (RSI), back and neck pain, and tired eyes. Sit with your feet flat and wrists straight, keep the screen at eye level and take breaks. Every 20 minutes, look 20 feet away for 20 seconds. Computers also use energy and become e-waste, so an office in Bridgetown recycles old devices and prints only what it needs.</p>",
+          deeper: "<p>Keep <b>ergonomics</b> and <b>safety</b> apart. Ergonomics fits the equipment to the person (chair height, screen position, keyboard angle) to prevent strain. Safety prevents accidents: trailing cables, overloaded power outlets and drinks beside electrical equipment. For the environment, think in order of impact: first <b>extend a device's life</b> through care and repair, then <b>reuse or donate</b> it, and only then <b>recycle</b> it responsibly. E-waste can contain harmful materials such as lead and mercury, which is a serious concern on small islands with limited landfill space. In the examination, pair each effect with a way to reduce it: \"eye strain, reduced by placing the screen at arm's length and following the 20-20-20 rule\".</p>"
+        },
+        {
+          type:'scenario', game:true, title:`The overtime office`,
+          intro:`<p>You are an office assistant at Marsh Harbour Accounting Services during the busy tax season. Make the best decisions for your health, safety and the environment.</p>`,
+          nodes:{
+            start:{text:`<p>You have been typing for three hours straight. Your wrists ache and your eyes feel dry. What do you do?</p>`,
+              choices:[
+                {t:`Keep going without a break. The deadline is more important.`, to:`bad1`, fb:`Extended, uninterrupted use contributes to RSI, back and neck pain, and eye strain.`},
+                {t:`Take a short break, stretch your hands and look away from the screen, then adjust your chair and keyboard so your wrists stay straight.`, to:`n2`, fb:`Good. Regular breaks and correct posture reduce the risk of RSI and eye strain.`}
+              ]},
+            n2:{text:`<p>Your manager asks you to print all 300 pages of a draft report "just to read it through". What do you suggest?</p>`,
+              choices:[
+                {t:`Print three copies, just in case.`, to:`bad2`, fb:`This creates unnecessary waste and cost.`},
+                {t:`Proofread the draft on screen and print only the final, approved version.`, to:`n3`, fb:`Good thinking. Reducing unnecessary printing saves paper, ink and energy.`}
+              ]},
+            n3:{text:`<p>The office is replacing five old monitors. What should happen to the old ones?</p>`,
+              choices:[
+                {t:`Leave them by the roadside with the household rubbish.`, to:`bad3`, fb:`Dumping electronics adds to e-waste and can release harmful materials into the environment.`},
+                {t:`Arrange for them to be recycled responsibly, or donated if they still work.`, to:`good`, fb:`Excellent. Responsible recycling and extending a device's life reduce e-waste.`}
+              ]},
+            good:{text:`<p><b>Success!</b> You finished tax season without injury, cut the office's paper use, and kept old equipment out of the landfill. You managed the health, ergonomic and environmental factors of computer use.</p>`, end:'good'},
+            bad1:{text:`<p><b>Injury.</b> By the end of the week, the pain in your wrists is so bad you need to see a doctor and take time off. This is how RSI develops. Try again.</p>`, end:'bad'},
+            bad2:{text:`<p><b>Wasteful.</b> Hundreds of pages go straight into the bin after one read. Reducing unnecessary printing is a key sustainability practice. Try again.</p>`, end:'bad'},
+            bad3:{text:`<p><b>E-waste problem.</b> On a small island with limited landfill space, dumped electronics are a real environmental cost. Try again.</p>`, end:'bad'}
+          },
+          tutor:[
+            {h:`Your body first`, p:`<p>Breaks, posture and an adjusted workstation protect you from RSI and eye strain.</p>`},
+            {h:`Print less`, p:`<p>Proofread on screen; print only the final copy.</p>`},
+            {h:`Old devices`, p:`<p>Recycle responsibly or donate. Never dump.</p>`}
+          ],
+          easy:{
+            title:`The overtime office (Foundation)`,
+            intro:`<p>A shorter version: it is a busy week at the accounting office.</p>`,
+            nodes:{
+              start:{text:`<p>You have typed for three hours and your wrists ache. What do you do?</p>`,
+                choices:[
+                  {t:`Keep typing without a break.`, to:`bad`, fb:`Extended use without breaks can cause RSI.`},
+                  {t:`Take a short break and adjust your workstation.`, to:`good`, fb:`Yes. Breaks and good posture reduce the risk of RSI.`}
+                ]},
+              good:{text:`<p><b>Well done.</b> You protected your health.</p>`, end:'good'},
+              bad:{text:`<p><b>Injury.</b> Your wrist pain gets worse. Try again.</p>`, end:'bad'}
+            }
+          },
+          up: {"title":"The overtime office (Challenge)","intro":"<p>It is tax season at Marsh Harbour Accounting Services. The manager has put you in charge of health, accessibility and environmental decisions for the office of eight staff. Choose the BEST option each time.</p>","nodes":{"start":{"text":"<p>Three staff report wrist pain, neck pain and sore eyes. The manager has B$800 for improvements. What do you prioritise?</p>","choices":[{"t":"Buy wrist braces for everyone and change nothing else.","to":"ok1","fb":"Braces treat a symptom. The badly set-up workstations are still causing strain."},{"t":"Check each workstation, then buy adjustable chairs and monitor risers, set keyboards so wrists stay straight, and introduce a break schedule.","to":"n2","fb":"Good. You tackled the causes at every desk and added breaks, which cost nothing."},{"t":"Buy one top-of-the-range ergonomic chair for the manager.","to":"bad1","fb":"The staff with symptoms get nothing, and most of the budget goes on one person."}]},"n2":{"text":"<p>A new colleague, Ms. Fleming, has low vision. She finds the small grey text on the office's forms hard to read. What do you suggest?</p>","choices":[{"t":"Print every form in large type for her each morning.","to":"ok2","fb":"It helps a little, but it wastes paper and still leaves her unable to use the computer forms herself."},{"t":"Suggest she moves to a job that does not use computers.","to":"bad2","fb":"Computers should be a tool for inclusion, not a barrier. The features she needs are already available."},{"t":"Switch on the operating system's magnifier and high-contrast settings, and redesign the forms with larger, dark text on a light background.","to":"n3","fb":"Excellent. Built-in accessibility features plus accessible document design let her work independently."}]},"n3":{"text":"<p>The manager wants to print the 300-page tax guide for each of the eight staff to read at home. What do you advise?</p>","choices":[{"t":"Print eight copies double-sided.","to":"ok3","fb":"Better than single-sided, but it still uses about 1,200 sheets of paper for one read."},{"t":"Print eight copies single-sided.","to":"bad3","fb":"That is 2,400 sheets of paper, plus the ink and energy, for one read."},{"t":"Share the guide as a PDF in the office cloud folder, and print only the pages each person actually needs.","to":"n4","fb":"Good thinking. Everyone can read it on any device, and you avoid thousands of printed pages."}]},"n4":{"text":"<p>The office is replacing five old monitors with energy-efficient ones. The old monitors still work. What happens to them?</p>","choices":[{"t":"Donate the working monitors to a school or community centre, and send any broken equipment to a proper e-waste recycler.","to":"good","fb":"Excellent. Reuse extends each monitor's life, and responsible recycling keeps harmful materials out of the landfill."},{"t":"Keep them in the storeroom just in case.","to":"ok4","fb":"They are not dumped, but unused equipment slowly becomes e-waste anyway."},{"t":"Put them out with the household rubbish.","to":"bad4","fb":"Dumped electronics can release harmful materials, and landfill space on the island is limited."}]},"good":{"text":"<p><b>Grade One management!</b> The pain reports stop, Ms. Fleming works independently, paper use falls sharply and the old monitors are helping students at a community centre. You balanced health, accessibility, cost and the environment.</p>","end":"good"},"ok1":{"text":"<p><b>Symptoms, not causes.</b> The braces help for a week, but the neck pain and sore eyes continue because the desks are still badly set up. Try again.</p>","end":"ok"},"ok2":{"text":"<p><b>Partly helpful.</b> Ms. Fleming can read the paper copies, but she still cannot use the forms on screen, and the paper use doubles. Try again.</p>","end":"ok"},"ok3":{"text":"<p><b>Still wasteful.</b> Double-sided printing halves the paper, but most pages are never read twice. A shared digital copy would have done the job. Try again.</p>","end":"ok"},"ok4":{"text":"<p><b>Gathering dust.</b> Two years later the monitors are obsolete and must be thrown out. Reuse works best while equipment is still useful. Try again.</p>","end":"ok"},"bad1":{"text":"<p><b>No improvement.</b> Two staff take sick leave in the busiest week. Ergonomic improvements must reach the people at risk. Try again.</p>","end":"bad"},"bad2":{"text":"<p><b>A barrier, not a tool.</b> The office loses a capable worker for no reason. Accessibility features exist so that everyone can work. Try again.</p>","end":"bad"},"bad3":{"text":"<p><b>Mountain of paper.</b> Most of the 2,400 sheets are in the bin a week later. Try again.</p>","end":"bad"},"bad4":{"text":"<p><b>E-waste problem.</b> The monitors end up in the landfill. On a small island, that is a real environmental cost. Try again.</p>","end":"bad"}}}
+        },
+        {
+          type:'multi', game:true, title:`Which factor?`,
+          intro:`<p>Name the factor or effect described in each statement.</p>`,
+          items:[
+            {text:`Pain in the wrists after months of typing and using a mouse.`, options:[`Phishing`,`Repetitive strain injury (RSI)`,`E-waste`], answer:1, fb:`RSI comes from repeating the same movements for long periods.`},
+            {text:`A teenager who stays up late scrolling and cannot concentrate in class.`, options:[`Social health (positive)`,`Mental and emotional health (negative)`,`Environmental impact`], answer:1, fb:`Excessive or poorly regulated use is linked to difficulty concentrating and disrupted sleep.`},
+            {text:`A grandmother in Montserrat video-calls her grandchildren in England every Sunday.`, options:[`Ergonomics`,`Social health (positive)`,`Physical health (negative)`], answer:1, fb:`Computers make it easy to stay in touch with distant family.`},
+            {text:`Old phones and laptops dumped in a landfill.`, options:[`E-waste (environmental impact)`,`Ergonomics`,`Accessibility`], answer:0, fb:`Discarded devices create electronic waste.`},
+            {text:`A student with low vision increases text size and colour contrast on her laptop.`, options:[`Cyber security`,`Accessibility`,`E-commerce`], answer:1, fb:`Adjustable text size and contrast are accessibility features.`},
+            {text:`Choosing a monitor with an energy-saving mode.`, options:[`Ethics`,`Reliability`,`Sustainability`], answer:2, fb:`Energy-efficient equipment supports sustainable computer use.`}
+          ],
+          win:`Well done. You can name each factor and say whether its effect is positive or negative.`,
+          tutor:[
+            {h:`Body, mind, people or planet?`, p:`<p>Body = physical health or ergonomics. Mind = mental and emotional. People = social. Planet = environment.</p>`},
+            {h:`Positive or negative?`, p:`<p>Every factor can go either way. Read the situation carefully.</p>`}
+          ],
+          easy:{
+            title:`Which factor? (Foundation)`,
+            items:[
+              {text:`Wrist pain after months of typing.`, options:[`E-waste`,`RSI`], answer:1, fb:`That is RSI.`},
+              {text:`Old laptops dumped in a landfill.`, options:[`Accessibility`,`E-waste`], answer:1, fb:`That is e-waste.`},
+              {text:`A blind user reading with a screen reader.`, options:[`Ergonomics`,`Accessibility`], answer:1, fb:`That is an accessibility feature.`}
+            ]
+          },
+          up: {"title":"Which factor? (Challenge)","intro":"<p>For each case, choose the option that names the factor AND whether the effect is positive or negative.</p>","items":[{"text":"A data clerk in Port of Spain has sharp pain in her wrist and fingers after months of heavy mouse use.","options":["Accessibility (positive)","Environmental impact (negative)","Mental and emotional health (negative)","Ergonomics and safety (negative): repetitive strain injury"],"answer":3,"fb":"Repeating the same movements for long periods causes RSI, an ergonomic effect."},{"text":"A student with dyslexia uses a text-to-speech tool to listen to her notes.","options":["Cyber security","Ergonomics (negative)","Accessibility (positive)","Social health (positive)"],"answer":2,"fb":"Accessibility covers reading difficulties as well as vision, hearing and movement."},{"text":"Jaden scrolls on his phone until 2 a.m. most nights and struggles to concentrate in class.","options":["Mental and emotional health (negative)","Social health (positive)","Physical health (positive)","Accessibility"],"answer":0,"fb":"Excessive or poorly regulated use is linked to disrupted sleep and difficulty concentrating."},{"text":"An extension cable trails across the walkway between the office desks.","options":["Social health","Safety hazard (negative)","E-waste","Accessibility (positive)"],"answer":1,"fb":"A trailing cable is a trip hazard: a safety issue, separate from ergonomics."},{"text":"Which practice MOST reduces e-waste?","options":["Leaving computers on overnight","Printing more documents","Extending a device's life through proper care and repair","Buying a new phone every year"],"answer":2,"fb":"A device that lasts longer means fewer devices thrown away."},{"text":"An office replaces its old monitors with energy-efficient models and sets computers to sleep after 10 minutes.","options":["Sustainability (positive environmental effect)","Reliability","Ergonomics (negative)","Ethics"],"answer":0,"fb":"Lower energy use is a positive environmental practice."},{"text":"Students in Nevis join a live online class with a teacher in Jamaica.","options":["Social health and learning (positive)","Accessibility (negative)","Ergonomics (negative)","Environmental impact (negative)"],"answer":0,"fb":"Computers support learning and connection across distance."},{"text":"A worker's monitor is set too high, so she tilts her head back all day.","options":["Ergonomics: neck and back strain (negative)","E-waste","Accessibility (positive)","Social health (negative)"],"answer":0,"fb":"The screen should be at about eye level; a poor set-up causes neck and back pain."}],"win":"Excellent. You named each factor precisely, separated ergonomics from safety, and judged whether each effect was positive or negative."}
+        },
+        {
+          type:'mcq', title:`RSI and its factor`,
+          q:`Repetitive strain injury (RSI) is MOST closely linked to which factor associated with computer use?`,
+          options:[
+            {t:`Ergonomics and safety`, ok:true, fb:`Correct. RSI results from extended, uninterrupted use and poor workstation set-up, which ergonomics aims to prevent.`},
+            {t:`Environmental impact`, fb:`Environmental impact is about energy use and e-waste, not the user's body.`},
+            {t:`E-commerce`, fb:`E-commerce is about buying and selling online, not injury.`},
+            {t:`Accuracy`, fb:`Accuracy is about correct data and results, not health.`}
+          ],
+          tutor:[
+            {h:`It is about the body`, p:`<p>Which factor deals with how equipment and posture affect your body?</p>`},
+            {h:`Ergonomics`, p:`<p>Ergonomics = designing work to fit the person.</p>`}
+          ],
+          easy:{
+            title:`RSI and its factor (Foundation)`,
+            q:`RSI is linked to...`,
+            options:[
+              {t:`ergonomics and safety`, ok:true, fb:`Yes. Poor set-up and long use cause RSI.`},
+              {t:`e-commerce`, fb:`E-commerce is online trade.`}
+            ]
+          },
+          up: {"title":"RSI and its factor (Challenge)","q":"Ms. James, a data-entry clerk in Kingstown, has early signs of RSI in her wrists. Which set of actions would MOST effectively reduce her risk?","options":[{"t":"Buy her a faster computer so she finishes her work sooner.","fb":"Speed does not change the repeated movements or her posture."},{"t":"Turn up the screen brightness and use a larger font.","fb":"That may help eye strain, but it does nothing for her wrists."},{"t":"Install antivirus software and update the operating system.","fb":"These protect the computer, not the user's body."},{"t":"Set the keyboard at elbow height so her wrists stay straight, adjust the chair and screen, and schedule short regular breaks.","ok":true,"fb":"Correct. RSI is an ergonomic problem, so the solution is posture, equipment set-up and breaks from repetitive movement."}]}
+        },
+        {type:'checkin', title:`Quick check-in`},
+        {
+          type:'write', title:`Computer care and safety guidelines`, genre:`Structured short answer: care, health and sustainability guidelines`,
+          stimulus:`<p class="passage">The Seagrape Bay Secondary School Business &amp; Technology Studies department wants a short set of guidelines to display in the computer lab. You have been asked to write them.</p>`,
+          prompt:`<p>Write the guidelines. Include:</p><ul><li><b>THREE</b> ways of caring for the computers;</li><li><b>TWO</b> ways of caring for peripherals;</li><li><b>TWO</b> health or ergonomic effects of extended computer use, with ONE way to reduce each;</li><li><b>ONE</b> practice that supports sustainability.</li></ul>`,
+          min:100, max:220,
+          frame:`<p><b>Caring for the computers</b><br>1. ... <br>2. ...<br>3. ...<br><b>Caring for peripherals</b><br>4. ...<br>5. ...<br><b>Protecting your health</b><br>6. Extended use can cause ... To reduce this, ...<br>7. ...<br><b>Protecting the environment</b><br>8. ...</p>`,
+          checklist:[
+            `I gave three ways of caring for computers.`,
+            `I gave two ways of caring for peripherals (safe removal, surge protector).`,
+            `I named two health or ergonomic effects and how to reduce each.`,
+            `I included one sustainability practice.`
+          ],
+          rubric:[
+            {criterion:`Caring for computers`, marks:3, look:[`update`, `anti-?virus`, `back ?up|backup`, `firewall`, `defrag`, `clean`, `eat|drink|food`], min:3,
+              strong:`You gave three accurate ways of caring for computers.`,
+              weak:`Choose three from the chapter: keep software updated, install antivirus, back up files, defragment, activate firewalls, clean screens, avoid eating and drinking nearby.`},
+            {criterion:`Caring for peripherals`, marks:2, look:[`safely remove|eject|safe removal`, `surge`], min:2,
+              strong:`You included both peripheral care practices.`,
+              weak:`Include safely removing external storage devices and using a surge protector.`},
+            {criterion:`Health and ergonomics`, marks:3, look:[`rsi|repetitive strain|wrist`, `eye strain|eyes`, `back|neck|posture`, `break|adjust|ergonomic|eye level|20`], min:2,
+              strong:`You named health effects and practical ways to reduce them.`,
+              weak:`Name effects such as RSI or eye strain, and reduce them with regular breaks, good posture and adjustable equipment.`},
+            {criterion:`Sustainability`, marks:2, look:[`recycl|print|energy|e-?waste|switch off|turn off|donat`], min:1,
+              strong:`You included a sound sustainability practice.`,
+              weak:`Add one, e.g. reduce unnecessary printing, switch off equipment, or recycle old devices responsibly.`}
+          ],
+          model:`<p><b>Caring for the computers</b><br>1. Do not eat or drink near the computers; spills and crumbs damage keyboards.<br>2. Keep the antivirus software and its virus definitions up to date, and never switch off the firewall.<br>3. Back up your work regularly in more than one location, such as your school cloud account and a flash drive.</p><p><b>Caring for peripherals</b><br>4. Always eject (safely remove) flash drives before unplugging them to avoid corrupting your files.<br>5. Keep every computer and printer plugged into the surge protector.</p><p><b>Protecting your health</b><br>6. Extended typing can cause repetitive strain injury (RSI). To reduce this, keep your wrists straight and take a short break at least once an hour.<br>7. Staring at the screen can cause eye strain. To reduce this, adjust the monitor to eye level and follow the 20-20-20 rule.</p><p><b>Protecting the environment</b><br>8. Proofread on screen and print only your final copy to reduce paper and ink waste.</p>`,
+          teacherTip:`<p>Guidelines should begin with a <b>command verb</b>: "Keep", "Back up", "Eject", "Take". This makes them clear and easy to follow, and it shows the examiner you know exactly what action is required.</p>`,
+          easy: {"genre":"Structured short answer: care, health and sustainability guidelines (8 marks)","prompt":"<p>Write four short lab guidelines for Seagrape Bay Secondary School. Start each guideline with a command verb such as <b>Keep, Back up, Eject, Take, Print</b>.</p><ol type=\"a\"><li><b>Write</b> TWO guidelines for caring for the computers. <i>(2 marks)</i></li><li><b>Complete</b>: Always ______ a flash drive before you unplug it. Plug every computer into a ______ protector. <i>(2 marks)</i></li><li><b>Name</b> ONE health problem caused by long computer use and ONE way to prevent it. <i>(2 marks)</i></li><li><b>Write</b> ONE guideline that helps the environment and say why. <i>(2 marks)</i></li></ol>","min":40,"max":130,"frame":"<p><b>(a)</b> 1. Keep ... 2. Back up ...<br><b>(b)</b> Always ... a flash drive before you unplug it. Plug every computer into a ... protector.<br><b>(c)</b> Long computer use can cause ... To prevent this, ...<br><b>(d)</b> ... This helps the environment because ...</p>","checklist":["I wrote two computer-care guidelines that start with a command verb.","I filled both gaps in (b).","I named one health problem and one way to prevent it.","I wrote one environment guideline and gave a reason."],"rubric":[{"criterion":"Caring for computers","marks":2,"look":["update|anti-?virus|firewall|eat|drink|food","back ?up|backup|clean"],"min":2,"strong":"Two correct care guidelines.","weak":"For example: Keep food and drink away. Back up your work every day."},{"criterion":"Caring for peripherals","marks":2,"look":["eject|safely remove","surge"],"min":2,"strong":"Both gaps are correct.","weak":"Always eject a flash drive. Plug every computer into a surge protector."},{"criterion":"Health","marks":2,"look":["rsi|wrist|eye|back|neck|posture","break|straight|eye level|20|adjust"],"min":2,"strong":"A health problem with a matching prevention.","weak":"For example: eye strain, prevented by looking away from the screen every 20 minutes."},{"criterion":"Environment","marks":2,"look":["print|recycl|switch off|turn off|energy|donat","paper|waste|e-?waste|energy|environment"],"min":2,"strong":"A sound guideline with a reason.","weak":"For example: Print only your final copy, to save paper and ink."}],"model":"<p><b>(a)</b> 1. Keep food and drink away from the computers. 2. Back up your work every day to your school cloud account.</p><p><b>(b)</b> Always eject a flash drive before you unplug it. Plug every computer into a surge protector.</p><p><b>(c)</b> Long computer use can cause eye strain. To prevent this, take a break and look away from the screen every 20 minutes.</p><p><b>(d)</b> Print only your final copy. This helps the environment because it saves paper, ink and energy.</p>","key":"<p>Mark scheme (8): (a) 1 per valid computer-care guideline. (b) 1 per gap (accept safely remove). (c) 1 health effect, 1 matching prevention. (d) 1 valid practice, 1 reason.</p>","teacherTip":"<p>Model one guideline on the board first: verb + action + reason (\"Eject the flash drive before unplugging it, so your file is not damaged\"). Foundation students who can write four of these confidently are ready for the Core task, which asks for eight.</p>","title":"Computer care and safety guidelines (Foundation)"},
+          up: {"genre":"Extended response: justified computer lab guidelines (15 marks)","stimulus":"<p class=\"passage\">The Seagrape Bay Secondary School Business &amp; Technology Studies lab has 24 desktop computers with solid-state drives, two printers and a projector. Power flickers during storms and the lab once lost a morning of SBA work in a power cut. Students often stay for two-hour after-school sessions. One Form 5 student, Aaliyah, has low vision. The department wants guidelines that students will actually follow, so each one must give a reason.</p>","prompt":"<p>Write the guidelines, with a reason for each. Answer all parts.</p><ol type=\"a\"><li><b>Write</b> THREE guidelines for caring for the computers and their data, each with a reason. <i>(3 marks)</i></li><li><b>Write</b> TWO guidelines for caring for peripherals, and <b>explain</b> the difference between a surge protector and a UPS for this lab. <i>(3 marks)</i></li><li><b>Explain</b> TWO health or ergonomic effects of the two-hour sessions, with a way to reduce each. <i>(4 marks)</i></li><li><b>Recommend</b> ONE accessibility feature for Aaliyah and explain how it helps. <i>(2 marks)</i></li><li><b>Justify</b> TWO sustainability practices for the lab, with reference to a small island. <i>(3 marks)</i></li></ol>","min":220,"max":420,"frame":"<p><b>(a)</b> 1. ... because ... 2. ... because ... 3. ... because ...<br><b>(b)</b> 4. ... because ... 5. ... A surge protector ..., whereas a UPS ... For this lab, ...<br><b>(c)</b> Two-hour sessions can cause ... To reduce this, ... They can also cause ... To reduce this, ...<br><b>(d)</b> Aaliyah could use ..., which ...<br><b>(e)</b> 6. ... because ... 7. ... because on a small island ...</p>","checklist":["Every guideline starts with a command verb and ends with a reason.","I did not recommend defragmenting the solid-state drives.","I explained that a surge protector blocks spikes while a UPS gives battery time to save and shut down.","Each health effect is paired with a matching way to reduce it.","My sustainability reasons mention limited landfill, e-waste or energy on a small island."],"rubric":[{"criterion":"Caring for computers and data","marks":3,"look":["update","anti-?virus|firewall","back ?up|backup|save","eat|drink|food|clean","because|so that|this"],"min":4,"strong":"Three accurate, reasoned guidelines.","weak":"Give three practices (updates, antivirus/firewall, backups, no food or drink, gentle cleaning), each with a reason."},{"criterion":"Peripherals, surge protector and UPS","marks":3,"look":["eject|safely remove","surge","ups|uninterruptible","battery|power cut|shut down|save"],"min":4,"strong":"Two peripheral guidelines and a precise surge protector/UPS distinction.","weak":"Include safe removal and a surge protector; explain that a UPS provides battery power to save and shut down during a power cut."},{"criterion":"Health and ergonomics","marks":4,"look":["rsi|repetitive strain|wrist","eye strain|eyes","back|neck|posture","break|20-20-20|eye level|straight|adjust|stretch"],"min":3,"strong":"Two developed effects with matching remedies.","weak":"Explain two effects (e.g. RSI, eye strain, back pain) and give a matching way to reduce each."},{"criterion":"Accessibility","marks":2,"look":["magnif|zoom|text size|larger text|high contrast|screen reader","read|see|independent|without help"],"min":2,"strong":"A suitable feature with a clear benefit.","weak":"Recommend e.g. the magnifier or larger text and high contrast, so Aaliyah can read the screen independently."},{"criterion":"Sustainability justified","marks":3,"look":["print|paper","switch off|turn off|sleep|energy","recycl|donat|e-?waste|repair|life","island|landfill"],"min":3,"strong":"Two justified practices linked to a small island.","weak":"Justify two practices (e.g. reduce printing, switch off, recycle) and refer to limited landfill or energy costs on a small island."}],"model":"<p><b>(a)</b> 1. Save your work every ten minutes and back it up to your school cloud account, because a power cut can wipe out unsaved work. 2. Never switch off the antivirus software or the firewall, because they block malware and unauthorised access. 3. Keep food and drink outside the lab, because spills and crumbs damage keyboards.</p><p><b>(b)</b> 4. Eject flash drives and wait for the safe-to-remove message before unplugging them, so your files are not corrupted. 5. Keep every computer and printer plugged into its surge protector. A surge protector blocks sudden power spikes, whereas a UPS (uninterruptible power supply) has a battery that keeps the computer running for a few minutes in a power cut, long enough to save and shut down. For this lab, the teacher's computer and the server should be on a UPS.</p><p><b>(c)</b> Two-hour sessions can cause repetitive strain injury in the wrists. To reduce this, keep your wrists straight and stretch your hands every 30 minutes. They can also cause eye strain. To reduce this, set the screen at eye level, about an arm's length away, and follow the 20-20-20 rule.</p><p><b>(d)</b> Aaliyah could use the operating system's magnifier with high contrast, which enlarges the text and sharpens it so she can read the screen independently.</p><p><b>(e)</b> 6. Print only your final, proofread copy, because paper and ink waste adds to the rubbish an island must dispose of. 7. Switch off monitors at the end of the day and send broken equipment for recycling, because on a small island with limited landfill space, e-waste and energy use matter.</p>","key":"<p>Mark scheme (15): (a) 1 per guideline that is accurate AND reasoned. (b) 1 safe removal, 1 surge protector, 1 correct surge protector/UPS distinction. (c) 1 per effect, 1 per matching way to reduce it. (d) 1 suitable feature, 1 benefit. (e) 1 per justified practice, 1 for a small-island link. Do not credit defragmenting SSDs.</p>","teacherTip":"<p>Challenge students should treat the stimulus as a checklist: solid-state drives (so no defragmenting), power flickers (surge protector and UPS), two-hour sessions (breaks, posture), Aaliyah (accessibility). A reason that simply repeats the guideline (\"back up because backing up is important\") should not earn the mark.</p>","title":"Computer care and safety guidelines (Challenge)"}
+        }
+      ]
+    }
+  ],
+  test: { title:`Section I Test`, pass:70, items:[
+    {q:`A computer is BEST described as a(n)`,
+      options:[`type of software used to browse the internet`,`mechanical device that stores paper records`,`electronic machine that accepts and processes data to produce information`,`peripheral used only for input`], answer:2,
+      why:`The syllabus defines a computer as an electronic machine or device that accepts and processes data to produce information. Option D is tempting because computers do accept input, but a computer also processes data and produces output; a peripheral is only one part of the system.`},
+    {q:`Which of the following is the CORRECT order of the computing cycle?`,
+      options:[`Output, input, storage, process`,`Process, input, output, storage`,`Storage, process, input, output`,`Input, process, output, storage`], answer:3,
+      why:`Data must first be input, then processed, then presented as output, and then stored for later use. Option B is tempting because processing is the "work" of the computer, but nothing can be processed until data has been input.`},
+    {q:`At a supermarket till, the total amount due shown on the display is an example of`,
+      options:[`input`,`a peripheral`,`information`,`data`], answer:2,
+      why:`The prices have been processed (added, with tax calculated) into a meaningful result, so the total is information. Option D is tempting because the total is made of numbers, but data refers to raw facts before processing.`},
+    {q:`Which category of computer is generally used to support hundreds or thousands of users at the same time?`,
+      options:[`Microcomputer`,`Minicomputer`,`Smartphone`,`Mainframe`], answer:3,
+      why:`Mainframes are large, powerful computers used by banks, airlines and governments to support hundreds or thousands of simultaneous users. Option B is tempting because minicomputers also serve several users, but only tens to hundreds, not thousands.`},
+    {q:`A microcomputer is so named because it is built around`,
+      options:[`a very small screen`,`a network of mainframes`,`a single microprocessor chip`,`microphone input`], answer:2,
+      why:`A microcomputer is a small, relatively inexpensive computer built around a single microprocessor chip. Option A is tempting because many microcomputers are small, but desktops with large monitors are also microcomputers; the name refers to the microprocessor.`},
+    {q:`Which of the following is NOT one of the main components of a computer system?`,
+      options:[`Hardware`,`Peripherals`,`Internet service provider`,`Software`], answer:2,
+      why:`An internet service provider is an outside company that supplies internet access; it is not a component of the computer system. Option B is tempting because peripherals are optional extras, but the syllabus lists peripherals as a main component.`},
+    {q:`Which of the following lists contains ONLY hardware?`,
+      options:[`Graphics tablet, memory chip, printer`,`Monitor, Windows, mouse`,`Spreadsheet program, memory chip, keyboard`,`Operating system, web browser, scanner`], answer:0,
+      why:`A graphics tablet, a memory chip and a printer are all physical, tangible parts. Option C is tempting because two of its items are hardware, but a spreadsheet program is software.`},
+    {q:`Digital media differ from analog media in that digital media`,
+      options:[`always require a printer`,`can only be used for video`,`cannot be copied`,`store information as discrete (binary) values`], answer:3,
+      why:`Digital media store and transmit information as discrete values, usually 0s and 1s. Option C is tempting to some, but it is the opposite of the truth: digital files can be copied with far less loss of quality than analog media.`},
+    {q:`Which part of the computer interprets instructions and performs calculations and logical comparisons?`,
+      options:[`Central processing unit (CPU)`,`Monitor`,`Sound card`,`Flash drive`], answer:0,
+      why:`The CPU carries out the processes between input and output. Option C is tempting because a sound card also processes data, but only audio data; the CPU interprets all instructions and manages the flow of data.`},
+    {q:`A peripheral is BEST described as`,
+      options:[`the CPU, motherboard and main memory`,`any hardware device connected to a computer that is not part of its essential core`,`any program installed on the hard drive`,`a type of web-based application`], answer:1,
+      why:`Peripherals are devices such as printers and scanners that connect to the core but are not part of it. Option A is tempting because it names hardware, but those three items ARE the essential core, so they are not peripherals.`},
+    {q:`Which factor of computer usage relates MOST directly to a computer producing correct results only when given correct data and instructions?`,
+      options:[`Accuracy`,`Speed`,`Ergonomics`,`E-commerce`], answer:0,
+      why:`This is the "garbage in, garbage out" principle, which belongs under accuracy. Option D is tempting only because e-commerce systems also depend on data, but the principle is about the correctness of results, which is accuracy.`},
+    {q:`An office worker receives an e-mail that appears to be from her bank, asking her to click a link and enter her password. This is an example of`,
+      options:[`e-commerce`,`a firewall`,`ransomware`,`phishing`], answer:3,
+      why:`Phishing tricks users into revealing passwords or personal details by posing as a trusted organisation. Option C is tempting because ransomware is also a cyber security threat, but ransomware locks files until payment is made; it does not ask for a password by e-mail.`},
+    {q:`Which of the following is a DISADVANTAGE of e-commerce for a small business in Basseterre?`,
+      options:[`Operating around the clock`,`Building customer trust without face-to-face interaction`,`Reaching customers overseas`,`Reducing the cost of a physical storefront`], answer:1,
+      why:`Building trust online is a challenge of e-commerce. Options C, A and D are all advantages; option A is tempting because "around the clock" sounds like extra work, but the chapter lists it as a benefit.`},
+    {q:`A biometric device is BEST described as a device that`,
+      options:[`stores files in the cloud`,`projects an image onto a screen`,`prints documents wirelessly`,`reads a unique physical characteristic to confirm identity`], answer:3,
+      why:`Fingerprint, facial and iris scanners read a unique physical characteristic for secure authentication. Option A is tempting because biometric data must be stored somewhere, but storing files is not what makes a device biometric.`},
+    {q:`Which device would a graphic designer use to draw directly into the computer with a pen-like stylus on a pressure-sensitive surface?`,
+      options:[`Graphics tablet`,`Projector`,`Scanner`,`Braille reader`], answer:0,
+      why:`A graphics tablet lets an artist or designer draw or trace using a stylus on a flat, pressure-sensitive surface. Option C is tempting because a scanner also brings images into the computer, but it converts existing printed images rather than letting the designer draw.`},
+    {q:`A video card is described as supporting output because it`,
+      options:[`displays images directly to the user`,`stores videos for later viewing`,`processes image data and generates the visual output sent to the monitor`,`captures video from a camera`], answer:2,
+      why:`The video card prepares the image signal; the monitor is the device that actually displays it. Option A is tempting, but that is the monitor's job, which is why the video card is not strictly an output device.`},
+    {q:`Which of the following devices functions as BOTH an input and an output device?`,
+      options:[`Scanner`,`Touchscreen`,`Speaker`,`Keyboard`], answer:1,
+      why:`A touchscreen accepts taps (input) and displays information (output) through the same component. Option A is tempting because a scanner deals with images, but it only sends data into the computer, so it is input only.`},
+    {q:`A device that blends the features of a smartphone and a tablet, with a larger touchscreen than a typical phone, is called a`,
+      options:[`minicomputer`,`memory card`,`projector`,`phablet`], answer:3,
+      why:`A phablet combines phone and tablet features. Option A is tempting because of the word "mini", but a minicomputer is a mid-sized multi-user computer, not a handheld device.`},
+    {q:`Which storage medium is considered legacy technology, having been largely replaced by flash drives and cloud storage?`,
+      options:[`CD-ROM`,`Hard disk`,`Memory card`,`Cloud storage`], answer:0,
+      why:`Optical discs such as the CD-ROM are now legacy technology in most everyday settings. Option B is tempting because hard disks have been around a long time, but fixed and portable hard disks are still in everyday use.`},
+    {q:`Three students living in different districts must edit the same SBA document during the week. Which storage option is MOST suitable?`,
+      options:[`The fixed hard disk of one student's laptop`,`A CD-ROM`,`Cloud storage`,`A memory card in a camera`], answer:2,
+      why:`Cloud storage allows files to be saved, synced and shared across devices from any location. Option A is tempting because a hard disk holds plenty of data, but the other two students could not reach it from their homes.`},
+    {q:`Operating system software is BEST described as programs that`,
+      options:[`coordinate activities among hardware devices and allow the user to run application software`,`perform specific tasks such as word processing`,`detect and remove malware`,`are always accessed through a web browser`], answer:0,
+      why:`This is the syllabus definition of operating system software (e.g. Windows, Android). Option B is tempting because it describes software too, but performing specific tasks for users is the definition of application software.`},
+    {q:`Which of the following is an example of web-based application software?`,
+      options:[`An operating system`,`A word processor installed on a laptop's hard drive`,`An online collaborative document editor accessed through a browser`,`Anti-virus software installed on a desktop`], answer:2,
+      why:`Web-based software is not installed on the hard drive but is accessed via the web, often with collaboration tools. Option B is tempting because word processing can be done online, but this option says the program is installed, so it is computer-based.`},
+    {q:`Which type of application software would a school office use to store and retrieve the records of 900 students in a structured way?`,
+      options:[`Anti-virus software`,`Database management software`,`Presentation software`,`Graphic manipulation software`], answer:1,
+      why:`Database management software stores, organises and retrieves large, structured collections of data. Option C is tempting only because presentations can display records, but presentation software is designed for slides, not for storing and searching data.`},
+    {q:`Which of the following is a recommended way of caring for peripherals?`,
+      options:[`Removing a flash drive at any time without warning`,`Keeping drinks beside the keyboard for convenience`,`Safely ejecting external storage devices before disconnecting them`,`Disabling the firewall for faster performance`], answer:2,
+      why:`Safely removing devices prevents data loss or corruption. Option D is tempting because some users believe it speeds things up, but turning off the firewall exposes the computer to unauthorised access, and it is not peripheral care.`},
+    {q:`Repetitive strain injury (RSI) is MOST closely linked to which factor associated with computer use?`,
+      options:[`Environmental impact`,`Accuracy`,`E-commerce`,`Ergonomics and safety`], answer:3,
+      why:`RSI results from extended, uninterrupted use and poor workstation set-up, which ergonomics aims to prevent. Option A is tempting because it is also a factor of computer use, but environmental impact concerns energy and e-waste, not injury to the user.`}
+  ]},
+  paper2: {
+    type:'write', title:`Paper 02 practice: setting up a computerised office`, genre:`Paper 02 structured response: computer systems in the workplace`,
+    stimulus:`<p class="passage">Sandy Point Marine Supplies is a small family business in Charlestown that sells boat parts. All records are kept on paper. The owner, Mrs. Carty, plans to buy computers for her three staff members, start an online shop, and keep a register of 2,000 customers. One staff member, Ms. Lake, is visually impaired. The shop is close to the sea and experiences frequent power cuts during hurricane season.</p>
+<p>Mrs. Carty has asked you, her new office assistant, to write a short report answering her questions (a) to (f).</p>
+<p>(a) Define a computer and explain how the shop's sales would pass through the four stages of the computing cycle. [4]<br>(b) State which category of computer the shop should buy and give ONE reason. [2]<br>(c) Recommend ONE input device, ONE output device and ONE accessibility device for the shop, stating the function of each. [3]<br>(d) Distinguish between operating system software and application software, and name ONE application the shop needs for its customer register. [3]<br>(e) State TWO advantages and TWO disadvantages of computerising the shop. [4]<br>(f) Recommend FOUR ways the staff should care for the computers and peripherals, including how to protect the equipment from power problems and how to back up data. [4]</p>`,
+    prompt:`<p>Write your report, labelling each part (a) to (f). Write in complete sentences and use the correct terms from Section I.</p>`,
+    min:220, max:450,
+    frame:`<p><b>(a)</b> A computer is ... Input: ... Process: ... Output: ... Storage: ...<br><b>(b)</b> The shop should buy ... because ...<br><b>(c)</b> Input: a ... which ... Output: a ... which ... Accessibility: a ... which ...<br><b>(d)</b> Operating system software ... Application software ... For the customer register, the shop needs ...<br><b>(e)</b> Advantages: (1) ... (2) ... Disadvantages: (1) ... (2) ...<br><b>(f)</b> 1. ... 2. ... 3. ... 4. ...</p>`,
+    checklist:[
+      `I labelled every part from (a) to (f).`,
+      `I used the syllabus definition of a computer and named all four stages.`,
+      `I recommended devices with their functions, including one for Ms. Lake.`,
+      `I distinguished operating system and application software and named a suitable application.`,
+      `I gave two advantages and two disadvantages linked to the shop.`,
+      `I gave four care practices, including a surge protector and backups.`
+    ],
+    rubric:[
+      {criterion:`Correct terminology`, marks:4, look:[`electronic`, `accept|process`, `information`, `input`, `output`, `stor`], min:5,
+        strong:`You used the syllabus definition and named the stages of the cycle.`,
+        weak:`Define a computer as "an electronic machine or device that accepts and processes data to produce information" and name input, process, output and storage.`},
+      {criterion:`Category and devices`, marks:5, look:[`micro|desktop|laptop`, `keyboard|scanner|barcode|mouse|touchscreen|camera|biometric`, `printer|monitor|speaker`, `braille|screen reader|voice`], min:3,
+        strong:`Your category and device choices suit the shop and its staff.`,
+        weak:`Recommend microcomputers, an input device (e.g. barcode scanner or keyboard), an output device (e.g. printer) and a Braille reader or screen reader for Ms. Lake, each with its function.`},
+      {criterion:`Software`, marks:3, look:[`operating system`, `coordinat|hardware|run application`, `specific task|application`, `database|access|spreadsheet|excel`], min:3,
+        strong:`You distinguished the two kinds of software and chose a suitable application.`,
+        weak:`Explain that the operating system coordinates the hardware and lets applications run, while application software performs specific tasks; recommend database software for the register.`},
+      {criterion:`Advantages and disadvantages`, marks:4, look:[`speed|fast|quick`, `stor|retriev|search`, `e-?commerce|online|around the clock|24`, `power|outage|reliab`, `phish|malware|virus|hack|cyber|fraud|trust|garbage|error`], min:3,
+        strong:`You weighed both sides with points from several areas.`,
+        weak:`Give two advantages (e.g. speed, storage and retrieval, online sales around the clock) and two disadvantages (e.g. power outages, phishing, online fraud).`},
+      {criterion:`Care practices`, marks:4, look:[`surge`, `back ?up|backup`, `anti-?virus|firewall|update`, `eject|safely remove|clean|eat|drink`], min:3,
+        strong:`Your care practices are accurate and suit the shop's power problems.`,
+        weak:`Include a surge protector, backups in more than one location, antivirus and updates, and safely removing devices or keeping food and drink away.`}
+    ],
+    model:`<p><b>(a)</b> A computer is an electronic machine or device that accepts and processes data to produce information. When a customer buys a part, the item code and quantity are input with a barcode scanner. The computer processes the sale by looking up the price, adding tax and reducing the stock count. A receipt is output on the monitor and printer. The sale is stored on the hard disk so Mrs. Carty can check daily takings later.</p>
+<p><b>(b)</b> The shop should buy microcomputers, such as desktop computers, because they are relatively inexpensive and designed for one user each, which suits three staff members.</p>
+<p><b>(c)</b> Input: a barcode scanner, which reads product codes quickly and accurately. Output: a printer, which produces a hard copy receipt for the customer. Accessibility: a Braille reader, which converts on-screen text into raised Braille characters so that Ms. Lake can read the customer records.</p>
+<p><b>(d)</b> Operating system software, such as Windows, coordinates activities among the computer's hardware devices and allows the user to run application software. Application software performs specific tasks for users. For the customer register, the shop needs database management software, such as Microsoft Access, to store, organise and retrieve the records of 2,000 customers.</p>
+<p><b>(e)</b> Advantages: (1) Storage and retrieval: a customer's record can be found in seconds instead of searching paper files. (2) E-commerce: boat owners can order parts online around the clock. Disadvantages: (1) Reliability: power cuts during hurricane season could shut down the system and stop sales. (2) Cyber security: the online shop could be targeted by phishing e-mails or malware that steal customer data.</p>
+<p><b>(f)</b> 1. Plug all computers and peripherals into surge protectors to shield them from power spikes. 2. Back up the customer register every day to cloud storage and to a portable hard disk kept in a second location. 3. Install antivirus software, keep all software up to date and activate the firewall. 4. Keep food and drinks away from the computers and safely eject flash drives before unplugging them.</p>`,
+    teacherTip:`<p>Paper 02 structured questions reward <b>precise terms</b> and <b>answers tied to the scenario</b>. Check the marks in brackets: [4] usually means four separate points. Label each part clearly, use the syllabus definitions word for word, and always mention the business (here, the sea, the power cuts and Ms. Lake) so the examiner sees you applied your knowledge.</p>`,
+    easy: {"genre":"Paper 02 structured response: computer systems in the workplace (12 marks)","stimulus":"<p class=\"passage\">Sandy Point Marine Supplies is a small family business in Basseterre that sells boat parts. All records are kept on paper. The owner, Mrs. Carty, plans to buy computers for her three staff members, start an online shop and keep a register of 2,000 customers. One staff member, Ms. Lake, is visually impaired. The shop is close to the sea and has power cuts during hurricane season.</p><p>Answer each part. Word bank: <b>microcomputer, barcode scanner, printer, Braille reader, surge protector, back up</b>.</p><p>(a) Complete the definition: A computer is an ______ machine or device that accepts and processes ______ to produce ______. [2]<br>(b) Name the category of computer the shop should buy and give ONE reason. [2]<br>(c) Name ONE input device and ONE output device for the shop. [2]<br>(d) Name ONE device that would help Ms. Lake and say how it helps. [2]<br>(e) State ONE advantage and ONE disadvantage of computerising the shop. [2]<br>(f) Give TWO ways to care for the computers, including ONE for power cuts. [2]</p>","prompt":"<p>Write your answers, labelling each part (a) to (f). One or two sentences per part is enough.</p>","min":100,"max":250,"frame":"<p><b>(a)</b> A computer is an ... machine or device that accepts and processes ... to produce ...<br><b>(b)</b> The shop should buy ... because ...<br><b>(c)</b> Input device: ... Output device: ...<br><b>(d)</b> A ... would help Ms. Lake because it ...<br><b>(e)</b> One advantage is ... One disadvantage is ...<br><b>(f)</b> 1. Plug ... into a ... 2. ...</p>","checklist":["I labelled every part from (a) to (f).","I completed the definition with electronic, data and information.","I chose a microcomputer and gave a reason.","I named an input device, an output device and a device for Ms. Lake.","I gave one advantage, one disadvantage and two care practices."],"rubric":[{"criterion":"Definition","marks":2,"look":["electronic","data","information"],"min":3,"strong":"Definition complete.","weak":"A computer is an electronic machine or device that accepts and processes data to produce information."},{"criterion":"Category","marks":2,"look":["micro|desktop|laptop","because|cheap|inexpensive|small|one user|afford"],"min":2,"strong":"Correct category with a reason.","weak":"Microcomputers, because they are inexpensive and made for one user each."},{"criterion":"Input and output devices","marks":2,"look":["barcode|scanner|keyboard|mouse|touchscreen","printer|monitor|speaker"],"min":2,"strong":"One correct device of each kind.","weak":"Input: barcode scanner. Output: printer."},{"criterion":"Device for Ms. Lake","marks":2,"look":["braille|screen reader","raised|read|fingers|aloud|hear"],"min":2,"strong":"A suitable device and how it helps.","weak":"A Braille reader turns screen text into raised characters she can read with her fingers."},{"criterion":"Advantage and disadvantage","marks":2,"look":["fast|speed|search|find|stor|online|e-?commerce|accura","power|outage|virus|hack|phish|fraud|error|garbage|cost"],"min":2,"strong":"One of each, linked to the shop.","weak":"Advantage: customer records can be found in seconds. Disadvantage: a power cut could stop sales."},{"criterion":"Care practices","marks":2,"look":["surge|ups","back ?up|backup|anti-?virus|update|firewall|eject|food|drink|clean"],"min":2,"strong":"Two correct care practices including power protection.","weak":"Plug equipment into a surge protector, and back up the register to cloud storage."}],"model":"<p><b>(a)</b> A computer is an electronic machine or device that accepts and processes data to produce information.</p><p><b>(b)</b> The shop should buy microcomputers, such as desktops, because they are inexpensive and made for one user each.</p><p><b>(c)</b> Input device: a barcode scanner to read product codes. Output device: a printer for customer receipts.</p><p><b>(d)</b> A Braille reader would help Ms. Lake because it turns the text on the screen into raised characters she can read with her fingers.</p><p><b>(e)</b> One advantage is that a customer's record can be found in seconds. One disadvantage is that a power cut could stop sales.</p><p><b>(f)</b> 1. Plug the computers and printer into a surge protector. 2. Back up the customer register to cloud storage every day.</p>","key":"<p>Mark scheme (12): (a) 2 for all three gaps, 1 for two. (b) 1 microcomputer (or desktop/laptop), 1 reason. (c) 1 input, 1 output. (d) 1 device, 1 how it helps. (e) 1 advantage, 1 disadvantage. (f) 1 power-protection practice, 1 other valid practice.</p>","teacherTip":"<p>This Foundation version keeps every part of the Core question but asks for one point at a time, with a word bank. Students who score 9 or more should attempt the Core task next. Insist on labels (a) to (f): unlabelled answers are the most common reason marks are missed in Paper 02.</p>","title":"Paper 02 practice: setting up a computerised office (Foundation)"},
+    up: {"genre":"Paper 02 extended response: planning a computerised business (30 marks)","stimulus":"<p class=\"passage\">Sandy Point Marine Supplies is a family business in Kingston that sells boat parts to local fishermen and to yacht owners visiting from across the Caribbean. All records are on paper. The owner, Mrs. Carty, has a budget of US$6,000. She plans to buy computers for her three staff, start an online shop, keep a register of 2,000 customers and let her accountant in Curaçao check the monthly figures. One staff member, Ms. Lake, is blind. The shop is next to the sea, the air is salty and humid, and power cuts are common in hurricane season. Mrs. Carty intends to keep the only copy of the customer register on one laptop that she takes home each night.</p><p>(a) Define a computer and explain how a sale passes through the four stages of the computing cycle. Explain how the stored sales data becomes information Mrs. Carty can use to decide what stock to order. [5]<br>(b) Recommend the category and number of computers, and explain why a mainframe would be unsuitable. [3]<br>(c) Specify input, output and accessibility devices for the shop, including ONE device used for both input and output, and justify each. [5]<br>(d) Distinguish between operating system software, computer-based application software and web-based application software, and recommend software for the register, the online shop and sharing figures with the accountant. [5]<br>(e) Discuss the advantages and disadvantages of computerising the shop across at least FOUR areas, with a safeguard for each disadvantage. [6]<br>(f) Evaluate Mrs. Carty's plan for the customer register and propose a backup and equipment-care plan suited to a seaside shop with power cuts. [6]</p>","prompt":"<p>Write a report to Mrs. Carty, labelling each part (a) to (f). Use Section I terms precisely, justify every recommendation, and refer to the details in the scenario.</p>","min":350,"max":650,"frame":"<p><b>(a)</b> A computer is ... Input: ... Process: ... Output: ... Storage: ... At the end of the month, ... becomes information because ...<br><b>(b)</b> I recommend ... because ... A mainframe would be unsuitable because ...<br><b>(c)</b> Input: ... because ... Output: ... because ... Accessibility: ... because ... Both input and output: ... because ...<br><b>(d)</b> Operating system software ... Computer-based application software ... whereas web-based ... For the register ... For the online shop ... For the accountant ...<br><b>(e)</b> (Area) Advantage ... (Area) Disadvantage ... Safeguard ...<br><b>(f)</b> The plan is risky because ... I propose ... In addition, ...</p>","checklist":["I labelled every part and used the syllabus definition word for word.","In (a) I showed data becoming information for a real stock decision.","Every device and software recommendation has a reason linked to the shop, Ms. Lake or the accountant.","In (e) I used at least four different areas and paired each disadvantage with a safeguard.","In (f) I judged the single-laptop plan and proposed backups in more than one location, plus care for salt air and power cuts.","I stayed within the US$6,000 budget."],"rubric":[{"criterion":"Definition, cycle and information","marks":5,"look":["electronic","input","process","output","stor","information|stock|order|best-?selling|month"],"min":6,"strong":"Precise definition, a full cycle and a clear example of data becoming information.","weak":"Give the definition, apply all four stages to a sale, then show how stored sales data is processed into information for ordering stock."},{"criterion":"Category and why not a mainframe","marks":3,"look":["micro|desktop|laptop","three|3|four|4","mainframe","thousands|expens|cost|budget|specialist"],"min":4,"strong":"A justified recommendation and a clear reason against a mainframe.","weak":"Recommend microcomputers for the three staff, and explain that a mainframe serves thousands of users and costs far more than the budget."},{"criterion":"Devices specified and justified","marks":5,"look":["barcode|scanner|keyboard","printer|monitor","braille|screen reader","touchscreen|tablet|smartphone|phablet","because|so that|which"],"min":5,"strong":"All four device roles are filled and justified.","weak":"Specify an input device, an output device, a device for Ms. Lake and a touch device (both input and output), each with a reason."},{"criterion":"Software distinguished and recommended","marks":5,"look":["operating system","coordinat|hardware|run","installed|hard drive|computer-based","web-based|browser|online","database|access","cloud|share|google|onedrive|e-?commerce platform|online store"],"min":5,"strong":"Three kinds of software distinguished and three suitable recommendations.","weak":"Distinguish OS, computer-based and web-based software, then recommend database software for the register, a web-based shop platform and a shared cloud tool for the accountant."},{"criterion":"Advantages and disadvantages discussed","marks":6,"look":["speed|fast|quick","stor|retriev|search","e-?commerce|online|around the clock","reliab|power|outage","phish|malware|ransomware|cyber|breach","garbage|accura|error","safeguard|surge|anti-?virus|validation|back ?up|backup|ups"],"min":5,"strong":"A balanced discussion across four or more areas with matching safeguards.","weak":"Discuss at least four areas on both sides and give a safeguard for every disadvantage."},{"criterion":"Evaluation and backup/care plan","marks":6,"look":["only copy|single copy|one copy|one laptop|risk","stolen|lost|theft|damag|drop","cloud","portable hard|external|second location|off-?site","daily|every day|weekly|every week","salt|humid|sea|corrosion|cover|dust","surge|ups"],"min":5,"strong":"A clear judgement of the plan and a complete, scenario-specific backup and care plan.","weak":"Judge the single-laptop plan (theft, loss, damage), then propose backups in two locations with a frequency, plus care against salt air and power problems."}],"model":"<p><b>(a)</b> A computer is an electronic machine or device that accepts and processes data to produce information. Input: the cashier scans the part's barcode and keys in the quantity. Process: the computer looks up the price, adds tax and reduces the stock count. Output: the total appears on the monitor and a receipt is printed. Storage: the sale is saved on the hard disk and in the cloud. At the end of the month, the stored sales are processed into a report showing the best-selling parts and items running low; this is information, because Mrs. Carty can act on it to decide what stock to order before hurricane season.</p><p><b>(b)</b> I recommend three microcomputers (one desktop for each member of staff, about US$900 each), because they are inexpensive and designed for one user each. A mainframe would be unsuitable because it is built for hundreds or thousands of simultaneous users, costs far more than the US$6,000 budget and needs specialist staff.</p><p><b>(c)</b> Input: a barcode scanner at the counter, because it reads part codes quickly and avoids typing errors. Output: a receipt printer, because customers need a hard copy for returns. Accessibility: a Braille reader for Ms. Lake, because it converts screen text into raised characters so she can read customer records without sound in a busy shop. Both input and output: a tablet for stock checks in the storeroom, because its touchscreen accepts taps and displays stock levels through the same screen.</p><p><b>(d)</b> Operating system software, such as Windows, coordinates the hardware and lets the user run applications. Computer-based application software is installed on the hard drive to perform specific tasks, whereas web-based application software is accessed through a browser. For the register, I recommend database software such as Microsoft Access, which can search 2,000 records quickly. For the online shop, a web-based e-commerce platform with secure payment. For the accountant in Curaçao, a shared cloud folder or online spreadsheet, so she can open the figures from her own office.</p><p><b>(e)</b> (Speed) Sales and stock updates happen in seconds. (Storage and retrieval) Any customer's record can be found by searching. (E-commerce) Yacht owners can order around the clock. However, (reliability) power cuts could stop sales; safeguard: a UPS and surge protectors. (Cyber security) the online shop could be hit by phishing or ransomware; safeguard: antivirus software, updates and staff training. (Accuracy) a wrong price keyed in would be repeated in every sale (garbage in, garbage out); safeguard: validation checks and a second person checking new prices.</p><p><b>(f)</b> The plan is very risky: the laptop holds the only copy of the register, and it could be stolen, dropped or damaged on the way home, losing 2,000 records at once. I propose backing up the register to cloud storage every day and to a portable hard disk every week, kept at a second location away from the shop. For equipment care, plug every computer into a surge protector, put the server and main desktop on a UPS, keep machines away from open windows to limit salt and humidity damage, use dust covers at night, keep software and antivirus updated and keep food and drink away.</p>","key":"<p>Mark scheme (30): (a) 1 definition, 1 per stage applied (max 3), 1 data-to-information explanation linked to ordering stock. (b) 1 category with number, 1 justification, 1 reason against a mainframe. (c) 1 each for input, output, accessibility and both-input-and-output devices, 1 for justifications linked to the scenario. (d) 1 OS, 1 computer-based versus web-based, 1 per suitable recommendation (max 3). (e) up to 3 for advantages from different areas, up to 3 for disadvantages each paired with a safeguard; fewer than four areas caps the part at 4. (f) 2 for a reasoned judgement of the single-laptop plan, 2 for a backup plan with two locations and a frequency, 2 for care practices suited to salt air and power cuts.</p>","teacherTip":"<p>This Challenge paper is marked like a full Paper 02 question: every mark depends on a precise term <b>and</b> a link to the scenario. Ask students to annotate the stimulus before writing (budget, Ms. Lake, Curaçao accountant, salt air, power cuts, single laptop) and tick each detail as they use it. In (f), students who only list backups without judging the plan should not score above 4.</p>","title":"Paper 02 practice: setting up a computerised office (Challenge)"}
+  }
+});

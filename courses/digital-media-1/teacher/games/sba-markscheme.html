@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unit 1 SBA Mark Scheme</title>
+<style>
+:root{--bg:#f4f1ea;--paper:#fffdf8;--ink:#1d2430;--muted:#5d6675;--line:#d9d2c3;--soft:#efe9dc;--accent:#0f6e74;--accent-ink:#fff;--good:#1f7a3f;--warn:#9a5b00;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--paper:#1a2029;--ink:#e7e9ee;--muted:#a3abb8;--line:#2f3846;--soft:#222a35;--accent:#46b3b9;--accent-ink:#06191a;--good:#5fd08a;--warn:#f0b35a}}
+:root[data-theme="dark"]{--bg:#12161d;--paper:#1a2029;--ink:#e7e9ee;--muted:#a3abb8;--line:#2f3846;--soft:#222a35;--accent:#46b3b9;--accent-ink:#06191a;--good:#5fd08a;--warn:#f0b35a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:38px;resize:vertical}
+button{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:8px 12px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sec h2{font-size:1.1rem;margin:0 0 10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sec h2 span{font-variant-numeric:tabular-nums;color:var(--accent)}
+.crit{border-top:1px solid var(--line);padding:10px 0}
+.crit:first-of-type{border-top:0}
+.ch{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.ch b{flex:1 1 260px}
+.marks{display:flex;gap:4px;flex-wrap:wrap}
+.marks button{min-width:40px;background:transparent;color:var(--ink);border-color:var(--line);font-variant-numeric:tabular-nums}
+.marks button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.desc{margin:6px 0 6px;padding-left:18px;color:var(--muted);font-size:.9rem}
+.desc li.hit{color:var(--ink);font-weight:600}
+.tot{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
+.big{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums}
+.pill{background:var(--soft);border-radius:999px;padding:3px 10px;font-size:.85rem;font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:.88rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+@media (max-width:600px){.tot{padding:10px 12px;gap:4px 8px}.big{font-size:1.4rem}.tot .pill{font-size:.75rem;padding:2px 8px}}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Digital Media Unit 1 Mark Scheme</h1>
+  <p class="sub">Paper 031 School-Based Assessment · 45 marks (weighted to 135 by CXC) · Marking sheet</p>
+  <div class="card"><p class="hint" style="margin:0">Criteria from the Unit 1 School-Based Assessment requirements of the CXC CAPE Digital Media syllabus: Research/Pitch 10, Progress and Process 15, Proposal 20. The pitch is a 5-minute oral presentation and the report is 1,000 to 1,500 words. Each module receives one third of the total (remainder 1 to Module 3; remainder 2 to Modules 3 and 2). <b>Weighting:</b> this sheet weights the score to 135, as the syllabus assessment grid does for the SBA (60% of the unit). The Unit 1 marking criteria page of the syllabus prints “weighted by CXC to 90”; the assessment grid gives 135.</p></div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div class="row"><label class="f" style="min-width:220px">Candidate on this sheet<select id="who"></select></label></div>
+      <div class="row"><button id="new" class="ghost">New candidate</button><button id="del" class="ghost">Remove</button></div>
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <label class="f">Candidate name<input type="text" id="name" autocomplete="off"></label>
+      <label class="f">Candidate number<input type="text" id="num" autocomplete="off"></label>
+      <label class="f">Group members<input type="text" id="group" autocomplete="off" placeholder="2 to 3 per group recommended"></label>
+      <label class="f">Product or service<input type="text" id="ptype" autocomplete="off" placeholder="For example: mobile app, video series, website"></label>
+    </div>
+  </div>
+
+  <div class="card tot" id="tot"></div>
+  <div id="secs"></div>
+
+  <div class="card">
+    <label class="f">Overall comment<textarea id="overall" rows="3"></textarea></label>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:1.1rem;margin:0 0 8px">Save and share</h2>
+    <div class="row">
+      <button id="dlSheet">Download this sheet (Word)</button>
+      <button id="dlCsv" class="ghost">Download class record (CSV)</button>
+      <button id="clear" class="ghost">Clear this sheet's marks</button>
+    </div>
+    <p class="hint">Sheets are kept on this device only, in this browser. Download them to keep a copy or to share with a moderator.</p>
+  </div>
+
+  <div class="card"><h2 style="font-size:1.1rem;margin:0 0 8px">Class record</h2><div class="tw" id="classTable"></div></div>
+  <p class="hint" style="text-align:center">CAPE Digital Media Unit 1 · Kester Small</p>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+const S = [
+{
+"id": "rp",
+"name": "Research/Pitch",
+"max": 10,
+"items": [
+{
+"t": "Name of product",
+"m": 1,
+"d": [
+"The product or service is named (1)"
+]
+},
+{
+"t": "Purpose of product",
+"m": 1,
+"d": [
+"The purpose is stated (1)"
+]
+},
+{
+"t": "Research: identify target audience",
+"m": 1,
+"d": [
+"The target audience is identified (1)"
+]
+},
+{
+"t": "Research: design data capture instrument",
+"m": 1,
+"d": [
+"A data capture instrument is designed (1)"
+]
+},
+{
+"t": "Research: data collection",
+"m": 1,
+"d": [
+"Data is collected (1)"
+]
+},
+{
+"t": "Research: data analysis",
+"m": 1,
+"d": [
+"Data is analysed (1)"
+]
+},
+{
+"t": "Research: data presentation",
+"m": 1,
+"d": [
+"Data is presented (1)"
+]
+},
+{
+"t": "Rationale: overview of the problem that is being solved",
+"m": 1,
+"d": [
+"Gives an overview of the problem (1)"
+]
+},
+{
+"t": "Pitch (5-minute oral presentation): clearly states the problem and situation",
+"m": 1,
+"d": [
+"Clearly states the problem and situation (1)"
+]
+},
+{
+"t": "Pitch: describes the solution and target audience",
+"m": 1,
+"d": [
+"Describes the solution and target audience (1)"
+]
+}
+]
+},
+{
+"id": "pp",
+"name": "Progress and Process",
+"max": 15,
+"items": [
+{
+"t": "Timeline: gives a timeline",
+"m": 1,
+"d": [
+"Gives a timeline (1)"
+]
+},
+{
+"t": "Production schedule: presents a production schedule",
+"m": 2,
+"d": [
+"Complete production schedule presented (2)",
+"Schedule incomplete or unclear (1)"
+],
+"band": true
+},
+{
+"t": "Milestones: indicates milestones",
+"m": 2,
+"d": [
+"Clear, dated milestones indicated (2)",
+"Some milestones, or not dated (1)"
+],
+"band": true
+},
+{
+"t": "Storyboard / wireframes / mock-ups / rough designs: identifies a crisis or problem and resolution or solution",
+"m": 2,
+"d": [
+"Clearly identifies both (2)",
+"Only one shown clearly (1)"
+],
+"band": true
+},
+{
+"t": "Storyboard / wireframes / mock-ups / rough designs: clarity",
+"m": 2,
+"d": [
+"Clear and easy to follow (2)",
+"Partly clear (1)"
+],
+"band": true
+},
+{
+"t": "Storyboard / wireframes / mock-ups / rough designs: demonstrates development and clear direction",
+"m": 2,
+"d": [
+"Development and clear direction shown (2)",
+"Some development, or direction unclear (1)"
+],
+"band": true
+},
+{
+"t": "Drafts: follow the storyboard, mock-up or rough design",
+"m": 2,
+"d": [
+"Clearly follow the plan (2)",
+"Partly follow the plan (1)"
+],
+"band": true
+},
+{
+"t": "Drafts: clearly illustrate the concept",
+"m": 2,
+"d": [
+"Clearly illustrate the concept (2)",
+"Partly illustrate the concept (1)"
+],
+"band": true
+}
+]
+},
+{
+"id": "pr",
+"name": "Proposal",
+"max": 20,
+"items": [
+{
+"t": "Overview: brief introduction",
+"m": 1,
+"d": [
+"Brief introduction (1)"
+]
+},
+{
+"t": "Overview: summary of the content",
+"m": 2,
+"d": [
+"Clear, complete summary (2)",
+"Summary incomplete or unclear (1)"
+],
+"band": true
+},
+{
+"t": "Concept (draft designs): states idea",
+"m": 1,
+"d": [
+"States the idea (1)"
+]
+},
+{
+"t": "Concept (draft designs): indicates how the idea works",
+"m": 2,
+"d": [
+"Clearly explained, with draft designs (2)",
+"Partly explained (1)"
+],
+"band": true
+},
+{
+"t": "Concept (draft designs): impact of the concept",
+"m": 2,
+"d": [
+"Impact explained (2)",
+"Impact mentioned but not explained (1)"
+],
+"band": true
+},
+{
+"t": "Methodology / tools / techniques: tools identified",
+"m": 2,
+"d": [
+"All tools identified (2)",
+"Some tools identified (1)"
+],
+"band": true
+},
+{
+"t": "Methodology explained",
+"m": 3,
+"d": [
+"Thorough (3)",
+"Adequate (2)",
+"Basic (1)"
+],
+"band": true
+},
+{
+"t": "Budget breakdown",
+"m": 3,
+"d": [
+"Thorough (3)",
+"Adequate (2)",
+"Basic (1)"
+],
+"band": true
+},
+{
+"t": "Use of digital tools for presentation of concept",
+"m": 2,
+"d": [
+"Effective use of digital tools (2)",
+"Some use, but weak (1)"
+],
+"band": true
+},
+{
+"t": "Evidence of application of the creative process",
+"m": 2,
+"d": [
+"Clear evidence at each stage (2)",
+"Some evidence (1)"
+],
+"band": true
+}
+]
+}
+];
+const UNIT='1', KEY='dm1.markscheme.v1', OLDKEY='', WEIGHT=3, WMAX=135;
+let D={cur:0,list:[]};
+try{const raw=localStorage.getItem(KEY); if(raw) D=JSON.parse(raw);}catch(e){}
+let migrated=false;
+if((!D.list||!D.list.length)&&OLDKEY){try{const o=JSON.parse(localStorage.getItem(OLDKEY)||'null');if(o&&o.list&&o.list.length){D={cur:0,list:o.list.map(c=>({name:c.name||'',num:c.num||'',group:c.group||'',ptype:c.ptype||'',overall:c.overall||'',marks:{},notes:{}}))};migrated=true}}catch(e){}}
+if(!D.list||!D.list.length) D={cur:0,list:[blank()]};
+function blank(){return {name:'',num:'',group:'',ptype:'',overall:'',marks:{},notes:{}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const levels=it=>it.lv||Array.from({length:it.m+1},(_,x)=>x);
+function C(){return D.list[D.cur]}
+function totals(c){const out={};let all=0;S.forEach(s=>{let t=0;s.items.forEach((it,i)=>{t+=Math.min(it.m,+c.marks[s.id+i]||0)});out[s.id]=t;all+=t});out.all=Math.min(45,all);return out}
+function marked(c){return Object.keys(c.marks).length}
+function split(t){const b=Math.floor(t/3),r=t%3;return [b, b+(r===2?1:0), b+(r>=1?1:0)]}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2600)}
+function renderWho(){$('who').innerHTML=D.list.map((c,i)=>`<option value="${i}" ${i===D.cur?'selected':''}>${esc(c.name||'Unnamed candidate '+(i+1))}${c.num?' · '+esc(c.num):''}</option>`).join('')}
+function renderTot(){const c=C(),t=totals(c),m=split(t.all);const n=S.reduce((a,s)=>a+s.items.length,0);
+ $('tot').innerHTML=`<div><div class="hint">Total</div><div class="big" id="grand">${t.all} / 45</div></div>`+S.map(s=>`<span class="pill">${esc(s.name)} ${t[s.id]}/${s.max}</span>`).join('')+
+ `<span class="pill">Weighted ${t.all*WEIGHT}/${WMAX}</span><span class="pill">Modules 1, 2, 3: ${m.join(', ')}</span><span class="hint">${marked(c)} of ${n} criteria marked</span>`}
+function renderSecs(){const c=C();$('secs').innerHTML=S.map(s=>`<div class="card sec"><h2>${esc(s.name)} <span id="st-${s.id}"></span></h2>${s.items.map((it,i)=>{const k=s.id+i,v=c.marks[k];
+ return `<div class="crit"><div class="ch"><b>${esc(it.t)} <span class="hint">[${it.m}]</span></b><div class="marks" role="group" aria-label="Mark for ${esc(it.t)}">${levels(it).map(x=>`<button type="button" data-k="${k}" data-v="${x}" class="${v===x?'on':''}" aria-pressed="${v===x}">${x}</button>`).join('')}</div></div>
+ <ul class="desc">${it.d.map(d=>{const mk=+(d.match(/\((\d)\)\s*$/)||[])[1];return `<li class="${it.band&&v===mk?'hit':''}">${esc(d)}</li>`}).join('')}</ul>
+ <textarea data-n="${k}" rows="1" placeholder="Comment (optional)" aria-label="Comment on ${esc(it.t)}">${esc(c.notes[k]||'')}</textarea></div>`}).join('')}</div>`).join('');
+ const t=totals(c);S.forEach(s=>{$('st-'+s.id).textContent=t[s.id]+' / '+s.max})}
+function renderClass(){const rows=D.list.map((c,i)=>{const t=totals(c);return `<tr><td>${esc(c.name||'Unnamed '+(i+1))}</td><td>${esc(c.num)}</td>`+S.map(s=>`<td class="n">${t[s.id]}</td>`).join('')+`<td class="n"><b>${t.all}</b></td><td class="n">${t.all*WEIGHT}</td></tr>`}).join('');
+ $('classTable').innerHTML=`<table><thead><tr><th>Candidate</th><th>Number</th>`+S.map(s=>`<th class="n">${esc(s.name)} /${s.max}</th>`).join('')+`<th class="n">Total /45</th><th class="n">/${WMAX}</th></tr></thead><tbody>${rows}</tbody></table>`}
+function fill(){const c=C();$('name').value=c.name;$('num').value=c.num;$('group').value=c.group;$('ptype').value=c.ptype||($('ptype').tagName==='SELECT'?$('ptype').options[0].value:'');$('overall').value=c.overall}
+function all(){renderWho();fill();renderTot();renderSecs();renderClass()}
+document.addEventListener('click',e=>{const b=e.target.closest('.marks button');if(!b)return;const c=C(),k=b.dataset.k,v=+b.dataset.v;if(c.marks[k]===v)delete c.marks[k];else c.marks[k]=v;save();renderTot();renderSecs();renderClass();renderWho()});
+document.addEventListener('input',e=>{const c=C(),el=e.target;if(el.dataset.n){c.notes[el.dataset.n]=el.value;save();return}
+ if(['name','num','group','overall'].includes(el.id)){c[el.id]=el.value;save();renderClass();if(el.id!=='overall'&&el.id!=='group')renderWho()}});
+$('ptype').addEventListener('change',e=>{C().ptype=e.target.value;save()});
+$('who').addEventListener('change',e=>{D.cur=+e.target.value;save();all()});
+$('new').onclick=()=>{D.list.push(blank());D.cur=D.list.length-1;save();all();$('name').focus()};
+let delArm=0;$('del').onclick=()=>{if(D.list.length===1&&!marked(C())&&!C().name){toast('Nothing to remove');return}
+ if(Date.now()-delArm>3000){delArm=Date.now();toast('Tap Remove again to delete this sheet');return}
+ D.list.splice(D.cur,1);if(!D.list.length)D.list=[blank()];D.cur=0;save();all();toast('Sheet removed')};
+let clrArm=0;$('clear').onclick=()=>{if(Date.now()-clrArm>3000){clrArm=Date.now();toast('Tap Clear again to reset the marks');return}const c=C();c.marks={};c.notes={};save();all();toast('Marks cleared')};
+function dl(name,type,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.setAttribute('download',name);document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+const safe=s=>(s||'candidate').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+$('dlSheet').onclick=()=>{const c=C(),t=totals(c),m=split(t.all);
+ const body=S.map(s=>`<tr style="background:#eee"><td colspan="3"><b>${esc(s.name)}</b></td><td align="right"><b>[${s.max}]</b></td><td align="right"><b>${t[s.id]}</b></td></tr>`+s.items.map((it,i)=>{const k=s.id+i;return `<tr><td colspan="3">${esc(it.t)}${c.notes[k]?'<br><i>'+esc(c.notes[k])+'</i>':''}</td><td align="right">[${it.m}]</td><td align="right">${c.marks[k]==null?'':c.marks[k]}</td></tr>`}).join('')).join('');
+ const html=`<html><head><meta charset="utf-8"><title>Mark Scheme</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 6px;vertical-align:top}</style></head><body>
+ <h2 style="text-align:center">Digital Media Unit ${UNIT} Mark Scheme</h2>
+ <p><b>Candidate Name:</b> ${esc(c.name)} &nbsp; &nbsp; <b>Candidate Number:</b> ${esc(c.num)}<br><b>Group:</b> ${esc(c.group)} &nbsp; &nbsp; <b>Product:</b> ${esc(c.ptype)}</p>
+ <table><tr><th colspan="3" align="left">Criterion</th><th>Maximum Marks Possible</th><th>Marks Awarded</th></tr>${body}
+ <tr><td colspan="3"><b>Total</b></td><td align="right"><b>45</b></td><td align="right"><b>${t.all}</b></td></tr></table>
+ <p><b>Weighted score:</b> ${t.all*WEIGHT} / ${WMAX} &nbsp; &nbsp; <b>Module allocation (1, 2, 3):</b> ${m.join(', ')}</p>
+ <p><b>Comment:</b> ${esc(c.overall)}</p><p>Teacher: ______________________ &nbsp; Date: ____________</p></body></html>`;
+ dl('Mark_Scheme_'+safe(c.name||c.num)+'.doc','application/msword',html);toast('Sheet downloaded')};
+$('dlCsv').onclick=()=>{const head=['Candidate','Number','Group','Product'].concat(S.flatMap(s=>s.items.map(it=>it.t+' ['+it.m+']')),S.map(s=>s.name+' /'+s.max),['Total /45','Weighted /'+WMAX,'Module 1','Module 2','Module 3']);
+ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const rows=D.list.map(c=>{const t=totals(c),m=split(t.all);return [c.name,c.num,c.group,c.ptype].concat(S.flatMap(s=>s.items.map((it,i)=>c.marks[s.id+i]==null?'':c.marks[s.id+i])),S.map(s=>t[s.id]),[t.all,t.all*WEIGHT].concat(m))});
+ dl('DM1_SBA_class_record.csv','text/csv',[head].concat(rows).map(r=>r.map(q).join(',')).join('\r\n'));toast('Class record downloaded')};
+if(migrated){save();}
+all();
+if(migrated) toast('Candidate details were kept. Marks were cleared because the mark scheme has changed.');
+</script>
+</body>
+</html>

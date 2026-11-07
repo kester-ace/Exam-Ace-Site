@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Discourse Detective — The Elements of Discourse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --navy: #1F3864;
+    --navy-deep: #14274A;
+    --gold: #C9A227;
+    --gold-deep: #A8841C;
+    --blue: #2E5C8A;
+    --parchment: #F2E9D2;
+    --parchment-deep: #E6D6AC;
+    --ink: #2B2013;
+    --ink-soft: #5B4C36;
+
+    --narrative: #2F5C3D;
+    --narrative-deep: #21422C;
+    --descriptive: #2E5C8A;
+    --descriptive-deep: #21456B;
+    --expository: #B8891E;
+    --expository-deep: #8F6A15;
+    --argumentative: #A2402C;
+    --argumentative-deep: #7A2E20;
+
+    --bg: var(--parchment);
+    --bg-deep: var(--parchment-deep);
+    --text: var(--ink);
+    --text-soft: var(--ink-soft);
+    --card-bg: #FFFDF6;
+    --card-border: #D8C79A;
+    --shadow: rgba(31, 56, 100, 0.18);
+  }
+
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: var(--navy-deep);
+      --bg-deep: #0E1B33;
+      --text: var(--parchment);
+      --text-soft: #C9BFA0;
+      --card-bg: #1E3555;
+      --card-border: #35507A;
+      --shadow: rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: var(--navy-deep);
+    --bg-deep: #0E1B33;
+    --text: var(--parchment);
+    --text-soft: #C9BFA0;
+    --card-bg: #1E3555;
+    --card-border: #35507A;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: radial-gradient(1200px 800px at 50% -10%, var(--bg-deep), var(--bg) 60%);
+    color: var(--text);
+    font-family: "Source Sans 3", Calibri, Candara, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+
+  h1, h2, h3, .display {
+    font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+    margin: 0;
+  }
+
+  #app {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 18px calc(28px + env(safe-area-inset-bottom, 0px));
+    min-height: 100%;
+  }
+
+  .site-header {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .site-header h1 {
+    font-size: clamp(1.55rem, 5vw, 2.35rem);
+    color: var(--navy);
+    letter-spacing: 0.3px;
+  }
+  .site-header .kicker {
+    font-style: italic;
+    color: var(--text-soft);
+    font-size: 0.98rem;
+    margin-top: 4px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    box-shadow: 0 10px 28px var(--shadow);
+    padding: 22px;
+  }
+
+  .screen { animation: fadeIn 0.45s ease both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .screen, .book, .clue-card, .feedback { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- Intro ---------- */
+  .intro-lede { font-size: 1.05rem; margin: 4px 0 16px; }
+  .intro-rules {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .intro-rules li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.97rem;
+    color: var(--text-soft);
+  }
+  .intro-rules .mark {
+    flex: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+
+  .shelf-preview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 18px 0;
+  }
+  .shelf-preview .spine {
+    border-radius: 6px;
+    padding: 10px 6px;
+    text-align: center;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .shelf-preview .spine.narrative { background: linear-gradient(160deg, var(--narrative), var(--narrative-deep)); }
+  .shelf-preview .spine.descriptive { background: linear-gradient(160deg, var(--descriptive), var(--descriptive-deep)); }
+  .shelf-preview .spine.expository { background: linear-gradient(160deg, var(--expository), var(--expository-deep)); color: #2B2013; }
+  .shelf-preview .spine.argumentative { background: linear-gradient(160deg, var(--argumentative), var(--argumentative-deep)); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 22px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    color: #fff;
+    background: var(--navy);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 9px 20px rgba(0,0,0,0.22); }
+  .btn:active { transform: translateY(0); }
+  .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .btn.secondary {
+    background: transparent;
+    color: var(--navy);
+    border: 2px solid var(--navy);
+    box-shadow: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn.secondary { color: var(--parchment); border-color: var(--parchment); }
+  }
+  :root[data-theme="dark"] .btn.secondary { color: var(--parchment); border-color: var(--parchment); }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+
+  .credit {
+    text-align: center;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    margin-top: 22px;
+  }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    flex-wrap: wrap;
+  }
+  .hud .stage-name {
+    font-weight: 700;
+    color: var(--navy);
+  }
+  :root[data-theme="dark"] .hud .stage-name { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hud .stage-name { color: var(--gold); } }
+  .hud .stats { display: flex; gap: 14px; align-items: center; }
+  .streak-flame { color: var(--gold-deep); font-weight: 700; }
+  .progress-track {
+    height: 8px;
+    border-radius: 6px;
+    background: var(--card-border);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--navy));
+    border-radius: 6px;
+    transition: width 0.35s ease;
+  }
+
+  /* ---------- Clue card ---------- */
+  .clue-label {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--navy);
+    background: var(--gold);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .clue-card {
+    text-align: center;
+    padding: 26px 18px;
+    animation: popIn 0.3s ease both;
+  }
+  @keyframes popIn { from { transform: scale(0.96); opacity: 0.6; } to { transform: scale(1); opacity: 1; } }
+  .clue-text {
+    font-family: "Playfair Display", Georgia, serif;
+    font-style: italic;
+    font-size: clamp(1.15rem, 4.4vw, 1.5rem);
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .clue-hint {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: var(--text-soft);
+  }
+
+  .prompt-line {
+    text-align: center;
+    margin: 16px 0 12px;
+    font-size: 0.95rem;
+    color: var(--text-soft);
+  }
+
+  /* ---------- Book shelf (answers) ---------- */
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 6px 0 4px;
+  }
+  @media (max-width: 520px) {
+    .shelf { grid-template-columns: repeat(2, 1fr); }
+  }
+  .book {
+    border: none;
+    border-radius: 8px 8px 4px 4px;
+    padding: 16px 8px 14px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    min-height: 108px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .book:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 10px 0 rgba(0,0,0,0.18), 0 14px 22px rgba(0,0,0,0.2); }
+  .book:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .book:disabled { cursor: default; }
+  .book .b-title { font-weight: 700; font-size: 0.92rem; line-height: 1.15; }
+  .book .b-tag { font-size: 0.74rem; opacity: 0.92; font-style: italic; }
+  .book.narrative { background: linear-gradient(160deg, var(--narrative), var(--narrative-deep)); }
+  .book.descriptive { background: linear-gradient(160deg, var(--descriptive), var(--descriptive-deep)); }
+  .book.expository { background: linear-gradient(160deg, var(--expository), var(--expository-deep)); color: #2B2013; }
+  .book.argumentative { background: linear-gradient(160deg, var(--argumentative), var(--argumentative-deep)); }
+
+  .book.correct-pick { filter: brightness(1.15); box-shadow: 0 0 0 4px var(--gold), 0 8px 16px rgba(0,0,0,0.2); }
+  .book.wrong-pick { animation: shake 0.4s ease; box-shadow: 0 0 0 4px #7a1f1f, 0 8px 16px rgba(0,0,0,0.2); }
+  .book.dim { opacity: 0.55; }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-6px); }
+    40%, 60% { transform: translateX(6px); }
+  }
+
+  /* ---------- Feedback ---------- */
+  .feedback {
+    margin-top: 16px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.94rem;
+    animation: fadeIn 0.3s ease both;
+  }
+  .feedback.is-correct { background: rgba(47, 92, 61, 0.14); border: 1px solid var(--narrative); }
+  .feedback.is-wrong { background: rgba(162, 64, 44, 0.12); border: 1px solid var(--argumentative); }
+  .feedback .verdict { font-weight: 700; display: block; margin-bottom: 4px; }
+  .feedback.is-correct .verdict { color: var(--narrative-deep); }
+  :root[data-theme="dark"] .feedback.is-correct .verdict { color: #8fd6a3; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .feedback.is-correct .verdict { color: #8fd6a3; } }
+  .feedback.is-wrong .verdict { color: var(--argumentative-deep); }
+  :root[data-theme="dark"] .feedback.is-wrong .verdict { color: #e8a996; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .feedback.is-wrong .verdict { color: #e8a996; } }
+
+  .next-row { text-align: center; margin-top: 18px; }
+
+  /* ---------- Stage complete / bonus / results ---------- */
+  .stage-complete { text-align: center; }
+  .stage-complete .big-check {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 1.7rem;
+    color: var(--navy);
+    font-weight: 700;
+  }
+  .score-line { font-size: 1.05rem; margin: 10px 0 4px; }
+  .score-num { font-family: "Playfair Display", serif; font-size: 2.6rem; color: var(--navy); }
+  :root[data-theme="dark"] .score-num { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .score-num { color: var(--gold); } }
+
+  .badge-title {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--navy);
+    margin: 6px 0 2px;
+  }
+  :root[data-theme="dark"] .badge-title { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge-title { color: var(--gold); } }
+
+  .recap-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 22px 0;
+  }
+  @media (min-width: 560px) {
+    .recap-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .recap-card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #fff;
+  }
+  .recap-card.narrative { background: linear-gradient(160deg, var(--narrative), var(--narrative-deep)); }
+  .recap-card.descriptive { background: linear-gradient(160deg, var(--descriptive), var(--descriptive-deep)); }
+  .recap-card.expository { background: linear-gradient(160deg, var(--expository), var(--expository-deep)); color: #2B2013; }
+  .recap-card.argumentative { background: linear-gradient(160deg, var(--argumentative), var(--argumentative-deep)); }
+  .recap-card h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .recap-card p { margin: 4px 0; font-size: 0.88rem; opacity: 0.96; }
+  .recap-card .rc-label { font-weight: 700; }
+
+  .missed-list {
+    text-align: left;
+    margin: 18px 0 6px;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+  .missed-list li {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    background: var(--bg-deep);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .missed-list b { color: var(--text); }
+
+  .section-title {
+    font-size: 1rem;
+    color: var(--navy);
+    margin: 22px 0 4px;
+    text-align: left;
+  }
+  :root[data-theme="dark"] .section-title { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .section-title { color: var(--gold); } }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+  }
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+<div id="app"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------- Data ----------------
+  var TYPES = {
+    narrative: {
+      key: "narrative", name: "Narrative", tagline: "Telling a story",
+      purpose: "to entertain, explain, or relate an experience",
+      formatExamples: ["Novels", "Short stories", "Anecdotes"],
+      strategyExamples: ["Flashback", "Flash-forward", "Foreshadowing", "Time sequence"]
+    },
+    descriptive: {
+      key: "descriptive", name: "Descriptive", tagline: "Painting a picture",
+      purpose: "to entertain, explain, or visually present and highlight",
+      formatExamples: ["Journals", "Poetry", "Biographies"],
+      strategyExamples: ["Comparison and contrast", "General to specific", "Time sequence"]
+    },
+    expository: {
+      key: "expository", name: "Expository", tagline: "Explaining the facts",
+      purpose: "to explain, inform, clarify, instruct, or define",
+      formatExamples: ["Reports", "News articles", "Instructions"],
+      strategyExamples: ["Cause and effect", "Classification", "Definitions", "Evidence"]
+    },
+    argumentative: {
+      key: "argumentative", name: "Argumentative/Persuasive", tagline: "Making a case",
+      purpose: "to prove an idea, to convince, or to influence",
+      formatExamples: ["Critical reviews", "Editorials", "Debates"],
+      strategyExamples: ["Counterarguments", "Concession and rebuttal", "Refutation"]
+    }
+  };
+  var TYPE_ORDER = ["narrative", "descriptive", "expository", "argumentative"];
+
+  function item(text, types) { return { text: text, types: types }; }
+
+  var FORMAT_ITEMS = [
+    item("Novels", ["narrative"]),
+    item("Short stories", ["narrative"]),
+    item("Anecdotes", ["narrative"]),
+    item("Journals", ["descriptive"]),
+    item("Poetry", ["descriptive"]),
+    item("Biographies", ["descriptive"]),
+    item("Reports", ["expository"]),
+    item("News articles", ["expository"]),
+    item("Instructions and directions", ["expository"]),
+    item("Academic writing", ["expository"]),
+    item("Critical reviews", ["argumentative"]),
+    item("Editorials", ["argumentative"]),
+    item("Debates", ["argumentative"])
+  ];
+
+  var PURPOSE_ITEMS = [
+    item("To entertain, explain, recount, or relate an experience", ["narrative"]),
+    item("To entertain, explain, visually present, or highlight", ["descriptive"]),
+    item("To explain, inform, clarify, instruct, or define", ["expository"]),
+    item("To prove the validity of an idea — to convince or to influence", ["argumentative"])
+  ];
+
+  var STRATEGY_ITEMS = [
+    item("Flashback", ["narrative"]),
+    item("Flash-forward", ["narrative"]),
+    item("Foreshadowing", ["narrative"]),
+    item("Time sequence", ["narrative", "descriptive"]),
+    item("Comparison and contrast", ["descriptive", "expository", "argumentative"]),
+    item("General to specific", ["descriptive"]),
+    item("Cause and effect", ["expository"]),
+    item("Classification", ["expository"]),
+    item("Definitions", ["expository"]),
+    item("Evidence", ["expository"]),
+    item("Illustrations and examples", ["expository", "argumentative"]),
+    item("Problem and solution", ["expository"]),
+    item("Counterarguments", ["argumentative"]),
+    item("Concession and rebuttal", ["argumentative"]),
+    item("List", ["argumentative"]),
+    item("Refutation", ["argumentative"])
+  ];
+
+  var ALL_ITEMS = FORMAT_ITEMS.concat(PURPOSE_ITEMS, STRATEGY_ITEMS);
+
+  // ---------------- Helpers ----------------
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function sample(arr, n) { return shuffle(arr).slice(0, n); }
+  function el(tag, className, html) {
+    var e = document.createElement(tag);
+    if (className) e.className = className;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function typeNamesJoined(keys) {
+    var names = keys.map(function (k) { return TYPES[k].name; });
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return names[0] + " and " + names[1];
+    return names.slice(0, -1).join(", ") + ", and " + names[names.length - 1];
+  }
+  function catLabel(cat) {
+    if (cat === "format") return "Format clue";
+    if (cat === "purpose") return "Purpose clue";
+    if (cat === "strategy") return "Organizational strategy clue";
+    return "Mixed clue";
+  }
+
+  function buildExplanation(qItem, category, chosenKey, wasCorrect) {
+    var names = typeNamesJoined(qItem.types);
+    if (category === "purpose") {
+      var t = TYPES[qItem.types[0]];
+      return wasCorrect
+        ? "Right where it belongs — that's the purpose of " + t.name + " writing."
+        : "That purpose actually belongs to " + t.name + " writing (" + t.tagline.toLowerCase() + ")."
+    }
+    if (category === "format") {
+      var only = TYPES[qItem.types[0]];
+      return wasCorrect
+        ? "\u201c" + qItem.text + "\u201d is a " + only.name + " format — " + only.tagline.toLowerCase() + "."
+        : "\u201c" + qItem.text + "\u201d actually sits on the " + only.name + " shelf.";
+    }
+    // strategy
+    if (qItem.types.length > 1) {
+      return "\u201c" + qItem.text + "\u201d is used in " + names + " writing — several shelves share this one.";
+    }
+    return wasCorrect
+      ? "\u201c" + qItem.text + "\u201d belongs to " + names + " writing."
+      : "\u201c" + qItem.text + "\u201d actually belongs to " + names + " writing.";
+  }
+
+  // ---------------- State ----------------
+  var STAGE_DEFS = [
+    { key: "format", label: "Format", pool: FORMAT_ITEMS },
+    { key: "purpose", label: "Purpose", pool: PURPOSE_ITEMS },
+    { key: "strategy", label: "Organizational strategy", pool: STRATEGY_ITEMS }
+  ];
+
+  var state = null;
+
+  function freshState() {
+    return {
+      stageIndex: 0,
+      stages: STAGE_DEFS.map(function (s) {
+        return { key: s.key, label: s.label, items: shuffle(s.pool) };
+      }),
+      qIndex: 0,
+      score: 0,
+      streak: 0,
+      maxStreak: 0,
+      correctCount: 0,
+      totalCount: 0,
+      missed: [],
+      answeredThis: false,
+      bonusAdded: false
+    };
+  }
+
+  function bestScore() {
+    try {
+      var v = window.localStorage.getItem("discourse-detective-best");
+      return v ? parseInt(v, 10) : null;
+    } catch (e) { return null; }
+  }
+  function saveBestScore(n) {
+    try {
+      var cur = bestScore();
+      if (cur === null || n > cur) window.localStorage.setItem("discourse-detective-best", String(n));
+    } catch (e) { /* ignore */ }
+  }
+
+  // ---------------- Rendering ----------------
+  var app = document.getElementById("app");
+
+  function render() {
+    app.innerHTML = "";
+    var header = el("div", "site-header");
+    header.innerHTML =
+      '<h1>The Elements of Discourse</h1>' +
+      '<div class="kicker">Sort every clue onto its rightful shelf</div>';
+    app.appendChild(header);
+
+    if (!state) {
+      renderIntro();
+    } else if (state.mode === "playing") {
+      renderPlaying();
+    } else if (state.mode === "stageComplete") {
+      renderStageComplete();
+    } else if (state.mode === "bonusPrompt") {
+      renderBonusPrompt();
+    } else if (state.mode === "results") {
+      renderResults();
+    }
+
+    var credit = el("div", "credit", "CAPE Communication Studies");
+    app.appendChild(credit);
+    gsSave();
+  }
+
+  function renderIntro() {
+    var card = el("div", "card screen");
+    var best = bestScore();
+    card.innerHTML =
+      '<p class="intro-lede">Every clue below is a real format, purpose, or organizational strategy. Read it, then click the shelf where it belongs.</p>' +
+      '<ul class="intro-rules">' +
+        '<li><span class="mark">1</span><span>Three rounds: <b>Format</b>, <b>Purpose</b>, and <b>Organizational strategy</b> — then an optional mixed bonus round.</span></li>' +
+        '<li><span class="mark">2</span><span>Some clues fit more than one shelf. Pick any shelf that\'s correct and it counts.</span></li>' +
+        '<li><span class="mark">3</span><span>No lives, no clock pressure — just read, think, and sort at your own pace.</span></li>' +
+      '</ul>';
+    var shelf = el("div", "shelf-preview");
+    TYPE_ORDER.forEach(function (k) {
+      var s = el("div", "spine " + k, TYPES[k].name);
+      shelf.appendChild(s);
+    });
+    card.appendChild(shelf);
+    if (best !== null) {
+      var b = el("p", "", '<span style="font-size:0.88rem;color:var(--text-soft);">Your best score so far: <b>' + best + '</b></span>');
+      card.appendChild(b);
+    }
+    var row = el("div", "btn-row");
+    var startBtn = el("button", "btn", "Start sorting");
+    startBtn.addEventListener("click", function () {
+      state = freshState();
+      state.mode = "playing";
+      render();
+    });
+    row.appendChild(startBtn);
+    card.appendChild(row);
+    app.appendChild(card);
+  }
+
+  function currentStage() { return state.stages[state.stageIndex]; }
+  function currentItem() { return currentStage().items[state.qIndex]; }
+
+  function renderPlaying() {
+    var stage = currentStage();
+    var q = currentItem();
+    var totalInStage = stage.items.length;
+    var overallDone = state.totalCount;
+    var overallTarget = state.stages.reduce(function (n, s) { return n + s.items.length; }, 0);
+
+    var hud = el("div", "hud");
+    hud.innerHTML =
+      '<div><span class="stage-name">' + stage.label + '</span> — clue ' + (state.qIndex + 1) + ' of ' + totalInStage + '</div>' +
+      '<div class="stats"><span>Score: <b>' + state.score + '</b></span>' +
+      (state.streak >= 3 ? '<span class="streak-flame">Streak ' + state.streak + '</span>' : '') +
+      '</div>';
+    app.appendChild(hud);
+
+    var track = el("div", "progress-track");
+    var fill = el("div", "progress-fill");
+    fill.style.width = Math.round((overallDone / overallTarget) * 100) + "%";
+    track.appendChild(fill);
+    app.appendChild(track);
+
+    var card = el("div", "card screen");
+    var clueLabel = el("div", "clue-label", catLabel(stage.key));
+    card.appendChild(clueLabel);
+
+    var clueBox = el("div", "clue-card");
+    clueBox.innerHTML = '<div class="clue-text" id="clueText">\u201c' + q.text + '\u201d</div>';
+    card.appendChild(clueBox);
+
+    var promptLine = el("div", "prompt-line", "Which shelf does this belong on?");
+    card.appendChild(promptLine);
+
+    var shelf = el("div", "shelf");
+    TYPE_ORDER.forEach(function (k) {
+      var t = TYPES[k];
+      var b = el("button", "book " + k);
+      b.innerHTML = '<span class="b-title">' + t.name + '</span><span class="b-tag">' + t.tagline + '</span>';
+      b.setAttribute("aria-label", "Place this clue on the " + t.name + " shelf");
+      b.addEventListener("click", function () { handleAnswer(k, shelf); });
+      shelf.appendChild(b);
+    });
+    card.appendChild(shelf);
+
+    var fbSlot = el("div", "");
+    fbSlot.id = "fbSlot";
+    card.appendChild(fbSlot);
+
+    app.appendChild(card);
+    if (state.answeredThis && TYPES[state.lastPick]) showAnswer(state.lastPick, shelf);
+  }
+
+  function handleAnswer(chosenKey, shelfEl) {
+    if (state.answeredThis) return;
+    state.answeredThis = true;
+
+    var stage = currentStage();
+    var q = currentItem();
+    var wasCorrect = q.types.indexOf(chosenKey) !== -1;
+
+    state.totalCount++;
+    if (wasCorrect) {
+      state.score += 10;
+      state.streak++;
+      state.maxStreak = Math.max(state.maxStreak, state.streak);
+      state.correctCount++;
+    } else {
+      state.streak = 0;
+      state.missed.push({
+        text: q.text,
+        category: stage.key,
+        types: q.types,
+        chosen: chosenKey
+      });
+    }
+    state.lastPick = chosenKey; gsSave();
+    showAnswer(chosenKey, shelfEl);
+  }
+
+  function showAnswer(chosenKey, shelfEl) {
+    var stage = currentStage();
+    var q = currentItem();
+    var wasCorrect = q.types.indexOf(chosenKey) !== -1;
+    var buttons = shelfEl.querySelectorAll(".book");
+    buttons.forEach(function (btn) {
+      btn.disabled = true;
+      var isThisChosen = btn.classList.contains(chosenKey);
+      var isAnyCorrectType = q.types.some(function (tk) { return btn.classList.contains(tk); });
+      if (isAnyCorrectType) btn.classList.add("correct-pick");
+      else if (isThisChosen) btn.classList.add("wrong-pick");
+      else btn.classList.add("dim");
+    });
+
+    var fbSlot = document.getElementById("fbSlot");
+    var fb = el("div", "feedback " + (wasCorrect ? "is-correct" : "is-wrong"));
+    var verdicts = wasCorrect
+      ? ["Nicely shelved!", "That's the one.", "Correct call.", "Good eye."]
+      : ["Not quite.", "Close, but no.", "Wrong shelf."];
+    var verdict = verdicts[Math.floor(Math.random() * verdicts.length)];
+    fb.innerHTML =
+      '<span class="verdict">' + verdict + '</span>' +
+      '<span>' + buildExplanation(q, stage.key, chosenKey, wasCorrect) + '</span>';
+    fbSlot.appendChild(fb);
+
+    var nextRow = el("div", "next-row");
+    var nextBtn = el("button", "btn", isLastQuestionOverall() ? "See results" : "Next clue");
+    nextBtn.addEventListener("click", advance);
+    nextRow.appendChild(nextBtn);
+    fbSlot.appendChild(nextRow);
+    nextBtn.focus();
+  }
+
+  function isLastQuestionOverall() {
+    var stage = currentStage();
+    var atLastItem = state.qIndex === stage.items.length - 1;
+    if (!atLastItem) return false;
+    // Only the bonus (mixed) stage's last question leads straight to results.
+    return stage.key === "mixed";
+  }
+
+  function advance() {
+    state.answeredThis = false;
+    var stage = currentStage();
+    if (state.qIndex < stage.items.length - 1) {
+      state.qIndex++;
+      render();
+      return;
+    }
+    // stage finished
+    if (state.stageIndex < state.stages.length - 1) {
+      state.mode = "stageComplete";
+      render();
+    } else if (!state.bonusAdded) {
+      state.mode = "bonusPrompt";
+      render();
+    } else {
+      finishGame();
+    }
+  }
+
+  function renderStageComplete() {
+    var stage = currentStage();
+    var card = el("div", "card screen stage-complete");
+    card.innerHTML =
+      '<div class="big-check">\u2713</div>' +
+      '<h2 class="display">Shelf complete</h2>' +
+      '<p>You\u2019ve sorted every ' + stage.label.toLowerCase() + ' clue.</p>' +
+      '<div class="score-line">Score so far: <span class="score-num">' + state.score + '</span></div>';
+    var row = el("div", "btn-row");
+    var nextStageName = state.stages[state.stageIndex + 1].label;
+    var cont = el("button", "btn", "Continue to " + nextStageName);
+    cont.addEventListener("click", function () {
+      state.stageIndex++;
+      state.qIndex = 0;
+      state.mode = "playing";
+      render();
+    });
+    row.appendChild(cont);
+    card.appendChild(row);
+    app.appendChild(card);
+  }
+
+  function renderBonusPrompt() {
+    var card = el("div", "card screen stage-complete");
+    card.innerHTML =
+      '<div class="big-check">\u2605</div>' +
+      '<h2 class="display">All three shelves sorted</h2>' +
+      '<p>Want a bonus mastery round — 10 mixed clues pulled from everything you\u2019ve just sorted?</p>' +
+      '<div class="score-line">Score so far: <span class="score-num">' + state.score + '</span></div>';
+    var row = el("div", "btn-row");
+    var yes = el("button", "btn", "Play bonus round");
+    var no = el("button", "btn secondary", "Finish and see results");
+    yes.addEventListener("click", function () {
+      var bonusItems = sample(ALL_ITEMS, 10);
+      state.stages.push({ key: "mixed", label: "Mixed mastery", items: bonusItems });
+      state.bonusAdded = true;
+      state.stageIndex++;
+      state.qIndex = 0;
+      state.mode = "playing";
+      render();
+    });
+    no.addEventListener("click", function () {
+      finishGame();
+    });
+    row.appendChild(yes);
+    row.appendChild(no);
+    card.appendChild(row);
+    app.appendChild(card);
+  }
+
+  function finishGame() {
+    state.mode = "results";
+    saveBestScore(state.score);
+    render();
+  }
+
+  function badgeFor(pct) {
+    if (pct >= 90) return "Master Archivist";
+    if (pct >= 75) return "Skilled Cataloguer";
+    if (pct >= 50) return "Apprentice Sorter";
+    return "Trainee Sorter";
+  }
+
+  function renderResults() {
+    var pct = state.totalCount ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
+    var card = el("div", "card screen stage-complete");
+    var best = bestScore();
+    card.innerHTML =
+      '<h2 class="display">Round complete</h2>' +
+      '<div class="score-line">Final score: <span class="score-num">' + state.score + '</span></div>' +
+      '<p>' + state.correctCount + ' of ' + state.totalCount + ' clues correct (' + pct + '%) &middot; longest streak ' + state.maxStreak + '</p>' +
+      '<div class="badge-title">' + badgeFor(pct) + '</div>' +
+      (best !== null ? '<p style="font-size:0.85rem;color:var(--text-soft);">Best score on this device: ' + best + '</p>' : '');
+    app.appendChild(card);
+
+    var recapTitle = el("h3", "section-title", "Your discourse shelf, at a glance");
+    app.appendChild(recapTitle);
+    var recapGrid = el("div", "recap-grid");
+    TYPE_ORDER.forEach(function (k) {
+      var t = TYPES[k];
+      var rc = el("div", "recap-card " + k);
+      rc.innerHTML =
+        '<h3>' + t.name + '</h3>' +
+        '<p><span class="rc-label">Purpose:</span> ' + t.purpose + '</p>' +
+        '<p><span class="rc-label">Formats:</span> ' + t.formatExamples.join(", ") + '</p>' +
+        '<p><span class="rc-label">Strategies:</span> ' + t.strategyExamples.join(", ") + '</p>';
+      recapGrid.appendChild(rc);
+    });
+    app.appendChild(recapGrid);
+
+    if (state.missed.length) {
+      var missTitle = el("h3", "section-title", "Clues worth a second look");
+      app.appendChild(missTitle);
+      var list = el("ul", "missed-list");
+      state.missed.forEach(function (m) {
+        var li = el("li");
+        li.innerHTML = '<b>\u201c' + m.text + '\u201d</b> &mdash; belongs to ' + typeNamesJoined(m.types) + '.';
+        list.appendChild(li);
+      });
+      app.appendChild(list);
+    }
+
+    var row = el("div", "btn-row");
+    row.style.marginTop = "20px";
+    var again = el("button", "btn", "Play again");
+    again.addEventListener("click", function () {
+      state = null;
+      render();
+    });
+    row.appendChild(again);
+    app.appendChild(row);
+  }
+
+  // ---------------- Saved progress (GameSave) ----------------
+  var gsOff = false, gsData = null;
+  function gsSave() { if (!gsOff && window.GameSave) { try { window.GameSave.save(); } catch (e) { /* ignore */ } } }
+  function gsRestore(s) {
+    var MODES = ["playing", "stageComplete", "bonusPrompt", "results"];
+    if (!s || typeof s !== "object" || MODES.indexOf(s.mode) < 0 || !Array.isArray(s.stages) || s.stages.length < 3 || s.stages.length > 4) return null;
+    var stages = [];
+    for (var i = 0; i < s.stages.length; i++) {
+      var sv = s.stages[i], def = STAGE_DEFS[i] || { key: "mixed", label: "Mixed mastery", pool: ALL_ITEMS };
+      if (!sv || sv.key !== def.key || !Array.isArray(sv.items) || !sv.items.length) return null;
+      var items = [];
+      for (var j = 0; j < sv.items.length; j++) {
+        var t = sv.items[j] && sv.items[j].text, hit = def.pool.filter(function (x) { return x.text === t; })[0];
+        if (!hit) return null;
+        items.push(hit);
+      }
+      stages.push({ key: def.key, label: def.label, items: items });
+    }
+    var num = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 && Math.floor(v) === v; };
+    if (!num(s.stageIndex) || s.stageIndex >= stages.length || !num(s.qIndex) || s.qIndex >= stages[s.stageIndex].items.length) return null;
+    if (!["score", "streak", "maxStreak", "correctCount", "totalCount"].every(function (k) { return num(s[k]); })) return null;
+    if (s.answeredThis && !TYPES[s.lastPick]) return null;
+    return {
+      mode: s.mode, stageIndex: s.stageIndex, stages: stages, qIndex: s.qIndex, score: s.score, streak: s.streak, maxStreak: s.maxStreak,
+      correctCount: s.correctCount, totalCount: s.totalCount, answeredThis: !!s.answeredThis, lastPick: s.lastPick || null, bonusAdded: stages.length === 4,
+      missed: Array.isArray(s.missed) ? s.missed.filter(function (m) { return m && typeof m.text === "string" && Array.isArray(m.types) && m.types.every(function (k) { return !!TYPES[k]; }); }) : []
+    };
+  }
+  if (window.GameSave) {
+    window.GameSave.register(["discourse-detective-best"]);
+    window.GameSave.onReset(function () { gsOff = true; });
+    window.GameSave.persist({ key: "comm.discourse.save", welcome: false, get: function () { return state; }, set: function (d) { gsData = d; } });
+    try { state = gsRestore(gsData); } catch (e) { state = null; }
+    if (state) setTimeout(function () { try { window.GameSave.toast("Welcome back! Your progress was restored."); } catch (e) { /* ignore */ } }, 400);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

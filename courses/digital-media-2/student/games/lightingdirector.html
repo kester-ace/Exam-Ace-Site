@@ -1,0 +1,1723 @@
+<!doctype html>
+<html lang="en-GB">
+<head><script>/* DME2 course bridge: inside the course, saves go through the course's save prompt and confirmations use a second tap */(function(){if(window.parent===window)return;var P=window.parent;function toast(m){try{P.postMessage({type:'dm2:toast',msg:m},'*')}catch(e){}}function send(a){var n=a.getAttribute('download')||'download.html',h=a.href;if(!h)return false;fetch(h).then(function(r){return r.blob()}).then(function(b){P.postMessage({type:'dm2:save',filename:n,blob:b},'*')}).catch(function(){toast('That file could not be prepared.')});return true}var oc=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.hasAttribute('download')&&send(this))return;return oc.apply(this,arguments)};document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[download]');if(a&&send(a))e.preventDefault()},true);var last={m:null,t:0};window.confirm=function(m){var now=Date.now();if(last.m===m&&now-last.t<6000){last={m:null,t:0};return true}last={m:m,t:now};toast((m||'Are you sure?')+' Tap again to confirm.');return false};window.alert=function(m){toast(String(m||''))};window.print=function(){toast('Printing is not available inside the course. Use the download or save button instead.')}})();</script>
+
+<meta charset="utf-8"><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lighting Director</title>
+<meta name="description" content="Lighting Director: arrange key, fill, rim and background lights, reflectors and modifiers for Caribbean photo briefs. CAPE Digital Media Unit 2, Module 1. Kester Small">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+:root{
+  --bg:#121419; --panel:#1b1f27; --panel2:#232833; --panel3:#2c3240; --line:#343b49; --line2:#465063;
+  --ink:#eef1f6; --ink2:#bac2cf; --ink3:#8a94a5;
+  --amber:#ffb020; --amber2:#ffd27a; --amberd:#a86d00;
+  --good:#3ccf7f; --bad:#ff6b6b; --warn:#ffc04d;
+  --key:#ff8a1f; --fill:#4b95ff; --refl:#e2bb3f; --rim:#b97cff; --bgl:#2fcf93; --win:#7fd3ff; --prac:#ffd24a;
+  --r:12px;
+  --sans:"Avenir Next","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.app{max-width:1440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--line);background:linear-gradient(#1a1d24,#15181e);position:sticky;top:0;z-index:30;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:-.2px}
+.brand svg{width:30px;height:30px;flex:none}
+.brand small{display:block;font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.3px;text-transform:uppercase}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--panel);padding:3px;border-radius:999px;border:1px solid var(--line)}
+.tab{border:0;background:none;padding:6px 14px;border-radius:999px;font-weight:700;color:var(--ink2);font-size:14px}
+.tab[aria-selected="true"]{background:var(--amber);color:#1b1300}
+.tally{font-weight:700;font-size:13px;color:var(--amber2);white-space:nowrap;font-family:var(--mono)}
+main{flex:1;padding:14px 16px 24px}
+footer{padding:14px 16px 20px;text-align:center;color:var(--ink3);font-size:13px;border-top:1px solid var(--line)}
+h1,h2,h3{margin:0;line-height:1.2}
+.btn{border:1px solid var(--line2);background:var(--panel2);padding:8px 13px;border-radius:9px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink3)}
+.btn.pri{background:var(--amber);border-color:var(--amber);color:#1b1300}
+.btn.pri:hover{background:var(--amber2)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.ph{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin:0 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph span{font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink3)}
+/* brief */
+.briefbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.briefbar select{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;max-width:100%;min-width:0;flex:1 1 260px}
+.briefcard{padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:1fr auto;gap:6px 16px}
+.briefcard h2{font-size:19px}
+.briefcard .client{color:var(--ink2);margin:2px 0 0;font-style:italic}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--panel3);color:var(--ink2);display:inline-flex;align-items:center;gap:5px}
+.chip i{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
+.look{grid-column:1/-1;font-size:13px;color:var(--amber2);background:rgba(255,176,32,.08);border:1px dashed rgba(255,176,32,.35);padding:6px 9px;border-radius:8px}
+.bstars{font-size:20px;color:var(--amber);letter-spacing:2px;white-space:nowrap;text-align:right}
+.bstars small{display:block;font-size:12px;color:var(--ink3);letter-spacing:0}
+/* studio layout */
+.studio{display:grid;grid-template-columns:142px minmax(0,1.2fr) minmax(320px,1fr);gap:12px;align-items:start}
+.kit{padding:10px;position:sticky;top:62px}
+.kit-toggle{display:none}
+.kitlist{display:flex;flex-direction:column;gap:6px}
+.kitbtn{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:1px solid var(--line2);background:var(--panel2);border-radius:9px;padding:7px 7px;font-size:12.5px;line-height:1.2;overflow-wrap:anywhere;font-weight:700;touch-action:none;user-select:none;-webkit-user-select:none}
+.kitbtn:hover{border-color:var(--amber)}
+.kitbtn svg{width:22px;height:22px;flex:none}
+.kithint{font-size:11.5px;color:var(--ink3);margin:8px 0 0}
+.planwrap{padding:10px}
+#plan{width:100%;height:auto;display:block;background:#1a1d23;border-radius:10px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+#plan .lt{cursor:grab;touch-action:none;outline:none}
+#plan .lt:focus-visible .selring{stroke:var(--amber);stroke-width:3;opacity:1}
+#plan .lt:focus .selring{opacity:1}
+#plan.dragging .lt{cursor:grabbing}
+.planbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:8px;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--panel2);padding:5px 9px;font-size:13px;font-weight:700;color:var(--ink2);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--amber);color:#1b1300}
+.lbl{font-weight:700;color:var(--ink3);font-size:12px;margin-right:4px}
+.swatches{display:inline-flex;gap:5px;flex-wrap:wrap}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;padding:0;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+.sw[aria-pressed="true"]{border-color:var(--amber);box-shadow:0 0 0 2px #000 inset}
+.settings{margin-top:10px;padding:10px 12px;background:var(--panel2);border-radius:10px;border:1px solid var(--line)}
+.settings .row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:7px 0}
+.settings h3{font-size:15px;display:flex;align-items:center;gap:8px}
+.settings .dot{width:12px;height:12px;border-radius:50%}
+.settings .pos{font-family:var(--mono);font-size:12.5px;color:var(--ink2)}
+.settings input[type=range]{width:min(220px,100%);accent-color:var(--amber)}
+.settings .empty{color:var(--ink3);font-size:13.5px;margin:0}
+.right{display:flex;flex-direction:column;gap:12px;min-width:0}
+.preview{padding:10px;display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px}
+#portrait{width:100%;height:auto;display:block;border-radius:10px;background:#000;aspect-ratio:300/360}
+.meter{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.meter div{background:var(--panel2);border-radius:8px;padding:5px 7px;border-left:3px solid var(--line2)}
+.meter b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)}
+.meter span{font-weight:700}
+.meter .ok{border-left-color:var(--good)}.meter .no{border-left-color:var(--bad)}.meter .mid{border-left-color:var(--warn)}
+.modelp{padding:10px 12px}
+.modelp .row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0}
+.modelp select{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:4px 8px}
+.locked{font-size:12px;color:var(--ink3)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.review{padding:12px 14px}
+.scorebox{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.scorebox .big{font-size:44px;font-weight:900;line-height:1;font-family:var(--mono);color:var(--amber)}
+.scorebox .stars{font-size:24px;color:var(--amber);letter-spacing:3px}
+.scorebox p{margin:2px 0 0;color:var(--ink2);font-size:13.5px}
+.crit{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.crit li{display:grid;grid-template-columns:22px 1fr auto;gap:2px 8px;align-items:start;background:var(--panel2);border-radius:8px;padding:6px 8px;font-size:13.5px}
+.crit .ic{font-weight:900;text-align:center}
+.crit .ok .ic{color:var(--good)}.crit .part .ic{color:var(--warn)}.crit .no .ic{color:var(--bad)}.crit .na .ic{color:var(--ink3)}
+.crit b{font-size:13px}
+.crit .pts{font-family:var(--mono);font-size:12px;color:var(--ink3);white-space:nowrap}
+.crit .msg{grid-column:2/4;color:var(--ink2)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.compare figure{margin:0;text-align:center;font-size:12px;color:var(--ink3)}
+.compare svg{width:100%;height:auto;border-radius:8px;display:block}
+.exportp{padding:10px 12px}
+.exportp textarea,.exportp input{width:100%;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 9px;resize:vertical}
+.exportp label{font-size:12.5px;font-weight:700;color:var(--ink2);display:block;margin:6px 0 3px}
+details.tips{padding:10px 12px}
+details.tips summary{cursor:pointer;font-weight:800}
+details.tips li{margin:4px 0;color:var(--ink2);font-size:13.5px}
+details.tips li.hot{color:var(--amber2);font-weight:700}
+.note{font-size:12.5px;color:var(--ink3)}
+/* learn */
+.learngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.lcard{padding:14px}
+.lcard h3{font-size:17px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.lcard h3 .n{font-family:var(--mono);font-size:12px;color:#1b1300;background:var(--amber);border-radius:6px;padding:1px 6px}
+.lcard p,.lcard li{color:var(--ink2);font-size:14px;margin:5px 0}
+.lcard ul{padding-left:18px;margin:6px 0}
+.lcard strong{color:var(--ink)}
+.figrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.figrow.four{grid-template-columns:repeat(4,1fr)}
+.figrow.two{grid-template-columns:repeat(2,1fr)}
+.figrow figure{margin:0;text-align:center;font-size:11.5px;color:var(--ink3)}
+.figrow svg{width:100%;height:auto;display:block;border-radius:6px}
+.lintro{margin:0 0 12px;color:var(--ink2);max-width:75ch}
+/* quick-fire */
+.qwrap{max-width:980px;margin:0 auto}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.qhead .prog{font-family:var(--mono);color:var(--amber2);font-weight:700}
+.qbrief{padding:12px 14px;margin-bottom:12px}
+.qbrief h2{font-size:19px}
+.qopts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.qopt{padding:8px;border:2px solid var(--line);background:var(--panel);border-radius:var(--r);text-align:center;font-weight:800}
+.qopt svg{width:100%;height:auto;display:block;border-radius:8px;margin-bottom:6px}
+.qopt:hover:not([disabled]){border-color:var(--amber)}
+.qopt.right{border-color:var(--good);box-shadow:0 0 0 2px var(--good)}
+.qopt.wrong{border-color:var(--bad)}
+.qopt[disabled]{cursor:default}
+.qopt .cap{display:block;font-weight:600;font-size:12px;color:var(--ink2);margin-top:4px;min-height:2.6em}
+.qfb{margin:12px 0;padding:10px 12px;border-radius:10px;background:var(--panel2);min-height:44px}
+.qfb.good{border-left:4px solid var(--good)}.qfb.bad{border-left:4px solid var(--bad)}
+/* drag ghost */
+.dragghost{position:fixed;z-index:100;pointer-events:none;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.55);border:2px solid var(--amber)}
+.dragghost svg{width:28px;height:28px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line2);padding:8px 14px;border-radius:999px;font-weight:700;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:opacity .3s}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* responsive */
+@media (max-width:1100px){
+  .studio{grid-template-columns:136px minmax(0,1fr)}
+  .right{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+}
+@media (max-width:760px){
+  main{padding:10px 12px 90px}
+  .top{padding:8px 12px}
+  .brand{font-size:17px}
+  .tabs{margin-left:0;order:3;width:100%;justify-content:space-between}
+  .tab{flex:1;padding:6px 6px}
+  .top{position:static}
+  .briefbar{flex-wrap:nowrap}
+  .briefbar select{flex:1 1 0;width:0}
+  .studio{display:flex;flex-direction:column}
+  .right{display:contents}
+  .right>*{width:100%}
+  .preview{order:1}
+  .planwrap{width:100%;padding:8px;order:2}
+  .actions{order:3}
+  .review{order:4}
+  .modelp{order:5}
+  .exportp{order:6}
+  details.tips{order:7}
+  .preview{grid-template-columns:minmax(0,1fr) 128px;padding:8px}
+  .kit{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;border-radius:16px 16px 0 0;padding:0 12px 12px;transform:translateY(calc(100% - 50px));transition:transform .25s ease;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+  .kit.open{transform:translateY(0)}
+  .kit-toggle{display:flex;width:100%;justify-content:center;align-items:center;gap:8px;height:50px;border:0;background:none;font-weight:800;font-size:15px}
+  .kit-toggle::before{content:"";width:36px;height:4px;border-radius:2px;background:var(--line2);position:absolute;top:6px;left:50%;transform:translateX(-50%)}
+  .kitlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .briefcard{grid-template-columns:1fr}
+  .bstars{text-align:left}
+  .qopts{gap:6px}
+  .qopt{padding:4px}
+  .qopt .cap{font-size:11px}
+  .footer-pad{height:50px}
+}
+@media (max-width:400px){
+  .preview{grid-template-columns:1fr 112px;gap:6px}
+  .meter{font-size:11.5px}
+}
+/* print sheet */
+#sheet{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;color:#000}
+  .app,.toast,.dragghost,#live{display:none!important}
+  #sheet{display:block;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:11pt}
+}
+#sheet h1{font-size:20pt;margin:0 0 2mm}
+#sheet h2{font-size:13pt;margin:5mm 0 2mm;border-bottom:1px solid #999;padding-bottom:1mm}
+#sheet .meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm;font-size:10pt}
+#sheet .meta div{border-bottom:1px solid #aaa;padding:2mm 0}
+#sheet .dg{display:grid;grid-template-columns:2fr 1fr;gap:4mm;align-items:start}
+#sheet svg{width:100%;height:auto;border:1px solid #bbb}
+#sheet table{width:100%;border-collapse:collapse;font-size:9.5pt}
+#sheet th,#sheet td{border:1px solid #999;padding:1.5mm 2mm;text-align:left;vertical-align:top}
+#sheet th{background:#eee}
+#sheet .rat{border:1px solid #777;min-height:42mm;padding:3mm;white-space:pre-wrap}
+#sheet .foot{margin-top:5mm;font-size:9pt;color:#555;text-align:center}
+#sheet ul{margin:1mm 0;padding-left:6mm;font-size:10pt}
+</style>
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="9" width="20" height="15" rx="3" fill="#2c3240" stroke="#ffb020" stroke-width="2"/><circle cx="12" cy="16.5" r="4.5" fill="none" stroke="#ffd27a" stroke-width="2"/><path d="M22 13l8-5v17l-8-5z" fill="#ffb020"/><path d="M5 9l3-5h8l3 5" fill="none" stroke="#ffb020" stroke-width="2"/></svg>
+    <div>Lighting Director<small>Digital Media Unit 2 · Module 1</small></div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Game modes">
+    <button class="tab" role="tab" id="t-learn" aria-controls="v-learn" aria-selected="false" data-view="learn">Learn</button>
+    <button class="tab" role="tab" id="t-director" aria-controls="v-director" aria-selected="true" data-view="director">Director</button>
+    <button class="tab" role="tab" id="t-quick" aria-controls="v-quick" aria-selected="false" data-view="quick">Which setup?</button>
+  </nav>
+  <div class="tally" id="tally" title="Stars and total of your best scores">★ 0/36 · 0 pts</div>
+</header>
+
+<main>
+<!-- LEARN -->
+<section id="v-learn" class="view" role="tabpanel" aria-labelledby="t-learn" hidden>
+  <p class="lintro">Short cards on how studio lighting works. The small portraits are drawn live by the same lighting engine as the game, so what you see here is what you get in Director mode.</p>
+  <div class="learngrid" id="learnGrid"></div>
+</section>
+
+<!-- DIRECTOR -->
+<section id="v-director" class="view" role="tabpanel" aria-labelledby="t-director">
+  <div class="briefbar">
+    <button class="btn sm" id="prevB" aria-label="Previous brief">‹ Prev</button>
+    <select id="briefSel" aria-label="Choose a photo brief"></select>
+    <button class="btn sm" id="nextB" aria-label="Next brief">Next ›</button>
+  </div>
+  <article class="briefcard card" id="briefCard" aria-live="polite"></article>
+
+  <div class="studio">
+    <aside class="kit card" id="kit" aria-label="Lighting kit">
+      <button class="kit-toggle" id="kitToggle" aria-expanded="false" aria-controls="kitList">Lighting kit ▲</button>
+      <div class="ph" aria-hidden="true">Kit</div>
+      <div class="kitlist" id="kitList"></div>
+      <p class="kithint">Drag a light onto the floor plan, or press Enter / tap to place it.</p>
+    </aside>
+
+    <div class="planwrap card">
+      <div class="ph">Studio floor plan <span>Drag to set angle and distance · Tab to select · arrows move · Q/E rotate · +/− power · Delete removes</span></div>
+      <svg id="plan" viewBox="0 0 600 520" role="application" aria-label="Top-down studio floor plan. Lights can be selected with Tab and moved with the arrow keys."></svg>
+      <div class="planbar">
+        <div><span class="lbl">Backdrop</span><span class="swatches" id="bdSw"></span></div>
+        <div><span class="lbl">Head turn</span><span class="seg" id="turnSeg"></span></div>
+        <button class="btn sm" id="clearAll">Clear lights</button>
+      </div>
+      <div class="settings" id="settings"></div>
+    </div>
+
+    <div class="right">
+      <div class="preview card">
+        <div>
+          <div class="ph">Live portrait preview</div>
+          <svg id="portrait" viewBox="0 0 300 360" role="img" aria-label="Portrait preview"></svg>
+        </div>
+        <div class="meter" id="meter" aria-label="Light meter readouts"></div>
+      </div>
+      <div class="modelp card" id="modelPanel"></div>
+      <div class="actions">
+        <button class="btn pri" id="submitBtn">🎬 Submit for Director's Review</button>
+        <button class="btn" id="ghostBtn" disabled aria-pressed="false">Show best setup</button>
+        <button class="btn" id="loadBestBtn" disabled>Load best setup</button>
+      </div>
+      <div class="review card" id="review" aria-live="polite" hidden></div>
+      <div class="exportp card">
+        <div class="ph">Lighting plan export <span>SBA pre-production evidence</span></div>
+        <label for="stuName">Photographer</label>
+        <input id="stuName" autocomplete="name" placeholder="Your name">
+        <label for="rationale">Rationale: why does this setup suit the brief?</label>
+        <textarea id="rationale" rows="3" placeholder="e.g. I used a softbox key at about 35° camera-left to create loop lighting…"></textarea>
+        <div class="actions" style="margin-top:8px">
+          <button class="btn sm" id="expPng">⬇ Diagram PNG</button>
+          <button class="btn sm" id="expSvg">⬇ Diagram SVG</button>
+          <button class="btn sm" id="expSheet">🖨 Printable lighting plan</button>
+        </div>
+      </div>
+      <details class="tips card" id="tips">
+        <summary>Lighting every skin tone well</summary>
+        <ul id="tipList"></ul>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK-FIRE -->
+<section id="v-quick" class="view" role="tabpanel" aria-labelledby="t-quick" hidden>
+  <div class="qwrap">
+    <div class="qhead"><h2>Quick-fire: Which setup?</h2><span class="prog" id="qProg"></span></div>
+    <div class="qbrief card" id="qBrief"></div>
+    <div class="qopts" id="qOpts"></div>
+    <div class="qfb" id="qFb" aria-live="polite"></div>
+    <div class="actions"><button class="btn pri" id="qNext" hidden>Next round ›</button><button class="btn" id="qRestart">Restart</button></div>
+  </div>
+</section>
+</main>
+<div class="footer-pad"></div>
+<footer>Lighting Director · Digital Media Unit 2 · Kester Small</footer>
+</div>
+<div id="sheet"></div>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+'use strict';
+(function(){
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const DEG = 180/Math.PI, RAD = Math.PI/180;
+const clamp = (v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Studio geometry (plan units: 100 = 1 metre) ---------- */
+const M = {x:300,y:210}, CAM = {x:300,y:455};
+const BACK = {y:52,x0:130,x1:470};
+const WIN = {x:22,y0:70,y1:470,len:110};
+const ROOM = {x0:30,y0:64,x1:570,y1:492};
+
+const TYPES = {
+  key:{name:'Key light',short:'Key',col:'#ff8a1f',desc:'Main light: sets the pattern and mood'},
+  fill:{name:'Fill light',short:'Fill',col:'#4b95ff',desc:'Opens up the shadows'},
+  refl:{name:'Reflector',short:'Reflector',col:'#e2bb3f',desc:'Bounces the key back into the shadows'},
+  rim:{name:'Rim / hair light',short:'Rim',col:'#b97cff',desc:'Edge glow that separates subject from background'},
+  bg:{name:'Background light',short:'BG',col:'#2fcf93',desc:'Lights the backdrop'},
+  win:{name:'Window light',short:'Window',col:'#7fd3ff',desc:'Natural light: only on the window wall'},
+  prac:{name:'Practical lamp',short:'Lamp',col:'#ffd24a',desc:'A lamp seen in the shot'}
+};
+const MODS = {
+  bare:{name:'Bare bulb',tag:'hard',soft:.06,eff:1,beam:55},
+  softbox:{name:'Softbox',tag:'soft',soft:.85,eff:.75,beam:60},
+  umbrella:{name:'Umbrella',tag:'soft',soft:.74,eff:.8,beam:75},
+  dish:{name:'Beauty dish',tag:'crisp',soft:.45,eff:.9,beam:45},
+  grid:{name:'Grid / snoot',tag:'narrow',soft:.1,eff:.65,beam:16},
+  scrim:{name:'Diffusion scrim',tag:'soft',soft:.8,eff:.6,beam:65},
+  window:{name:'Window (indirect)',tag:'soft',soft:.92,eff:1,beam:85},
+  sun:{name:'Direct sun',tag:'hard',soft:.08,eff:1,beam:85},
+  reflector:{name:'Reflector',tag:'soft',soft:.7,eff:1,beam:70},
+  lamp:{name:'Lampshade',tag:'soft',soft:.6,eff:1,beam:180}
+};
+const STUDIO_MODS = ['bare','softbox','umbrella','dish','grid','scrim'];
+const REFL = {white:{name:'White',k:.42,t:[1,1,1],soft:.75,c:'#f2f2f2'},silver:{name:'Silver',k:.68,t:[1,1,1.02],soft:.45,c:'#c9d1db'},gold:{name:'Gold',k:.6,t:[1,.86,.58],soft:.6,c:'#e2b33a'}};
+const TEMPS = {tung:{name:'Tungsten 3200 K',t:[1,.79,.55]},day:{name:'Daylight 5600 K',t:[1,1,1]}};
+const GELS = {red:{name:'Red',c:'#e5383b',t:[1,.3,.32]},amber:{name:'Amber (CTO)',c:'#ff9f1c',t:[1,.68,.3]},magenta:{name:'Magenta',c:'#e040a0',t:[1,.35,.85]},blue:{name:'Blue',c:'#3a7bff',t:[.42,.6,1]},teal:{name:'Teal',c:'#21c6b8',t:[.35,.95,.9]},green:{name:'Green',c:'#3ccf5a',t:[.45,1,.45]},purple:{name:'Purple',c:'#9b5cff',t:[.68,.42,1]}};
+const BACKDROPS = {
+  white:{name:'White sweep',c:'#f3f2ee',refl:.9},
+  grey:{name:'Mid grey',c:'#8c9096',refl:.45},
+  black:{name:'Black',c:'#141416',refl:.05},
+  teal:{name:'Teal',c:'#1f8f8c',refl:.4},
+  blue:{name:'Royal blue',c:'#2b4fb5',refl:.32},
+  yellow:{name:'Sunshine yellow',c:'#ecb92a',refl:.6},
+  red:{name:'Hibiscus red',c:'#b8262c',refl:.3}
+};
+const SKINS = [
+  {name:'Tone 1 (lightest)',c:'#f4d8c6',refl:.55},
+  {name:'Tone 2',c:'#e4b996',refl:.46},
+  {name:'Tone 3',c:'#c98f63',refl:.36},
+  {name:'Tone 4',c:'#a36a43',refl:.28},
+  {name:'Tone 5',c:'#704529',refl:.2},
+  {name:'Tone 6 (deepest)',c:'#4a2d1b',refl:.14}
+];
+const HAIRS = {short:{name:'Short',rim:.85},long:{name:'Long',rim:1.1},locs:{name:'Locs',rim:1.2},braids:{name:'Braids',rim:1.15},wrap:{name:'Headwrap',rim:1}};
+const HAIRC = '#241914';
+
+/* ---------- Briefs ---------- */
+const SEP_TXT = {rim:'rim light',bg:'background light',either:'rim or background light',any:'optional',none:'not needed'};
+const BRIEFS = [
+ {id:'bank',title:'Corporate headshot for a bank’s website',short:'a bank headshot',subject:'person',outfit:'suit',pose:'stool',
+  client:'Harbourview Bank, Castries: “Our new branch manager needs a friendly, trustworthy headshot for the website. Clean and professional: nothing moody, please.”',
+  look:'Even and flattering · low contrast (about 2:1) · loop or butterfly · white or grey background · soft light',
+  want:{patterns:['loop','butterfly'],near:['flat','rembrandt'],ratio:[1.5,3],quality:'soft',sep:'either',bg:['bright','mid'],backdrops:['white','grey'],temp:'day',catch:true,maxLights:4},
+  ideal:{backdrop:'grey',lights:[{type:'key',az:-35,d:1.3,h:'high',mod:'softbox',pow:85},{type:'fill',az:30,d:1.6,h:'eye',mod:'umbrella',pow:55},{type:'bg',x:300,y:125,mod:'bare',pow:20,h:'low'}]}},
+ {id:'calypso',title:'Moody album cover for a calypso artist',short:'a moody album cover',subject:'person',outfit:'shirt',pose:'stool',
+  client:'The Mighty Sandpiper: “The new album is called Midnight in Port of Spain. I want it dark, dramatic and mysterious: half my face in shadow.”',
+  look:'Dramatic · split or Rembrandt · high ratio (8:1 or more) · dark backdrop · rim light for separation',
+  want:{patterns:['split','rembrandt'],near:['loop'],ratio:[6,40],quality:'hard',sep:'rim',bg:['dark'],backdrops:['black','grey'],temp:'any',catch:null,maxLights:3},
+  ideal:{backdrop:'black',lights:[{type:'key',az:90,d:1.2,h:'high',mod:'grid',pow:100},{type:'rim',az:-150,d:1.2,h:'high',mod:'grid',pow:70}]}},
+ {id:'beauty',title:'Beauty and cosmetics advert',short:'a beauty advert',subject:'person',outfit:'beauty',pose:'stool',
+  client:'Coral Glow Cosmetics: “Our new foundation range is all about radiant, even skin. Bright and glossy, with sparkle in the eyes.”',
+  look:'Butterfly · beauty dish key · clamshell (key above plus a reflector below) · bright, clean background',
+  want:{patterns:['butterfly'],near:['loop','flat'],ratio:[1.3,2.6],quality:'crisp',sep:'any',bg:['bright'],backdrops:['white','grey'],temp:'day',catch:true,maxLights:4,
+   extras:[{id:'dish',label:'Beauty dish key',test:A=>A.key&&A.key.mod==='dish'?1:0,pass:'A beauty dish key gives the crisp-but-flattering glow beauty clients expect.',fail:'Put a beauty dish on the key: it sits between hard and soft and gives skin a polished sheen.'},
+           {id:'clam',label:'Clamshell setup',test:A=>A.clamshell?1:0,pass:'Clamshell in place: key above the lens with a reflector or fill below, so shadows under the eyes and chin are filled.',fail:'Make a clamshell: key in line with the camera at 45° above, plus a reflector (or low fill) below the face, angled up.'}]},
+  ideal:{backdrop:'white',lights:[{type:'key',az:0,d:1.1,h:'high',mod:'dish',pow:70},{type:'refl',az:0,d:.55,h:'low',refl:'silver'},{type:'bg',x:300,y:118,mod:'bare',pow:25,h:'low'}]}},
+ {id:'schoolid',title:'School ID photo',short:'a school ID photo',subject:'person',outfit:'uniform',pose:'stool',
+  client:'The school office: “We need 600 ID photos by Friday. Every face clear and even, no harsh shadows, plain light background.”',
+  look:'Flat and even · ratio near 1:1 · soft light · plain mid or bright background · no glare on glasses',
+  want:{patterns:['flat','butterfly'],near:['loop'],ratio:[1,1.8],quality:'soft',sep:'any',bg:['bright','mid'],backdrops:['white','grey'],temp:'day',catch:true,maxLights:3},
+  ideal:{backdrop:'grey',lights:[{type:'key',az:-35,d:1.5,h:'high',mod:'softbox',pow:80},{type:'fill',az:35,d:1.5,h:'high',mod:'softbox',pow:75},{type:'bg',x:300,y:125,mod:'bare',pow:25,h:'low'}]}},
+ {id:'sauce',title:'Product shot: hot pepper sauce bottle',short:'a pepper sauce product shot',subject:'bottle',pose:'table',
+  client:'Island Heat Pepper Sauce: “Make our Scotch bonnet sauce glow like a sunset in the bottle. It’s for the new online shop, on clean white.”',
+  look:'Backlight for glow through the liquid · white sweep · two softboxes for clean edge highlights',
+  want:{patterns:null,ratio:[1,4],quality:'soft',sep:'any',bg:['bright'],backdrops:['white'],temp:'day',catch:null,maxLights:4,expo:[-1,.9],
+   extras:[{id:'glow',label:'Backlight glow through the liquid',test:A=>clamp(A.glow/0.6),pass:'Light from behind passes through the sauce, so it glows.',fail:'Add a backlight: light the white sweep directly behind the bottle (or put a light behind it) so the sauce glows from within.'},
+           {id:'twosb',label:'Two softboxes for edge highlights',test:A=>A.sideSoft>=2?1:A.sideSoft===1?.5:0,pass:'Two side softboxes draw clean vertical highlights down both edges of the glass.',fail:'Use two softboxes, one each side of the bottle at about 60–90°, for long clean highlights on the glass.'}]},
+  ideal:{backdrop:'white',lights:[{type:'key',az:-75,d:1.0,h:'eye',mod:'softbox',pow:60},{type:'fill',az:75,d:1.0,h:'eye',mod:'softbox',pow:55},{type:'bg',x:300,y:120,mod:'bare',pow:45,h:'low'}]}},
+ {id:'heritage',title:'Documentary interview for a heritage video',short:'a heritage interview',subject:'person',outfit:'shirt',pose:'stool',
+  client:'Anguilla heritage project: “We are filming an elder talking about salt picking at the Road Salt Pond in Sandy Ground. Natural, warm and respectful, like sitting in her living room.”',
+  look:'Three-point lighting · about 3:1 ratio · a practical lamp in the background · consistent colour on the face',
+  want:{patterns:['loop','rembrandt'],near:['split','butterfly'],ratio:[2.5,4.5],quality:'soft',sep:'rim',bg:['mid','dark'],backdrops:['grey','black','teal','blue'],temp:'consistent',catch:true,maxLights:5,
+   extras:[{id:'three',label:'Three-point lighting',test:A=>A.threePoint?1:(A.key&&A.Fsum>.1?.5:0),pass:'Key, fill and rim are all doing their jobs: classic three-point lighting.',fail:'Build three-point lighting: key at about 45°, fill (or reflector) on the other side, rim light behind.'},
+           {id:'prac',label:'Practical light in the background',test:A=>A.practical?1:0,pass:'The practical lamp in the background adds warmth and tells the viewer where we are.',fail:'Add a practical lamp behind the interviewee so it is seen in the shot: it adds depth and a homely feel.'}]},
+  ideal:{backdrop:'grey',lights:[{type:'key',az:-45,d:1.4,h:'high',mod:'softbox',pow:85},{type:'refl',az:50,d:.9,h:'eye',refl:'white'},{type:'rim',az:150,d:1.2,h:'high',mod:'grid',pow:50},{type:'prac',x:410,y:95,pow:60}]}},
+ {id:'sunset',title:'Silhouette at sunset for a tourism poster',short:'a sunset silhouette',subject:'person',outfit:'shirt',pose:'standing',
+  client:'Negril tourism board: “A figure against a blazing sunset. No face detail at all, just a strong black shape against warm sky.”',
+  look:'Backlight only · subject underexposed to black · bright warm background (amber or red gel, or tungsten)',
+  want:{patterns:null,ratio:null,quality:'any',sep:'any',bg:['bright'],backdrops:['white','yellow','red','teal','blue','grey'],temp:'warm',catch:false,maxLights:2,expo:[-12,-2.5],silhouette:true,
+   extras:[{id:'backonly',label:'Backlight only',test:A=>A.frontTotal<.06?1:A.frontTotal<.15?.5:0,pass:'No light falls on the front of the model, so they read as a pure shape.',fail:'Remove or turn off every light that reaches the front of the model: only the background should be lit.'}]},
+  ideal:{backdrop:'white',lights:[{type:'bg',x:300,y:120,mod:'bare',pow:100,h:'low',temp:'gel',gel:'amber'}]}},
+ {id:'grad',title:'Graduation portrait with glasses',short:'a graduation portrait',subject:'person',outfit:'gown',pose:'stool',fix:{glasses:true},
+  client:'A parent: “My son wears glasses and every photo has white glare on the lenses. Please get his eyes clear for the graduation frame.”',
+  look:'Key raised to 45° and moved off-axis to avoid glare · loop · soft · about 3:1 · catchlights visible',
+  want:{patterns:['loop','rembrandt'],near:['butterfly','flat'],ratio:[2,4],quality:'soft',sep:'either',bg:['mid','bright'],backdrops:['grey','blue','white'],temp:'day',catch:true,maxLights:4,
+   extras:[{id:'raised',label:'Key raised and off-axis',test:A=>A.key&&A.key.l.h==='high'&&A.key.abs>=15&&A.key.abs<=60?1:A.key&&(A.key.l.h==='high'||A.key.abs>=15)?.5:0,pass:'The key is up at 45° and off to one side, so its reflection bounces away from the lens.',fail:'Raise the key to 45° above and move it 20–45° off the camera axis: the angle of reflection sends glare away from the lens.'}]},
+  ideal:{backdrop:'grey',lights:[{type:'key',az:-35,d:1.4,h:'high',mod:'softbox',pow:85},{type:'refl',az:45,d:1.2,h:'low',refl:'silver'},{type:'bg',x:300,y:125,mod:'bare',pow:20,h:'low'}]}},
+ {id:'johnny',title:'Food photo: johnny cakes for a menu',short:'a food menu shot',subject:'food',pose:'table',
+  client:'Salt Pond Café: “Our johnny cakes are golden, fluffy and fresh out of the pan. Make people hungry. Natural light, not flashy.”',
+  look:'Window light from the side or behind · reflector fill on the other side · soft · ratio 2:1 to 5:1',
+  want:{patterns:null,ratio:[2,5],quality:'soft',sep:'any',bg:['mid','dark','bright'],backdrops:['white','grey','black','teal','blue','yellow','red'],temp:'day',catch:null,maxLights:3,expo:[-.8,.8],
+   extras:[{id:'win',label:'Window light from side or back',test:A=>A.key&&A.key.type==='win'&&A.key.abs>=65?1:A.key&&A.key.type==='win'?.5:A.key&&A.key.abs>=65?.4:0,pass:'Side or back window light skims across the cakes and shows off their texture.',fail:'Use the window as the key and slide it level with, or behind, the plate so the light skims across the food.'},
+           {id:'reflfill',label:'Reflector fill',test:A=>A.reflOpp?1:A.reflAny?.5:0,pass:'A reflector on the far side lifts the shadows without a second lamp.',fail:'Add a white or silver reflector on the side opposite the window to fill the shadows gently.'}]},
+  ideal:{backdrop:'grey',lights:[{type:'win',y:150,pow:100},{type:'refl',az:75,d:.8,h:'eye',refl:'white'}]}},
+ {id:'carnival',title:'Carnival costume portrait',short:'a Carnival costume portrait',subject:'person',outfit:'carnival',pose:'standing',
+  client:'A Carnival troupe leader: “Our costume this year is ‘Reef Fire’. Make the sequins and feathers sparkle and the colours pop!”',
+  look:'Coloured gels · rim light for sparkle · crisp key · dark or colourful backdrop',
+  want:{patterns:['loop','rembrandt','butterfly'],near:['split','flat'],ratio:[2,7],quality:'any',sep:'rim',bg:['dark','mid'],backdrops:['black','blue','teal','red'],temp:'gel',catch:true,maxLights:5,
+   extras:[{id:'gel',label:'Coloured gels',test:A=>A.gelCount>=2?1:A.gelCount===1?.6:0,pass:'Gels paint the edges with colour that matches the costume.',fail:'Put coloured gels on the rim or background lights (magenta, teal, amber) so the colours pop.'},
+           {id:'spark',label:'Rim sparkle',test:A=>clamp(A.rim/0.45),pass:'Strong rim light from behind makes the sequins and feathers sparkle.',fail:'Add a strong rim light behind the model: light from behind makes sequins and feathers glitter.'}]},
+  ideal:{backdrop:'black',lights:[{type:'key',az:-30,d:1.4,h:'high',mod:'dish',pow:80},{type:'rim',az:145,d:1.2,h:'high',mod:'grid',pow:75,temp:'gel',gel:'magenta'},{type:'rim',az:-145,d:1.2,h:'high',mod:'grid',pow:75,temp:'gel',gel:'teal'},{type:'refl',az:40,d:1,h:'low',refl:'white'}]}},
+ {id:'fisher',title:'Newspaper profile of a Gouyave fisherman',short:'a newspaper profile',subject:'person',outfit:'shirt',pose:'stool',fix:{turnRandom:true},
+  client:'The Weekend Herald feature desk: “Forty years at sea. We want character in his face: strong, sculpted, with depth. Turn him a little and light the short side.”',
+  look:'Short lighting (key on the side turned away from the camera) · Rembrandt or loop · 3:1 to 6:1 · dark or grey backdrop',
+  want:{patterns:['rembrandt','loop'],near:['split'],ratio:[3,6.5],quality:'soft',sep:'either',bg:['dark','mid'],backdrops:['black','grey'],temp:'any',catch:true,maxLights:4,sb:'short'},
+  ideal:(t)=>({backdrop:'grey',lights:[{type:'key',az:45*t,d:1.3,h:'high',mod:'softbox',pow:85},{type:'refl',az:-45*t,d:1.1,h:'eye',refl:'white'},{type:'rim',az:-150*t,d:1.2,h:'high',mod:'grid',pow:45}]})},
+ {id:'ambassador',title:'Youth ambassador portrait for a reef campaign',short:'a campaign portrait',subject:'person',outfit:'tee',pose:'standing',fix:{turnRandom:true},
+  client:'Reef Guardians SLU: “Our youth ambassador should look open, bright and approachable on a teal background for social media.”',
+  look:'Broad lighting (key on the side facing the camera) · loop · soft · about 2:1–3:1 · teal or colour backdrop with background light',
+  want:{patterns:['loop','butterfly'],near:['rembrandt','flat'],ratio:[1.7,3.4],quality:'soft',sep:'bg',bg:['mid','bright'],backdrops:['teal','blue','yellow'],temp:'day',catch:true,maxLights:4,sb:'broad'},
+  ideal:(t)=>({backdrop:'teal',lights:[{type:'key',az:-30*t,d:1.3,h:'high',mod:'softbox',pow:85},{type:'fill',az:30*t,d:1.7,h:'eye',mod:'umbrella',pow:50},{type:'bg',x:300,y:122,mod:'bare',pow:35,h:'low'}]})},
+ {id:'free',title:'Free studio (no brief)',short:'free practice',subject:'person',outfit:'tee',pose:'stool',free:true,
+  client:'No client today. Change the model, try every light and modifier, and see what each one does.',
+  look:'Experiment: try a clamshell, split light, a gelled rim, window light… then export your favourite as a lighting plan.',
+  want:null,ideal:{backdrop:'grey',lights:[]}}
+];
+const PAT = {butterfly:'Butterfly',loop:'Loop',rembrandt:'Rembrandt',split:'Split',flat:'Flat (even)',under:'Under-lighting',none:'No key'};
+const PAT_HOW = {
+  butterfly:'move the key in line with the camera and raise it to 45° above, so a small butterfly shadow sits under the nose',
+  loop:'swing the key 20–35° to one side of the camera, a little above eye level, so the nose shadow makes a small loop',
+  rembrandt:'swing the key to about 45° and raise it, so a small triangle of light falls on the shadow-side cheek',
+  split:'move the key to 90°, level with the model’s side, so exactly half the face is lit',
+  flat:'use two equal soft lights either side of the camera (or one big soft source on axis) so shadows almost vanish'
+};
+
+/* ---------- Helpers ---------- */
+const h2r = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const r2h = a => '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+function shade(hex, v, tint, ref){
+  ref = ref||0.8; tint = tint||[1,1,1];
+  const c = h2r(hex); const st = Math.log2(Math.max(v,1e-4)/ref); const f = Math.pow(2, st*0.72);
+  const o = f<=1 ? c.map(x=>x*f) : c.map(x=>x+(255-x)*Math.min(1,(f-1)/1.9));
+  return r2h(o.map((x,i)=>x*tint[i]));
+}
+const mixH = (a,b,t) => { const A=h2r(a),B=h2r(b); return r2h(A.map((x,i)=>x+(B[i]-x)*t)); };
+const mulT = (a,b) => a.map((x,i)=>x*b[i]);
+const fmtR = r => r>=10?Math.round(r)+'':r>=3?(Math.round(r*2)/2+'').replace('.5','½'):(Math.round(r*10)/10)+'';
+const fmtRatio = r => r==null?'—':(r>=3?Math.round(r):Math.round(r*10)/10)+':1';
+function polar(az,d){ return {x:Math.round(M.x+d*100*Math.sin(az*RAD)), y:Math.round(M.y+d*100*Math.cos(az*RAD))}; }
+function angTo(a,b){ return Math.atan2(b.y-a.y,b.x-a.x)*DEG; }
+function angDiff(a,b){ return Math.abs(((a-b)%360+540)%360-180); }
+function rnd(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('lightingdirector.'+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('lightingdirector.'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------- Lights ---------- */
+let uid = 1;
+function modOf(l){ if(l.type==='refl') return 'reflector'; if(l.type==='prac') return 'lamp'; if(l.type==='win') return l.mod==='sun'?'sun':'window'; return l.mod||'softbox'; }
+function tintOf(l){
+  if(l.type==='win') return [.95,.98,1];
+  if(l.temp==='gel' && GELS[l.gel]) return GELS[l.gel].t;
+  return (TEMPS[l.temp]||TEMPS.day).t;
+}
+function aimTarget(l){
+  if(l.type==='bg') return {x:clamp(l.x+(M.x-l.x)*.5,BACK.x0+20,BACK.x1-20), y:BACK.y};
+  return M;
+}
+function reaim(l){ if(l.type==='prac') return; if(l.type==='win'){ l.rot=0; return; } if(l.auto!==false){ l.rot = angTo(l, aimTarget(l)); } }
+function constrain(l){
+  if(l.type==='win'){ l.x = WIN.x+14; l.y = Math.round(clamp(l.y, WIN.y0+WIN.len/2, WIN.y1-WIN.len/2)); return; }
+  l.x = Math.round(clamp(l.x, ROOM.x0, ROOM.x1)); l.y = Math.round(clamp(l.y, ROOM.y0, ROOM.y1));
+  const d = Math.hypot(l.x-M.x,l.y-M.y);
+  if(d<42){ const a = Math.atan2(l.y-M.y,l.x-M.x)||Math.PI/2; l.x=Math.round(M.x+Math.cos(a)*42); l.y=Math.round(M.y+Math.sin(a)*42); }
+}
+function makeLight(spec){
+  const t = spec.type;
+  const def = {key:{az:-40,d:1.4,h:'high',mod:'softbox',pow:80},fill:{az:35,d:1.8,h:'eye',mod:'umbrella',pow:40},refl:{az:50,d:.9,h:'eye'},rim:{az:145,d:1.2,h:'high',mod:'grid',pow:60},bg:{x:300,y:122,h:'low',mod:'bare',pow:40},win:{y:210,pow:80},prac:{x:420,y:96,pow:50}}[t];
+  const s = Object.assign({}, def, spec);
+  const l = {id:'L'+(uid++), type:t, h:s.h||'eye', pow:s.pow!=null?s.pow:60, mod:t==='win'?(s.mod==='sun'?'sun':'window'):(s.mod||'softbox'), temp:s.temp||(t==='prac'?'tung':'day'), gel:s.gel||'amber', refl:s.refl||'white', auto:true};
+  if(spec.x!=null && spec.az==null){ l.x=spec.x; l.y=spec.y; }
+  else if(s.x!=null && s.az==null){ l.x=s.x; l.y=s.y; }
+  else if(t==='win'){ l.x=WIN.x+14; l.y=s.y; }
+  else { const p = polar(s.az, s.d); l.x=p.x; l.y=p.y; }
+  if(t==='win') l.y = s.y;
+  constrain(l); reaim(l);
+  if(spec.rot!=null && spec.auto===false){ l.rot=spec.rot; l.auto=false; }
+  return l;
+}
+function setupFrom(ideal){ return {backdrop:ideal.backdrop||'grey', lights:(ideal.lights||[]).map(makeLight)}; }
+
+/* ---------- Lighting engine ---------- */
+const AMB = 0.025;
+function sideF(az,n){ return Math.pow(Math.max(0.03, Math.cos((az-n)*RAD)), 1.5); }
+function aimF(l, p, beam){ if(beam>=180) return 1; const diff = angDiff(angTo(l,p), l.rot||0); return diff<=beam?1:Math.max(0,1-(diff-beam)/25); }
+function tintAvg(acc,w){ return w>1e-6 ? acc.map(x=>x/w) : [1,1,1]; }
+function analyse(S, md, turn){
+  turn = turn==null ? (S.turn||0) : turn;
+  const bd = BACKDROPS[S.backdrop]||BACKDROPS.grey;
+  const A = {L:[], md, turn};
+  for(const l of S.lights){
+    const r = {l, type:l.type};
+    const dx=l.x-M.x, dy=l.y-M.y; const d=Math.max(Math.hypot(dx,dy),30);
+    r.d=d; r.dm=d/100; r.az=Math.atan2(dx,dy)*DEG; r.abs=Math.abs(r.az);
+    r.mod=modOf(l); const mo=MODS[r.mod];
+    r.soft = clamp(mo.soft*clamp(1.35-0.25*r.dm,.45,1.15));
+    r.tint = tintOf(l); r.front = r.abs<=110;
+    r.aim = aimF(l, M, mo.beam);
+    const pw=(l.pow||0)/100;
+    if(l.type==='prac') r.I = 0.02*pw*Math.pow(150/d,2);
+    else if(l.type==='refl') r.I = 0;
+    else r.I = pw*Math.pow(150/d,2)*mo.eff*r.aim*(l.type==='win'?(r.mod==='sun'?7:4.5):1);
+    r.fL=sideF(r.az,-45); r.fR=sideF(r.az,45);
+    A.L.push(r);
+  }
+  let key=null, best=0;
+  for(const r of A.L){ if(r.type==='refl'||r.type==='prac'||!r.front) continue; const v=r.I*Math.max(r.fL,r.fR); if(v>best){best=v;key=r;} }
+  if(key && best<0.03) key=null;
+  A.key=key;
+  const KI = key?(key.abs<12?key.I:best):0;
+  for(const r of A.L) if(r.type==='refl'){
+    const rf = REFL[r.l.refl]||REFL.white;
+    r.I = Math.min(0.85*KI, KI*rf.k*Math.pow(80/Math.max(r.d,40),2)*r.aim);
+    r.tint = mulT(key?key.tint:[1,1,1], rf.t); r.soft = rf.soft;
+  }
+  const bounce = AMB + (bd.refl>.6?.02:bd.refl>.3?.01:0);
+  let vL=bounce, vR=bounce, wL=bounce, wR=bounce, tL=[bounce,bounce,bounce], tR=[bounce,bounce,bounce];
+  let rimL=0, rimR=0, rimT=[0,0,0], rimW=0, frontTotal=0, rTL=[0,0,0], rTR=[0,0,0], rWL=0, rWR=0;
+  for(const r of A.L){
+    if(r.I<=0) continue;
+    if(r.front){
+      const cl=r.I*r.fL, cr=r.I*r.fR; vL+=cl; vR+=cr;
+      for(let i=0;i<3;i++){ tL[i]+=r.tint[i]*cl; tR[i]+=r.tint[i]*cr; } wL+=cl; wR+=cr;
+      if(r.type!=='prac') frontTotal += r.I*Math.max(r.fL,r.fR);
+      if(r.abs>80 && r.type!=='prac'){ const e=r.I*.3; if(r.az<0) rimL+=e; else rimR+=e; }
+    } else {
+      const dx=r.l.x-M.x;
+      const wl = dx<-20?1:dx>20?0:.7, wr = dx>20?1:dx<-20?0:.7; rimL+=r.I*wl; rimR+=r.I*wr; for(let i=0;i<3;i++){ rTL[i]+=r.tint[i]*r.I*wl; rTR[i]+=r.tint[i]*r.I*wr; } rWL+=r.I*wl; rWR+=r.I*wr;
+      for(let i=0;i<3;i++) rimT[i]+=r.tint[i]*r.I; rimW+=r.I;
+    }
+  }
+  A.vL=vL; A.vR=vR; A.tL=tintAvg(tL,wL); A.tR=tintAvg(tR,wR);
+  A.rimL=rimL; A.rimR=rimR; A.rimT=tintAvg(rimT,rimW); A.rimTL=tintAvg(rTL,rWL); A.rimTR=tintAvg(rTR,rWR);
+  A.frontTotal=frontTotal;
+  const hairF = (HAIRS[md.hair]||HAIRS.short).rim;
+  A.rimRaw = Math.max(rimL,rimR); A.rim = A.rimRaw*hairF;
+  // key/fill ratio
+  let kS=0, Klit=0, Fs=bounce, Flit=0, Fsum=0;
+  if(key){
+    kS = key.abs<12?0:Math.sign(key.az);
+    Klit = kS===0 ? key.I*(key.fL+key.fR)/2 : key.I*(kS>0?key.fR:key.fL);
+    Fs += kS===0 ? 0 : key.I*(kS>0?key.fL:key.fR);
+    for(const r of A.L){ if(r===key||!r.front||r.I<=0) continue; const sh = kS===0?(r.fL+r.fR)/2:(kS>0?r.fL:r.fR); const lt = kS===0?sh:(kS>0?r.fR:r.fL); Fs+=r.I*sh; Flit+=r.I*lt; if(r.type!=='prac') Fsum+=r.I*sh; }
+    A.H = Klit+Flit+bounce; A.Fs=Fs; A.ratio=Math.max(1,A.H/Fs);
+  } else { A.H=Math.max(vL,vR); A.Fs=Math.min(vL,vR); A.ratio=null; }
+  A.Fsum=Fsum; A.keySide=kS; A.Klit=Klit;
+  A.stops = Math.log2(A.H/0.8);
+  // pattern
+  let pat='none', sw=0;
+  if(key){
+    const a=key.abs, h=key.l.h;
+    if(h==='low' && a<100) pat='under';
+    else if(a<12) pat = h==='high'?'butterfly':'flat';
+    else if(a<38) pat='loop'; else if(a<65) pat='rembrandt'; else pat='split';
+    if(A.ratio<1.5 && pat!=='butterfly' && pat!=='under') pat='flat';
+    sw = a<12?0 : pat==='loop'||pat==='flat'? .2+.1*clamp((a-12)/26) : pat==='rembrandt'? .46 : a<=90 ? .5 : .5+.4*clamp((a-90)/60);
+  }
+  A.pattern=pat; A.shadowW=sw;
+  A.sb = (turn && kS) ? (kS===-turn?'broad':'short') : null;
+  A.soft = key?key.soft:0;
+  A.quality = !key?'—': key.soft>=.55?'soft':key.soft<.3?'hard':'medium';
+  // catchlights
+  A.catch=[];
+  for(const r of A.L){
+    if(!r.front||r.type==='prac'||r.abs>80) continue;
+    if(r.I<(r.type==='refl'?.08:.12)) continue;
+    if(r.l.h==='low' && r.type!=='refl') continue;
+    A.catch.push({ox:Math.sin(r.az*RAD)*.8, oy:r.l.h==='high'?-.6:r.l.h==='low'?.65:-.05, mod:r.mod, b:clamp(r.I/.45,.35,1), near:r.abs>50?Math.sign(r.az):0, refl:r.l.refl});
+  }
+  // glasses glare
+  let g=0;
+  if(md.glasses){ for(const r of A.L){ if(!r.front||r.type==='prac'||r.I<.12) continue; if(r.l.h==='eye'){ if(r.abs<22) g=Math.max(g, clamp(r.I*1.3)*(1-r.abs/30)); else if(r.abs<32) g=Math.max(g, clamp(r.I)*.3); } } }
+  A.glare=g;
+  A.hotspot = key && key.soft<.3 && Klit>.85 ? clamp((Klit-.85)*1.6+.3) : 0;
+  // backdrop: five samples across the visible part
+  const xs=[190,245,300,355,410]; A.bgV=[]; let bT=[0,0,0], bW=0; let spot=null, spotV=0;
+  for(const sx of xs){
+    const P={x:sx,y:BACK.y}; let v=AMB*1.5;
+    for(const r of A.L){
+      const l=r.l; if(l.type==='refl') continue;
+      const pw=(l.pow||0)/100;
+      if(l.type==='prac'){ v+= 0.02*pw*Math.pow(150/Math.max(Math.hypot(l.x-sx,l.y-BACK.y),40),2); continue; }
+      const mo=MODS[r.mod]; const dd=Math.max(Math.hypot(l.x-sx,l.y-BACK.y),40);
+      const af=aimF(l,P,mo.beam); if(af<=0) continue;
+      const behind = l.y < M.y-10;
+      const c = pw*Math.pow(150/dd,2)*mo.eff*af*(l.type==='win'?(r.mod==='sun'?7:4.5)*.35:1)*(behind?1:.55);
+      v+=c; if(sx===300){ for(let i=0;i<3;i++) bT[i]+=r.tint[i]*c; bW+=c; }
+    }
+    A.bgV.push(v);
+  }
+  A.bgT = bW>0.05 ? tintAvg(bT.map((x,i)=>x+AMB*1.5),bW+AMB*1.5) : [1,1,1];
+  for(const r of A.L){ const l=r.l; if(l.type==='refl'||l.type==='prac') continue; if(l.y<M.y-10 && aimF(l,M,MODS[r.mod].beam)<.5){ const hit = l.rot<-20&&l.rot>-160; if(hit){ const v=(l.pow/100); if(v>spotV){spotV=v;spot=r;} } } }
+  A.spot=spot;
+  A.bgCentre=(A.bgV[1]+A.bgV[2]+A.bgV[3])/3;
+  A.bgLum=bd.refl*A.bgCentre;
+  A.bgTone = A.bgLum>=.5?'bright':A.bgLum>=.12?'mid':'dark';
+  A.bgLight = !!spot && A.bgCentre>.15;
+  const skin = SKINS[md.skin]||SKINS[2];
+  A.faceLum = skin.refl*A.H;
+  A.overStops = Math.log2(Math.max(A.bgLum,1e-3)/Math.max(A.faceLum,1e-3));
+  // glow through liquid (bottle)
+  let back=0; for(const r of A.L){ if(r.abs>135 && r.I>0) back+=r.I; }
+  A.glow = clamp(Math.max(back*1.5, (A.bgCentre-.35)*.9));
+  // colour
+  const fronts = A.L.filter(r=>r.front&&r.I>.08&&r.type!=='refl'&&r.type!=='prac');
+  const tkey = r => r.type==='win'?'day':r.l.temp==='gel'?'gel:'+r.l.gel:r.l.temp;
+  A.temps = Array.from(new Set(fronts.map(tkey)));
+  A.mixed = A.temps.length>1;
+  A.keyTemp = key?tkey(key):null;
+  A.gelCount = A.L.filter(r=>r.l.temp==='gel'&&r.type!=='win'&&r.type!=='refl'&&(r.I>.08||r.type==='bg'||r.type==='prac'||(!r.front))).length;
+  const warmT = t => t==='tung'||t==='gel:amber'||t==='gel:red'||t==='gel:magenta';
+  A.warm = (key&&warmT(A.keyTemp)) || A.L.some(r=>(r.type==='bg'||r.l.y<M.y-10)&&r.type!=='refl'&&warmT(tkey(r)));
+  A.n = S.lights.length;
+  A.threePoint = !!key && Fsum>.1 && A.rimRaw>.2;
+  A.practical = S.lights.some(l=>l.type==='prac'&&l.y<M.y);
+  A.clamshell = !!key && key.l.h==='high' && key.abs<20 && A.L.some(r=>r!==key&&r.front&&r.l.h==='low'&&r.abs<35&&r.I>.12);
+  const sides = new Set(); let ss=0; for(const r of A.L){ if((r.mod==='softbox'||r.mod==='scrim')&&r.abs>35&&r.abs<=125&&r.I>.1){ ss++; sides.add(Math.sign(r.az)); } }
+  A.sideSoft = sides.size>=2?ss:Math.min(ss,1);
+  A.reflAny = A.L.some(r=>r.type==='refl'&&r.I>.06);
+  A.reflOpp = !!key && A.L.some(r=>r.type==='refl'&&r.I>.06&&Math.sign(r.az)!==Math.sign(key.az));
+  return A;
+}
+
+/* ---------- Portrait renderer ---------- */
+const FACE = {
+  round:'M150 76 C192 76 212 110 212 150 C212 194 186 224 150 224 C114 224 88 194 88 150 C88 110 108 76 150 76 Z',
+  angular:'M150 74 C192 74 208 102 207 140 L202 182 L178 213 Q150 230 122 213 L98 182 L93 140 C92 102 108 74 150 74 Z'
+};
+const BODY = 'M18 360 C22 300 62 270 116 258 Q150 278 184 258 C238 270 278 300 282 360 Z';
+function hairParts(type, fill, extra){
+  extra = extra||'';
+  const f = `fill="${fill}" ${extra}`;
+  switch(type){
+    case 'long': return {back:`<path ${f} d="M80 150 C74 84 110 58 150 58 C192 58 228 84 220 150 C224 210 236 260 246 302 C214 314 196 296 190 262 L110 262 C104 296 86 314 54 302 C64 260 76 210 80 150 Z"/>`, front:`<path ${f} d="M86 150 C80 90 112 62 150 62 C194 62 222 92 214 150 C206 112 182 92 152 92 C134 104 106 114 86 150 Z"/>`};
+    case 'locs': { let b=''; for(let i=-5;i<=5;i++){ const x0=150+i*12.5, x1=150+i*15.5+(i<0?-6:6); b+=`<path d="M${x0} 92 C${x0+i*3} 170 ${x1} 210 ${x1} ${262+Math.abs(i)*3}" fill="none" stroke="${fill}" stroke-width="12" stroke-linecap="round" ${extra}/>`; }
+      let fr=`<path ${f} d="M87 146 C82 90 112 64 150 64 C190 64 220 90 213 146 C204 116 184 98 150 98 C118 98 96 116 87 146 Z"/>`;
+      for(let i=-3;i<=3;i++){ fr+=`<path d="M${150+i*17} 88 Q${150+i*20} 104 ${150+i*24} 112" fill="none" stroke="${fill}" stroke-width="10" stroke-linecap="round" ${extra}/>`; }
+      return {back:b, front:fr}; }
+    case 'braids': { const b=`<path d="M98 150 C92 200 92 250 96 304" fill="none" stroke="${fill}" stroke-width="15" stroke-linecap="round" ${extra}/><path d="M202 150 C208 200 208 250 204 304" fill="none" stroke="${fill}" stroke-width="15" stroke-linecap="round" ${extra}/><path d="M98 150 C92 200 92 250 96 304 M202 150 C208 200 208 250 204 304" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="13" stroke-dasharray="5 5" ${extra}/>`;
+      let fr=`<path ${f} d="M88 148 C82 90 112 64 150 64 C190 64 220 90 212 148 C204 116 184 100 150 100 C118 100 96 116 88 148 Z"/>`;
+      for(let i=-3;i<=3;i++) fr+=`<path d="M${150+i*15} 98 Q${150+i*14} 80 ${150+i*9} 68" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="2" stroke-dasharray="3 3"/>`;
+      return {back:b, front:fr}; }
+    case 'wrap': return {back:'', front:`<path ${f} d="M84 150 C70 82 102 24 152 20 C206 16 238 72 216 150 C206 116 184 102 150 102 C118 102 96 116 84 150 Z"/><path ${f} d="M128 34 C138 6 172 6 178 30 C166 22 142 22 128 34 Z"/>`};
+    default: return {back:'', front:`<path ${f} d="M88 146 C82 92 110 66 150 66 C192 66 220 92 212 146 C206 118 190 100 150 98 C112 100 94 118 88 146 Z"/>`};
+  }
+}
+function bgLayer(S, A, p, w, h){
+  const bd = BACKDROPS[S.backdrop]||BACKDROPS.grey;
+  const st = A.bgV.map((v,i)=>`<stop offset="${i/4}" stop-color="${shade(bd.c, v, A.bgT)}"/>`).join('');
+  let s = `<linearGradient id="${p}bg" x1="0" x2="1" y1="0" y2="0">${st}</linearGradient>
+  <linearGradient id="${p}bgv" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>`;
+  let spot='';
+  if(A.spot){ const sx = clamp((A.spot.l.x+(M.x-A.spot.l.x)*.5-190)/220,0,1)*w; const sv=A.bgCentre*1.5;
+    s+=`<radialGradient id="${p}sp" cx="${sx}" cy="${h*.42}" r="${w*.55}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${shade(bd.c, sv, A.bgT)}" stop-opacity=".85"/><stop offset="1" stop-color="${shade(bd.c, sv, A.bgT)}" stop-opacity="0"/></radialGradient>`;
+    spot=`<rect width="${w}" height="${h}" fill="url(#${p}sp)"/>`; }
+  return {defs:s, body:`<rect width="${w}" height="${h}" fill="url(#${p}bg)"/>${spot}<rect width="${w}" height="${h}" fill="url(#${p}bgv)"/>`};
+}
+function practicalLayer(S, A, p){
+  let s='';
+  for(const l of S.lights){ if(l.type!=='prac'||l.y>=M.y) continue;
+    const x = clamp((l.x-190)/220,0,1)*300; const lx = clamp(x, 26, 274); const pw=l.pow/100; const t=tintOf(l);
+    const glow = shade('#ffd9a0', .8+pw*1.4, t);
+    s+=`<radialGradient id="${p}pg${l.id}" cx="${lx}" cy="200" r="${60+60*pw}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${glow}" stop-opacity="${.55+.35*pw}"/><stop offset="1" stop-color="${glow}" stop-opacity="0"/></radialGradient>
+    <rect width="300" height="360" fill="url(#${p}pg${l.id})"/>
+    <rect x="${lx-3}" y="214" width="6" height="56" fill="#3a2a1c"/><rect x="${lx-26}" y="268" width="52" height="8" rx="3" fill="#2a1e14"/>
+    <path d="M${lx-22} 214 L${lx+22} 214 L${lx+15} 180 L${lx-15} 180 Z" fill="${glow}"/>`;
+  }
+  return s;
+}
+function shadeOverlayGrad(p, id, t, w, c, kS){
+  const op = (0.75*c).toFixed(2);
+  const a = kS>0 ? [op,'0'] : kS<0 ? ['0',op] : ['0','0'];
+  return `<linearGradient id="${p}${id}" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity="${a[0]}"/><stop offset="${clamp(t-w/2)}" stop-color="#000" stop-opacity="${a[0]}"/><stop offset="${clamp(t+w/2)}" stop-color="#000" stop-opacity="${a[1]}"/><stop offset="1" stop-color="#000" stop-opacity="${a[1]}"/></linearGradient>`;
+}
+function personSVG(S, md, A, p, outfit){
+  const sk = SKINS[md.skin]||SKINS[2];
+  const turn = A.turn||0, fx = turn*9;
+  const kS = A.keySide||0, soft = A.key?A.key.soft:.6, w = .05+.32*soft;
+  const t = (!A.key||kS===0) ? .5 : (kS>0 ? A.shadowW : 1-A.shadowW);
+  const c = A.ratio ? clamp(1-1/A.ratio) : .9;
+  const cL = shade(sk.c, A.vL, A.tL), cR = shade(sk.c, A.vR, A.tR);
+  const tS = kS>0?A.tL:A.tR, cLit = kS>0?cR:kS<0?cL:mixH(cL,cR,.5);
+  const cSh = shade(sk.c, A.Fs*.8, tS), cDeep = shade(sk.c, A.Fs*.55, tS);
+  const st = (a,b)=>`<stop offset="0" stop-color="${a}"/><stop offset="${clamp(t-w/2)}" stop-color="${a}"/><stop offset="${clamp(t+w/2)}" stop-color="${b}"/><stop offset="1" stop-color="${b}"/>`;
+  const face = FACE[md.face]||FACE.round;
+  const blur = (1+8*soft).toFixed(1);
+  const cloth = {suit:'#1f2d4a',shirt:'#6b4a2b',gown:'#151515',uniform:'#3f6fb5',carnival:'#c2186b',tee:'#e9e4d8',beauty:'#d8c7e6'}[outfit]||'#5a5a5a';
+  const clL = shade(cloth, A.vL*.95, A.tL), clR = shade(cloth, A.vR*.95, A.tR);
+  const hL = shade(HAIRC, A.vL*1.1, A.tL), hR = shade(HAIRC, A.vR*1.1, A.tR);
+  const bg = bgLayer(S, A, p, 300, 360);
+  const neckSh = A.key ? (A.key.l.h==='high'? .85*c : A.key.l.h==='eye'? .35*c : 0) : .5;
+  const hp = hairParts(md.hair, `url(#${p}hg)`);
+  const madras = `<pattern id="${p}md" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#d6362b"/><rect width="22" height="5" y="4" fill="#f2c230"/><rect width="4" height="22" x="13" fill="#1f8a4c" opacity=".85"/><rect width="22" height="2" y="15" fill="#fff" opacity=".5"/></pattern>`;
+  let defs = `${bg.defs}
+    <linearGradient id="${p}fg" x1="0" x2="1">${st(cL,cR)}</linearGradient>
+    <linearGradient id="${p}cg" x1="0" x2="1">${st(clL,clR)}</linearGradient>
+    <linearGradient id="${p}hg" x1="0" x2="1">${st(hL,hR)}</linearGradient>
+    <linearGradient id="${p}ng" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${cDeep}" stop-opacity="${neckSh.toFixed(2)}"/><stop offset=".55" stop-color="${cDeep}" stop-opacity="${(neckSh*.35).toFixed(2)}"/><stop offset="1" stop-color="${cDeep}" stop-opacity="0"/></linearGradient>
+    <radialGradient id="${p}vg" cx=".5" cy=".45" r=".62"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${(.12+.25*c).toFixed(2)}"/></radialGradient>
+    <radialGradient id="${p}gl" cx=".4" cy=".35" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#e8f2ff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    ${shadeOverlayGrad(p,'og',t,w,c,kS)}
+    ${madras}
+    <clipPath id="${p}fc"><path d="${face}"/></clipPath>
+    <mask id="${p}rm" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="360"><rect width="300" height="360" fill="#fff"/><ellipse cx="${150+fx}" cy="152" rx="54" ry="78" fill="#000" filter="url(#${p}bs)"/><rect x="${120+fx}" y="200" width="60" height="62" rx="20" fill="#000" filter="url(#${p}bs)"/></mask>
+    <linearGradient id="${p}gmL" x1="0" x2="300" gradientUnits="userSpaceOnUse"><stop offset="${((120+fx)/300).toFixed(3)}" stop-color="#fff"/><stop offset="${((175+fx)/300).toFixed(3)}" stop-color="#000"/></linearGradient>
+    <linearGradient id="${p}gmR" x1="0" x2="300" gradientUnits="userSpaceOnUse"><stop offset="${((125+fx)/300).toFixed(3)}" stop-color="#000"/><stop offset="${((180+fx)/300).toFixed(3)}" stop-color="#fff"/></linearGradient>
+    <mask id="${p}cL" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="360"><rect width="300" height="360" fill="url(#${p}gmL)"/></mask>
+    <mask id="${p}cR" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="360"><rect width="300" height="360" fill="url(#${p}gmR)"/></mask>
+    <filter id="${p}bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter>
+    <filter id="${p}br" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>
+    <filter id="${p}bs" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>`;
+  let s = bg.body + practicalLayer(S, A, p);
+  // carnival feathers
+  if(outfit==='carnival'){
+    const cols=['#ff2d95','#ffcc00','#00c2c7','#ff6a00','#9b5cff','#ff2d95','#00c2c7','#ffcc00','#ff6a00'];
+    for(let i=0;i<9;i++){ const a=-80+i*20; const col=shade(cols[i], (A.vL+A.vR)/2*1.1+A.rimRaw*.6, A.rimRaw>.2?A.rimT:A.tL);
+      s+=`<ellipse cx="150" cy="40" rx="15" ry="82" fill="${col}" transform="rotate(${a} 150 140)" opacity=".95"/>`; }
+  }
+  s += hp.back;
+  // body + neck
+  s += `<path d="${BODY}" fill="url(#${p}cg)"/>`;
+  if(outfit==='suit') s+=`<path d="M128 262 L150 312 L172 262 Q150 276 128 262Z" fill="${shade('#f4f4f4',(A.vL+A.vR)/2,A.tL)}"/><path d="M146 278 L154 278 L157 330 L150 340 L143 330Z" fill="${shade('#8a1c2b',(A.vL+A.vR)/2,A.tL)}"/>`;
+  if(outfit==='gown') s+=`<path d="M112 262 L134 360 L150 360 L140 268Z M188 262 L166 360 L150 360 L160 268Z" fill="${shade('#d4a017',(A.vL+A.vR)/2,A.tL)}"/>`;
+  if(outfit==='uniform') s+=`<path d="M124 262 L150 296 L176 262 Q150 276 124 262Z" fill="${shade('#f2f2f2',(A.vL+A.vR)/2,A.tL)}"/>`;
+  if(outfit==='carnival'){ const spk = clamp((1-soft)*.7 + A.rimRaw*.9); for(let i=0;i<34;i++){ const x=40+((i*53)%220), y=278+((i*37)%80); const lit = x<150?A.vL:A.vR; s+=`<circle cx="${x}" cy="${y}" r="2.6" fill="${shade('#ffd700',lit*1.2,A.tL)}"/>`; if((i%3===0)&&spk>.25) s+=`<path d="M${x-5} ${y}h10M${x} ${y-5}v10" stroke="#fff" stroke-width="1.4" opacity="${(spk*.9).toFixed(2)}"/>`; } }
+  s += `<path d="M126 200 L126 266 Q150 280 174 266 L174 200 Z" fill="url(#${p}fg)"/><path d="M126 200 L126 266 Q150 280 174 266 L174 200 Z" fill="url(#${p}ng)"/>`;
+  // ears
+  const ex = md.face==='angular'?93:88;
+  s += `<ellipse cx="${ex+fx*.4}" cy="156" rx="8" ry="14" fill="${cL}"/><ellipse cx="${300-ex+fx*.4}" cy="156" rx="8" ry="14" fill="${cR}"/>`;
+  // head
+  s += `<path d="${face}" fill="url(#${p}fg)"/>`;
+  // overlays clipped to face
+  let o = '';
+  const nx = 150+fx, ny = 170, sd = -kS;
+  const h = A.key?A.key.l.h:'eye';
+  if(A.key){
+    if(h==='high') o+=`<ellipse cx="${126+fx}" cy="141" rx="19" ry="11" fill="${cSh}" opacity="${(.45*c).toFixed(2)}" filter="url(#${p}bl)"/><ellipse cx="${174+fx}" cy="141" rx="19" ry="11" fill="${cSh}" opacity="${(.45*c).toFixed(2)}" filter="url(#${p}bl)"/>`;
+    const op = (.92*c).toFixed(2);
+    switch(A.pattern){
+      case 'butterfly': o+=`<path d="M${nx-11} ${ny+3} Q${nx} ${ny+15} ${nx+11} ${ny+3} Q${nx} ${ny+8} ${nx-11} ${ny+3}Z" fill="${cDeep}" opacity="${op}" filter="url(#${p}bl)"/><ellipse cx="${nx}" cy="226" rx="44" ry="10" fill="${cDeep}" opacity="${op}" filter="url(#${p}bl)"/>`; break;
+      case 'loop': o+= h==='eye' ? `<ellipse cx="${nx+sd*11}" cy="${ny-3}" rx="9" ry="4" fill="${cDeep}" opacity="${op}" filter="url(#${p}bl)"/>` : `<ellipse cx="${nx+sd*9}" cy="${ny+6}" rx="10" ry="5" fill="${cDeep}" opacity="${op}" transform="rotate(${sd*28} ${nx+sd*9} ${ny+6})" filter="url(#${p}bl)"/>`; break;
+      case 'rembrandt': if(c>.35) o+=`<path d="M${nx+sd*8} 158 Q${nx+sd*24} 152 ${nx+sd*34} 156 Q${nx+sd*24} 172 ${nx+sd*13} 186 Z" fill="${cLit}" opacity="${clamp((c-.35)/.45).toFixed(2)}" filter="url(#${p}bs)"/>`; o+=`<ellipse cx="${nx+sd*7}" cy="${ny+4}" rx="8" ry="4" fill="${cDeep}" opacity="${(.6*c).toFixed(2)}" filter="url(#${p}bl)"/>`; break;
+      case 'under': o+=`<rect x="80" y="70" width="140" height="70" fill="${cDeep}" opacity="${(.7*c).toFixed(2)}" filter="url(#${p}bl)"/><ellipse cx="${nx}" cy="150" rx="7" ry="13" fill="${cDeep}" opacity="${op}" filter="url(#${p}bl)"/>`; break;
+      case 'flat': o+=`<ellipse cx="${nx}" cy="${ny+5}" rx="8" ry="3" fill="${cSh}" opacity="${(.5*c).toFixed(2)}" filter="url(#${p}bl)"/>`; break;
+    }
+    if(A.hotspot>0) o+=`<ellipse cx="${150+fx+kS*14}" cy="104" rx="16" ry="8" fill="#fff" opacity="${(A.hotspot*.55).toFixed(2)}" filter="url(#${p}bs)"/><ellipse cx="${nx+kS*2}" cy="158" rx="3" ry="8" fill="#fff" opacity="${(A.hotspot*.6).toFixed(2)}" filter="url(#${p}bs)"/>`;
+    if(A.key.mod==='dish'||A.key.mod==='sun') o+=`<ellipse cx="${150+fx}" cy="110" rx="18" ry="6" fill="#fff" opacity=".12" filter="url(#${p}bs)"/><ellipse cx="${150+fx+kS*30}" cy="168" rx="9" ry="5" fill="#fff" opacity=".1" filter="url(#${p}bs)"/>`;
+    for(const r of A.L){ if(r.type==='refl'&&r.I>.1&&r.l.refl!=='white'){ const rs = r.az<0?-1:1; o+=`<ellipse cx="${150+fx+rs*30}" cy="182" rx="22" ry="14" fill="${r.l.refl==='gold'?'#ffcf70':'#ffffff'}" opacity="${clamp(r.I*.25,0,.2).toFixed(2)}" filter="url(#${p}bl)"/>`; } }
+  }
+  o += `<rect x="80" y="70" width="140" height="160" fill="url(#${p}vg)"/>`;
+  s += `<g clip-path="url(#${p}fc)">${o}</g>`;
+  // features
+  const eyes = [{x:126+fx,s:-1},{x:174+fx,s:1}];
+  for(const e of eyes){
+    const v = e.s<0?A.vL:A.vR; const wc = shade('#efe9e2', Math.max(v,.12)*1.05, e.s<0?A.tL:A.tR);
+    const nar = turn===e.s ? .85 : 1;
+    s+=`<ellipse cx="${e.x}" cy="146" rx="${(10*nar).toFixed(1)}" ry="5.4" fill="${wc}"/><circle cx="${e.x+turn*1.6}" cy="146" r="4.8" fill="#3a2416"/><circle cx="${e.x+turn*1.6}" cy="146" r="2.1" fill="#0b0705"/>`;
+    s+=`<path d="M${e.x-12} ${136} Q${e.x} ${129} ${e.x+12} ${135}" stroke="${shade(HAIRC,v*1.2)}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;
+  }
+  s+=`<path d="M${nx-9+turn*2} 165 Q${nx-10+turn*2} 172 ${nx-4+turn*2} 172 Q${nx+turn*2} 175 ${nx+4+turn*2} 172 Q${nx+10+turn*2} 172 ${nx+9+turn*2} 165" stroke="${cDeep}" stroke-width="1.6" fill="none" opacity=".55" stroke-linecap="round"/><path d="M${nx+(kS||1)*-5} 142 Q${nx+(kS||1)*-6} 156 ${nx+(kS||1)*-8} 164" stroke="${cDeep}" stroke-width="1.4" fill="none" opacity="${(.15+.35*c).toFixed(2)}" stroke-linecap="round"/>`;
+  const lipBase = mixH(shade(sk.c,.55), '#8d3a3a', .28);
+  s+=`<path d="M${133+fx} 193 Q${150+fx} 199 ${167+fx} 193 Q${150+fx} 206 ${133+fx} 193Z" fill="${shade(lipBase,(A.vL+A.vR)/2*1.3,A.tL)}"/>`;
+  // catchlights
+  for(const k of A.catch){
+    for(const e of eyes){
+      if(k.near && k.near!==e.s) continue;
+      const cx = e.x+turn*1.6+k.ox*3.2, cy = 146+k.oy*2.8, op=k.b.toFixed(2);
+      if(k.mod==='softbox'||k.mod==='scrim') s+=`<rect x="${(cx-1.4).toFixed(1)}" y="${(cy-1.2).toFixed(1)}" width="2.8" height="2.4" fill="#fff" opacity="${op}"/>`;
+      else if(k.mod==='window') s+=`<rect x="${(cx-1.7).toFixed(1)}" y="${(cy-1.4).toFixed(1)}" width="3.4" height="2.8" fill="#fff" opacity="${op}"/><path d="M${cx.toFixed(1)} ${(cy-1.4).toFixed(1)}v2.8M${(cx-1.7).toFixed(1)} ${cy.toFixed(1)}h3.4" stroke="#2a1a10" stroke-width=".5"/>`;
+      else if(k.mod==='dish') s+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="1.7" fill="none" stroke="#fff" stroke-width="1" opacity="${op}"/>`;
+      else if(k.mod==='reflector') s+=`<path d="M${(cx-2).toFixed(1)} ${cy.toFixed(1)} q2 1.3 4 0" stroke="${k.refl==='gold'?'#ffe0a0':'#fff'}" stroke-width="1" fill="none" opacity="${(k.b*.8).toFixed(2)}"/>`;
+      else s+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${k.mod==='umbrella'?1.6:.95}" fill="#fff" opacity="${op}"/>`;
+    }
+  }
+  // glasses
+  if(md.glasses){
+    for(const e of eyes) s+=`<rect x="${e.x-17}" y="133" width="34" height="25" rx="9" fill="rgba(210,230,255,.07)" stroke="#161616" stroke-width="3"/>`;
+    s+=`<path d="M${143+fx} 142 Q${150+fx} 138 ${157+fx} 142" stroke="#161616" stroke-width="3" fill="none"/><path d="M${109+fx} 141 L${91+fx*.4} 146 M${191+fx} 141 L${209+fx*.4} 146" stroke="#161616" stroke-width="3"/>`;
+    if(A.glare>.05) for(const e of eyes) s+=`<ellipse cx="${e.x+2}" cy="145" rx="16" ry="12" fill="url(#${p}gl)" opacity="${clamp(A.glare*1.3).toFixed(2)}"/><path d="M${e.x-8} 150 L${e.x+6} 136" stroke="#fff" stroke-width="2" opacity="${(A.glare*.8).toFixed(2)}"/>`;
+  }
+  // front hair / wrap / cap
+  if(md.hair==='wrap'){ const wp = hairParts('wrap', `url(#${p}md)`); s+= wp.front + hairParts('wrap','url(#'+p+'og)').front; s+= hairParts('wrap','#000',`opacity="${(1-clamp(Math.pow(2,A.stops*.72))).toFixed(2)}"`).front; }
+  else s += hp.front;
+  if(outfit==='gown' && md.hair!=='wrap') s+=`<path d="M86 84 L150 58 L214 84 L150 108 Z" fill="${shade('#1a1a1a',(A.vL+A.vR)/2*1.3,A.tL)}"/><path d="M118 92 L118 108 Q150 122 182 108 L182 92" fill="${shade('#111',(A.vL+A.vR)/2,A.tL)}"/><path d="M150 82 L196 92 L198 128" stroke="#e0b020" stroke-width="2.5" fill="none"/>`;
+  // rim light
+  const rimPathsFor = (rimCol)=>{ const hr = hairParts(md.hair, 'none', `stroke="${rimCol}" stroke-width="${md.hair==='short'?3:4}"`); return `<path d="${face}" fill="none" stroke="${rimCol}" stroke-width="5"/><path d="${BODY}" fill="none" stroke="${rimCol}" stroke-width="6"/>${hr.back.replace(/stroke="(?!rgba)[^"]*"/,'')}${md.hair==='wrap'?hairParts('wrap','none',`stroke="${rimCol}" stroke-width="5"`).front:(hr.back?'':hr.front)}`; };
+  const rimOp = side => clamp((side==='L'?A.rimL:A.rimR)/0.45);
+  for(const side of ['L','R']){ const op=rimOp(side); if(op>.04){ const rc=r2h((side==='L'?A.rimTL:A.rimTR).map(x=>255*Math.min(1,x*1.05))); const rp=rimPathsFor(rc); s+=`<g mask="url(#${p}rm)"><g mask="url(#${p}c${side})"><g opacity="${op.toFixed(2)}" filter="url(#${p}br)">${rp}</g></g><g mask="url(#${p}c${side})"><g opacity="${(op*.35).toFixed(2)}">${rp.replace(/stroke-width="\d+"/g,'stroke-width="1.4"')}</g></g></g>`; } }
+  return `<defs>${defs}</defs>${s}`;
+}
+function bottleSVG(S, md, A, p){
+  const bg = bgLayer(S, A, p, 300, 360);
+  const kS=A.keySide||0, soft=A.key?A.key.soft:.6, c=A.ratio?clamp(1-1/A.ratio):.8;
+  const avg=(A.vL+A.vR)/2;
+  const body='M138 52 L162 52 L162 118 C162 132 190 140 190 168 L190 318 Q190 330 178 330 L122 330 Q110 330 110 318 L110 168 C110 140 138 132 138 118 Z';
+  const lq = '#c2410c';
+  const lqL=shade(lq,A.vL*.8,A.tL), lqR=shade(lq,A.vR*.8,A.tR);
+  const glowC = shade('#ffb347', .9+A.glow*1.6, A.bgT);
+  let defs = `${bg.defs}<clipPath id="${p}bc"><path d="${body}"/></clipPath>
+   <linearGradient id="${p}lq" x1="0" x2="1"><stop offset="0" stop-color="${lqL}"/><stop offset="1" stop-color="${lqR}"/></linearGradient>
+   <radialGradient id="${p}gw" cx="150" cy="250" r="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${glowC}" stop-opacity="${(A.glow*.95).toFixed(2)}"/><stop offset="1" stop-color="${glowC}" stop-opacity="0"/></radialGradient>
+   <linearGradient id="${p}fl" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="${clamp(A.bgCentre*.12,0,.25).toFixed(2)}"/></linearGradient>
+   <filter id="${p}bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${(2+9*soft).toFixed(1)}"/></filter>
+   <filter id="${p}bs" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`;
+  let s = bg.body + `<rect y="230" width="300" height="130" fill="url(#${p}fl)"/>`;
+  s += `<ellipse cx="${150-kS*26}" cy="332" rx="64" ry="9" fill="#000" opacity="${(.15+.45*c).toFixed(2)}" filter="url(#${p}bl)"/>`;
+  s += `<g clip-path="url(#${p}bc)"><rect x="100" y="130" width="100" height="210" fill="url(#${p}lq)"/><rect x="100" y="130" width="100" height="210" fill="url(#${p}gw)"/><rect x="100" y="40" width="100" height="92" fill="${shade('#d8e0e6',avg*.6,A.tL)}" opacity=".35"/></g>`;
+  s += `<path d="${body}" fill="none" stroke="${shade('#e9f0f4',avg,A.tL)}" stroke-width="1.6" opacity=".55"/>`;
+  for(const r of A.L){ if(r.I<.08||!r.front||r.abs<30) continue; const sx = r.az<0?118:178; const op=clamp(r.I*1.1,.15,.9);
+    if(r.soft>.5) s+=`<rect x="${sx-3}" y="150" width="6" height="168" rx="3" fill="#fff" opacity="${op.toFixed(2)}" filter="url(#${p}bs)"/><rect x="${sx-1+ (r.az<0?2:-2)}" y="62" width="3" height="52" rx="1.5" fill="#fff" opacity="${(op*.7).toFixed(2)}"/>`;
+    else s+=`<circle cx="${sx}" cy="170" r="3" fill="#fff" opacity="${op.toFixed(2)}"/>`; }
+  s += `<rect x="134" y="30" width="32" height="26" rx="3" fill="${shade('#222',avg*1.2,A.tL)}"/><path d="M138 34v18M144 34v18M150 34v18M156 34v18M162 34v18" stroke="#000" stroke-opacity=".35"/>`;
+  const lab = shade('#fbf6ea', A.H*.95, A.key?A.key.tint:[1,1,1]);
+  s += `<rect x="114" y="196" width="72" height="82" rx="4" fill="${lab}"/><rect x="114" y="196" width="72" height="82" rx="4" fill="url(#${p}lbs)"/>`;
+  defs += shadeOverlayGrad(p,'lbs',kS>0?.35:.65,.5,c*.7,kS);
+  s += `<text x="150" y="226" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="12" fill="${shade('#b3261e',A.H)}">ISLAND</text><text x="150" y="242" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="15" fill="${shade('#b3261e',A.H)}">HEAT</text><text x="150" y="258" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.5" fill="${shade('#333',A.H)}">SCOTCH BONNET</text><text x="150" y="267" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.5" fill="${shade('#333',A.H)}">PEPPER SAUCE</text>`;
+  if(A.hotspot>0) s+=`<ellipse cx="${150+kS*24}" cy="150" rx="5" ry="10" fill="#fff" opacity="${(A.hotspot*.8).toFixed(2)}"/>`;
+  return `<defs>${defs}</defs>${s}`;
+}
+function foodSVG(S, md, A, p){
+  const bg = bgLayer(S, A, p, 300, 360);
+  const kS=A.keySide||0, soft=A.key?A.key.soft:.6, c=A.ratio?clamp(1-1/A.ratio):.8;
+  const back = A.key && A.key.abs>95;
+  const rim = clamp(Math.max(A.rimRaw/0.4, back? A.key.I*.8:0));
+  const wood='#7a4f31';
+  let defs = `${bg.defs}<linearGradient id="${p}wd" x1="0" x2="1"><stop offset="0" stop-color="${shade(wood,A.vL*.9,A.tL)}"/><stop offset="1" stop-color="${shade(wood,A.vR*.9,A.tR)}"/></linearGradient>
+   <linearGradient id="${p}pl" x1="0" x2="1"><stop offset="0" stop-color="${shade('#f3efe6',A.vL,A.tL)}"/><stop offset="1" stop-color="${shade('#f3efe6',A.vR,A.tR)}"/></linearGradient>
+   <linearGradient id="${p}ck" x1="0" x2="1"><stop offset="0" stop-color="${shade('#d39a4c',A.vL*1.05,A.tL)}"/><stop offset="1" stop-color="${shade('#d39a4c',A.vR*1.05,A.tR)}"/></linearGradient>
+   <filter id="${p}bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${(1.5+8*soft).toFixed(1)}"/></filter>
+   <filter id="${p}bs" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>`;
+  let s = `<rect width="300" height="150" fill="#000"/>` + `<svg width="300" height="150" viewBox="0 0 300 360" preserveAspectRatio="none">${bg.body}</svg>`;
+  s += `<rect y="148" width="300" height="212" fill="url(#${p}wd)"/>`;
+  for(let i=0;i<7;i++) s+=`<path d="M0 ${170+i*28} Q150 ${160+i*30} 300 ${172+i*28}" stroke="#000" stroke-opacity=".12" fill="none"/>`;
+  const shx = -kS*16, shy = back? 12 : 6;
+  s += `<ellipse cx="${150+shx}" cy="${258+shy}" rx="126" ry="54" fill="#000" opacity="${(.12+.35*c).toFixed(2)}" filter="url(#${p}bl)"/>`;
+  s += `<ellipse cx="150" cy="255" rx="126" ry="56" fill="url(#${p}pl)"/><ellipse cx="150" cy="255" rx="98" ry="40" fill="none" stroke="#000" stroke-opacity=".08" stroke-width="2"/>`;
+  const cakes=[[108,236],[190,232],[150,266]];
+  for(const [x,y] of cakes){
+    s+=`<ellipse cx="${x+shx*.7}" cy="${y+10+shy*.6}" rx="42" ry="18" fill="#000" opacity="${(.15+.5*c).toFixed(2)}" filter="url(#${p}bl)"/>`;
+    s+=`<ellipse cx="${x}" cy="${y+6}" rx="40" ry="18" fill="${shade('#9c6127',(A.vL+A.vR)/2*.8,A.tL)}"/><ellipse cx="${x}" cy="${y}" rx="40" ry="18" fill="url(#${p}ck)"/>`;
+    for(let k=0;k<9;k++){ const a=k*0.7, rr=8+(k*7)%26; s+=`<circle cx="${(x+Math.cos(a)*rr).toFixed(1)}" cy="${(y+Math.sin(a)*rr*.4).toFixed(1)}" r="1.6" fill="#7a4313" opacity=".35"/>`; }
+    if(rim>.05) s+=`<path d="M${x-38} ${y-3} Q${x} ${y-24} ${x+38} ${y-3}" stroke="#fff3cf" stroke-width="2.4" fill="none" opacity="${(rim*.85).toFixed(2)}" filter="url(#${p}bs)"/>`;
+  }
+  s+=`<rect x="142" y="252" width="18" height="10" rx="2" fill="${shade('#f7e27a',(A.vL+A.vR)/2*1.1,A.tL)}"/>`;
+  if(rim>.3) for(let i=0;i<3;i++) s+=`<path d="M${120+i*30} 216 q-8 -16 0 -32 q8 -16 0 -32" stroke="#fff" stroke-width="3" fill="none" opacity="${(rim*.35).toFixed(2)}" filter="url(#${p}bs)"/>`;
+  return `<defs>${defs}</defs>${s}`;
+}
+function renderSubject(S, md, brief, p, A){
+  A = A || analyse(S, md);
+  if(brief.subject==='bottle') return bottleSVG(S, md, A, p);
+  if(brief.subject==='food') return foodSVG(S, md, A, p);
+  let out = personSVG(S, md, A, p, brief.outfit);
+  if(A.stops<-1.2 && brief.want && brief.want.silhouette) out = out.replace(/<\/defs>/,'</defs>');
+  return out;
+}
+function miniSVG(S, md, brief, p, label){
+  return `<svg viewBox="0 0 300 360" role="img" aria-label="${esc(label||'Portrait')}" xmlns="http://www.w3.org/2000/svg">${renderSubject(S, md, brief, p)}</svg>`;
+}
+
+/* ---------- Plan renderer ---------- */
+function lightIcon(l, col, o){
+  const mod = modOf(l), b = Math.min(MODS[mod].beam, 48);
+  const len = o.small?52:74;
+  const wedge = mod==='lamp' ? `<circle r="34" fill="${col}" opacity=".12" pointer-events="none"/>` : `<path d="M0 0 L${(len*Math.cos(-b*RAD)).toFixed(1)} ${(len*Math.sin(-b*RAD)).toFixed(1)} A${len} ${len} 0 0 1 ${(len*Math.cos(b*RAD)).toFixed(1)} ${(len*Math.sin(b*RAD)).toFixed(1)} Z" fill="${col}" opacity="${o.ghost?.08:.16}" pointer-events="none"/>`;
+  let body='';
+  const st = `stroke="#0d0f13" stroke-width="1.5"`;
+  switch(mod){
+    case 'softbox': body=`<rect x="-6" y="-17" width="13" height="34" rx="2" fill="${col}" ${st}/><rect x="6" y="-15" width="3" height="30" fill="#fff" opacity=".9"/>`; break;
+    case 'umbrella': body=`<path d="M8 -19 Q-10 0 8 19" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"/><line x1="-4" y1="0" x2="12" y2="0" stroke="${col}" stroke-width="2"/><circle r="4" fill="#fff"/>`; break;
+    case 'dish': body=`<path d="M6 -15 A15 15 0 0 0 6 15 Z" fill="${col}" ${st}/><circle cx="3" r="3.5" fill="#fff"/>`; break;
+    case 'grid': body=`<rect x="-7" y="-8" width="15" height="16" rx="2" fill="${col}" ${st}/><path d="M8 -6v12M4 -8v16M0 -8v16" stroke="#0d0f13" stroke-width="1.2"/>`; break;
+    case 'scrim': body=`<circle r="8" fill="${col}" ${st}/><line x1="20" y1="-20" x2="20" y2="20" stroke="#f4f4f4" stroke-width="4" stroke-dasharray="3 2"/>`; break;
+    case 'reflector': { const rc=(REFL[l.refl]||REFL.white).c; body=`<ellipse rx="6" ry="20" fill="${rc}" stroke="${col}" stroke-width="2"/>`; break; }
+    case 'window': case 'sun': body=`<rect x="-10" y="-16" width="14" height="32" fill="${col}" ${st}/><path d="M-3 -16v32M-10 0h14" stroke="#0d0f13" stroke-width="1.4"/>`; break;
+    case 'lamp': body=`<circle r="10" fill="${col}" ${st}/><circle r="4" fill="#fff8d0"/>`; break;
+    default: body=`<circle r="9" fill="${col}" ${st}/><path d="M12 0h6M10 -7l5 -4M10 7l5 4" stroke="${col}" stroke-width="2"/>`;
+  }
+  const rot = mod==='lamp'?0:(l.rot||0);
+  return `${o.ghost?'':`<circle r="25" fill="transparent"/>`}<g transform="rotate(${rot.toFixed(1)})">${wedge}${body}</g>`;
+}
+function lightSummary(l){
+  const mod = modOf(l), dx=l.x-M.x, dy=l.y-M.y, d=Math.hypot(dx,dy)/100, az=Math.atan2(dx,dy)*DEG, a=Math.abs(az);
+  const side = a<4?'on camera axis':a>176?'directly behind the subject':(az<0?'camera-left':'camera-right');
+  return {az, a, d, side, pos:`${Math.round(a)}° ${side}${a>110&&a<=176?' (behind)':''} · ${d.toFixed(1)} m`, mod:MODS[mod].name,
+    h:{low:'Low',eye:'Eye level',high:'45° above'}[l.h]||'—',
+    col: l.type==='refl'?(REFL[l.refl]||REFL.white).name+' surface' : l.type==='win'?'Daylight (window)' : l.temp==='gel'?(GELS[l.gel].name+' gel'):TEMPS[l.temp].name,
+    pow: l.type==='refl'?'Bounce':(l.pow+'%')};
+}
+function planMarkup(S, o){
+  o = o||{}; const p = o.p||'pl';
+  const bd = BACKDROPS[S.backdrop]||BACKDROPS.grey;
+  const winL = S.lights.find(l=>l.type==='win');
+  const wy = winL ? winL.y : 210;
+  let s = `<defs><pattern id="${p}grid" width="50" height="50" patternUnits="userSpaceOnUse" x="0" y="10"><path d="M50 0H0V50" fill="none" stroke="#2c313b" stroke-width="1"/></pattern></defs>`;
+  s += `<rect width="600" height="520" fill="#1a1d23"/><rect x="22" y="22" width="556" height="476" fill="url(#${p}grid)" stroke="#5a6273" stroke-width="3"/>`;
+  // guides
+  for(const r of [100,200]) s+=`<circle cx="${M.x}" cy="${M.y}" r="${r}" fill="none" stroke="#3b4250" stroke-dasharray="4 6"/><text x="${M.x+4}" y="${M.y+r-4}" fill="#6b7587" font-size="11" font-family="Arial,sans-serif">${r/100} m</text>`;
+  for(const a of [-90,-45,45,90,135,-135]){ const q=polar(a,2.45); s+=`<line x1="${M.x}" y1="${M.y}" x2="${q.x}" y2="${q.y}" stroke="#333a46" stroke-dasharray="2 6"/><text x="${polar(a,2.6).x}" y="${polar(a,2.6).y}" fill="#6b7587" font-size="11" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif">${Math.abs(a)}°</text>`; }
+  // window wall
+  s += `<rect x="${WIN.x-6}" y="${WIN.y0}" width="10" height="${WIN.y1-WIN.y0}" fill="#2a3442" opacity=".7"/>`;
+  s += `<rect x="${WIN.x-7}" y="${wy-WIN.len/2}" width="12" height="${WIN.len}" fill="${winL?'#9fdcff':'#3f5a6e'}" stroke="#cfefff" stroke-width="1"/>`;
+  s += `<text transform="translate(${WIN.x+16} ${WIN.y1-6}) rotate(-90)" fill="#7f9bb0" font-size="11" font-family="Arial,sans-serif">Window wall</text>`;
+  // backdrop
+  s += `<path d="M${BACK.x0} ${BACK.y+6} Q${BACK.x0} ${BACK.y-6} ${BACK.x0+20} ${BACK.y-6} L${BACK.x1-20} ${BACK.y-6} Q${BACK.x1} ${BACK.y-6} ${BACK.x1} ${BACK.y+6}" fill="none" stroke="${bd.c}" stroke-width="9" stroke-linecap="round"/>`;
+  s += `<text x="300" y="${BACK.y-16}" text-anchor="middle" fill="#aeb6c3" font-size="12" font-family="Arial,sans-serif">Backdrop: ${esc(bd.name)}</text>`;
+  // camera + axis
+  s += `<line x1="${CAM.x}" y1="${CAM.y-14}" x2="${M.x}" y2="${M.y+24}" stroke="#ffb020" stroke-opacity=".35" stroke-dasharray="6 5"/>`;
+  s += `<g transform="translate(${CAM.x} ${CAM.y})"><rect x="-17" y="-9" width="34" height="22" rx="4" fill="#d9dde3" stroke="#0d0f13"/><rect x="-7" y="-19" width="14" height="11" rx="2" fill="#7c8696"/><text y="30" text-anchor="middle" fill="#cfd5de" font-size="12" font-family="Arial,sans-serif">Camera</text></g>`;
+  // subject
+  const subj = o.subject||'person';
+  if(subj==='person'){
+    const tr = (S.turn||0)*-22;
+    s += `<g transform="translate(${M.x} ${M.y})">${o.pose==='standing'?'':'<circle r="26" fill="#3a3326" stroke="#6d5f45" stroke-dasharray="3 3"/>'}<ellipse rx="27" ry="13" fill="#5a6577" stroke="#0d0f13"/><g transform="rotate(${tr})"><circle r="13" fill="#c98f63" stroke="#0d0f13"/><path d="M-5 11 L0 21 L5 11Z" fill="#c98f63" stroke="#0d0f13"/></g><text y="-30" text-anchor="middle" fill="#cfd5de" font-size="12" font-family="Arial,sans-serif">${o.pose==='standing'?'Model (standing)':'Model (on stool)'}</text></g>`;
+  } else if(subj==='bottle'){
+    s += `<g transform="translate(${M.x} ${M.y})"><rect x="-30" y="-22" width="60" height="44" rx="4" fill="#3a3f49" stroke="#6b7280"/><circle r="11" fill="#c2410c" stroke="#0d0f13"/><circle r="4" fill="#222"/><text y="-30" text-anchor="middle" fill="#cfd5de" font-size="12" font-family="Arial,sans-serif">Bottle on table</text></g>`;
+  } else {
+    s += `<g transform="translate(${M.x} ${M.y})"><rect x="-34" y="-26" width="68" height="52" rx="4" fill="#5a3c26" stroke="#0d0f13"/><circle r="20" fill="#eee" stroke="#0d0f13"/><circle cx="-6" cy="-4" r="7" fill="#d39a4c"/><circle cx="7" cy="-3" r="7" fill="#d39a4c"/><circle cx="1" cy="7" r="7" fill="#d39a4c"/><text y="-32" text-anchor="middle" fill="#cfd5de" font-size="12" font-family="Arial,sans-serif">Plate on table</text></g>`;
+  }
+  // ghosts
+  if(o.ghost){
+    for(const l of o.ghost.lights){ const col=TYPES[l.type].col; s+=`<g transform="translate(${l.x} ${l.y})" opacity=".6" stroke-dasharray="4 3">${lightIcon(l,col,{ghost:true})}<circle r="22" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="4 4"/><text y="-27" text-anchor="middle" fill="${col}" font-size="11" font-weight="700" font-family="Arial,sans-serif">Best: ${TYPES[l.type].short}</text></g>`; }
+  }
+  // lights
+  for(const l of S.lights){
+    const col=TYPES[l.type].col, sm=lightSummary(l), sel=o.sel===l.id;
+    const label = `${TYPES[l.type].name}: ${sm.pos}, ${sm.h}, ${sm.mod}, ${sm.pow}, ${sm.col}`;
+    const up = o.labels && l.y < M.y-20; const ly = up?[-56,-43,-30]:[25,38,51];
+    const extra = o.labels ? `<text y="${ly[1]}" text-anchor="middle" fill="#e8ecf2" font-size="10.5" font-family="Arial,sans-serif">${esc(sm.mod)} · ${esc(sm.pow)}</text><text y="${ly[2]}" text-anchor="middle" fill="#aeb6c3" font-size="10" font-family="Arial,sans-serif">${esc(sm.h)} · ${esc(sm.col.replace(' surface',''))}</text>` : '';
+    s += `<g class="lt" data-id="${l.id}" ${o.static?'':`tabindex="0" role="button" aria-label="${esc(label)}" aria-pressed="${sel}"`} transform="translate(${l.x} ${l.y})">${lightIcon(l,col,{})}<circle class="selring" r="23" fill="none" stroke="${sel?'#ffb020':col}" stroke-width="${sel?2.5:1.2}" stroke-dasharray="${sel?'5 3':'none'}" opacity="${sel?1:.5}"/><text y="${o.labels?ly[0]:-28}" text-anchor="middle" fill="${col}" font-size="11.5" font-weight="700" font-family="Arial,sans-serif">${TYPES[l.type].short}${l.type==='refl'?'':' '+l.pow+'%'}</text>${extra}</g>`;
+  }
+  return s;
+}
+
+/* ---------- Scoring: Director's Review ---------- */
+function scoreSetup(S, md, brief){
+  const W = brief.want; if(!W) return null;
+  const A = analyse(S, md);
+  const items=[]; const add=(key,label,w,sc,msg)=>items.push({key,label,w,s:clamp(sc),msg});
+  const B = brief.short;
+  const person = brief.subject==='person';
+  const keyTxt = A.key ? `${TYPES[A.key.type].name.toLowerCase()} (${MODS[A.key.mod].name.toLowerCase()})` : 'key';
+  // 1 pattern
+  if(person && W.patterns){
+    let sc = W.patterns.includes(A.pattern)?1:(W.near||[]).includes(A.pattern)?.5:0, msg;
+    const want = W.patterns.map(x=>PAT[x]).join(' or ');
+    if(!A.key) msg = `There is no key light on the front of the face. Place a key light in front of the model; ${B} calls for ${want}.`;
+    else if(sc===1) msg = `${PAT[A.pattern]} lighting is right for ${B}.`;
+    else msg = `Your key makes ${PAT[A.pattern].toLowerCase()} lighting; ${B} calls for ${want}. To fix it, ${PAT_HOW[W.patterns[0]]}.`;
+    if(W.sb){
+      if(!A.turn){ sc*=.5; msg += ` Also turn the model’s head (Head turn buttons) so there is a broad side and a short side, then light the ${W.sb} side.`; }
+      else if(A.sb!==W.sb){ sc*=.4; msg += ` The key is lighting the ${A.sb||'front'} side; this brief needs ${W.sb} lighting, so move the key to the side of the face ${W.sb==='short'?'turned away from':'turned towards'} the camera.`; }
+      else msg += ` ${W.sb==='short'?'Short':'Broad'} lighting is correct: the key is on the side ${W.sb==='short'?'turned away from':'facing'} the camera.`;
+    }
+    add('pattern','Lighting pattern',14,sc,msg);
+  } else if(person && W.silhouette){
+    add('pattern','Lighting pattern',8,A.frontTotal<.08?1:0, A.frontTotal<.08?'No pattern on the face at all: perfect for a silhouette.':'Light is landing on the face, so it shows a lighting pattern. A silhouette needs the face to go black.');
+  }
+  // 2 ratio
+  if(W.ratio && A.key){
+    const r=A.ratio, [lo,hi]=W.ratio; let sc, msg; const rs = fmtR(r);
+    if(r>=lo && r<=hi){ sc=1; msg=`Your key-to-fill ratio is about ${rs}:1, inside the ${fmtR(lo)}:1 to ${fmtR(hi)}:1 range for ${B}.`; }
+    else if(r>hi){ sc=clamp(1-Math.log2(r/hi)/1.6); msg=`Your key-to-fill ratio is about ${rs}:1, which is too dramatic for ${B}; move the fill closer, raise its power or add a reflector.`; }
+    else { sc=clamp(1-Math.log2(lo/r)/1.2); msg=`Your key-to-fill ratio is about ${rs}:1, which is too flat for ${B}; ${A.Fsum>.05?'move the fill further back, lower its power or remove it':'move the key further to the side'} so the shadows have more depth.`; }
+    add('ratio','Contrast ratio',14,sc,msg);
+  } else if(W.ratio){ add('ratio','Contrast ratio',14,0,'No key light means no measurable ratio. Start with a key light in front of the subject.'); }
+  // 3 quality
+  if(W.quality!=='any'){
+    const q=A.quality; let sc=0;
+    if(W.quality==='soft') sc = q==='soft'?1:q==='medium'?.5:0;
+    if(W.quality==='hard') sc = q==='hard'?1:q==='medium'?.6:.25;
+    if(W.quality==='crisp') sc = q==='medium'?1:q==='soft'?.7:.3;
+    const kd = A.key?`${MODS[A.key.mod].name.toLowerCase()} at ${A.key.dm.toFixed(1)} m`:'';
+    let msg = !A.key?'No key light to judge.': sc>=1?`Your key (${kd}) gives the right ${W.quality==='crisp'?'crisp-but-flattering':W.quality} quality.` :
+      W.quality==='soft' ? `Your key is a ${kd}, giving ${q} light with crisp shadow edges. For ${B}, use a softbox, umbrella or scrim and bring it closer: the bigger the source relative to the face, the softer the light.` :
+      W.quality==='hard' ? `Your key is a ${kd}, which is too soft for ${B}. Use a bare bulb or grid for crisp, dramatic shadow edges, or move the soft source further away.` :
+      `For ${B}, a beauty dish is ideal: crisper than a softbox, softer than a bare bulb. Yours is a ${kd}.`;
+    add('quality','Hard or soft quality',10,sc,msg);
+  }
+  // 4 separation
+  {
+    const hair = {short:'short hair',long:'long hair',locs:'locs',braids:'braids',wrap:'headwrap'}[md.hair]||'hair';
+    let sc=1, msg='', w=10;
+    const rimOK = clamp(A.rim/0.35), bgOK = A.bgLight?1:0;
+    if(W.sep==='rim'){ sc=rimOK; msg = sc>=1?`The rim light traces the outline${person?` and the ${hair}`:''} so the subject stands out from the background.`:`Add a rim/hair light behind the model on the side opposite the key${person?`; with ${hair} against this backdrop it will trace the outline and stop the hair merging into the shadows`:''}.`; }
+    else if(W.sep==='bg'){ sc=bgOK; msg = sc?`The background light lifts the backdrop behind the model and gives clean separation.`:`Put a background light behind the model, aimed at the backdrop, so the colour glows and the model stands clear of it.`; }
+    else if(W.sep==='either'){ sc=Math.max(rimOK,bgOK); msg = sc>=1?`Good separation from ${A.bgLight&&A.rim>.35?'both a rim light and a background light':A.bgLight?'the background light':'the rim light'}.`:`Add separation: a rim light behind the model or a background light on the backdrop, so ${person?'the shoulders and hair':'the subject'} do not sink into the background.`; }
+    else { w=4; sc=1; msg = W.sep==='any'?'Separation is optional for this brief.':'Separation light not needed here.'; }
+    add('sep','Separation',w,sc,msg);
+  }
+  // 5 background tone
+  {
+    const bdOK = W.backdrops.includes(S.backdrop), toneOK = W.bg.includes(A.bgTone);
+    const sc = (bdOK?.4:0)+(toneOK?.6:0);
+    const tn = {bright:'bright',mid:'mid-tone',dark:'dark'};
+    let msg = `The ${BACKDROPS[S.backdrop].name.toLowerCase()} backdrop is reading as ${tn[A.bgTone]}.`;
+    if(!bdOK) msg += ` For ${B}, choose ${W.backdrops.map(b=>BACKDROPS[b].name.toLowerCase()).join(' or ')}.`;
+    if(!toneOK) msg += W.bg.includes('bright') && !W.bg.includes('mid') ? ` It needs to be bright: add a background light${S.backdrop==='white'?' (a white sweep goes grey without its own light)':''} or raise its power.` : W.bg.includes('dark')&&!W.bg.includes('mid') ? ` It needs to be dark: turn off or lower the background light and move lights so they do not spill onto it.` : W.bg.includes('bright') ? ` Lift it with a background light so it reads as ${W.bg.map(x=>tn[x]).join(' or ')}.` : ` Aim for ${W.bg.map(x=>tn[x]).join(' or ')}: adjust the background light power or distance.`;
+    if(sc>=1) msg += ' Spot on.';
+    add('bg','Background tone',10,sc,msg);
+  }
+  // 6 colour
+  if(W.temp!=='any'){
+    let sc=0, msg='';
+    const kt = A.keyTemp;
+    if(W.temp==='day'){ sc = kt==='day'?(A.mixed?.4:1):kt==='tung'?.3:.2; msg = sc>=1?'Clean daylight balance: skin colour looks natural.': A.mixed?`Mixed colour temperatures (${A.temps.map(t=>t.startsWith('gel')?t.slice(4)+' gel':t==='day'?'daylight':'tungsten').join(' + ')}) on the face give patchy colour. Match the fill to the key at 5600 K.`:`Your key is ${kt==='tung'?'tungsten (3200 K) and will look orange with a daylight white balance':'gelled'}; ${B} needs neutral daylight 5600 K.`; }
+    if(W.temp==='warm'){ sc = A.warm?1:0; msg = sc?'Warm colour sells the sunset: the amber/red tones read as golden hour.':'Make it warm: put an amber or red gel (or tungsten 3200 K) on the background light so it looks like a sunset sky.'; }
+    if(W.temp==='gel'){ sc = A.gelCount>0?1:0; msg = sc?`${A.gelCount} gelled light${A.gelCount>1?'s':''} adding colour.`:'No gels yet. Coloured gels on the rim or background lights make Carnival colours pop.'; }
+    if(W.temp==='consistent'){ sc = A.mixed?.3:1; msg = sc>=1?'The lights on the face all share one colour temperature, so skin tones stay consistent (the warm practical in the background is fine).':'The key and fill are different colour temperatures, so one side of the face looks orange and the other blue. Match them.'; }
+    add('temp','Colour temperature / gels',8,sc,msg);
+  }
+  // 7 catchlights
+  if(person && W.catch!=null){
+    const n=A.catch.length;
+    if(W.catch){ add('catch','Catchlights',6,n>0?1:0, n>0?`${n} catchlight${n>1?'s':''} in the eyes: they look alive.`:'No catchlights: the eyes look flat and lifeless. Bring a light round in front of the model, above eye level, within about 45° of the camera.'); }
+    else add('catch','Catchlights',4,n===0?1:.3, n===0?'No catchlights, as a silhouette should be.':'There are catchlights, so light is reaching the eyes; a silhouette should show no detail.');
+  }
+  // 8 glasses
+  if(person){
+    if(md.glasses){ const sc=A.glare<.12?1:A.glare<.4?.4:0; add('glare','Glasses glare avoided',W.extras&&W.extras.some(e=>e.id==='raised')?10:6,sc, sc>=1?'No glare on the lenses: the eyes are clear behind the glasses.':'Glare on the lenses! A light at eye level, straight on, reflects back into the camera. Raise it to 45° above and move it 20–40° off the camera axis.'); }
+    else add('glare','Glasses glare avoided',0,1,'n/a: this model is not wearing glasses.');
+  }
+  // 9 exposure
+  {
+    const [lo,hi] = W.expo || [-.6,.8];
+    const st = A.stops; let sc = st>=lo&&st<=hi?1:clamp(1-(st<lo?lo-st:st-hi)/1.6);
+    const label = person?'Skin-tone exposure':'Exposure';
+    let msg;
+    if(W.silhouette){ msg = sc>=1?`The model is about ${Math.abs(st).toFixed(1)} stops under: a true silhouette.`:`The model is only ${Math.abs(Math.min(st,0)).toFixed(1)} stops under. For a silhouette, the subject must be at least 2½ stops darker than normal, so remove front light.`; }
+    else if(sc>=1) msg = `${person?'The face':'The subject'} is well exposed (${st>=0?'+':''}${st.toFixed(1)} stops).`;
+    else if(st<lo) msg = `${person?'The face':'The subject'} is about ${Math.abs(st).toFixed(1)} stops under. Expose for the ${person?'face':'subject'}: raise the key power, bring it closer (inverse square law: half the distance gives four times the light) or add a silver or gold reflector.`;
+    else msg = `${person?'The face':'The subject'} is about ${st.toFixed(1)} stops over, so highlights will clip. Lower the key power or move it back.`;
+    if(person && !W.silhouette && A.bgTone==='bright' && ((A.overStops>2.3 && st<0) || A.overStops>3.4)){ sc*=.6; msg+= st<0 ? ` The backdrop is about ${A.overStops.toFixed(1)} stops brighter than the skin, so an auto-exposing camera would underexpose the face even more. Expose for the face: add light to the face first, then bring the background light down.` : ` The backdrop is about ${A.overStops.toFixed(1)} stops brighter than the skin, so it will flare and eat into the edges of the face. Bring the background light down a little.`; }
+    if(A.hotspot>.35){ sc*=.8; msg+=' Watch the specular highlights: the hard key is creating shiny hotspots on the forehead and nose. Soften or diffuse it.'; }
+    add('expo',label,12,sc,msg);
+  }
+  // 10 efficiency
+  {
+    const n=A.n, mx=W.maxLights; const sc = n===0?0:n<=mx?1:n===mx+1?.5:0;
+    add('eff','Efficiency',6,sc, n===0?'No lights placed yet.': n<=mx?`${n} light${n>1?'s':''} or reflector${n>1?'s':''}: lean and efficient.`:`You’ve used ${n} lights and reflectors; ${B} can be done well with ${mx}. Every extra light adds shadows, spill and set-up time.`);
+  }
+  // extras
+  for(const e of (W.extras||[])){ const sc=e.test(A); add(e.id,e.label,12,sc,sc>=.99?e.pass:e.fail); }
+  const tw = items.reduce((a,b)=>a+b.w,0), ts = items.reduce((a,b)=>a+b.w*b.s,0);
+  const score = Math.round(100*ts/tw);
+  const stars = score>=85?3:score>=65?2:score>=45?1:0;
+  return {score, stars, items, A};
+}
+
+/* ---------- State ---------- */
+const state = {
+  view:'director', bi:0, S:null, md:null, sel:null, ghost:false, revealed:false, last:null,
+  best: store.get('best', {}),
+};
+/* a damaged or old save is ignored, never trusted blindly */
+if(!state.best || typeof state.best!=='object' || Array.isArray(state.best)) state.best = {};
+Object.keys(state.best).forEach(k=>{ if(typeof state.best[k]!=='number' || !isFinite(state.best[k])) delete state.best[k]; });
+function briefIdeal(b, turn){ const id = typeof b.ideal==='function' ? b.ideal(turn||1) : b.ideal; return setupFrom(id); }
+function randomModel(b){
+  const md = {skin:rnd(6), face:Math.random()<.5?'round':'angular', glasses:Math.random()<.3, hair:['short','long','locs','braids','wrap'][rnd(5)]};
+  if(b.fix && b.fix.glasses) md.glasses = true;
+  if(b.outfit==='gown' && md.hair==='wrap') md.hair='short';
+  return md;
+}
+function loadBrief(i){
+  state.bi = (i+BRIEFS.length)%BRIEFS.length; const b = BRIEFS[state.bi];
+  state.md = randomModel(b);
+  state.S = {backdrop: b.id==='free'?'grey':'grey', lights:[], turn: b.fix&&b.fix.turnRandom ? (Math.random()<.5?-1:1) : 0};
+  state.sel=null; state.ghost=false; state.revealed=false; state.last=null;
+  $('#briefSel').value = String(state.bi);
+  $('#review').hidden = true; $('#ghostBtn').disabled = true; $('#loadBestBtn').disabled = true; $('#ghostBtn').setAttribute('aria-pressed','false'); $('#ghostBtn').textContent='Show best setup';
+  $('#submitBtn').disabled = !!b.free;
+  renderBrief(); renderModel(); renderAll(); announce(`Brief: ${b.title}. ${b.free?'':'Place your lights, then submit for the Director’s Review.'}`);
+}
+
+/* ---------- UI rendering ---------- */
+function starStr(n){ return '★'.repeat(n)+'☆'.repeat(3-n); }
+function renderTally(){
+  let st=0, pts=0; for(const b of BRIEFS){ if(b.free) continue; const v=state.best[b.id]; if(v!=null){ pts+=v; st+= v>=85?3:v>=65?2:v>=45?1:0; } }
+  const max = BRIEFS.filter(b=>!b.free).length;
+  $('#tally').textContent = `★ ${st}/${max*3} · ${pts} pts`;
+  const sel=$('#briefSel'); const cur=sel.value;
+  sel.innerHTML = BRIEFS.map((b,i)=>{ const v=state.best[b.id]; return `<option value="${i}">${i+1}. ${esc(b.title)}${b.free?'':v!=null?` · ${starStr(v>=85?3:v>=65?2:v>=45?1:0)} ${v}`:''}</option>`; }).join('');
+  sel.value = cur||String(state.bi);
+}
+function modelChips(md){
+  const sk=SKINS[md.skin];
+  return `<span class="chip"><i style="background:${sk.c}"></i>${sk.name}</span><span class="chip">${md.face==='round'?'Round':'Angular'} face</span><span class="chip">${md.glasses?'👓 Glasses':'No glasses'}</span><span class="chip">Hair: ${HAIRS[md.hair].name}</span>`;
+}
+function renderBrief(){
+  const b = BRIEFS[state.bi]; const v = state.best[b.id];
+  $('#briefCard').innerHTML = `<div><h2>${esc(b.title)}</h2><p class="client">${esc(b.client)}</p><div class="chips">${b.subject==='person'?modelChips(state.md):`<span class="chip">Subject: ${b.subject==='bottle'?'pepper sauce bottle':'plate of johnny cakes'}</span>`}<span class="chip">${b.pose==='standing'?'Model standing':b.pose==='stool'?'Model on a stool':'Tabletop'}</span>${b.want?`<span class="chip">Up to ${b.want.maxLights} lights</span>`:''}</div></div>
+   <div class="bstars">${b.free?'':starStr(v!=null?(v>=85?3:v>=65?2:v>=45?1:0):0)}<small>${b.free?'Practice mode':v!=null?'Best: '+v+'/100':'Not yet reviewed'}</small></div>
+   <div class="look"><b>The look:</b> ${esc(b.look)}</div>`;
+}
+function renderModel(){
+  const b = BRIEFS[state.bi], md = state.md, free=!!b.free;
+  if(b.subject!=='person'){ $('#modelPanel').innerHTML = `<div class="ph">Subject</div><p class="note">This is a tabletop brief, so there is no model. Light the ${b.subject==='bottle'?'bottle':'plate'} as you would a product: think about where the highlights and shadows fall.</p>`; return; }
+  const dis = free?'':'disabled';
+  $('#modelPanel').innerHTML = `<div class="ph">Model ${free?'<span>Change anything to see how it affects the lighting</span>':'<span>Set by the brief (try them all in Free studio)</span>'}</div>
+   <div class="row"><span class="lbl">Skin tone</span><span class="swatches" role="group" aria-label="Skin tone">${SKINS.map((s,i)=>`<button class="sw" ${dis} data-skin="${i}" aria-pressed="${md.skin===i}" style="background:${s.c}" aria-label="${s.name}" title="${s.name}"></button>`).join('')}</span></div>
+   <div class="row"><span class="lbl">Face</span><span class="seg">${['round','angular'].map(f=>`<button ${dis} data-face="${f}" aria-pressed="${md.face===f}">${f==='round'?'Round':'Angular'}</button>`).join('')}</span>
+     <span class="lbl">Glasses</span><span class="seg"><button ${dis} data-gl="1" aria-pressed="${md.glasses}">On</button><button ${dis} data-gl="0" aria-pressed="${!md.glasses}">Off</button></span></div>
+   <div class="row"><label class="lbl" for="hairSel">Hair</label><select id="hairSel" ${dis}>${Object.keys(HAIRS).map(h=>`<option value="${h}" ${md.hair===h?'selected':''}>${HAIRS[h].name}</option>`).join('')}</select>
+   ${free?'':'<span class="locked">🔒 locked for this brief</span>'}</div>`;
+}
+function renderPlan(){
+  const b = BRIEFS[state.bi];
+  const plan = $('#plan');
+  const ae = document.activeElement; const fid = ae && ae.closest && plan.contains(ae) && ae.closest('.lt') ? ae.closest('.lt').dataset.id : null;
+  plan.innerHTML = planMarkup(state.S, {sel:state.sel, ghost: state.ghost ? currentIdeal() : null, subject:b.subject, pose:b.pose});
+  if(fid){ const el = plan.querySelector(`.lt[data-id="${fid}"]`); if(el) el.focus({preventScroll:true}); }
+}
+function currentIdeal(){ const b=BRIEFS[state.bi]; return briefIdeal(b, state.S.turn||1); }
+function renderPortrait(){
+  const b = BRIEFS[state.bi];
+  const A = analyse(state.S, state.md);
+  $('#portrait').innerHTML = renderSubject(state.S, state.md, b, 'pv', A);
+  const W=b.want;
+  const cls = (ok)=> ok==null?'':ok?'ok':'no';
+  const inR = (v,r)=> r? (v>=r[0]&&v<=r[1]) : null;
+  const pOK = W&&W.patterns&&A.key ? W.patterns.includes(A.pattern) : null;
+  const pat = b.subject!=='person' ? (A.key?`${A.key.abs>95?'Back':A.key.abs>50?'Side':'Front'} light`:'None') : PAT[A.pattern] + (A.sb?` · ${A.sb}`:'');
+  const exOK = W ? inR(A.stops, W.expo||[-.6,.8]) : null;
+  $('#meter').innerHTML = `
+   <div class="${cls(pOK)}"><b>${b.subject==='person'?'Pattern':'Direction'}</b><span>${pat}</span></div>
+   <div class="${cls(W&&W.ratio&&A.ratio?inR(A.ratio,W.ratio):null)}"><b>Key : fill</b><span>${fmtRatio(A.ratio)}</span></div>
+   <div><b>Quality</b><span>${A.quality==='—'?'—':A.quality[0].toUpperCase()+A.quality.slice(1)}</span></div>
+   <div class="${cls(exOK)}"><b>${b.subject==='person'?'Face':'Subject'} exposure</b><span>${A.stops>=0?'+':''}${A.stops.toFixed(1)} stops</span></div>
+   <div class="${cls(W?W.bg.includes(A.bgTone):null)}"><b>Background</b><span>${A.bgTone[0].toUpperCase()+A.bgTone.slice(1)}${A.bgLight?' · lit':''}</span></div>
+   <div><b>Separation</b><span>${A.rim>.35?'Rim ✓':'Rim –'} ${A.bgLight?'· BG ✓':''}</span></div>
+   ${b.subject==='person'?`<div><b>Catchlights</b><span>${A.catch.length||'None'}</span></div>`:''}
+   ${state.md.glasses&&b.subject==='person'?`<div class="${A.glare<.12?'ok':'no'}"><b>Lens glare</b><span>${A.glare<.12?'None':A.glare<.4?'Slight':'Strong'}</span></div>`:''}`;
+  $('#portrait').setAttribute('aria-label', `Portrait preview: ${pat} lighting, ratio ${fmtRatio(A.ratio)}, ${A.quality} light, face exposure ${A.stops.toFixed(1)} stops, ${A.bgTone} background.`);
+  renderTips(A);
+  return A;
+}
+function renderTips(A){
+  const b = BRIEFS[state.bi];
+  const tips = [
+    ['expo', 'Expose for the face, not the background: meter on the skin (or check the histogram and zoom in on the face).', A.stops<-.6 && !(b.want&&b.want.silhouette)],
+    ['refl', 'A gold or silver reflector adds glow and lifts shadows without adding another lamp. Gold warms; silver adds sparkle; white is the most subtle.', A.ratio>5 && b.want && b.want.ratio && b.want.ratio[1]<5],
+    ['bright', 'Avoid underexposure against bright backgrounds: light the face first, then bring the background up only as far as you need.', A.overStops>2.3 && b.subject==='person'],
+    ['spec', 'Watch specular highlights: shine on foreheads, noses and cheekbones shows on every skin. Diffuse the key, move it back a little, or blot the skin.', A.hotspot>.3],
+    ['wb', 'Check white balance and gels on skin: the person should look like themselves, not like the colour of the lamp.', A.mixed],
+    ['ask', 'Show the model the back of the camera and ask how they feel about the result. People know their own faces.', false]
+  ];
+  $('#tipList').innerHTML = tips.map(t=>`<li class="${t[2]?'hot':''}">${t[2]?'⚑ ':''}${esc(t[1])}</li>`).join('') + `<li>These are good practice for <strong>every</strong> skin tone. Skin varies in depth, undertone and shine from person to person, so light the person in front of you, not a rule about a group.</li>`;
+}
+function renderSettings(){
+  const box = $('#settings'); const l = state.S.lights.find(x=>x.id===state.sel);
+  if(!l){ box.innerHTML = `<p class="empty">${state.S.lights.length?'Select a light on the plan (click it, or Tab to it) to change its height, power, modifier and colour.':'Your studio is empty. Drag a <strong>key light</strong> from the kit onto the floor plan to begin.'}</p>`; return; }
+  const sm = lightSummary(l), T=TYPES[l.type];
+  const segBtns = (name, opts, cur) => `<span class="seg" role="group" aria-label="${name}">${opts.map(([v,t])=>`<button data-set="${name}" data-v="${v}" aria-pressed="${cur===v}">${t}</button>`).join('')}</span>`;
+  let h = `<h3><span class="dot" style="background:${T.col}"></span>${T.name} <span class="pos">${sm.pos}${l.type!=='win'&&l.type!=='prac'?` · aim ${l.auto!==false?'auto':'manual'}`:''}</span></h3>`;
+  if(l.type!=='prac' && l.type!=='win') h += `<div class="row"><span class="lbl">Height</span>${segBtns('h',[['low','Low'],['eye','Eye level'],['high','45° above']],l.h)}</div>`;
+  if(l.type!=='refl') h += `<div class="row"><label class="lbl" for="powR">${l.type==='win'?'Window brightness':'Power'}</label><input type="range" id="powR" min="10" max="100" step="5" value="${l.pow}" aria-valuetext="${l.pow}%"><span class="pos" id="powV">${l.pow}%</span></div>`;
+  if(STUDIO_MODS.includes(l.mod) && !['refl','win','prac'].includes(l.type)) h += `<div class="row"><span class="lbl">Modifier</span>${segBtns('mod',STUDIO_MODS.map(m=>[m,MODS[m].name+(MODS[m].tag==='hard'?' (hard)':MODS[m].tag==='narrow'?' (narrow)':MODS[m].tag==='soft'?' (soft)':'')]),l.mod)}</div>`;
+  if(l.type==='win') h += `<div class="row"><span class="lbl">Window</span>${segBtns('mod',[['window','Indirect / overcast (soft)'],['sun','Direct sun (hard)']],l.mod)}</div><p class="note">Natural light is daylight (about 5600–6500 K). The window can only slide along the window wall.</p>`;
+  if(l.type==='refl') h += `<div class="row"><span class="lbl">Surface</span>${segBtns('refl',[['white','White'],['silver','Silver'],['gold','Gold']],l.refl)}</div><p class="note">A reflector has no power of its own: it bounces the key light back. Closer means more fill.</p>`;
+  if(l.type!=='refl' && l.type!=='win') h += `<div class="row"><span class="lbl">Colour</span>${segBtns('temp',[['tung','Tungsten 3200 K'],['day','Daylight 5600 K'],['gel','Gel']],l.temp)}${l.temp==='gel'?`<span class="swatches" role="group" aria-label="Gel colour">${Object.entries(GELS).map(([k,g])=>`<button class="sw" data-set="gel" data-v="${k}" aria-pressed="${l.gel===k}" style="background:${g.c}" aria-label="${g.name} gel" title="${g.name}"></button>`).join('')}</span>`:''}</div>`;
+  h += `<div class="row">${l.type!=='win'&&l.type!=='prac'?`<button class="btn sm" data-act="rotL" aria-label="Rotate anticlockwise (Q)">⟲ Q</button><button class="btn sm" data-act="rotR" aria-label="Rotate clockwise (E)">⟳ E</button><button class="btn sm" data-act="aim" aria-pressed="${l.auto!==false}">🎯 Aim at ${l.type==='bg'?'backdrop':'subject'}</button>`:''}<button class="btn sm" data-act="del">🗑 Remove</button></div>`;
+  box.innerHTML = h;
+}
+let rafPending=false;
+function renderAll(){ renderPlan(); const A=renderPortrait(); renderSettings(); renderTally(); state.lastA=A; }
+function renderFast(){ if(rafPending) return; rafPending=true; requestAnimationFrame(()=>{ rafPending=false; renderPlan(); renderPortrait(); }); }
+
+let liveT=null;
+function announce(msg){ clearTimeout(liveT); liveT=setTimeout(()=>{ $('#live').textContent=msg; }, 120); }
+function describe(l){ const A=analyse(state.S,state.md); const sm=lightSummary(l); const b=BRIEFS[state.bi];
+  return `${TYPES[l.type].name}: ${sm.pos}, ${sm.h}, ${sm.pow}. ${b.subject==='person'?'Pattern '+PAT[A.pattern]+', ':''}ratio ${A.ratio?fmtR(A.ratio)+' to 1':'none'}, exposure ${A.stops.toFixed(1)} stops.`; }
+function toast(msg){ let t=$('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); document.body.appendChild(t);} t.textContent=msg; t.style.opacity='1'; clearTimeout(t._h); t._h=setTimeout(()=>{t.style.opacity='0';},2200); }
+
+/* ---------- Adding / editing lights ---------- */
+function addLight(type, at){
+  const S=state.S;
+  if(S.lights.length>=8){ toast('The studio is full: 8 lights maximum.'); return null; }
+  if(type==='win' && S.lights.some(l=>l.type==='win')){ toast('There is only one window. Slide it along the window wall.'); const w=S.lights.find(l=>l.type==='win'); state.sel=w.id; renderAll(); return w; }
+  const spec = {type};
+  const same = S.lights.filter(l=>l.type===type).length;
+  if(at){ spec.x=at.x; spec.y=at.y; if(type==='win'){ spec.y=at.y; } }
+  else if(same){ const d={key:[40,1.4],fill:[-35,1.8],refl:[-50,.9],rim:[-145,1.2],bg:null,prac:null}[type]; if(d){ spec.az=d[0]; spec.d=d[1]; } else { spec.x=300+same*60*(same%2?1:-1); spec.y=type==='prac'?96:122; } }
+  const l = makeLight(spec);
+  if(at && type!=='win'){ l.x=Math.round(at.x); l.y=Math.round(at.y); constrain(l); reaim(l); }
+  S.lights.push(l); state.sel=l.id; state.last=null;
+  renderAll(); announce(`${TYPES[type].name} added. ${describe(l)}`);
+  return l;
+}
+function updateSel(fn, quiet){ const l=state.S.lights.find(x=>x.id===state.sel); if(!l) return; fn(l); constrain(l); reaim(l); renderPlan(); renderPortrait(); if(!quiet) renderSettings(); announce(describe(l)); }
+function removeSel(){ const i=state.S.lights.findIndex(x=>x.id===state.sel); if(i<0) return; const l=state.S.lights[i]; state.S.lights.splice(i,1); state.sel=null; renderAll(); announce(`${TYPES[l.type].name} removed.`); $('#plan').focus(); }
+
+/* ---------- Plan interaction ---------- */
+const plan = $('#plan');
+plan.setAttribute('tabindex','-1');
+function svgPt(e){ const pt = plan.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const m=plan.getScreenCTM(); return m?pt.matrixTransform(m.inverse()):{x:0,y:0}; }
+let drag=null;
+plan.addEventListener('pointerdown', e=>{
+  const g = e.target.closest('.lt'); if(!g) return;
+  e.preventDefault();
+  const l = state.S.lights.find(x=>x.id===g.dataset.id); if(!l) return;
+  state.sel = l.id; const p=svgPt(e);
+  drag = {id:l.id, dx:l.x-p.x, dy:l.y-p.y, moved:false};
+  try{ plan.setPointerCapture(e.pointerId); }catch(_){}
+  plan.classList.add('dragging');
+  renderPlan(); renderSettings();
+  const el = plan.querySelector(`.lt[data-id="${l.id}"]`); if(el) el.focus({preventScroll:true});
+});
+plan.addEventListener('pointermove', e=>{
+  if(!drag) return; const l=state.S.lights.find(x=>x.id===drag.id); if(!l) return;
+  const p=svgPt(e); l.x=p.x+drag.dx; l.y=p.y+drag.dy; drag.moved=true; constrain(l); reaim(l); renderFast();
+});
+function endDrag(){ if(!drag) return; const l=state.S.lights.find(x=>x.id===drag.id); plan.classList.remove('dragging'); const moved=drag.moved; drag=null; renderAll(); const el=l&&plan.querySelector(`.lt[data-id="${l.id}"]`); if(el) el.focus({preventScroll:true}); if(l&&moved) announce(describe(l)); }
+plan.addEventListener('pointerup', endDrag); plan.addEventListener('pointercancel', endDrag);
+plan.addEventListener('focusin', e=>{ const g=e.target.closest&&e.target.closest('.lt'); if(g && state.sel!==g.dataset.id && !drag){ state.sel=g.dataset.id; renderSettings(); const l=state.S.lights.find(x=>x.id===g.dataset.id); if(l) announce(`Selected. ${describe(l)}`); plan.querySelectorAll('.lt').forEach(n=>{ const s=n.dataset.id===state.sel; n.setAttribute('aria-pressed',s); const r=n.querySelector('.selring'); if(r){ r.setAttribute('stroke', s?'#ffb020':TYPES[state.S.lights.find(x=>x.id===n.dataset.id).type].col); r.setAttribute('stroke-dasharray', s?'5 3':'none'); r.setAttribute('opacity', s?1:.5);} }); } });
+plan.addEventListener('keydown', e=>{
+  const g=e.target.closest&&e.target.closest('.lt'); if(!g) return;
+  state.sel=g.dataset.id; const step=e.shiftKey?2:10; let handled=true;
+  switch(e.key){
+    case 'ArrowLeft': updateSel(l=>{l.x-=step;}); break;
+    case 'ArrowRight': updateSel(l=>{l.x+=step;}); break;
+    case 'ArrowUp': updateSel(l=>{l.y-=step;}); break;
+    case 'ArrowDown': updateSel(l=>{l.y+=step;}); break;
+    case 'q': case 'Q': updateSel(l=>{ if(l.type==='win'||l.type==='prac') return; l.rot=(l.rot||0)-15; l.auto=false; }); break;
+    case 'e': case 'E': updateSel(l=>{ if(l.type==='win'||l.type==='prac') return; l.rot=(l.rot||0)+15; l.auto=false; }); break;
+    case '+': case '=': updateSel(l=>{ l.pow=Math.min(100,(l.pow||0)+10); }); break;
+    case '-': case '_': updateSel(l=>{ l.pow=Math.max(10,(l.pow||0)-10); }); break;
+    case 'Delete': case 'Backspace': removeSel(); break;
+    case 'Enter': case ' ': renderSettings(); { const f=$('#settings button, #settings input'); if(f) f.focus(); } break;
+    default: handled=false;
+  }
+  if(handled) e.preventDefault();
+});
+
+/* ---------- Kit ---------- */
+function kitIcon(type){ const l={type,mod:{key:'softbox',fill:'umbrella',refl:'reflector',rim:'grid',bg:'bare',win:'window',prac:'lamp'}[type],refl:'silver',rot:0}; return `<svg viewBox="-26 -26 52 52" aria-hidden="true">${lightIcon(l,TYPES[type].col,{small:true,ghost:true})}</svg>`; }
+const KIT_ORDER=['key','fill','refl','rim','bg','win','prac'];
+$('#kitList').innerHTML = KIT_ORDER.map(t=>`<button class="kitbtn" data-type="${t}" title="${esc(TYPES[t].desc)}" aria-label="Add ${TYPES[t].name}: ${esc(TYPES[t].desc)}">${kitIcon(t)}<span>${TYPES[t].name}</span></button>`).join('');
+let kd=null;
+$('#kitList').addEventListener('pointerdown', e=>{
+  const b=e.target.closest('.kitbtn'); if(!b) return;
+  e.preventDefault();
+  kd={type:b.dataset.type, x0:e.clientX, y0:e.clientY, ghost:null, btn:b};
+  try{ b.setPointerCapture(e.pointerId); }catch(_){}
+});
+$('#kitList').addEventListener('pointermove', e=>{
+  if(!kd) return;
+  if(!kd.ghost && Math.hypot(e.clientX-kd.x0,e.clientY-kd.y0)>6){ kd.ghost=document.createElement('div'); kd.ghost.className='dragghost'; kd.ghost.innerHTML=kitIcon(kd.type); document.body.appendChild(kd.ghost); if(window.innerWidth<=760) setKit(false); }
+  if(kd.ghost){ kd.ghost.style.left=e.clientX+'px'; kd.ghost.style.top=e.clientY+'px'; }
+});
+function kitEnd(e){
+  if(!kd) return; const k=kd; kd=null;
+  if(k.ghost){ k.ghost.remove(); const r=plan.getBoundingClientRect();
+    if(e.type!=='pointercancel' && e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){ addLight(k.type, svgPt(e)); focusSel(); } }
+  else if(e.type!=='pointercancel'){ addLight(k.type); if(window.innerWidth<=760) setKit(false); focusSel(); }
+}
+function focusSel(){ const el=plan.querySelector(`.lt[data-id="${state.sel}"]`); if(el) el.focus({preventScroll:window.innerWidth>760}); if(window.innerWidth<=760) plan.scrollIntoView({block:'center',behavior:reduceMotion()?'auto':'smooth'}); }
+$('#kitList').addEventListener('pointerup', kitEnd); $('#kitList').addEventListener('pointercancel', kitEnd);
+$('#kitList').addEventListener('click', e=>{ const b=e.target.closest('.kitbtn'); if(b && e.detail===0){ addLight(b.dataset.type); focusSel(); } });
+function setKit(o){ $('#kit').classList.toggle('open',o); $('#kitToggle').setAttribute('aria-expanded',o); $('#kitToggle').textContent = o?'Lighting kit ▼':'Lighting kit ▲'; }
+$('#kitToggle').addEventListener('click', ()=>setKit(!$('#kit').classList.contains('open')));
+
+/* ---------- Settings events ---------- */
+$('#settings').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.set){ const k=b.dataset.set, v=b.dataset.v; updateSel(l=>{ l[k]=v; if(k==='temp'&&v==='gel'&&!l.gel) l.gel='amber'; }); const again=$(`#settings button[data-set="${k}"][data-v="${v}"]`); if(again) again.focus(); return; }
+  const a=b.dataset.act;
+  if(a==='rotL') updateSel(l=>{ l.rot=(l.rot||0)-15; l.auto=false; });
+  if(a==='rotR') updateSel(l=>{ l.rot=(l.rot||0)+15; l.auto=false; });
+  if(a==='aim') updateSel(l=>{ l.auto=true; });
+  if(a==='del') removeSel();
+  if(a){ const again=$(`#settings button[data-act="${a}"]`); if(again) again.focus(); }
+});
+$('#settings').addEventListener('input', e=>{ if(e.target.id==='powR'){ const v=+e.target.value; updateSel(l=>{l.pow=v;}, true); $('#powV').textContent=v+'%'; e.target.setAttribute('aria-valuetext',v+'%'); } });
+
+/* ---------- Scene / model controls ---------- */
+$('#bdSw').innerHTML = Object.entries(BACKDROPS).map(([k,b])=>`<button class="sw" data-bd="${k}" style="background:${b.c}" aria-label="${b.name} backdrop" title="${b.name}" aria-pressed="false"></button>`).join('');
+$('#bdSw').addEventListener('click', e=>{ const b=e.target.closest('[data-bd]'); if(!b) return; state.S.backdrop=b.dataset.bd; syncScene(); renderPlan(); renderPortrait(); announce(`Backdrop: ${BACKDROPS[b.dataset.bd].name}.`); });
+$('#turnSeg').innerHTML = [[-1,'← Left'],[0,'Straight'],[1,'Right →']].map(([v,t])=>`<button data-turn="${v}" aria-pressed="false" aria-label="Head turned ${v<0?'to camera-left':v>0?'to camera-right':'straight to camera'}">${t}</button>`).join('');
+$('#turnSeg').addEventListener('click', e=>{ const b=e.target.closest('[data-turn]'); if(!b) return; state.S.turn=+b.dataset.turn; syncScene(); renderPlan(); renderPortrait(); const A=analyse(state.S,state.md); announce(`Head ${state.S.turn===0?'straight':'turned'}${A.sb?'. '+A.sb+' lighting':''}.`); });
+function syncScene(){ $$('#bdSw [data-bd]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.bd===state.S.backdrop)); $$('#turnSeg [data-turn]').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.turn===(state.S.turn||0))); const p=BRIEFS[state.bi].subject==='person'; $('#turnSeg').parentElement.hidden=!p; }
+$('#clearAll').addEventListener('click', ()=>{ state.S.lights=[]; state.sel=null; renderAll(); announce('All lights removed.'); });
+$('#modelPanel').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b||b.disabled) return; const md=state.md;
+  if(b.dataset.skin!=null) md.skin=+b.dataset.skin; if(b.dataset.face) md.face=b.dataset.face; if(b.dataset.gl!=null) md.glasses=b.dataset.gl==='1';
+  renderModel(); renderPortrait(); renderBrief();
+});
+$('#modelPanel').addEventListener('change', e=>{ if(e.target.id==='hairSel'){ state.md.hair=e.target.value; renderPortrait(); renderBrief(); } });
+
+/* ---------- Brief nav ---------- */
+$('#briefSel').addEventListener('change', e=>{ loadBrief(+e.target.value); syncScene(); });
+$('#prevB').addEventListener('click', ()=>{ loadBrief(state.bi-1); syncScene(); });
+$('#nextB').addEventListener('click', ()=>{ loadBrief(state.bi+1); syncScene(); });
+
+/* ---------- Review ---------- */
+function doReview(){
+  const b=BRIEFS[state.bi]; if(!b.want) return;
+  const R = scoreSetup(state.S, state.md, b); state.last=R;
+  const practice = state.revealed;
+  if(!practice){ const prev=state.best[b.id]; if(prev==null||R.score>prev){ state.best[b.id]=R.score; store.set('best', state.best); } }
+  const idealS = currentIdeal(); idealS.turn = state.S.turn;
+  const order = R.items.slice().sort((x,y)=>(x.s-y.s)||(y.w-x.w));
+  const top = order.filter(i=>i.w>0&&i.s<.99).slice(0,2);
+  const summary = R.score>=85?'That’s a wrap! The client will love it.':R.score>=65?'Nearly there. A couple of tweaks and it’s a wrap.':R.score>=45?'Some good ideas, but the look isn’t right for this brief yet.':'Back to the drawing board: re-read the brief and the look.';
+  $('#review').hidden=false;
+  $('#review').innerHTML = `<div class="ph">Director’s Review</div>
+   <div class="scorebox"><div class="big" aria-label="Score ${R.score} out of 100">${R.score}</div><div><div class="stars" aria-label="${R.stars} out of 3 stars">${starStr(R.stars)}</div><p>${summary}${practice?' <em>(Practice: you loaded the best setup, so this score is not recorded.)</em>':''}</p></div></div>
+   ${top.length?`<p class="note"><b>Top fix:</b> ${esc(top[0].msg)}</p>`:''}
+   <ul class="crit">${R.items.map(i=>{ const c = i.w===0?'na':i.s>=.99?'ok':i.s>=.4?'part':'no'; return `<li class="${c}"><span class="ic" aria-hidden="true">${c==='ok'?'✓':c==='part'?'~':c==='na'?'–':'✗'}</span><b>${esc(i.label)}</b><span class="pts">${i.w?Math.round(i.s*i.w)+'/'+i.w:'n/a'}</span><span class="msg">${esc(i.msg)}</span></li>`; }).join('')}</ul>
+   <div class="compare"><figure>${miniSVG(state.S,state.md,b,'cy','Your setup')}<figcaption>Your setup · ${R.score}</figcaption></figure><figure>${miniSVG(idealS,state.md,b,'cb','Best setup')}<figcaption>Best setup · ${scoreSetup(idealS,state.md,b).score}</figcaption></figure></div>`;
+  $('#ghostBtn').disabled=false; $('#loadBestBtn').disabled=false;
+  renderBrief(); renderTally();
+  announce(`Director’s Review: ${R.score} out of 100, ${R.stars} stars. ${top.length?top[0].msg:''}`);
+  $('#review').scrollIntoView({block:'nearest',behavior:reduceMotion()?'auto':'smooth'});
+  return R;
+}
+$('#submitBtn').addEventListener('click', doReview);
+$('#ghostBtn').addEventListener('click', ()=>{ state.ghost=!state.ghost; $('#ghostBtn').setAttribute('aria-pressed',state.ghost); $('#ghostBtn').textContent=state.ghost?'Hide best setup':'Show best setup'; renderPlan(); announce(state.ghost?'Best setup shown as ghost icons on the plan.':'Best setup hidden.'); });
+$('#loadBestBtn').addEventListener('click', ()=>{ const id=currentIdeal(); state.S.lights=id.lights; state.S.backdrop=id.backdrop; state.sel=null; state.revealed=true; syncScene(); renderAll(); announce('Best setup loaded. Compare the preview, then try your own version on another brief.'); });
+
+/* ---------- Export ---------- */
+function exportSVGString(){
+  const b=BRIEFS[state.bi]; const S=state.S; const rows=S.lights.map(l=>({l,s:lightSummary(l)}));
+  const A=analyse(S,state.md);
+  const H = 520+70+Math.max(1,rows.length)*22+70;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${H*2}" viewBox="0 0 600 ${H}" font-family="Arial,Helvetica,sans-serif">`;
+  s += `<rect width="600" height="${H}" fill="#14171c"/>`;
+  s += `<g>${planMarkup(S,{labels:true,static:true,subject:b.subject,pose:b.pose,p:'ex'})}</g>`;
+  let y=545;
+  s += `<text x="20" y="${y}" fill="#ffb020" font-size="15" font-weight="700">Lighting diagram: ${esc(b.title)}</text>`; y+=18;
+  s += `<text x="20" y="${y}" fill="#aeb6c3" font-size="11">${esc(b.subject==='person'?`Pattern ${PAT[A.pattern]}${A.sb?' ('+A.sb+')':''} · `:'')}Ratio ${fmtRatio(A.ratio)} · ${A.quality} light · Exposure ${A.stops.toFixed(1)} stops · Backdrop ${BACKDROPS[S.backdrop].name} (${A.bgTone})</text>`; y+=20;
+  const cols=[20,122,280,352,428,482];
+  ['Light','Position','Height','Modifier','Power','Colour'].forEach((t,i)=>{ s+=`<text x="${cols[i]}" y="${y}" fill="#e8ecf2" font-size="10.5" font-weight="700">${t}</text>`; }); y+=6;
+  s += `<line x1="20" x2="580" y1="${y}" y2="${y}" stroke="#465063"/>`; y+=14;
+  if(!rows.length){ s+=`<text x="20" y="${y}" fill="#aeb6c3" font-size="10.5">No lights placed.</text>`; y+=22; }
+  for(const {l,s:sm} of rows){ const v=[TYPES[l.type].name,sm.pos,sm.h,sm.mod,sm.pow,sm.col]; v.forEach((t,i)=>{ s+=`<text x="${cols[i]}" y="${y}" fill="${i===0?TYPES[l.type].col:'#cfd5de'}" font-size="${i===1?9.5:10}">${esc(t)}</text>`; }); y+=22; }
+  s += `<text x="580" y="${H-12}" text-anchor="end" fill="#6b7587" font-size="9.5">Lighting Director · Digital Media Unit 2 · Kester Small</text></svg>`;
+  return s;
+}
+function download(name, blob){ const a=document.createElement('a'); const u=URL.createObjectURL(blob); a.href=u; a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(u); a.remove(); }, 1500); }
+function fileBase(){ return 'lighting-plan-'+BRIEFS[state.bi].id; }
+$('#expSvg').addEventListener('click', ()=>{ download(fileBase()+'.svg', new Blob([exportSVGString()],{type:'image/svg+xml'})); toast('Diagram SVG downloaded.'); announce('Lighting diagram downloaded as SVG.'); });
+function svgToPng(svg){ return new Promise((res,rej)=>{ const img=new Image(); const u=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})); img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.width||1200; c.height=img.height||1400; const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); c.toBlob(b=>b?res(b):rej(new Error('PNG failed')),'image/png'); }; img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('SVG load failed')); }; img.src=u; }); }
+$('#expPng').addEventListener('click', async ()=>{ try{ const b=await svgToPng(exportSVGString()); download(fileBase()+'.png', b); toast('Diagram PNG downloaded.'); announce('Lighting diagram downloaded as PNG.'); }catch(err){ toast('PNG export failed: try SVG instead.'); } });
+function buildSheet(){
+  const b=BRIEFS[state.bi], S=state.S, A=analyse(S,state.md); const R = b.want?scoreSetup(S,state.md,b):null;
+  const name=$('#stuName').value.trim(), rat=$('#rationale').value.trim();
+  const d=new Date(); const date=d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const rows = S.lights.map(l=>{ const sm=lightSummary(l); return `<tr><td><b>${esc(TYPES[l.type].name)}</b></td><td>${esc(sm.pos)}</td><td>${esc(sm.h)}</td><td>${esc(sm.mod)}</td><td>${esc(sm.pow)}</td><td>${esc(sm.col)}</td></tr>`; }).join('') || '<tr><td colspan="6">No lights placed.</td></tr>';
+  const planSvg = `<svg viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg">${planMarkup(S,{labels:true,static:true,subject:b.subject,pose:b.pose,p:'sh'})}</svg>`;
+  $('#sheet').innerHTML = `<h1>Lighting Plan</h1><div style="font-size:10pt;color:#444">CAPE Digital Media Unit 2 · Module 1 · Pre-production evidence (photographing)</div>
+   <div class="meta"><div><b>Photographer:</b> ${esc(name)||'&nbsp;'}</div><div><b>Date:</b> ${esc(date)}</div><div><b>Teacher:</b> Ms. Kester Small</div></div>
+   <h2>The brief</h2><p><b>${esc(b.title)}</b><br>${esc(b.client)}</p><p><b>The look:</b> ${esc(b.look)}</p>
+   ${b.subject==='person'?`<p><b>Model:</b> ${SKINS[state.md.skin].name}, ${state.md.face} face, ${state.md.glasses?'wears glasses':'no glasses'}, ${HAIRS[state.md.hair].name.toLowerCase()} hair; ${b.pose==='standing'?'standing':'seated on a stool'}; head ${S.turn?'turned to camera-'+(S.turn<0?'left':'right'):'straight to camera'}.</p>`:''}
+   <h2>Lighting diagram</h2><div class="dg">${planSvg}<div>${miniSVG(S,state.md,b,'shp','Preview')}<p style="font-size:9.5pt">Pattern: <b>${b.subject==='person'?PAT[A.pattern]+(A.sb?' ('+A.sb+')':''):'—'}</b><br>Key : fill ratio: <b>${fmtRatio(A.ratio)}</b><br>Quality: <b>${A.quality}</b><br>Exposure: <b>${A.stops.toFixed(1)} stops</b><br>Backdrop: <b>${BACKDROPS[S.backdrop].name} (${A.bgTone})</b>${R?`<br>Director’s Review: <b>${R.score}/100</b>`:''}</p></div></div>
+   <h2>Settings</h2><table><thead><tr><th>Light</th><th>Angle and distance</th><th>Height</th><th>Modifier</th><th>Power</th><th>Colour</th></tr></thead><tbody>${rows}</tbody></table>
+   <h2>Rationale</h2><div class="rat">${rat?esc(rat):'Explain why each light is where it is, and how the setup suits the brief and the model.\n\n\n\n'}</div>
+   <h2>Safety and consent checklist</h2><ul><li>☐ Cables taped down or covered; no trailing leads across walkways</li><li>☐ Light stands weighted with sandbags; booms counter-weighted</li><li>☐ Hot lamps and modelling bulbs not touched; allowed to cool before packing</li><li>☐ Model has given informed consent and knows how the photos will be used (parent or guardian consent if under 18)</li><li>☐ Model release form signed</li></ul>
+   <div class="foot">Lighting Director · Digital Media Unit 2 · Kester Small</div>`;
+}
+$('#expSheet').addEventListener('click', ()=>{ buildSheet(); announce('Printable lighting plan ready. Use your browser’s print dialogue, or save as PDF.'); setTimeout(()=>{ try{ window.print(); }catch(_){} }, 60); });
+window.addEventListener('beforeprint', buildSheet);
+
+/* ---------- Learn ---------- */
+const LMD = {skin:2, face:'round', glasses:false, hair:'short'};
+const PB = {subject:'person', outfit:'tee'};
+function demo(lights, backdrop, turn){ const S=setupFrom({backdrop:backdrop||'grey',lights}); S.turn=turn||0; return S; }
+function fig(S, cap, p, md, brief){ return `<figure>${miniSVG(S, md||LMD, brief||PB, p, cap)}<figcaption>${esc(cap)}</figcaption></figure>`; }
+function renderLearn(){
+  const K = (az,d,h,mod,pow,x)=>Object.assign({type:'key',az,d,h,mod,pow},x||{});
+  const cards = [
+   ['Key light',`<p>The <strong>key</strong> is the main light. Its angle and height decide the lighting pattern and the mood. Start every setup with the key, check it, then add other lights one at a time.</p>`, `<div class="figrow">${fig(demo([K(-40,1.4,'high','softbox',85)]),'Key only, 40°','l1a')}${fig(demo([K(0,1.3,'high','softbox',85)]),'Key on axis','l1b')}${fig(demo([K(-90,1.2,'eye','softbox',85)]),'Key at 90°','l1c')}</div>`],
+   ['Fill light and reflectors',`<p>The <strong>fill</strong> opens up the shadows the key makes. Keep it weaker than the key. A <strong>reflector</strong> is a free fill: it bounces the key back.</p><ul><li><strong>White</strong>: soft, natural, subtle.</li><li><strong>Silver</strong>: brighter and crisper, adds sparkle.</li><li><strong>Gold</strong>: warm glow, lovely for golden-hour looks.</li></ul>`, `<div class="figrow">${fig(demo([K(-45,1.4,'high','softbox',85)]),'No fill','l2a')}${fig(demo([K(-45,1.4,'high','softbox',85),{type:'refl',az:50,d:.8,h:'eye',refl:'silver'}]),'Silver reflector','l2b')}${fig(demo([K(-45,1.4,'high','softbox',85),{type:'refl',az:50,d:.8,h:'eye',refl:'gold'}]),'Gold reflector','l2c')}</div>`],
+   ['Rim and background lights',`<p>A <strong>rim (hair) light</strong> sits behind the subject and draws a bright edge around the hair and shoulders. A <strong>background light</strong> lights the backdrop. Both create <strong>separation</strong>, so a dark-haired model does not disappear into a dark background.</p>`, `<div class="figrow">${fig(demo([K(-45,1.4,'high','softbox',85)],'black'),'No separation','l3a',{...LMD,hair:'locs'})}${fig(demo([K(-45,1.4,'high','softbox',85),{type:'rim',az:150,d:1.2,h:'high',mod:'grid',pow:70}],'black'),'+ rim light','l3b',{...LMD,hair:'locs'})}${fig(demo([K(-45,1.4,'high','softbox',85),{type:'bg',x:300,y:122,mod:'bare',pow:40}],'teal'),'+ background light','l3c',{...LMD,hair:'locs'})}</div>`],
+   ['Three-point lighting',`<p>The classic portrait and interview setup: <strong>key</strong> at about 45° to one side, <strong>fill</strong> on the other side at lower power, and a <strong>rim</strong> behind the subject, opposite the key.</p><svg viewBox="0 0 300 160" role="img" aria-label="Three-point lighting diagram" style="width:100%;height:auto;background:#1a1d23;border-radius:8px"><circle cx="150" cy="60" r="14" fill="#c98f63"/><text x="150" y="38" fill="#ccc" font-size="10" text-anchor="middle">Subject</text><rect x="138" y="132" width="24" height="16" rx="3" fill="#ddd"/><text x="150" y="128" fill="#ccc" font-size="10" text-anchor="middle">Camera</text><circle cx="70" cy="120" r="10" fill="#ff8a1f"/><text x="70" y="146" fill="#ff8a1f" font-size="10" text-anchor="middle">Key 45°</text><circle cx="240" cy="115" r="9" fill="#4b95ff"/><text x="240" y="140" fill="#4b95ff" font-size="10" text-anchor="middle">Fill</text><circle cx="215" cy="20" r="8" fill="#b97cff"/><text x="250" y="24" fill="#b97cff" font-size="10" text-anchor="middle">Rim</text><path d="M78 113 L138 68 M231 110 L163 67 M209 26 L161 52" stroke="#666" stroke-dasharray="3 3"/></svg>`, ''],
+   ['Hard vs soft light',`<p>Softness depends on the <strong>size of the source compared with the subject</strong>. A big source close to the face wraps round it and gives soft, gradual shadow edges. A small source, or a big one far away, gives hard, crisp shadows.</p><ul><li><strong>Hard</strong>: bare bulb, direct sun, grid/snoot (also narrows the beam).</li><li><strong>Soft</strong>: softbox, umbrella, diffusion scrim, overcast window.</li><li><strong>In between</strong>: beauty dish.</li></ul>`, `<div class="figrow two">${fig(demo([K(-45,1.4,'high','bare',70)]),'Bare bulb: hard','l5a')}${fig(demo([K(-45,1.0,'high','softbox',70)]),'Softbox close: soft','l5b')}</div>`],
+   ['The inverse square law',`<p>Light falls off fast. <strong>Double the distance and you get a quarter of the light</strong>; halve it and you get four times as much.</p><ul><li>1 m → 100%</li><li>2 m → 25% (2 stops less)</li><li>4 m → about 6%</li></ul><p>So moving a light is often a better adjustment than changing its power, and moving the model away from the backdrop makes the background darker.</p>`, `<div class="figrow">${fig(demo([K(-45,1.0,'high','softbox',60)]),'Key at 1 m','l6a')}${fig(demo([K(-45,2.0,'high','softbox',60)]),'Same key at 2 m','l6b')}${fig(demo([K(-45,2.8,'high','softbox',60)]),'At 2.8 m','l6c')}</div>`],
+   ['Lighting ratios',`<p>The <strong>key-to-fill ratio</strong> compares the lit side of the face (key + fill) with the shadow side (fill only). Each stop doubles the ratio.</p><ul><li><strong>2:1</strong>: soft, open, commercial (headshots, IDs).</li><li><strong>3:1–4:1</strong>: standard portrait, a little depth.</li><li><strong>8:1 and above</strong>: dramatic, moody (album covers, film noir).</li></ul>`, `<div class="figrow">${fig(demo([K(-45,1.3,'high','softbox',80),{type:'fill',az:40,d:1.3,h:'eye',mod:'umbrella',pow:60}]),'About 2:1','l7a')}${fig(demo([K(-45,1.3,'high','softbox',80),{type:'fill',az:40,d:2.2,h:'eye',mod:'umbrella',pow:45}]),'About 4:1','l7b')}${fig(demo([K(-45,1.3,'high','softbox',80)]),'8:1 or more','l7c')}</div>`],
+   ['The named patterns',`<p>Named after the shape of the nose shadow and where the key sits.</p><ul><li><strong>Butterfly</strong>: key on axis, high. Small shadow under the nose.</li><li><strong>Loop</strong>: key 20–35° to the side. The nose shadow makes a small loop.</li><li><strong>Rembrandt</strong>: key about 45°, high. A triangle of light on the shadow cheek.</li><li><strong>Split</strong>: key at 90°. Half the face lit.</li></ul>`, `<div class="figrow four">${fig(demo([K(0,1.2,'high','softbox',75),{type:'refl',az:0,d:.8,h:'low',refl:'white'}]),'Butterfly','l8a')}${fig(demo([K(-28,1.3,'high','softbox',80),{type:'refl',az:45,d:1,h:'eye'}]),'Loop','l8b')}${fig(demo([K(-50,1.3,'high','bare',75),{type:'refl',az:45,d:1.2,h:'eye'}]),'Rembrandt','l8c')}${fig(demo([K(-90,1.2,'eye','bare',75)]),'Split','l8d')}</div>`],
+   ['Broad vs short lighting',`<p>When the head is turned, one side of the face is closer to the camera (the <strong>broad</strong> side) and one side is turned away (the <strong>short</strong> side).</p><ul><li><strong>Short lighting</strong> lights the side turned away. It sculpts and slims, and adds mood.</li><li><strong>Broad lighting</strong> lights the side facing the camera. It looks open and bright, and widens a narrow face.</li></ul>`, `<div class="figrow two">${fig(demo([K(40,1.3,'high','softbox',85),{type:'refl',az:-45,d:1,h:'eye'}],'grey',1),'Short lighting','l9a')}${fig(demo([K(-40,1.3,'high','softbox',85),{type:'refl',az:45,d:1,h:'eye'}],'grey',1),'Broad lighting','l9b')}</div>`],
+   ['Colour temperature (Kelvin)',`<p>Light has a colour, measured in <strong>kelvin (K)</strong>. Lower is warmer (orange), higher is cooler (blue).</p><ul><li>Candle: about 1900 K</li><li><strong>Tungsten</strong> studio lamp: 3200 K</li><li><strong>Daylight</strong> and flash: 5600 K</li><li>Shade or overcast sky: 6500–8000 K</li></ul><p>Set the camera’s white balance to match the key. Do not mix temperatures on the face unless you want the effect. <strong>Gels</strong> are coloured filters: CTO warms, CTB cools, colour gels add creative colour.</p>`, `<div class="figrow">${fig(demo([K(-40,1.4,'high','softbox',85,{temp:'day'})]),'Daylight 5600 K','l10a')}${fig(demo([K(-40,1.4,'high','softbox',85,{temp:'tung'})]),'Tungsten 3200 K','l10b')}${fig(demo([K(-40,1.4,'high','softbox',85),{type:'rim',az:150,d:1.2,h:'high',mod:'grid',pow:80,temp:'gel',gel:'magenta'}],'black'),'Magenta gel rim','l10c')}</div>`],
+   ['Catchlights',`<p><strong>Catchlights</strong> are reflections of the lights in the eyes. They make the eyes look alive. Aim for one clear catchlight at about the 10 or 2 o’clock position. Their shape shows the modifier: square for a softbox or window, round for an umbrella, a ring for a beauty dish.</p>`, `<div class="figrow two">${fig(demo([K(-35,1.0,'high','softbox',70)]),'Softbox catchlight','l11a',{...LMD,skin:4})}${fig(demo([K(-100,1.3,'eye','grid',80)]),'No catchlight','l11b',{...LMD,skin:4})}</div>`],
+   ['Lighting every skin tone',`<p>Good practice for <strong>every</strong> skin tone. People vary in depth, undertone and shine, so light the person in front of you.</p><ul><li><strong>Expose for the face</strong>, not the background.</li><li>A <strong>gold or silver reflector</strong> adds glow and lifts shadows.</li><li><strong>Avoid underexposure against bright backgrounds</strong>: a white backdrop can fool the camera’s meter.</li><li><strong>Watch specular highlights</strong> (shine). Diffuse the source or blot the skin.</li><li>Check white balance so skin looks true.</li></ul>`, `<div class="figrow">${fig(demo([K(-40,1.4,'high','softbox',85),{type:'refl',az:45,d:.8,h:'eye',refl:'gold'}]),'Gold reflector glow','l12a',{...LMD,skin:5})}${fig(demo([K(-40,1.4,'high','bare',100)]),'Hard key: shine','l12b',{...LMD,skin:1})}${fig(demo([K(-40,1.6,'high','softbox',50),{type:'bg',x:300,y:118,mod:'bare',pow:100}],'white'),'Face under, bright BG','l12c',{...LMD,skin:3})}</div>`],
+   ['Glasses and glare',`<p>Glasses act like mirrors. If the key is at eye level and straight on, its reflection bounces right back into the lens. <strong>Raise the key</strong> to 45° above and <strong>move it off-axis</strong> (20–45° to the side). The angle of reflection then sends the glare away from the camera. Ask the model to tilt their chin down slightly too.</p>`, `<div class="figrow two">${fig(demo([K(0,1.3,'eye','softbox',85)]),'Eye level, straight on','l13a',{...LMD,glasses:true})}${fig(demo([K(-35,1.3,'high','softbox',85),{type:'refl',az:45,d:.9,h:'low'}]),'Raised and off-axis','l13b',{...LMD,glasses:true})}</div>`],
+   ['Studio safety',`<ul><li><strong>Cables</strong>: tape them down or run them along walls. Never across a walkway.</li><li><strong>Sandbags</strong> on every stand leg, especially with booms, umbrellas and softboxes that catch air from fans.</li><li><strong>Hot lamps</strong>: tungsten and modelling bulbs get very hot. Wear gloves, keep gels and fabric away, and let lamps cool before packing.</li><li>Never touch bulbs with bare fingers; keep drinks away from power.</li><li>Do not overload extension leads. Warn people before firing flash.</li></ul>`, ''],
+   ['Consent when photographing people',`<ul><li><strong>Ask first</strong> and explain where the photo will be used (website, poster, social media, SBA).</li><li>Use a <strong>model release form</strong>. Under-18s need a parent or guardian’s consent.</li><li>People can <strong>change their mind</strong>; delete images if they withdraw.</li><li>Direct poses respectfully and never touch someone without asking.</li><li>At Carnival and public events, still ask before close-up portraits, and respect cultural and religious dress.</li><li>Store images securely and do not share them beyond what was agreed.</li></ul>`, '']
+  ];
+  $('#learnGrid').innerHTML = cards.map((c,i)=>`<article class="lcard card"><h3><span class="n">${i+1}</span>${esc(c[0])}</h3>${c[1]}${c[2]}</article>`).join('');
+}
+
+/* ---------- Quick-fire ---------- */
+const Q = {round:0, total:12, score:0, list:[], cur:null};
+function qStart(){ const bs=BRIEFS.filter(b=>!b.free); Q.list = shuffle(bs.slice()).concat(shuffle(bs.slice())).slice(0,Q.total); Q.round=0; Q.score=0; qRound(); }
+function qRound(){
+  if(Q.round>=Q.total){ $('#qBrief').innerHTML=`<h2>Final score: ${Q.score} / ${Q.total}</h2><p class="note">${Q.score>=10?'Superb eye: you think like a lighting director.':Q.score>=7?'Good work. Check the Learn cards on ratios and patterns to sharpen up.':'Keep practising: open the Learn tab and try each setup in Director mode.'}</p>`; $('#qOpts').innerHTML=''; $('#qFb').textContent=''; $('#qFb').className='qfb'; $('#qNext').hidden=true; $('#qProg').textContent=`Done · ${Q.score}/${Q.total}`; announce(`Quick-fire finished. ${Q.score} out of ${Q.total}.`); return; }
+  const b = Q.list[Q.round]; const md = randomModel(b); const turn = b.fix&&b.fix.turnRandom?(Math.random()<.5?-1:1):0;
+  const ideal = briefIdeal(b, turn||1); ideal.turn=turn;
+  const cands = [];
+  for(const o of shuffle(BRIEFS.filter(x=>!x.free&&x.id!==b.id))){ const S=briefIdeal(o, turn||1); S.turn=turn; const r=scoreSetup(S,md,b); if(r.score<60) cands.push({S, r, from:o}); if(cands.length>=2) break; }
+  while(cands.length<2){ const S=setupFrom({backdrop:'black',lights:[{type:'key',az:-90+rnd(3)*90,d:1.2,h:['low','eye','high'][rnd(3)],mod:'bare',pow:100}]}); S.turn=turn; cands.push({S,r:scoreSetup(S,md,b)}); }
+  const opts = shuffle([{S:ideal,r:scoreSetup(ideal,md,b),ok:true}, ...cands]);
+  Q.cur = {b, md, opts, done:false};
+  qPaint();
+}
+function qPaint(){
+  const {b, md, opts} = Q.cur;
+  $('#qProg').textContent = `Round ${Q.round+1} of ${Q.total} · Score ${Q.score}`;
+  $('#qBrief').innerHTML = `<h2>${esc(b.title)}</h2><p class="client" style="color:var(--ink2);font-style:italic;margin:4px 0">${esc(b.client)}</p>${b.subject==='person'?`<div class="chips">${modelChips(md)}</div>`:''}`;
+  $('#qOpts').innerHTML = opts.map((o,i)=>`<button class="qopt" data-i="${i}" aria-label="Setup ${'ABC'[i]}">${miniSVG(o.S,md,b,'q'+i,'Setup '+'ABC'[i])}Setup ${'ABC'[i]}<span class="cap"></span></button>`).join('');
+  $('#qFb').textContent='Which setup suits the brief best? Pick A, B or C.'; $('#qFb').className='qfb'; $('#qNext').hidden=true;
+}
+function capFor(o, b){ const A=o.r.A; return `${b.subject==='person'?PAT[A.pattern]+' · ':''}${fmtRatio(A.ratio)} · ${A.quality} · ${A.bgTone} BG`; }
+$('#qOpts').addEventListener('click', e=>{
+  const btn=e.target.closest('.qopt'); if(!btn||!Q.cur||Q.cur.done) return; Q.cur.done=true;
+  Q.cur.pick=+btn.dataset.i; if(Q.cur.opts[Q.cur.pick].ok) Q.score++;
+  qMark(); $('#qNext').focus();
+});
+/* show the answer to the current round (after a pick, or when a saved round is restored) */
+function qMark(){
+  const i=Q.cur.pick, o=Q.cur.opts[i], b=Q.cur.b;
+  $$('#qOpts .qopt').forEach((x,j)=>{ x.disabled=true; const oo=Q.cur.opts[j]; x.querySelector('.cap').textContent=capFor(oo,b); if(oo.ok) x.classList.add('right'); else if(j===i) x.classList.add('wrong'); });
+  if(o.ok){ $('#qFb').className='qfb good'; $('#qFb').textContent=`Correct! ${o.r.items.filter(x=>x.s>=.99&&x.w>0).slice(0,2).map(x=>x.msg).join(' ')}`; }
+  else { const bad=o.r.items.filter(x=>x.w>0).sort((x,y)=>x.s-y.s)[0]; $('#qFb').className='qfb bad'; $('#qFb').textContent=`Not this one. ${bad?bad.msg:''} The best setup is ${'ABC'[Q.cur.opts.findIndex(x=>x.ok)]}.`; }
+  $('#qProg').textContent = `Round ${Q.round+1} of ${Q.total} · Score ${Q.score}`;
+  $('#qNext').hidden=false;
+}
+$('#qNext').addEventListener('click', ()=>{ Q.round++; qRound(); });
+$('#qRestart').addEventListener('click', qStart);
+
+/* ---------- Views ---------- */
+let learnDone=false, quickDone=false;
+function setView(v){
+  state.view=v;
+  $$('.tab').forEach(t=>t.setAttribute('aria-selected', t.dataset.view===v));
+  $('#v-learn').hidden = v!=='learn'; $('#v-director').hidden = v!=='director'; $('#v-quick').hidden = v!=='quick';
+  $('#kit').style.visibility = v==='director'?'':'hidden';
+  if(v==='learn' && !learnDone){ renderLearn(); learnDone=true; }
+  if(v==='quick' && !quickDone){ qStart(); quickDone=true; }
+  store.set('view', v);
+}
+$$('.tab').forEach(t=>t.addEventListener('click', ()=>setView(t.dataset.view)));
+$('.tabs').addEventListener('keydown', e=>{ const tabs=$$('.tab'); const i=tabs.indexOf(document.activeElement); if(i<0) return; let j=null; if(e.key==='ArrowRight') j=(i+1)%tabs.length; if(e.key==='ArrowLeft') j=(i-1+tabs.length)%tabs.length; if(j!=null){ e.preventDefault(); tabs[j].focus(); setView(tabs[j].dataset.view); } });
+
+/* ---------- Boot ---------- */
+renderTally();
+loadBrief(0); syncScene();
+const sv = store.get('view','director'); if(sv==='learn' || sv==='quick') setView(sv);
+const svName = store.get('name',''); $('#stuName').value = typeof svName==='string' ? svName : '';
+$('#stuName').addEventListener('input', e=>store.set('name', e.target.value));
+
+/* ---------- GameSave: the brief you are lighting (model, lights, backdrop, head turn), your rationale
+   and the Quick-fire round in progress stay on this device; best scores, view and name were already saved ---------- */
+(function(){
+  if(!window.GameSave) return;
+  const num = v => typeof v==='number' && isFinite(v);
+  function cleanLight(l){
+    if(!l || typeof l!=='object' || !TYPES[l.type] || !num(l.x) || !num(l.y)) return null;
+    const o = {id:'L'+(uid++), type:l.type, h:['low','eye','high'].includes(l.h)?l.h:'eye', pow:num(l.pow)?clamp(Math.round(l.pow),0,100):60,
+      mod:MODS[l.mod]?l.mod:'softbox', temp:['tung','day','gel'].includes(l.temp)?l.temp:'day', gel:GELS[l.gel]?l.gel:'amber', refl:REFL[l.refl]?l.refl:'white',
+      auto:l.auto!==false, x:l.x, y:l.y, rot:num(l.rot)?l.rot:0};
+    constrain(o); if(o.auto) reaim(o);
+    return o;
+  }
+  function cleanSetup(s){
+    if(!s || typeof s!=='object' || !Array.isArray(s.lights) || s.lights.length>8) return null;
+    const lights = s.lights.map(cleanLight); if(lights.some(l=>!l)) return null;
+    return {backdrop:BACKDROPS[s.backdrop]?s.backdrop:'grey', lights, turn:[-1,0,1].includes(s.turn)?s.turn:0};
+  }
+  function cleanModel(m){
+    if(!m || typeof m!=='object' || !Number.isInteger(m.skin) || !SKINS[m.skin] || !['round','angular'].includes(m.face) || typeof m.glasses!=='boolean' || !HAIRS[m.hair]) return null;
+    return {skin:m.skin, face:m.face, glasses:m.glasses, hair:m.hair};
+  }
+  const plainSetup = S => ({backdrop:S.backdrop, turn:S.turn||0, lights:S.lights.map(l=>Object.assign({}, l))});
+  function snapQuick(){
+    if(!quickDone || !Q.list.length) return null;
+    const c = Q.cur;
+    return {round:Q.round, total:Q.total, score:Q.score, list:Q.list.map(b=>b.id),
+      cur: c && Q.round<Q.total ? {b:c.b.id, md:c.md, opts:c.opts.map(o=>({S:plainSetup(o.S), ok:!!o.ok})), done:!!c.done, pick:c.pick} : null};
+  }
+  function restoreQuick(q){
+    if(!q || typeof q!=='object' || q.total!==Q.total || !Array.isArray(q.list) || q.list.length!==Q.total) return;
+    const list = q.list.map(id=>BRIEFS.find(b=>b.id===id && !b.free)); if(list.some(b=>!b)) return;
+    if(!Number.isInteger(q.round) || q.round<0 || q.round>Q.total || !Number.isInteger(q.score) || q.score<0 || q.score>Math.min(Q.total, q.round+1)) return;
+    Q.list = list; Q.round = q.round; Q.score = q.score; Q.cur = null; quickDone = true;
+    const c = q.cur, b = list[q.round];
+    if(b && c && c.b===b.id && Array.isArray(c.opts) && c.opts.length===3){
+      const md = cleanModel(c.md), opts = c.opts.map(o=>{ const S=o&&cleanSetup(o.S); return S?{S, ok:o.ok===true}:null; });
+      if(md && opts.every(Boolean) && opts.filter(o=>o.ok).length===1){
+        opts.forEach(o=>{ o.r = scoreSetup(o.S, md, b); });
+        Q.cur = {b, md, opts, done:false}; qPaint();
+        if(c.done===true && [0,1,2].includes(c.pick)){ Q.cur.done = true; Q.cur.pick = c.pick; qMark(); }
+        return;
+      }
+    }
+    qRound(); // the final score, or a fresh set of setups for this brief
+  }
+  const gsSave = () => { try{ GameSave.save(); }catch(e){} };
+  GameSave.register(['lightingdirector.*']);
+  GameSave.persist({key:'dm2.lightingdirector.save',
+    get: () => ({v:1, brief:BRIEFS[state.bi].id, md:state.md, S:plainSetup(state.S), revealed:!!state.revealed, rationale:$('#rationale').value, quick:snapQuick()}),
+    set: d => {
+      if(!d || d.v!==1) return;
+      const bi = BRIEFS.findIndex(b=>b.id===d.brief), S = cleanSetup(d.S), md = cleanModel(d.md);
+      if(bi>=0 && S){
+        loadBrief(bi);
+        if(md) state.md = md;
+        state.S = S; state.revealed = d.revealed===true;
+        renderBrief(); renderModel(); renderAll(); syncScene();
+      }
+      if(typeof d.rationale==='string') $('#rationale').value = d.rationale.slice(0, 5000);
+      try{ restoreQuick(d.quick); }catch(e){ Q.cur=null; }
+    }});
+  ['click','pointerup','change','keyup'].forEach(t=>document.addEventListener(t, ()=>setTimeout(gsSave, 0), true));
+  let typing=null; document.addEventListener('input', ()=>{ clearTimeout(typing); typing=setTimeout(gsSave, 600); }, true);
+})();
+
+/* test / teacher hook */
+window.LD = {state, BRIEFS, analyse, scoreSetup, setupFrom, briefIdeal, loadBrief:(i)=>{loadBrief(i);syncScene();}, setLights:(specs,backdrop)=>{ const S=setupFrom({backdrop:backdrop||state.S.backdrop,lights:specs}); state.S.lights=S.lights; state.S.backdrop=S.backdrop; state.sel=null; syncScene(); renderAll(); }, review:doReview, exportSVGString, buildSheet, setView, renderAll};
+})();
+</script>
+</body>
+</html>

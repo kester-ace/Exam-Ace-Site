@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blueprint Breakers</title>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --navy: #1F3864;
+    --navy-light: #2E5C8A;
+    --gold: #C9A227;
+    --gold-soft: #F1E4B8;
+    --bg: #F5F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EEF1F6;
+    --text: #1B2430;
+    --text-muted: #5B6675;
+    --border: #DFE3EA;
+    --success: #1E7A34;
+    --success-bg: #E5F4E9;
+    --danger: #B3241C;
+    --danger-bg: #FBE7E5;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --navy: #6E97C9;
+      --navy-light: #8FB0D8;
+      --gold: #E4C158;
+      --gold-soft: #3A3320;
+      --bg: #10151C;
+      --surface: #19212B;
+      --surface-2: #212A36;
+      --text: #E9ECF1;
+      --text-muted: #9AA6B4;
+      --border: #2B3542;
+      --success: #4FBE6C;
+      --success-bg: #163823;
+      --danger: #E36F65;
+      --danger-bg: #3B1E1B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --navy: #6E97C9; --navy-light: #8FB0D8; --gold: #E4C158; --gold-soft: #3A3320;
+    --bg: #10151C; --surface: #19212B; --surface-2: #212A36; --text: #E9ECF1;
+    --text-muted: #9AA6B4; --border: #2B3542; --success: #4FBE6C; --success-bg: #163823;
+    --danger: #E36F65; --danger-bg: #3B1E1B;
+  }
+
+  * { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Calibri', 'Candara', 'Segoe UI', Optima, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  img, svg { max-width: 100%; }
+
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    padding: env(safe-area-inset-top, 0px) 1.25rem 0 1.25rem;
+    border-bottom: 4px solid var(--gold);
+  }
+  .header-inner { max-width: 920px; margin: 0 auto; padding: 1.75rem 0 1.5rem; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    background: rgba(255,255,255,0.14);
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+  }
+  h1 { margin: 0 0 0.4rem; font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 700; }
+  .subtitle { margin: 0 0 0.9rem; color: #E6ECF4; font-size: 1rem; max-width: 62ch; }
+  .byline { font-size: 0.85rem; color: var(--gold); font-weight: 600; }
+
+  .student-bar { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .student-bar-inner {
+    max-width: 920px; margin: 0 auto; padding: 0.85rem 1.25rem;
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .student-bar label {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    font-size: 0.78rem; font-weight: 700; color: var(--text-muted);
+    flex: 1 1 150px;
+  }
+  .student-bar input {
+    font-family: inherit; font-size: 0.9rem; padding: 0.45rem 0.65rem;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+  }
+  .student-bar input:focus { outline: none; border-color: var(--navy-light); }
+
+  nav.tabs {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tabs-inner {
+    max-width: 920px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0 0.75rem;
+  }
+  .tab-btn {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.9rem 0.75rem 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--gold); }
+
+  main { max-width: 920px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .intro {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold); 
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+  .intro strong { color: var(--text); }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 0.9rem;
+  }
+  .score-pill {
+    display: inline-block;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  /* ---- Activity 1: Match ---- */
+  .match-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+  .btn {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 7px;
+    border: 1px solid var(--navy);
+    background: var(--surface);
+    color: var(--navy);
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn.primary:hover { background: var(--navy-light); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:disabled:hover { background: var(--surface); }
+
+  .id-block { margin-bottom: 1rem; }
+  .id-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; }
+
+  .passage-title { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin: 0 0 0.6rem; }
+  .strategy-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .strategy-chip {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .strategy-chip:hover:not(:disabled) { border-color: var(--navy-light); }
+  .strategy-chip.toggled { background: var(--gold-soft); border-color: var(--gold); }
+  .strategy-chip.chip-correct { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+  .strategy-chip.chip-incorrect { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+  .strategy-chip.chip-missed { background: var(--surface-2); border-color: var(--gold); color: var(--text); border-style: dashed; }
+  .strategy-chip:disabled { cursor: default; }
+
+  .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }
+  .match-card {
+    font-family: inherit;
+    text-align: left;
+    font-size: 0.82rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    min-height: 3.1rem;
+  }
+  .match-card.term { font-weight: 700; color: var(--navy); }
+  .match-card:hover:not(.solved) { border-color: var(--navy-light); }
+  .match-card.selected { border-color: var(--gold); background: var(--gold-soft); }
+  .match-card.solved { background: var(--success-bg); border-color: var(--success); color: var(--success); opacity: 0.85; cursor: default; }
+  .match-card.wrong { background: var(--danger-bg); border-color: var(--danger); }
+
+  .complete-banner {
+    margin-top: 1.2rem;
+    background: var(--success-bg);
+    border: 1px solid var(--success);
+    color: var(--success);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  /* ---- Activity 2: Quiz ---- */
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.2rem 1.3rem; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; flex-wrap: wrap; gap: 0.4rem; }
+  .quiz-progress { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+  .quiz-extract {
+    font-style: italic;
+    background: var(--surface-2);
+    border-left: 4px solid var(--navy-light);
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.55rem; }
+  .quiz-option {
+    font-family: inherit;
+    text-align: left;
+    font-size: 0.9rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--navy-light); }
+  .quiz-option.correct { background: var(--success-bg); border-color: var(--success); color: var(--success); font-weight: 700; }
+  .quiz-option.incorrect { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+  .quiz-option.selected-answer { background: var(--gold-soft); border-color: var(--gold); font-weight: 700; }
+  .quiz-option:disabled { cursor: default; }
+  .quiz-explanation { margin-top: 0.9rem; padding: 0.7rem 0.9rem; border-radius: 7px; font-size: 0.87rem; }
+  .quiz-explanation.good { background: var(--success-bg); color: var(--success); }
+  .quiz-explanation.bad { background: var(--danger-bg); color: var(--danger); }
+  #quizNext { margin-top: 1rem; }
+  .quiz-summary { text-align: center; padding: 2rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .quiz-final-score { font-size: 2rem; font-weight: 700; color: var(--navy); margin: 0.5rem 0 1rem; }
+
+  /* ---- Activity 3: Sort ---- */
+  .sort-instructions { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem; }
+  .sort-pool { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.2rem; min-height: 2.6rem; }
+  .sort-chip {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--navy);
+    background: var(--surface);
+    color: var(--navy);
+    cursor: pointer;
+  }
+  .sort-chip:hover:not(.placed) { background: var(--surface-2); }
+  .sort-chip.selected { background: var(--gold-soft); border-color: var(--gold); }
+  .sort-chip.placed { opacity: 0.3; cursor: default; }
+  .buckets { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .bucket {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 0.8rem;
+    cursor: pointer;
+    background: var(--surface);
+    min-height: 6rem;
+  }
+  .bucket:hover { border-color: var(--navy-light); }
+  .bucket h4 { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--navy); }
+  .bucket-items { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .placed-chip { font-size: 0.75rem; background: var(--success-bg); color: var(--success); padding: 0.25rem 0.55rem; border-radius: 999px; }
+  .bucket.flash-good { border-color: var(--success); background: var(--success-bg); }
+  .bucket.flash-bad { border-color: var(--danger); background: var(--danger-bg); }
+
+  /* ---- Activity 4: Exam practice ---- */
+  .exam-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.2rem 1.3rem; margin-bottom: 1.3rem; }
+  .exam-card h3 { margin: 0 0 0.6rem; font-size: 0.95rem; color: var(--navy); }
+  .exam-extract { font-style: italic; background: var(--surface-2); border-left: 4px solid var(--navy-light); padding: 0.8rem 1rem; border-radius: 6px; margin: 0 0 1rem; font-size: 0.92rem; }
+  .exam-field { margin-bottom: 0.7rem; }
+  .exam-field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .exam-field textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+    min-height: 2.6rem;
+  }
+  .model-answer { margin-top: 0.8rem; background: var(--gold-soft); border-radius: 7px; padding: 0.8rem 1rem; font-size: 0.87rem; }
+  .model-answer p { margin: 0 0 0.5rem; }
+  .model-answer p:last-child { margin-bottom: 0; }
+
+  footer { max-width: 920px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+  .tip-box {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+  }
+
+  @media (max-width: 480px) {
+    .match-grid { gap: 0.45rem; }
+    .match-card { font-size: 0.76rem; padding: 0.5rem 0.55rem; }
+    .buckets { grid-template-columns: 1fr; }
+  }
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+
+<header>
+  <div class="header-inner">
+    <span class="eyebrow">CAPE COMMUNICATION STUDIES</span>
+    <h1>Blueprint Breakers</h1>
+    <p class="byline">CAPE Communication Studies</p>
+  </div>
+</header>
+
+<div class="student-bar">
+  <div class="student-bar-inner">
+    <label>Name<input type="text" id="studentName" autocomplete="name"></label>
+    <label>Class<input type="text" id="studentClass"></label>
+    <label>Date<input type="date" id="studentDate"></label>
+  </div>
+</div>
+
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab-btn active" data-target="match">1 · Match the Strategy</button>
+    <button class="tab-btn" data-target="spot">2 · Spot the Strategy</button>
+    <button class="tab-btn" data-target="sort">3 · Sort by Discourse Type</button>
+    <button class="tab-btn" data-target="identify">4 · Identify Discourse &amp; Strategy</button>
+    <button class="tab-btn" data-target="exam">5 · Exam Practice</button>
+    <button class="tab-btn" data-target="practice">6 · Practice Passages</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ACTIVITY 1: MATCH -->
+  <section id="match" class="panel active">
+    <div class="intro"><strong>How to play:</strong> Tap a strategy name, then tap the definition you think matches it. A correct pair turns green and locks in place; an incorrect pair flashes red so you can try again.</div>
+    <div class="match-toolbar">
+      <div>
+        <div class="section-title" id="matchRoundTitle">Round 1</div>
+        <span class="score-pill" id="matchRoundIndicator">Round 1 of 3</span>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" id="matchRestartRound">Restart Round</button>
+        <button class="btn primary" id="matchNextRound">Next Round →</button>
+      </div>
+    </div>
+    <span class="score-pill" id="matchScore" style="margin-bottom:0.9rem; display:inline-block;">Matched: 0 / 0</span>
+    <div class="match-grid">
+      <div id="matchTerms"></div>
+      <div id="matchDefs"></div>
+    </div>
+    <div class="complete-banner" id="matchComplete" hidden>Round complete — every strategy matched correctly. Choose "Next Round" to continue, or "Restart Round" to play again.</div>
+  </section>
+
+  <!-- ACTIVITY 2: SPOT THE STRATEGY -->
+  <section id="spot" class="panel">
+    <div class="intro"><strong>How to play:</strong> Read each Caribbean extract and choose the organizational strategy the author is using. Your score updates as you go; answers aren't revealed, so check your reasoning with your teacher or classmates once you finish.</div>
+    <div class="quiz-card" id="quizCard">
+      <div class="quiz-top">
+        <span class="quiz-progress" id="quizProgress">Question 1 of 14</span>
+        <span class="score-pill" id="quizScoreLive">Score: 0 / 0</span>
+      </div>
+      <p class="quiz-extract" id="quizExtract"></p>
+      <div class="quiz-options" id="quizOptions"></div>
+      <button class="btn primary" id="quizNext" hidden>Next Question →</button>
+    </div>
+    <div class="quiz-summary" id="quizSummary" hidden>
+      <div>Activity complete</div>
+      <div class="quiz-final-score"></div>
+      <button class="btn primary" id="quizRestart">Play Again</button>
+    </div>
+  </section>
+
+  <!-- ACTIVITY 3: SORT BY DISCOURSE TYPE -->
+  <section id="sort" class="panel">
+    <div class="intro"><strong>How to play:</strong> Tap a strategy chip below, then tap the discourse type where it belongs. Some strategies can appear under more than one discourse type — any correct placement counts.</div>
+    <span class="score-pill" id="sortScore" style="margin-bottom:0.9rem; display:inline-block;">Placed: 0 / 0</span>
+    <div class="sort-pool" id="sortPool"></div>
+    <div class="buckets">
+      <div class="bucket" id="bucket-Narrative" data-type="Narrative">
+        <h4>Narrative</h4>
+        <div class="bucket-items"></div>
+      </div>
+      <div class="bucket" id="bucket-Descriptive" data-type="Descriptive">
+        <h4>Descriptive</h4>
+        <div class="bucket-items"></div>
+      </div>
+      <div class="bucket" id="bucket-Expository" data-type="Expository">
+        <h4>Expository</h4>
+        <div class="bucket-items"></div>
+      </div>
+      <div class="bucket" id="bucket-Argumentative" data-type="Argumentative">
+        <h4>Argumentative</h4>
+        <div class="bucket-items"></div>
+      </div>
+    </div>
+    <div class="complete-banner" id="sortComplete" hidden>All strategies placed correctly — well done.</div>
+    <div style="margin-top:1rem;"><button class="btn" id="sortRestart">Restart</button></div>
+  </section>
+
+  <!-- ACTIVITY 4: IDENTIFY DISCOURSE & STRATEGY -->
+  <section id="identify" class="panel">
+    <div class="intro"><strong>How to play:</strong> Read the extract, choose its discourse type and its organizational strategy, then type the evidence you'd use to justify both choices. Your score updates as you go; answers aren't revealed, so check your reasoning with your teacher or classmates once you finish.</div>
+    <div class="quiz-card" id="idCard">
+      <div class="quiz-top">
+        <span class="quiz-progress" id="idProgress">Extract 1 of 8</span>
+        <span class="score-pill" id="idScoreLive">Score: 0 / 0</span>
+      </div>
+      <p class="quiz-extract" id="idExtract"></p>
+
+      <div class="id-block">
+        <div class="id-label">Discourse type</div>
+        <div class="quiz-options" id="idDiscourseOptions"></div>
+      </div>
+
+      <div class="id-block">
+        <div class="id-label">Organizational strategy</div>
+        <div class="quiz-options" id="idStrategyOptions"></div>
+      </div>
+
+      <div class="exam-field">
+        <label>Your evidence (quote or paraphrase from the extract)</label>
+        <textarea id="idEvidenceInput" rows="2"></textarea>
+      </div>
+
+      <button class="btn primary" id="idNext" hidden>Next Extract →</button>
+    </div>
+    <div class="quiz-summary" id="idSummary" hidden>
+      <div>Activity complete</div>
+      <div class="quiz-final-score"></div>
+      <button class="btn primary" id="idRestart">Play Again</button>
+    </div>
+  </section>
+
+  <!-- ACTIVITY 5: EXAM PRACTICE -->
+  <section id="exam" class="panel">
+    <div class="intro"><strong>How to use:</strong> For each extract, write your own Identify–Evidence–Effect response in the boxes, the same three-step structure used to earn full marks on the exam. Click "Check My Answers" when you're done for a score; answers aren't shown here, so also trade responses with a classmate or check your work with your teacher.</div>
+
+    <div class="exam-card">
+      <h3>Extract 1 — Tourism</h3>
+      <p class="exam-extract">"Antigua and Barbuda's tourism industry is often described as the backbone of the country's economy; it can be examined in three main strands — cruise tourism, stay-over tourism, and yacht tourism — each contributing uniquely to the country's overall economic performance."</p>
+      <div class="exam-field"><label>Identify the strategy</label><textarea id="e5_1_id" rows="1"></textarea></div>
+      <div class="exam-field"><label>Evidence (quote from the extract)</label><textarea id="e5_1_ev" rows="2"></textarea></div>
+      <div class="exam-field"><label>Effect on the reader</label><textarea id="e5_1_ef" rows="2"></textarea></div>
+    </div>
+
+    <div class="exam-card">
+      <h3>Extract 2 — Hurricane Irma</h3>
+      <p class="exam-extract">"When Hurricane Irma struck Sint Maarten in September 2017, the destruction was staggering. Roofs were torn from homes, boats were flung onto roads, and the island's main power grid was crippled for months. As a direct result, thousands of residents were left without electricity, businesses were forced to close, and the tourism season that had been the island's lifeline came to an abrupt halt."</p>
+      <div class="exam-field"><label>Identify the strategy</label><textarea id="e5_2_id" rows="1"></textarea></div>
+      <div class="exam-field"><label>Evidence (quote from the extract)</label><textarea id="e5_2_ev" rows="2"></textarea></div>
+      <div class="exam-field"><label>Effect on the reader</label><textarea id="e5_2_ef" rows="2"></textarea></div>
+    </div>
+
+    <div class="exam-card">
+      <h3>Extract 3 — Cruise Tourism Debate</h3>
+      <p class="exam-extract">"Some residents argue that Saint Lucia should scale back cruise tourism to reduce environmental strain on the island's beaches and reefs. It is true that cruise ships bring large volumes of visitors in short bursts, straining local infrastructure. However, cruise tourism also generates substantial revenue for local vendors, taxi drivers, and small businesses who depend on ship-day traffic to survive; scaling it back without a viable alternative would devastate this segment of the workforce."</p>
+      <div class="exam-field"><label>Identify the strategy</label><textarea id="e5_3_id" rows="1"></textarea></div>
+      <div class="exam-field"><label>Evidence (quote from the extract)</label><textarea id="e5_3_ev" rows="2"></textarea></div>
+      <div class="exam-field"><label>Effect on the reader</label><textarea id="e5_3_ef" rows="2"></textarea></div>
+    </div>
+
+    <span class="score-pill" id="examScoreLive" style="display:inline-block; margin-bottom:0.9rem;">Score: not checked yet</span>
+    <div><button class="btn primary" id="examCheck">Check My Answers</button></div>
+  </section>
+
+  <!-- ACTIVITY 6: PRACTICE PASSAGES -->
+  <section id="practice" class="panel">
+    <div class="intro"><strong>How to play:</strong> Read the passage, choose its discourse type, tap every organizational strategy you can find (more than one usually applies), then write your evidence and explanation. Once you've written something, click "Lock In My Answer" to submit your strategies and evidence together. Answers aren't revealed, so check your reasoning with your teacher or classmates once you finish.</div>
+    <div class="quiz-card" id="pCard">
+      <div class="quiz-top">
+        <span class="quiz-progress" id="pProgress">Passage 1 of 7</span>
+        <span class="score-pill" id="pScoreLive">Score: 0 / 0</span>
+      </div>
+      <div class="passage-title" id="pTitle"></div>
+      <p class="quiz-extract" id="pExtract"></p>
+
+      <div class="id-block">
+        <div class="id-label">Discourse type</div>
+        <div class="quiz-options" id="pDiscourseOptions"></div>
+      </div>
+
+      <div class="id-block">
+        <div class="id-label">Organizational strategies (select all that apply)</div>
+        <div class="strategy-options" id="pStrategyOptions"></div>
+      </div>
+
+      <div class="exam-field">
+        <label>Your evidence and explanation</label>
+        <textarea id="pEvidenceInput" rows="3"></textarea>
+      </div>
+
+      <div style="margin-bottom:0.9rem;"><button class="btn" id="pCheckStrategies" disabled>Lock In My Answer</button></div>
+
+      <button class="btn primary" id="pNext" hidden>Next Passage →</button>
+    </div>
+    <div class="quiz-summary" id="pSummary" hidden>
+      <div>Activity complete</div>
+      <div class="quiz-final-score"></div>
+      <button class="btn primary" id="pRestart">Play Again</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="tip-box">Tip: once you can complete all six activities without hints, practise spotting these same strategies in real newspaper articles — your territory's main newspaper is a good place to start.</div>
+  <button class="btn primary no-print" id="printPageBtn" style="margin-top:1rem;">Print This Worksheet</button>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- TAB NAVIGATION ---------- */
+  var tabButtons = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.panel');
+  tabButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabButtons.forEach(function(b){ b.classList.remove('active'); });
+      panels.forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+
+  /* ---------- UTIL ---------- */
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  /* ================= ACTIVITY 1: MATCH THE STRATEGY ================= */
+  var matchRounds = [
+    {
+      title: "Round 1 — Narrative & Descriptive Strategies",
+      pairs: [
+        {term:"Time Sequence", def:"Arranges events in chronological order, from a starting point through to a resolution."},
+        {term:"Flashback", def:"Recalls events that happened before the present moment in the narrative."},
+        {term:"Flash-Forward", def:"Interrupts the current flow of events to show exactly what will happen in the future."},
+        {term:"Foreshadowing", def:"Gives subtle hints or clues in advance about what is to come later in the narrative."},
+        {term:"Comparison and Contrast", def:"Examines the similarities and differences between two or more things, ideas, or situations."},
+        {term:"General to Specific", def:"Begins with a broad, general idea and progressively narrows to specific details or examples."}
+      ]
+    },
+    {
+      title: "Round 2 — Expository Strategies",
+      pairs: [
+        {term:"Cause and Effect", def:"Presents the reasons why something happens, then the consequences that result."},
+        {term:"Classification", def:"Groups ideas, information, or things according to their shared characteristics."},
+        {term:"Definition", def:"Explains the meaning of a concept, idea, or term for the reader."},
+        {term:"Evidence", def:"Uses scientific, statistical, or historical facts to support or disprove a claim."},
+        {term:"Problem and Solution", def:"Presents an issue in detail, then offers ways or procedures to resolve it."},
+        {term:"Credible Sources", def:"References experts, organizations, or authorities to lend weight to a claim."}
+      ]
+    },
+    {
+      title: "Round 3 — Structural & Argumentative Strategies",
+      pairs: [
+        {term:"Concession and Rebuttal", def:"Admits an opposing point has some truth, then counters it with a stronger argument."},
+        {term:"List / Listing", def:"Presents a series of related details, facts, or ideas in a sequential or grouped format."},
+        {term:"Order of Importance", def:"Arranges ideas from most important to least important, or the reverse."},
+        {term:"Subheadings", def:"Uses titles for subsections of a text to guide the reader through its content."},
+        {term:"Topical Organization", def:"Divides a main topic into distinct sub-topics, each given roughly equal attention."}
+      ]
+    }
+  ];
+
+  var currentRound = 0, matchOrder = null, matchSolved = [];
+  var matchState = { selectedTerm:null, selectedDef:null, solved:0, total:0, locked:false };
+
+  function renderMatchRound(saved){
+    var round = matchRounds[currentRound];
+    matchState = { selectedTerm:null, selectedDef:null, solved:0, total: round.pairs.length, locked:false };
+    document.getElementById('matchRoundTitle').textContent = round.title;
+    document.getElementById('matchRoundIndicator').textContent = 'Round ' + (currentRound+1) + ' of ' + matchRounds.length;
+
+    var ids = round.pairs.map(function(p,i){ return i; });
+    var shuffledTerms = saved ? saved.t.slice() : shuffle(ids);
+    var shuffledDefs = saved ? saved.d.slice() : shuffle(ids);
+    matchOrder = { t: shuffledTerms, d: shuffledDefs }; matchSolved = [];
+
+    var termCol = document.getElementById('matchTerms');
+    var defCol = document.getElementById('matchDefs');
+    termCol.innerHTML = '';
+    defCol.innerHTML = '';
+
+    shuffledTerms.forEach(function(id){
+      var b = document.createElement('button');
+      b.className = 'match-card term';
+      b.textContent = round.pairs[id].term;
+      b.dataset.id = id;
+      b.addEventListener('click', function(){ onTermClick(b,id); });
+      termCol.appendChild(b);
+    });
+    shuffledDefs.forEach(function(id){
+      var b = document.createElement('button');
+      b.className = 'match-card def';
+      b.textContent = round.pairs[id].def;
+      b.dataset.id = id;
+      b.addEventListener('click', function(){ onDefClick(b,id); });
+      defCol.appendChild(b);
+    });
+
+    updateMatchScore();
+    document.getElementById('matchComplete').hidden = true;
+    if(saved) saved.solved.forEach(function(id){
+      var t = termCol.querySelector('[data-id="' + id + '"]'), d = defCol.querySelector('[data-id="' + id + '"]');
+      if(!t || !d) return;
+      t.classList.add('solved'); d.classList.add('solved'); matchState.solved++; matchSolved.push(id);
+    });
+    if(saved){ updateMatchScore(); if(matchState.solved === matchState.total) document.getElementById('matchComplete').hidden = false; }
+  }
+
+  function updateMatchScore(){
+    document.getElementById('matchScore').textContent = 'Matched: ' + matchState.solved + ' / ' + matchState.total;
+  }
+
+  function onTermClick(el, id){
+    if(matchState.locked || el.classList.contains('solved')) return;
+    document.querySelectorAll('.match-card.term').forEach(function(c){ c.classList.remove('selected'); });
+    el.classList.add('selected');
+    matchState.selectedTerm = {el:el, id:id};
+    tryMatch();
+  }
+  function onDefClick(el, id){
+    if(matchState.locked || el.classList.contains('solved')) return;
+    document.querySelectorAll('.match-card.def').forEach(function(c){ c.classList.remove('selected'); });
+    el.classList.add('selected');
+    matchState.selectedDef = {el:el, id:id};
+    tryMatch();
+  }
+  function tryMatch(){
+    if(!matchState.selectedTerm || !matchState.selectedDef) return;
+    matchState.locked = true;
+    var tEl = matchState.selectedTerm.el, tId = matchState.selectedTerm.id;
+    var dEl = matchState.selectedDef.el, dId = matchState.selectedDef.id;
+    if(tId === dId){
+      tEl.classList.add('solved'); dEl.classList.add('solved');
+      tEl.classList.remove('selected'); dEl.classList.remove('selected');
+      matchState.solved++; matchSolved.push(tId);
+      updateMatchScore();
+      matchState.selectedTerm = null; matchState.selectedDef = null;
+      matchState.locked = false;
+      if(matchState.solved === matchState.total){
+        document.getElementById('matchComplete').hidden = false;
+      }
+    } else {
+      tEl.classList.add('wrong'); dEl.classList.add('wrong');
+      setTimeout(function(){
+        tEl.classList.remove('wrong','selected');
+        dEl.classList.remove('wrong','selected');
+        matchState.selectedTerm = null; matchState.selectedDef = null;
+        matchState.locked = false;
+      }, 650);
+    }
+  }
+
+  document.getElementById('matchNextRound').addEventListener('click', function(){
+    currentRound = (currentRound + 1) % matchRounds.length;
+    renderMatchRound();
+  });
+  document.getElementById('matchRestartRound').addEventListener('click', function(){ renderMatchRound(); });
+
+  renderMatchRound();
+
+  /* ================= ACTIVITY 2: SPOT THE STRATEGY ================= */
+  var quizQuestions = [
+    {
+      extract: "Barbados's electricity company supplies the island's power, while its telecommunications providers keep residents connected; both are vital utilities, though one deals in power and the others in connectivity.",
+      options: ["Comparison and Contrast", "Classification", "Definition", "List / Listing"],
+      correctIndex: 0,
+      explanation: "The signal words \"while\" and \"though\" set the two kinds of utility side by side to highlight how they are alike and different."
+    },
+    {
+      extract: "The storm first flooded the streets of Roseau, then knocked out power across Dominica, and finally forced the island's main airport to suspend all flights for 48 hours.",
+      options: ["Cause and Effect", "Order of Importance", "Time Sequence", "Flash-Forward"],
+      correctIndex: 2,
+      explanation: "\"First... then... finally\" signals a chronological sequence of events, not a ranking or a single cause-effect link."
+    },
+    {
+      extract: "Heavy rainfall overwhelmed the Cul-de-Sac drainage system, causing flash floods that damaged several homes and businesses along the main road.",
+      options: ["Problem and Solution", "Cause and Effect", "Evidence", "Classification"],
+      correctIndex: 1,
+      explanation: "\"Causing\" links the reason (heavy rainfall) directly to its consequence (flash floods and damage)."
+    },
+    {
+      extract: "Cruise arrivals in Nassau increased by 18% between January and March 2026, according to newly released tourism figures.",
+      options: ["Evidence", "Comparison and Contrast", "Foreshadowing", "Subheadings"],
+      correctIndex: 0,
+      explanation: "A specific statistic (18% increase) is used to support the claim — this is statistical evidence."
+    },
+    {
+      extract: "Dr. Patricia Ebanks, a marine biologist at Coralstone College, warns that unregulated construction is damaging the coral reefs of the Cayman Islands.",
+      options: ["Definition", "Credible Sources", "Classification", "Cause and Effect"],
+      correctIndex: 1,
+      explanation: "Naming an expert — Dr. Ebanks, a marine biologist — lends authority to the claim, which is the mark of the credible sources strategy."
+    },
+    {
+      extract: "Traffic along the Eastern Main Road near Arima, Trinidad, has become unbearable during peak hours; the government now proposes a new roundabout and staggered school start times to ease congestion.",
+      options: ["Cause and Effect", "List / Listing", "Problem and Solution", "Order of Importance"],
+      correctIndex: 2,
+      explanation: "An issue (traffic congestion) is presented, then specific measures are proposed to resolve it."
+    },
+    {
+      extract: "Businesses along the waterfront in Oranjestad, Aruba, can be grouped into three categories: hospitality (hotels and restaurants), retail (duty-free shops), and marine services (yacht repair and charters).",
+      options: ["Topical Organization", "Classification", "List / Listing", "Definition"],
+      correctIndex: 1,
+      explanation: "The businesses are explicitly grouped by shared characteristics into categories — the defining feature of classification."
+    },
+    {
+      extract: "Preparing for hurricane season in St. Kitts and Nevis involves several tasks: securing loose objects, stocking non-perishable food, charging devices, and reviewing the family emergency plan.",
+      options: ["List / Listing", "Order of Importance", "Classification", "Problem and Solution"],
+      correctIndex: 0,
+      explanation: "A series of related tasks is presented one after another with no ranking or grouping by category — a straightforward list."
+    },
+    {
+      extract: "When evacuating during a hurricane warning, the first priority is personal safety, followed by protecting important documents, and finally securing valuables.",
+      options: ["Time Sequence", "General to Specific", "Order of Importance", "List / Listing"],
+      correctIndex: 2,
+      explanation: "Although ordinal words are used, the ranking reflects priority — what matters most — rather than a sequence of events over time."
+    },
+    {
+      extract: "Some residents argue that the wetlands of North Caicos should see less hotel construction to protect their mangroves. It is true that new hotels bring jobs and revenue. However, unchecked development also removes the natural storm-surge protection the mangroves provide — a risk that outweighs the short-term economic gain.",
+      options: ["Comparison and Contrast", "Problem and Solution", "Concession and Rebuttal", "Cause and Effect"],
+      correctIndex: 2,
+      explanation: "The author first admits the opposing view has merit (\"It is true that...\") before countering it with \"However\" — concession followed by rebuttal."
+    },
+    {
+      extract: "A hurricane shutter is a protective covering installed over windows and doors to prevent damage from high winds and flying debris.",
+      options: ["Definition", "Classification", "Evidence", "Subheadings"],
+      correctIndex: 0,
+      explanation: "The extract simply explains what a hurricane shutter is — a definition."
+    },
+    {
+      extract: "As she watched the ferry depart from Kingstown, Marisol remembered the summer three years earlier when she had first arrived on the island, unsure of what to expect.",
+      options: ["Foreshadowing", "Flash-Forward", "Flashback", "Time Sequence"],
+      correctIndex: 2,
+      explanation: "The narrative pauses in the present to recall an earlier event — three years earlier — which is a flashback."
+    },
+    {
+      extract: "The fisherman noticed the unusually still water in Soufrière Bay that morning and felt a strange unease he could not explain.",
+      options: ["Flashback", "Foreshadowing", "Flash-Forward", "Cause and Effect"],
+      correctIndex: 1,
+      explanation: "A subtle, unexplained hint of unease is planted without revealing what will happen — classic foreshadowing."
+    },
+    {
+      extract: "Years later, the small beachside food truck at Grand Anse would grow into one of the most celebrated restaurants in the Eastern Caribbean.",
+      options: ["Foreshadowing", "Flashback", "Flash-Forward", "Order of Importance"],
+      correctIndex: 2,
+      explanation: "The text jumps ahead and states exactly what will happen in the future — a flash-forward, not just a hint."
+    }
+  ];
+
+  var quizIndex = 0;
+  var quizScore = 0;
+  var quizAnswered = false, quizPick = null;
+
+  function renderQuiz(){
+    if(quizIndex >= quizQuestions.length){
+      renderQuizSummary();
+      return;
+    }
+    quizAnswered = false; quizPick = null;
+    var q = quizQuestions[quizIndex];
+    document.getElementById('quizProgress').textContent = 'Question ' + (quizIndex+1) + ' of ' + quizQuestions.length;
+    document.getElementById('quizExtract').textContent = q.extract;
+    document.getElementById('quizNext').hidden = true;
+    var optWrap = document.getElementById('quizOptions');
+    optWrap.innerHTML = '';
+    q.options.forEach(function(opt, i){
+      var b = document.createElement('button');
+      b.className = 'quiz-option';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ answerQuiz(i); });
+      optWrap.appendChild(b);
+    });
+    document.getElementById('quizScoreLive').textContent = 'Score: ' + quizScore + ' / ' + quizIndex;
+  }
+
+  function answerQuiz(i, quiet){
+    if(quizAnswered) return;
+    quizAnswered = true; quizPick = i;
+    var q = quizQuestions[quizIndex];
+    var opts = document.querySelectorAll('#quizOptions .quiz-option');
+    opts.forEach(function(o, idx){
+      o.disabled = true;
+      if(idx === i) o.classList.add('selected-answer');
+    });
+    if(i === q.correctIndex && !quiet) quizScore++;
+    document.getElementById('quizNext').hidden = false;
+    document.getElementById('quizScoreLive').textContent = 'Score: ' + quizScore + ' / ' + (quizIndex+1);
+  }
+
+  document.getElementById('quizNext').addEventListener('click', function(){
+    quizIndex++;
+    renderQuiz();
+  });
+
+  function renderQuizSummary(){
+    document.getElementById('quizCard').hidden = true;
+    var summary = document.getElementById('quizSummary');
+    summary.hidden = false;
+    var pct = Math.round((quizScore/quizQuestions.length)*100);
+    summary.querySelector('.quiz-final-score').textContent = quizScore + ' / ' + quizQuestions.length + ' (' + pct + '%)';
+  }
+
+  document.getElementById('quizRestart').addEventListener('click', function(){
+    quizIndex = 0; quizScore = 0;
+    document.getElementById('quizCard').hidden = false;
+    document.getElementById('quizSummary').hidden = true;
+    renderQuiz();
+  });
+
+  renderQuiz();
+
+  /* ================= ACTIVITY 3: SORT BY DISCOURSE TYPE ================= */
+  var sortItems = [
+    {term:"Flashback", correctTypes:["Narrative"]},
+    {term:"Flash-Forward", correctTypes:["Narrative"]},
+    {term:"Foreshadowing", correctTypes:["Narrative"]},
+    {term:"Time Sequence", correctTypes:["Narrative","Descriptive"]},
+    {term:"Comparison and Contrast", correctTypes:["Descriptive","Expository","Argumentative"]},
+    {term:"General to Specific", correctTypes:["Descriptive"]},
+    {term:"Cause and Effect", correctTypes:["Expository"]},
+    {term:"Classification", correctTypes:["Expository"]},
+    {term:"Definition", correctTypes:["Expository"]},
+    {term:"Evidence", correctTypes:["Expository"]},
+    {term:"Problem and Solution", correctTypes:["Expository"]},
+    {term:"Concession and Rebuttal", correctTypes:["Argumentative"]},
+    {term:"List / Listing", correctTypes:["Argumentative"]}
+  ];
+  var sortSelected = null, sortOrder = null, sortPlaced = {};
+  var sortSolvedCount = 0;
+  var sortSolvedSet = {};
+
+  function renderSort(saved){
+    sortSelected = null; sortSolvedCount = 0; sortSolvedSet = {}; sortPlaced = {};
+    var pool = document.getElementById('sortPool');
+    pool.innerHTML = '';
+    var order = saved ? saved.order.slice() : shuffle(sortItems.map(function(item,i){ return i; }));
+    sortOrder = order;
+    order.forEach(function(idx){
+      var item = sortItems[idx];
+      var b = document.createElement('button');
+      b.className = 'sort-chip';
+      b.textContent = item.term;
+      b.dataset.idx = idx;
+      b.addEventListener('click', function(){ selectSortChip(b); });
+      pool.appendChild(b);
+    });
+    ['Narrative','Descriptive','Expository','Argumentative'].forEach(function(type){
+      document.getElementById('bucket-'+type).querySelector('.bucket-items').innerHTML = '';
+    });
+    updateSortScore();
+    document.getElementById('sortComplete').hidden = true;
+    if(saved){
+      Object.keys(saved.placed).forEach(function(k){
+        var idx = +k, type = saved.placed[k], b = pool.querySelector('.sort-chip[data-idx="' + idx + '"]');
+        if(!b) return;
+        b.classList.add('placed');
+        var chip = document.createElement('span'); chip.className = 'placed-chip'; chip.textContent = sortItems[idx].term;
+        document.getElementById('bucket-'+type).querySelector('.bucket-items').appendChild(chip);
+        sortPlaced[idx] = type; sortSolvedSet[idx] = true; sortSolvedCount++;
+      });
+      updateSortScore();
+      if(sortSolvedCount === sortItems.length) document.getElementById('sortComplete').hidden = false;
+    }
+  }
+
+  function selectSortChip(el){
+    if(el.classList.contains('placed')) return;
+    document.querySelectorAll('.sort-chip').forEach(function(c){ c.classList.remove('selected'); });
+    el.classList.add('selected');
+    sortSelected = el;
+  }
+
+  function attemptPlace(type){
+    if(!sortSelected) return;
+    var idx = parseInt(sortSelected.dataset.idx, 10);
+    var item = sortItems[idx];
+    var bucketEl = document.getElementById('bucket-'+type);
+    if(item.correctTypes.indexOf(type) !== -1){
+      bucketEl.classList.add('flash-good');
+      setTimeout(function(){ bucketEl.classList.remove('flash-good'); }, 500);
+      sortSelected.classList.add('placed');
+      sortSelected.classList.remove('selected');
+      var chip = document.createElement('span');
+      chip.className = 'placed-chip';
+      chip.textContent = item.term;
+      bucketEl.querySelector('.bucket-items').appendChild(chip);
+      if(!sortSolvedSet[idx]){ sortSolvedSet[idx] = true; sortSolvedCount++; }
+      sortPlaced[idx] = type;
+      sortSelected = null;
+      updateSortScore();
+      if(sortSolvedCount === sortItems.length){
+        document.getElementById('sortComplete').hidden = false;
+      }
+    } else {
+      bucketEl.classList.add('flash-bad');
+      setTimeout(function(){ bucketEl.classList.remove('flash-bad'); }, 500);
+    }
+  }
+
+  document.querySelectorAll('.bucket').forEach(function(b){
+    b.addEventListener('click', function(){ attemptPlace(b.dataset.type); });
+  });
+
+  function updateSortScore(){
+    document.getElementById('sortScore').textContent = 'Placed: ' + sortSolvedCount + ' / ' + sortItems.length;
+  }
+
+  document.getElementById('sortRestart').addEventListener('click', function(){ renderSort(); });
+  renderSort();
+
+  /* ================= ACTIVITY 4: IDENTIFY DISCOURSE & STRATEGY ================= */
+  var idItems = [
+    {
+      extract: "As the sun rose over Road Town, the early ferry pulled away from the jetty at 6:45 a.m., docked briefly at West End by 7:15, and continued on toward Jost Van Dyke, arriving just before eight.",
+      discourseOptions: ["Narrative", "Expository", "Argumentative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Time Sequence", "Cause and Effect", "Order of Importance", "Classification"],
+      correctStrategyIndex: 0,
+      evidence: "\"pulled away... at 6:45 a.m., docked briefly... by 7:15, and continued on... arriving just before eight\"",
+      evidenceKeywords: ["6:45", "7:15", "west end", "docked"],
+      explanation: "The passage recounts one specific journey in the order it happened, which makes it narrative discourse; the clock-time markers show the events are arranged in time sequence."
+    },
+    {
+      extract: "In Tobago, Pigeon Point's beach is calm and shallow, ideal for young children, while Store Bay's stretch of sand is livelier, backed by beach bars and watersport rentals.",
+      discourseOptions: ["Descriptive", "Narrative", "Argumentative", "Expository"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Comparison and Contrast", "Classification", "List / Listing", "Cause and Effect"],
+      correctStrategyIndex: 0,
+      evidence: "\"calm and shallow... while... livelier, backed by beach bars\"",
+      evidenceKeywords: ["calm", "shallow", "livelier", "beach bar"],
+      explanation: "Vivid sensory detail used purely to paint a picture of each beach signals descriptive discourse; \"while\" sets the two beaches side by side to compare and contrast them."
+    },
+    {
+      extract: "Renewable energy options being piloted in Curaçao fall into three groups: solar installations on rooftops, small-scale wind turbines, and experimental wave-energy buoys off the coast.",
+      discourseOptions: ["Expository", "Narrative", "Descriptive", "Argumentative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Classification", "Comparison and Contrast", "Problem and Solution", "Flash-Forward"],
+      correctStrategyIndex: 0,
+      evidence: "\"fall into three groups: solar installations... wind turbines... wave-energy buoys\"",
+      evidenceKeywords: ["three groups", "solar", "wind turbine", "wave-energy", "wave energy"],
+      explanation: "The extract objectively informs the reader about energy options, which is expository; the three groups, sorted by shared technology type, show classification."
+    },
+    {
+      extract: "Critics claim that raising the airport departure tax in Guyana will discourage visitors. This may be true in the short term. Yet the additional revenue would fund runway repairs that have been delayed for years, ultimately protecting the very industry critics claim to defend.",
+      discourseOptions: ["Argumentative", "Expository", "Narrative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Concession and Rebuttal", "Cause and Effect", "List / Listing", "Definition"],
+      correctStrategyIndex: 0,
+      evidence: "\"This may be true in the short term. Yet the additional revenue would fund runway repairs...\"",
+      evidenceKeywords: ["short term", "runway", "yet"],
+      explanation: "The author is trying to persuade the reader on a policy question, which is argumentative discourse; conceding the critics' point before countering it with \"Yet\" is concession and rebuttal."
+    },
+    {
+      extract: "Rising sea temperatures along Belize's barrier reef have led to increased coral bleaching, which in turn has reduced fish populations that reef-dependent fishing communities rely on.",
+      discourseOptions: ["Expository", "Narrative", "Argumentative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Cause and Effect", "Time Sequence", "Comparison and Contrast", "Order of Importance"],
+      correctStrategyIndex: 0,
+      evidence: "\"have led to increased coral bleaching, which in turn has reduced fish populations\"",
+      evidenceKeywords: ["led to", "in turn", "fish population"],
+      explanation: "The passage explains a factual process for the reader, which is expository; \"have led to... which in turn\" traces a chain of causes and effects."
+    },
+    {
+      extract: "Standing on the newly repaired jetty in Codrington, Barbuda, Elena thought back to the morning after Irma, when the same stretch had been buried under sand and debris.",
+      discourseOptions: ["Narrative", "Descriptive", "Expository", "Argumentative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Flashback", "Flash-Forward", "Foreshadowing", "General to Specific"],
+      correctStrategyIndex: 0,
+      evidence: "\"thought back to the morning after Irma, when the same stretch had been buried under sand and debris\"",
+      evidenceKeywords: ["morning after irma", "buried", "sand and debris"],
+      explanation: "A specific character recalling a personal memory is narrative discourse; the shift to an earlier moment in the story is a flashback."
+    },
+    {
+      extract: "Jamaica must invest in stronger building codes: they reduce storm damage, lower insurance costs, protect tourism revenue, and above all, save lives.",
+      discourseOptions: ["Argumentative", "Expository", "Descriptive", "Narrative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["List / Listing", "Classification", "Time Sequence", "Definition"],
+      correctStrategyIndex: 0,
+      evidence: "\"they reduce storm damage, lower insurance costs, protect tourism revenue, and above all, save lives\"",
+      evidenceKeywords: ["storm damage", "insurance", "save lives"],
+      explanation: "The writer is urging a course of action, which is argumentative discourse; stacking four benefits in a row is the list / listing strategy, used here to strengthen the case."
+    },
+    {
+      extract: "The mangrove lagoon at Lac Bay, Bonaire, supports a wide range of marine life; for instance, juvenile tarpon, silver mullet, and the occasional nurse shark can be spotted in its shallow waters.",
+      discourseOptions: ["Descriptive", "Expository", "Narrative", "Argumentative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["General to Specific", "Classification", "Evidence", "Problem and Solution"],
+      correctStrategyIndex: 0,
+      evidence: "\"for instance, juvenile tarpon, silver mullet, and the occasional nurse shark\"",
+      evidenceKeywords: ["for instance", "tarpon", "silver mullet", "nurse shark"],
+      explanation: "The passage's purpose is to vividly present the lagoon's marine life, which is descriptive discourse; \"for instance\" narrows the broad claim down to specific examples."
+    }
+  ];
+
+  var idIndex = 0;
+  var idScore = 0;
+  var idAnswered = { discourse:false, strategy:false }, idPicks = { discourse:null, strategy:null };
+
+  function keywordMatch(text, keywords){
+    var lower = (text || '').toLowerCase();
+    return keywords.some(function(kw){ return lower.indexOf(kw.toLowerCase()) !== -1; });
+  }
+
+  function renderIdItem(){
+    if(idIndex >= idItems.length){
+      renderIdSummary();
+      return;
+    }
+    idAnswered = { discourse:false, strategy:false }; idPicks = { discourse:null, strategy:null };
+    var item = idItems[idIndex];
+    document.getElementById('idProgress').textContent = 'Extract ' + (idIndex+1) + ' of ' + idItems.length;
+    document.getElementById('idExtract').textContent = item.extract;
+    document.getElementById('idEvidenceInput').value = '';
+    document.getElementById('idNext').hidden = true;
+
+    var discWrap = document.getElementById('idDiscourseOptions');
+    discWrap.innerHTML = '';
+    item.discourseOptions.forEach(function(opt, i){
+      var b = document.createElement('button');
+      b.className = 'quiz-option';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ answerId('discourse', i); });
+      discWrap.appendChild(b);
+    });
+
+    var stratWrap = document.getElementById('idStrategyOptions');
+    stratWrap.innerHTML = '';
+    item.strategyOptions.forEach(function(opt, i){
+      var b = document.createElement('button');
+      b.className = 'quiz-option';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ answerId('strategy', i); });
+      stratWrap.appendChild(b);
+    });
+  }
+
+  function answerId(kind, i, quiet){
+    if(idAnswered[kind]) return;
+    idAnswered[kind] = true; idPicks[kind] = i;
+    var item = idItems[idIndex];
+    var wrapId = kind === 'discourse' ? 'idDiscourseOptions' : 'idStrategyOptions';
+    var correctIndex = kind === 'discourse' ? item.correctDiscourseIndex : item.correctStrategyIndex;
+    var opts = document.getElementById(wrapId).querySelectorAll('.quiz-option');
+    opts.forEach(function(o, idx){
+      o.disabled = true;
+      if(idx === i) o.classList.add('selected-answer');
+    });
+    if(i === correctIndex && !quiet) idScore++;
+    updateIdScoreLive();
+    if(idAnswered.discourse && idAnswered.strategy){
+      document.getElementById('idNext').hidden = false;
+    }
+  }
+
+  function updateIdScoreLive(){
+    var answeredComponents = idIndex*3 + (idAnswered.discourse?1:0) + (idAnswered.strategy?1:0);
+    document.getElementById('idScoreLive').textContent = 'Score: ' + idScore + ' / ' + answeredComponents;
+  }
+
+  document.getElementById('idNext').addEventListener('click', function(){
+    var item = idItems[idIndex];
+    var evidenceText = document.getElementById('idEvidenceInput').value;
+    if(keywordMatch(evidenceText, item.evidenceKeywords)) idScore++;
+    idIndex++;
+    renderIdItem();
+  });
+
+  function renderIdSummary(){
+    document.getElementById('idCard').hidden = true;
+    var summary = document.getElementById('idSummary');
+    summary.hidden = false;
+    var total = idItems.length*3;
+    var pct = Math.round((idScore/total)*100);
+    summary.querySelector('.quiz-final-score').textContent = idScore + ' / ' + total + ' (' + pct + '%)';
+  }
+
+  document.getElementById('idRestart').addEventListener('click', function(){
+    idIndex = 0; idScore = 0;
+    document.getElementById('idCard').hidden = false;
+    document.getElementById('idSummary').hidden = true;
+    renderIdItem();
+  });
+
+  renderIdItem();
+
+  /* ================= ACTIVITY 5: EXAM PRACTICE ================= */
+  var examItems = [
+    { idField:'e5_1_id', evField:'e5_1_ev', efField:'e5_1_ef',
+      idKeywords:["topical"],
+      evKeywords:["three main strands", "cruise tourism", "stay-over", "yacht tourism"],
+      efKeywords:["sub-topic", "sub topics", "focus on one", "easier to follow"] },
+    { idField:'e5_2_id', evField:'e5_2_ev', efField:'e5_2_ef',
+      idKeywords:["cause and effect", "cause-and-effect"],
+      evKeywords:["as a direct result", "crippled", "power grid"],
+      efKeywords:["chain", "hardship", "consequence"] },
+    { idField:'e5_3_id', evField:'e5_3_ev', efField:'e5_3_ef',
+      idKeywords:["concession", "rebuttal"],
+      evKeywords:["it is true", "however"],
+      efKeywords:["balanced", "reasonable", "persuasive"] }
+  ];
+
+  document.getElementById('examCheck').addEventListener('click', function(){
+    var score = 0, total = 0;
+    examItems.forEach(function(item){
+      total += 3;
+      if(keywordMatch(document.getElementById(item.idField).value, item.idKeywords)) score++;
+      if(keywordMatch(document.getElementById(item.evField).value, item.evKeywords)) score++;
+      if(keywordMatch(document.getElementById(item.efField).value, item.efKeywords)) score++;
+    });
+    var pct = Math.round((score/total)*100);
+    document.getElementById('examScoreLive').textContent = 'Score: ' + score + ' / ' + total + ' (' + pct + '%)';
+  });
+
+  /* ================= ACTIVITY 6: PRACTICE PASSAGES ================= */
+  var practicePassages = [
+    {
+      title: "1. Bullying",
+      text: "Bullying is often dismissed as an unavoidable part of growing up, something every generation simply endures and survives. This view ignores what research consistently shows: prolonged bullying is linked to anxiety, depression, and in the most tragic cases, self-harm among adolescents. It is true that not every unkind word between classmates constitutes bullying, and schools must be careful not to over-police ordinary childhood conflict. Yet the pattern that defines real bullying (repeated, targeted harm aimed at someone with less power to defend themselves) is precisely what makes it dangerous rather than developmental. Addressing it requires more than a zero-tolerance poster in a hallway. Schools that have successfully reduced bullying combine three measures: training staff to recognise early warning signs, giving students confidential ways to report incidents, and involving parents before a pattern escalates into crisis. None of these work alone; together, they interrupt bullying before it becomes normalised as \"just how things are.\"",
+      discourseOptions: ["Argumentative", "Expository", "Descriptive", "Narrative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Concession and Rebuttal", "Problem and Solution", "List / Listing", "Classification", "Flashback", "Cause and Effect"],
+      correctStrategyIndices: [0,1,2],
+      evidenceKeywords: ["it is true", "yet", "three measures", "training staff", "confidential"],
+      breakdown: [
+        {strategy:"Concession and Rebuttal", note:"\"It is true that not every unkind word... constitutes bullying... Yet the pattern that defines real bullying... is precisely what makes it dangerous.\""},
+        {strategy:"Problem and Solution", note:"The harms of bullying are presented, then \"schools that have successfully reduced bullying combine three measures\" offers the solution."},
+        {strategy:"List / Listing", note:"The three measures (training staff, confidential reporting, involving parents) are listed in sequence."}
+      ]
+    },
+    {
+      title: "2. The Hurricane Season That Wasn't",
+      text: "For the first time in over a century, the Atlantic basin reached the last week of September 2026 without producing a single hurricane, a record previously held by the seasons of 1907 and 1914, decades before satellites ever tracked a storm. The cause lies thousands of miles away, in the Pacific Ocean. A powerful El Nino event has warmed Pacific waters to levels not recorded since 2015, and this shift has sent strong upper-level winds tearing across the Atlantic, shredding tropical systems before they can organise into hurricanes. For residents of Anguilla, still rebuilding from the direct hit of Hurricane Irma in 2017, the news brings a familiar, cautious relief rather than celebration. The repaired power grid and reinforced rooftops across The Valley stand as evidence that the island prepares every June regardless of the forecast, and forecasters are quick to note that hurricane season does not officially end until November 30; this El Nino-driven quiet could just as easily reverse once conditions shift.",
+      discourseOptions: ["Expository", "Narrative", "Argumentative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Cause and Effect", "Comparison and Contrast", "Evidence", "Problem and Solution", "Classification", "Order of Importance"],
+      correctStrategyIndices: [0,1,2],
+      evidenceKeywords: ["el nino", "warmed pacific", "1907", "1914"],
+      breakdown: [
+        {strategy:"Cause and Effect", note:"\"A powerful El Nino event has warmed Pacific waters... this shift has sent strong upper-level winds tearing across the Atlantic, shredding tropical systems.\""},
+        {strategy:"Comparison and Contrast", note:"The quiet 2026 season is set against the 1907 and 1914 seasons, the only prior years without an Atlantic hurricane."},
+        {strategy:"Evidence", note:"Specific dates and figures (1907, 1914, since 2015, November 30) support the claim of a record-breaking season."}
+      ]
+    },
+    {
+      title: "3. Lolcow",
+      text: "Online, a \"lolcow\" is a person whose reactions (anger, tears, chaos) have become so reliably entertaining that commentary channels return to them again and again, the way a farmer might return to a cow that never runs dry. The term began in obscure internet forums but now describes a much wider pattern: reality television stars provoked for a reaction, disgraced influencers followed from scandal to scandal, and, increasingly, real tragedies replayed as debate content. When a young Chicago rapper is shot, for instance, commentary channels do not simply report the death; they analyse it, rank it against rival killings, and revisit it for years whenever a new clip resurfaces. The business model rewards whoever keeps the reaction coming, regardless of whether the subject consented to being watched or has since died. What distinguishes a \"lolcow\" from an ordinary public figure is precisely this: the audience is not there for what the person has achieved, but for what can be extracted from their suffering.",
+      discourseOptions: ["Expository", "Argumentative", "Narrative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Definition", "Cause and Effect", "Classification", "Evidence", "List / Listing", "Comparison and Contrast"],
+      correctStrategyIndices: [0,1],
+      evidenceKeywords: ["reaction", "business model", "reward"],
+      breakdown: [
+        {strategy:"Definition", note:"The opening sentence explains what a \"lolcow\" is before the term is used further."},
+        {strategy:"Cause and Effect", note:"\"The business model rewards whoever keeps the reaction coming\" links the incentive directly to the behaviour it produces."}
+      ]
+    },
+    {
+      title: "4. The Memefication of Emotion",
+      text: "Grief used to look like silence. Now it often looks like a meme: a blurry selfie captioned \"me pretending I'm okay,\" or a trending sound stitched under footage of someone crying at a funeral. Heartbreak, rage, and even panic attacks have their own recognisable templates, instantly reproducible, shared not to process the feeling but to perform it for an audience. Psychologists studying this shift are divided. Some argue that meme culture gives young people a shared, low-stakes language for emotions that would otherwise feel too raw to name directly, turning pain into something communal rather than isolating. Others warn that flattening every emotion into a punchline trains a generation to reach for irony before they ever sit with what they actually feel, so that a joke becomes easier to post than an honest sentence. Either way, the format is spreading faster than anyone is studying it.",
+      discourseOptions: ["Argumentative", "Expository", "Narrative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Comparison and Contrast", "Concession and Rebuttal", "Definition", "Cause and Effect", "Classification", "Evidence"],
+      correctStrategyIndices: [0,2],
+      evidenceKeywords: ["grief", "meme", "psychologist"],
+      breakdown: [
+        {strategy:"Comparison and Contrast", note:"\"Grief used to look like silence. Now it often looks like a meme\" and the two opposing psychologist camps are set side by side."},
+        {strategy:"Definition", note:"The passage explains what emotional meme templates are and how they function before evaluating them."}
+      ]
+    },
+    {
+      title: "5. Social Media and the Evolution of Language",
+      text: "Slang has always moved from the margins to the mainstream, but social media has collapsed the timeline from years to weeks. A phrase whispered by a rapper on a TikTok livestream on Monday can be a shushing hand gesture in a Grade 9 classroom by Friday, stripped of its original context and reused to mean something slightly different. In 2026, rapper Saucy Santana's offhand comment about fishing, \"you gotta be real quiet on the creek,\" took exactly that journey, turning into a chart-topping single and a nationwide code for keeping your business to yourself, all within a matter of weeks. The same collapsing timeline gave the world \"6 7,\" a phrase lifted from a 2025 drill track that Dictionary.com eventually named its Word of the Year despite the fact that, by design, it means absolutely nothing; its appeal was precisely that nobody could pin it down. Not every piece of internet slang is this weightless, though. \"Pause,\" a much older interjection tacked onto a sentence to head off an unintended double meaning, carries a more loaded history: a reminder that slang can transmit social attitudes as easily as it transmits jokes. Linguists note that none of this is decay so much as evolution: English has always absorbed vocabulary from whatever community holds cultural attention. What has changed is the sheer speed and volume. A student today can watch a phrase travel from a livestream to a classroom faster than a textbook could ever be reprinted, and the challenge for educators is no longer resisting the change but teaching students when each register belongs.",
+      discourseOptions: ["Expository", "Narrative", "Argumentative", "Descriptive"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Cause and Effect", "Comparison and Contrast", "General to Specific", "Definition", "Classification", "Evidence"],
+      correctStrategyIndices: [0,1,2],
+      evidenceKeywords: ["collapsed the timeline", "quiet on the creek", "6 7", "pause"],
+      breakdown: [
+        {strategy:"Cause and Effect", note:"Social media \"collapsed the timeline\" is presented as the cause of slang spreading in weeks instead of years."},
+        {strategy:"Comparison and Contrast", note:"\"Quiet on the creek\" and \"6 7\" (meaningless and weightless) are contrasted with \"pause\" (older and more loaded)."},
+        {strategy:"General to Specific", note:"The passage opens with a broad claim about slang, then narrows to three specific named examples."}
+      ]
+    },
+    {
+      title: "6. Performance",
+      text: "On social media, almost everything is a performance, even honesty. A carefully imperfect selfie, a \"no-filter\" caption, a video captioned \"not planning to post this but...\" are all just as staged as a red-carpet photograph, only styled to look spontaneous. This is not necessarily dishonest; humans have always adjusted their behaviour depending on who is watching, whether at a job interview or a funeral. What social media changes is the audience's size and permanence: a teenager deciding how to react to bad news must now consider not just their family in the room, but hundreds of followers who will judge the performance later, screenshot in hand. Some psychologists argue this constant awareness of an audience erodes a young person's sense of who they are when no one is watching at all. Others counter that every generation has performed identity in public; social media has simply made the stage larger and the curtain impossible to close.",
+      discourseOptions: ["Argumentative", "Expository", "Descriptive", "Narrative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Comparison and Contrast", "Concession and Rebuttal", "Definition", "Cause and Effect", "List / Listing", "Evidence"],
+      correctStrategyIndices: [0,1],
+      evidenceKeywords: ["staged", "red-carpet", "job interview", "funeral", "audience"],
+      breakdown: [
+        {strategy:"Comparison and Contrast", note:"A staged selfie is compared to a red-carpet photograph, and a job interview is set against a funeral."},
+        {strategy:"Concession and Rebuttal", note:"\"Some psychologists argue this constant awareness... erodes a young person's sense of who they are... Others counter that every generation has performed identity in public.\""}
+      ]
+    },
+    {
+      title: "7. Education, Gender, and a Society Still Catching Up",
+      text: "Across the Caribbean, girls now consistently outperform boys at CSEC and CAPE level, earning more distinctions, fewer failing grades, and a growing majority of university enrolment from Kingston to Port of Spain. Some commentators point to this gap as evidence that the region's real gender crisis now runs the other way, with boys falling behind in classrooms built around sitting still and following instructions. There is something to this concern; disengaged boys do deserve better support. Yet it would be a mistake to read exam results as the end of the story. The same graduating classes of high-achieving young women still enter a workforce where men disproportionately hold senior management positions, boardroom seats, and political office: the very outcomes that schooling is meant to prepare people for. Equality in the classroom has clearly arrived, or even reversed; equality in the boardroom has not caught up. Closing that second gap will take more than better grades; it will take employers and institutions willing to promote the women already outperforming their male peers on paper.",
+      discourseOptions: ["Argumentative", "Expository", "Descriptive", "Narrative"],
+      correctDiscourseIndex: 0,
+      strategyOptions: ["Comparison and Contrast", "Concession and Rebuttal", "Evidence", "Problem and Solution", "Classification", "List / Listing"],
+      correctStrategyIndices: [0,1,2],
+      evidenceKeywords: ["csec", "cape", "boardroom", "leadership"],
+      breakdown: [
+        {strategy:"Comparison and Contrast", note:"Girls' academic outperformance is set against men's continued dominance of leadership positions."},
+        {strategy:"Concession and Rebuttal", note:"\"There is something to this concern... Yet it would be a mistake to read exam results as the end of the story.\""},
+        {strategy:"Evidence", note:"CSEC and CAPE performance patterns and workforce leadership statistics are cited to support the claim."}
+      ]
+    }
+  ];
+
+  var pIndex = 0;
+  var pScore = 0;
+  var pState = { discourseAnswered:false, strategiesChecked:false, selected:{} }, pPick = null;
+
+  function renderPracticeItem(){
+    if(pIndex >= practicePassages.length){
+      renderPracticeSummary();
+      return;
+    }
+    pState = { discourseAnswered:false, strategiesChecked:false, selected:{} }; pPick = null;
+    var item = practicePassages[pIndex];
+    document.getElementById('pProgress').textContent = 'Passage ' + (pIndex+1) + ' of ' + practicePassages.length;
+    document.getElementById('pTitle').textContent = item.title;
+    document.getElementById('pExtract').textContent = item.text;
+    var evInput = document.getElementById('pEvidenceInput');
+    evInput.value = '';
+    evInput.disabled = false;
+    document.getElementById('pNext').hidden = true;
+
+    var discWrap = document.getElementById('pDiscourseOptions');
+    discWrap.innerHTML = '';
+    item.discourseOptions.forEach(function(opt, i){
+      var b = document.createElement('button');
+      b.className = 'quiz-option';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ answerPracticeDiscourse(i); });
+      discWrap.appendChild(b);
+    });
+
+    var stratWrap = document.getElementById('pStrategyOptions');
+    stratWrap.innerHTML = '';
+    item.strategyOptions.forEach(function(opt, i){
+      var b = document.createElement('button');
+      b.className = 'strategy-chip';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ toggleStrategyChip(b, i); });
+      stratWrap.appendChild(b);
+    });
+    document.getElementById('pCheckStrategies').disabled = true;
+    document.getElementById('pCheckStrategies').textContent = 'Lock In My Answer';
+  }
+
+  function answerPracticeDiscourse(i, quiet){
+    if(pState.discourseAnswered) return;
+    pState.discourseAnswered = true; pPick = i;
+    var item = practicePassages[pIndex];
+    var opts = document.querySelectorAll('#pDiscourseOptions .quiz-option');
+    opts.forEach(function(o, idx){
+      o.disabled = true;
+      if(idx === i) o.classList.add('selected-answer');
+    });
+    if(i === item.correctDiscourseIndex && !quiet) pScore++;
+    updatePracticeScoreLive();
+    maybeShowNext();
+  }
+
+  function toggleStrategyChip(el, i){
+    if(pState.strategiesChecked) return;
+    if(pState.selected[i]){
+      delete pState.selected[i];
+      el.classList.remove('toggled');
+    } else {
+      pState.selected[i] = true;
+      el.classList.add('toggled');
+    }
+  }
+
+  document.getElementById('pEvidenceInput').addEventListener('input', function(){
+    if(pState.strategiesChecked) return;
+    document.getElementById('pCheckStrategies').disabled = (this.value.trim().length === 0);
+  });
+
+  function pLock(quiet){
+    if(pState.strategiesChecked) return;
+    if(document.getElementById('pEvidenceInput').value.trim().length === 0) return;
+    pState.strategiesChecked = true;
+    var item = practicePassages[pIndex];
+    var correctSet = {};
+    item.correctStrategyIndices.forEach(function(idx){ correctSet[idx] = true; });
+    var chips = document.querySelectorAll('#pStrategyOptions .strategy-chip');
+    var exactMatch = true;
+    chips.forEach(function(chip, idx){
+      chip.disabled = true;
+      var wasSelected = !!pState.selected[idx];
+      var isCorrect = !!correctSet[idx];
+      if(wasSelected !== isCorrect) exactMatch = false;
+    });
+    if(exactMatch && !quiet) pScore++;
+
+    var evInput = document.getElementById('pEvidenceInput');
+    if(keywordMatch(evInput.value, item.evidenceKeywords) && !quiet) pScore++;
+    evInput.disabled = true;
+
+    document.getElementById('pCheckStrategies').disabled = true;
+    document.getElementById('pCheckStrategies').textContent = 'Locked In';
+    updatePracticeScoreLive();
+    maybeShowNext();
+  }
+  document.getElementById('pCheckStrategies').addEventListener('click', function(){ pLock(false); });
+
+  function maybeShowNext(){
+    if(pState.discourseAnswered && pState.strategiesChecked){
+      document.getElementById('pNext').hidden = false;
+    }
+  }
+
+  function updatePracticeScoreLive(){
+    var answered = pIndex*3 + (pState.discourseAnswered?1:0) + (pState.strategiesChecked?2:0);
+    document.getElementById('pScoreLive').textContent = 'Score: ' + pScore + ' / ' + answered;
+  }
+
+  document.getElementById('pNext').addEventListener('click', function(){
+    pIndex++;
+    renderPracticeItem();
+  });
+
+  function renderPracticeSummary(){
+    document.getElementById('pCard').hidden = true;
+    var summary = document.getElementById('pSummary');
+    summary.hidden = false;
+    var total = practicePassages.length*3;
+    var pct = Math.round((pScore/total)*100);
+    summary.querySelector('.quiz-final-score').textContent = pScore + ' / ' + total + ' (' + pct + '%)';
+  }
+
+  document.getElementById('pRestart').addEventListener('click', function(){
+    pIndex = 0; pScore = 0;
+    document.getElementById('pCard').hidden = false;
+    document.getElementById('pSummary').hidden = true;
+    renderPracticeItem();
+  });
+
+  renderPracticeItem();
+
+  document.getElementById('printPageBtn').addEventListener('click', function(){
+    window.print();
+  });
+
+  /* ================= SAVED PROGRESS (GameSave) ================= */
+  var gsOff = false, gsT = 0, gsData = null;
+  function gsSave(){ if(gsOff || !window.GameSave) return; try { window.GameSave.save(); } catch(e){} }
+  function gsLater(){ clearTimeout(gsT); gsT = setTimeout(gsSave, 300); }
+  function gsInt(v, lo, hi){ return typeof v === 'number' && Math.floor(v) === v && v >= lo && v <= hi; }
+  function gsPerm(a, n){ return Array.isArray(a) && a.length === n && a.slice().sort(function(x, y){ return x - y; }).every(function(v, i){ return v === i; }); }
+  function gsFields(){ var f = []; examItems.forEach(function(it){ f.push(it.idField, it.evField, it.efField); }); return f; }
+  function gsGet(){
+    var tab = document.querySelector('.tab-btn.active'), exam = {};
+    gsFields().forEach(function(f){ exam[f] = document.getElementById(f).value; });
+    return { v:1, tab: tab ? tab.dataset.target : 'match',
+      match: { round: currentRound, t: matchOrder.t, d: matchOrder.d, solved: matchSolved },
+      quiz: { i: quizIndex, score: quizScore, pick: quizAnswered ? quizPick : null },
+      sort: { order: sortOrder, placed: sortPlaced },
+      id: { i: idIndex, score: idScore, picks: idPicks, ev: document.getElementById('idEvidenceInput').value },
+      exam: exam, examScore: document.getElementById('examScoreLive').textContent,
+      p: { i: pIndex, score: pScore, pick: pPick, sel: pState.selected, locked: pState.strategiesChecked, ev: document.getElementById('pEvidenceInput').value } };
+  }
+  function gsBack(d){
+    if(!d || d.v !== 1) return false;
+    var any = false;
+    var btn = typeof d.tab === 'string' && /^[a-z]+$/.test(d.tab) ? document.querySelector('.tab-btn[data-target="' + d.tab + '"]') : null;
+    if(btn){
+      tabButtons.forEach(function(b){ b.classList.remove('active'); }); panels.forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active'); document.getElementById(d.tab).classList.add('active'); if(d.tab !== 'match') any = true;
+    }
+    var m = d.match;
+    if(m && gsInt(m.round, 0, matchRounds.length - 1)){
+      var n = matchRounds[m.round].pairs.length;
+      if(gsPerm(m.t, n) && gsPerm(m.d, n)){
+        currentRound = m.round;
+        renderMatchRound({ t: m.t, d: m.d, solved: Array.isArray(m.solved) ? m.solved.filter(function(id, k, a){ return gsInt(id, 0, n - 1) && a.indexOf(id) === k; }) : [] });
+        if(m.round || matchSolved.length) any = true;
+      }
+    }
+    var q = d.quiz;
+    if(q && gsInt(q.i, 0, quizQuestions.length) && gsInt(q.score, 0, quizQuestions.length)){
+      quizIndex = q.i; quizScore = q.score; renderQuiz();
+      if(quizIndex < quizQuestions.length && gsInt(q.pick, 0, quizQuestions[quizIndex].options.length - 1)) answerQuiz(q.pick, true);
+      if(q.i || q.pick != null) any = true;
+    }
+    var s = d.sort;
+    if(s && gsPerm(s.order, sortItems.length)){
+      var placed = {};
+      if(s.placed && typeof s.placed === 'object') Object.keys(s.placed).forEach(function(k){ var i = +k, t = s.placed[k]; if(gsInt(i, 0, sortItems.length - 1) && sortItems[i].correctTypes.indexOf(t) >= 0) placed[i] = t; });
+      renderSort({ order: s.order, placed: placed }); if(Object.keys(placed).length) any = true;
+    }
+    var t = d.id;
+    if(t && gsInt(t.i, 0, idItems.length) && gsInt(t.score, 0, idItems.length * 3)){
+      idIndex = t.i; idScore = t.score; renderIdItem();
+      if(idIndex < idItems.length){
+        var it = idItems[idIndex];
+        if(t.picks && gsInt(t.picks.discourse, 0, it.discourseOptions.length - 1)) answerId('discourse', t.picks.discourse, true);
+        if(t.picks && gsInt(t.picks.strategy, 0, it.strategyOptions.length - 1)) answerId('strategy', t.picks.strategy, true);
+        if(typeof t.ev === 'string') document.getElementById('idEvidenceInput').value = t.ev;
+        updateIdScoreLive();
+      }
+      if(t.i || t.ev || (t.picks && (t.picks.discourse != null || t.picks.strategy != null))) any = true;
+    }
+    if(d.exam && typeof d.exam === 'object') gsFields().forEach(function(f){ if(typeof d.exam[f] === 'string' && d.exam[f]){ document.getElementById(f).value = d.exam[f]; any = true; } });
+    if(typeof d.examScore === 'string' && /^Score: /.test(d.examScore)) document.getElementById('examScoreLive').textContent = d.examScore;
+    var pp = d.p;
+    if(pp && gsInt(pp.i, 0, practicePassages.length) && gsInt(pp.score, 0, practicePassages.length * 3)){
+      pIndex = pp.i; pScore = pp.score; renderPracticeItem();
+      if(pIndex < practicePassages.length){
+        var item = practicePassages[pIndex], chips = document.querySelectorAll('#pStrategyOptions .strategy-chip'), ev = document.getElementById('pEvidenceInput');
+        if(gsInt(pp.pick, 0, item.discourseOptions.length - 1)) answerPracticeDiscourse(pp.pick, true);
+        if(pp.sel && typeof pp.sel === 'object') Object.keys(pp.sel).forEach(function(k){ var i = +k; if(gsInt(i, 0, chips.length - 1) && pp.sel[k]){ pState.selected[i] = true; chips[i].classList.add('toggled'); } });
+        if(typeof pp.ev === 'string') ev.value = pp.ev;
+        document.getElementById('pCheckStrategies').disabled = ev.value.trim().length === 0;
+        if(pp.locked === true && ev.value.trim()) pLock(true);
+        updatePracticeScoreLive();
+      }
+      if(pp.i || pp.ev || pp.pick != null) any = true;
+    }
+    return any;
+  }
+  function gsFresh(){
+    currentRound = 0; renderMatchRound();
+    quizIndex = 0; quizScore = 0; document.getElementById('quizCard').hidden = false; document.getElementById('quizSummary').hidden = true; renderQuiz();
+    renderSort();
+    idIndex = 0; idScore = 0; document.getElementById('idCard').hidden = false; document.getElementById('idSummary').hidden = true; renderIdItem();
+    pIndex = 0; pScore = 0; document.getElementById('pCard').hidden = false; document.getElementById('pSummary').hidden = true; renderPracticeItem();
+  }
+  if(window.GameSave){
+    window.GameSave.onReset(function(){ gsOff = true; clearTimeout(gsT); });
+    window.GameSave.persist({ key: 'comm.orgstrat.save', welcome: false, get: gsGet, set: function(d){ gsData = d; } });
+    var gsHad = false;
+    try { gsHad = gsBack(gsData); } catch(e){ gsHad = false; try { gsFresh(); } catch(e2){} }
+    if(gsHad) setTimeout(function(){ try { window.GameSave.toast('Welcome back! Your progress was restored.'); } catch(e){} }, 400);
+    document.addEventListener('click', gsLater);
+    document.addEventListener('input', gsLater);
+  }
+
+})();
+</script>
+</body>
+</html>

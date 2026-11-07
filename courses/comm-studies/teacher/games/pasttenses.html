@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en" data-gs-own>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Travellers: Past Tense Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1D2745; --paper:#F4F6FA; --card:#FFFFFF; --line:#D5DBE7;
+  --teal:#17706F; --gold:#D9A21B; --good:#2C7A4B; --good-bg:#E6F3EA;
+  --bad:#B0362D; --bad-bg:#F9E7E5; --muted:#55607A;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#E7EBF5; --paper:#131A2E; --card:#1C2540; --line:#33406200;
+    --line:#34416A; --teal:#5CC3BF; --gold:#F0C04E; --good:#6FD39A; --good-bg:#16352A;
+    --bad:#F2877D; --bad-bg:#3D1F22; --muted:#A5AEC6;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E7EBF5; --paper:#131A2E; --card:#1C2540; --line:#34416A;
+  --teal:#5CC3BF; --gold:#F0C04E; --good:#6FD39A; --good-bg:#16352A;
+  --bad:#F2877D; --bad-bg:#3D1F22; --muted:#A5AEC6;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;font-size:1.0625rem;line-height:1.65}
+h1,h2,h3,.sans{font-family:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif}
+.wrap{max-width:46rem;margin:0 auto;padding:0 1.25rem}
+
+/* Hero: the timeline */
+header{padding:2.75rem 0 1.5rem}
+h1{font-size:clamp(2rem,6vw,3.1rem);line-height:1.05;margin:0 0 .6rem;letter-spacing:-.02em}
+.lede{color:var(--muted);margin:0 0 2rem;max-width:36rem}
+.timeline{position:relative;margin:0 0 1rem;padding:2.2rem 0 0}
+.timeline .rail{height:4px;background:linear-gradient(90deg,var(--line),var(--teal) 70%,var(--gold));border-radius:2px}
+.stops{display:grid;grid-template-columns:repeat(4,1fr);margin-top:-12px}
+.stop{text-align:center;font-size:.8rem;color:var(--muted)}
+.stop .dot{width:20px;height:20px;border-radius:50%;margin:0 auto .5rem;background:var(--card);border:4px solid var(--teal)}
+.stop:last-child .dot{border-color:var(--gold);background:var(--gold)}
+.stop b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;color:var(--ink);font-size:.95rem}
+.credit{font-size:.85rem;color:var(--muted);margin-top:1.5rem}
+
+/* Score bar */
+.scorebar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);
+  border-bottom:1px solid var(--line);padding:.7rem 0}
+.scorebar .wrap{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.score{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:1.05rem}
+.meter{flex:1;min-width:8rem;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.meter span{display:block;height:100%;width:0;background:var(--teal);transition:width .3s}
+nav{display:flex;gap:.4rem;flex-wrap:wrap}
+nav a{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.85rem;color:var(--teal);text-decoration:none;
+  padding:.2rem .55rem;border:1px solid var(--line);border-radius:999px}
+nav a:hover{border-color:var(--teal)}
+
+section{padding:2.5rem 0 .5rem}
+.course{font-weight:700;color:var(--teal);margin:0 0 .4rem;font-size:1rem}
+.info{display:grid;grid-template-columns:2fr 1fr 1fr;gap:.8rem;margin-top:1.2rem}
+.info label{display:flex;flex-direction:column;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.85rem;color:var(--muted);gap:.25rem}
+.info input{max-width:none;width:100%;font:inherit;font-family:"Source Serif 4",Georgia,serif;font-size:1rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:5px;padding:.5rem .7rem}
+.info input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.info input.missing{border-color:var(--bad);background:var(--bad-bg)}
+.info-note{font-size:.88rem;color:var(--muted);margin:.5rem 0 0}
+.info-note.alert{color:var(--bad);font-weight:600}
+details{background:var(--card);border:1px solid var(--line);border-radius:6px;margin-bottom:.6rem;padding:.2rem 1.1rem}
+details[open]{padding-bottom:.8rem}
+summary{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;cursor:pointer;padding:.6rem 0}
+summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+details p{margin:.35rem 0}
+details .ex{border-left:3px solid var(--gold);padding-left:.8rem;font-style:italic}
+.tbl{overflow-x:auto}
+.vtbl{max-height:26rem;overflow-y:auto;border:1px solid var(--line);border-radius:5px}
+.vtbl th{position:sticky;top:0;background:var(--card)}
+.vsearch{display:flex;flex-direction:column;gap:.25rem;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.85rem;color:var(--muted);margin:.6rem 0 .2rem}
+.vcount{font-size:.85rem;color:var(--muted);margin:.2rem 0 .5rem}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:.35rem .6rem;border-bottom:1px solid var(--line)}
+th{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.85rem;color:var(--muted)}
+.who{font-family:"Bricolage Grotesque",system-ui,sans-serif;color:var(--muted);font-size:.9rem;margin:0 0 .4rem}
+@media (max-width:560px){.info{grid-template-columns:1fr 1fr}.info label:first-child{grid-column:1 / -1}}
+@media print{.scorebar,#rules,.row button,.timeline,nav{display:none!important}.q{break-inside:avoid}}
+h2{font-size:1.6rem;margin:0 0 .25rem;letter-spacing:-.01em}
+.how{color:var(--muted);margin:0 0 1.4rem;font-style:italic}
+
+.q{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);
+  border-radius:6px;padding:1.1rem 1.2rem 1.2rem;margin-bottom:1rem}
+.q.ok{border-left-color:var(--good)} .q.no{border-left-color:var(--bad)}
+.q .num{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;color:var(--teal);margin-right:.35rem}
+.q p.stem{margin:0 0 .85rem}
+.blank{display:inline-block;min-width:4.5rem;border-bottom:2px solid var(--muted);height:1.1em;vertical-align:baseline}
+.opts{display:grid;gap:.45rem}
+.opts label{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem .75rem;border:1px solid var(--line);
+  border-radius:5px;cursor:pointer}
+.opts label:hover{border-color:var(--teal)}
+.opts input{margin-top:.35rem;accent-color:var(--teal)}
+.opts label.right{border-color:var(--good);background:var(--good-bg)}
+.opts label.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.tf{display:flex;gap:.6rem}
+.tf .opts{grid-template-columns:1fr 1fr;width:100%}
+input[type=text]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);
+  border-radius:5px;padding:.5rem .7rem;width:100%;max-width:20rem}
+input[type=text]:focus-visible,button:focus-visible,nav a:focus-visible,.opts label:focus-within{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.85rem}
+button{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:500;font-size:.95rem;cursor:pointer;
+  border:none;border-radius:5px;padding:.55rem 1.1rem;background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.fb{display:none;margin-top:.9rem;padding:.75rem .9rem;border-radius:5px;font-size:.98rem}
+.fb.show{display:block}
+.fb.ok{background:var(--good-bg)} .fb.no{background:var(--bad-bg)}
+.fb strong{font-family:"Bricolage Grotesque",system-ui,sans-serif}
+.fb .verdict-ok{color:var(--good)} .fb .verdict-no{color:var(--bad)}
+
+.summary{background:var(--card);border:2px solid var(--teal);border-radius:8px;padding:1.4rem;margin:2.5rem 0 1rem}
+.summary h2{margin-bottom:.5rem}
+footer{padding:1.5rem 0 3rem;color:var(--muted);font-size:.85rem}
+@media (max-width:520px){.stop{font-size:.72rem}.stop b{font-size:.82rem}.tf .opts{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+
+<header class="wrap">
+  <p class="course sans">CAPE Communication Studies</p>
+  <h1>Looking back: past tenses</h1>
+  <p class="lede">A reinforcement exercise on past tenses. Fill in your name, class and date, review the rules, then answer each item and check it. You'll see the correct answer and why it's correct straight away.</p>
+  <div class="timeline" aria-hidden="true">
+    <div class="rail"></div>
+    <div class="stops">
+      <div class="stop"><div class="dot"></div><b>had left</b>earlier past</div>
+      <div class="stop"><div class="dot"></div><b>was leaving</b>in progress</div>
+      <div class="stop"><div class="dot"></div><b>left</b>finished past</div>
+      <div class="stop"><div class="dot"></div><b>now</b>the present</div>
+    </div>
+  </div>
+  <form class="info" id="info" onsubmit="return false" aria-label="Student details">
+    <label>Name <input type="text" id="s-name" autocomplete="name" required></label>
+    <label>Class <input type="text" id="s-class" required></label>
+    <label>Date <input type="date" id="s-date" required></label>
+  </form>
+  <p class="info-note" id="info-note">Enter your name, class and date before you check any answers.</p>
+</header>
+
+<div class="scorebar">
+  <div class="wrap">
+    <span class="score" id="score">0 / 0 correct</span>
+    <div class="meter" aria-hidden="true"><span id="meter"></span></div>
+    <nav aria-label="Sections">
+      <a href="#rules">Rules</a><a href="#mcq">Multiple choice</a><a href="#fill">Fill in</a><a href="#tf">True/False</a><a href="#supply">Supply</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="rules">
+    <h2>Rules at a glance</h2>
+    <p class="how">Open any rule to review its form, use and signal words.</p>
+    <details><summary>Simple past</summary>
+      <p><b>Form:</b> verb + -ed (regular) or the irregular past form. Questions and negatives use <i>did / did not</i> + base verb.</p>
+      <p><b>Use:</b> a completed action at a definite time in the past.</p>
+      <p><b>Signal words:</b> yesterday, last week, ago, in 2017, when I was a child.</p>
+      <p class="ex">She <b>wrote</b> the essay last night. Did she <b>write</b> it? She did not <b>write</b> it.</p>
+    </details>
+    <details><summary>Past continuous</summary>
+      <p><b>Form:</b> was / were + verb-ing.</p>
+      <p><b>Use:</b> an action in progress at a specific past moment, or one interrupted by a shorter action (often with <i>while</i> or <i>when</i>).</p>
+      <p><b>Signal words:</b> while, when, at 8 p.m. last night, all afternoon.</p>
+      <p class="ex">We <b>were watching</b> the match when the power went out.</p>
+    </details>
+    <details><summary>Past perfect</summary>
+      <p><b>Form:</b> had + past participle.</p>
+      <p><b>Use:</b> the earlier of two past actions; an action complete before a past point.</p>
+      <p><b>Signal words:</b> by the time, before, after, already, never … before.</p>
+      <p class="ex">By the time the bell rang, we <b>had completed</b> the test.</p>
+    </details>
+    <details><summary>Past perfect continuous</summary>
+      <p><b>Form:</b> had been + verb-ing.</p>
+      <p><b>Use:</b> an ongoing action that lasted up to a point in the past, stressing duration or explaining a past result.</p>
+      <p><b>Signal words:</b> for, since, all night, how long.</p>
+      <p class="ex">They <b>had been waiting</b> for three hours when the rain stopped.</p>
+    </details>
+    <details><summary>Used to and would</summary>
+      <p><b>Used to + base verb:</b> past habits and past states that are no longer true.</p>
+      <p><b>Would + base verb:</b> repeated past actions only, never states.</p>
+      <p class="ex">I <b>used to live</b> in Georgetown. (state) Every Sunday we <b>would go</b> to the beach. (habit)</p>
+    </details>
+    <details><summary>Past passive</summary>
+      <p><b>Form:</b> was / were + past participle; had been + past participle; was / were being + past participle.</p>
+      <p><b>Use:</b> when the action matters more than who did it.</p>
+      <p class="ex">The Treaty of Concordia <b>was signed</b> in 1648.</p>
+    </details>
+    <details><summary>Reported speech (backshifting)</summary>
+      <p>After a past reporting verb (said, told, asked), tenses usually move one step back: am → was, finished → had finished, is doing → was doing. Time words shift too: last night → the night before, yesterday → the day before.</p>
+      <p class="ex">“I am tired.” → She said she <b>was</b> tired.</p>
+    </details>
+    <details><summary>Tense consistency and common errors</summary>
+      <p>Keep verbs in a sequence in the same time frame: <i>He finished his meal and <b>left</b></i>, not <i>leaves</i>.</p>
+      <p>Don’t use the present perfect with finished time: say <i>I saw him yesterday</i>, not <i>I have seen him yesterday</i>.</p>
+      <p>After <i>did / didn’t</i>, use the base verb: <i>I didn’t <b>go</b></i>, not <i>I didn’t went</i>.</p>
+    </details>
+    <details><summary>Irregular verbs (166)</summary>
+      <p>Where two forms are given (burnt / burned), both are correct; the -t form is common in British and Caribbean English.</p>
+      <p>Watch the look-alikes: lie (tell an untruth) is regular: lie – lied – lied. Hang (execute a person) is regular: hang – hanged – hanged. Rise has no object; raise (regular) takes one.</p>
+      <label class="vsearch">Find a verb <input type="text" id="vfind" placeholder="Type any form, e.g. brought" autocomplete="off"></label>
+      <p class="vcount" id="vcount" aria-live="polite"></p>
+      <div class="tbl vtbl"><table id="vtable">
+        <thead><tr><th>Base</th><th>Simple past</th><th>Past participle</th></tr></thead>
+        <tbody>
+          <tr><td>arise</td><td>arose</td><td>arisen</td></tr>
+          <tr><td>awake</td><td>awoke</td><td>awoken</td></tr>
+          <tr><td>be</td><td>was / were</td><td>been</td></tr>
+          <tr><td>bear</td><td>bore</td><td>borne</td></tr>
+          <tr><td>beat</td><td>beat</td><td>beaten</td></tr>
+          <tr><td>become</td><td>became</td><td>become</td></tr>
+          <tr><td>begin</td><td>began</td><td>begun</td></tr>
+          <tr><td>bend</td><td>bent</td><td>bent</td></tr>
+          <tr><td>bet</td><td>bet</td><td>bet</td></tr>
+          <tr><td>bid</td><td>bid</td><td>bid</td></tr>
+          <tr><td>bind</td><td>bound</td><td>bound</td></tr>
+          <tr><td>bite</td><td>bit</td><td>bitten</td></tr>
+          <tr><td>bleed</td><td>bled</td><td>bled</td></tr>
+          <tr><td>blow</td><td>blew</td><td>blown</td></tr>
+          <tr><td>break</td><td>broke</td><td>broken</td></tr>
+          <tr><td>breed</td><td>bred</td><td>bred</td></tr>
+          <tr><td>bring</td><td>brought</td><td>brought</td></tr>
+          <tr><td>broadcast</td><td>broadcast</td><td>broadcast</td></tr>
+          <tr><td>build</td><td>built</td><td>built</td></tr>
+          <tr><td>burn</td><td>burnt / burned</td><td>burnt / burned</td></tr>
+          <tr><td>burst</td><td>burst</td><td>burst</td></tr>
+          <tr><td>buy</td><td>bought</td><td>bought</td></tr>
+          <tr><td>cast</td><td>cast</td><td>cast</td></tr>
+          <tr><td>catch</td><td>caught</td><td>caught</td></tr>
+          <tr><td>choose</td><td>chose</td><td>chosen</td></tr>
+          <tr><td>cling</td><td>clung</td><td>clung</td></tr>
+          <tr><td>come</td><td>came</td><td>come</td></tr>
+          <tr><td>cost</td><td>cost</td><td>cost</td></tr>
+          <tr><td>creep</td><td>crept</td><td>crept</td></tr>
+          <tr><td>cut</td><td>cut</td><td>cut</td></tr>
+          <tr><td>deal</td><td>dealt</td><td>dealt</td></tr>
+          <tr><td>dig</td><td>dug</td><td>dug</td></tr>
+          <tr><td>do</td><td>did</td><td>done</td></tr>
+          <tr><td>draw</td><td>drew</td><td>drawn</td></tr>
+          <tr><td>dream</td><td>dreamt / dreamed</td><td>dreamt / dreamed</td></tr>
+          <tr><td>drink</td><td>drank</td><td>drunk</td></tr>
+          <tr><td>drive</td><td>drove</td><td>driven</td></tr>
+          <tr><td>eat</td><td>ate</td><td>eaten</td></tr>
+          <tr><td>fall</td><td>fell</td><td>fallen</td></tr>
+          <tr><td>feed</td><td>fed</td><td>fed</td></tr>
+          <tr><td>feel</td><td>felt</td><td>felt</td></tr>
+          <tr><td>fight</td><td>fought</td><td>fought</td></tr>
+          <tr><td>find</td><td>found</td><td>found</td></tr>
+          <tr><td>flee</td><td>fled</td><td>fled</td></tr>
+          <tr><td>fling</td><td>flung</td><td>flung</td></tr>
+          <tr><td>fly</td><td>flew</td><td>flown</td></tr>
+          <tr><td>forbid</td><td>forbade</td><td>forbidden</td></tr>
+          <tr><td>forecast</td><td>forecast</td><td>forecast</td></tr>
+          <tr><td>foresee</td><td>foresaw</td><td>foreseen</td></tr>
+          <tr><td>forget</td><td>forgot</td><td>forgotten</td></tr>
+          <tr><td>forgive</td><td>forgave</td><td>forgiven</td></tr>
+          <tr><td>forsake</td><td>forsook</td><td>forsaken</td></tr>
+          <tr><td>freeze</td><td>froze</td><td>frozen</td></tr>
+          <tr><td>get</td><td>got</td><td>got (US: gotten)</td></tr>
+          <tr><td>give</td><td>gave</td><td>given</td></tr>
+          <tr><td>go</td><td>went</td><td>gone</td></tr>
+          <tr><td>grind</td><td>ground</td><td>ground</td></tr>
+          <tr><td>grow</td><td>grew</td><td>grown</td></tr>
+          <tr><td>hang (an object)</td><td>hung</td><td>hung</td></tr>
+          <tr><td>have</td><td>had</td><td>had</td></tr>
+          <tr><td>hear</td><td>heard</td><td>heard</td></tr>
+          <tr><td>hide</td><td>hid</td><td>hidden</td></tr>
+          <tr><td>hit</td><td>hit</td><td>hit</td></tr>
+          <tr><td>hold</td><td>held</td><td>held</td></tr>
+          <tr><td>hurt</td><td>hurt</td><td>hurt</td></tr>
+          <tr><td>keep</td><td>kept</td><td>kept</td></tr>
+          <tr><td>kneel</td><td>knelt</td><td>knelt</td></tr>
+          <tr><td>know</td><td>knew</td><td>known</td></tr>
+          <tr><td>lay (put down)</td><td>laid</td><td>laid</td></tr>
+          <tr><td>lead</td><td>led</td><td>led</td></tr>
+          <tr><td>lean</td><td>leant / leaned</td><td>leant / leaned</td></tr>
+          <tr><td>leap</td><td>leapt / leaped</td><td>leapt / leaped</td></tr>
+          <tr><td>learn</td><td>learnt / learned</td><td>learnt / learned</td></tr>
+          <tr><td>leave</td><td>left</td><td>left</td></tr>
+          <tr><td>lend</td><td>lent</td><td>lent</td></tr>
+          <tr><td>let</td><td>let</td><td>let</td></tr>
+          <tr><td>lie (recline)</td><td>lay</td><td>lain</td></tr>
+          <tr><td>light</td><td>lit</td><td>lit</td></tr>
+          <tr><td>lose</td><td>lost</td><td>lost</td></tr>
+          <tr><td>make</td><td>made</td><td>made</td></tr>
+          <tr><td>mean</td><td>meant</td><td>meant</td></tr>
+          <tr><td>meet</td><td>met</td><td>met</td></tr>
+          <tr><td>mislead</td><td>misled</td><td>misled</td></tr>
+          <tr><td>mistake</td><td>mistook</td><td>mistaken</td></tr>
+          <tr><td>misunderstand</td><td>misunderstood</td><td>misunderstood</td></tr>
+          <tr><td>overcome</td><td>overcame</td><td>overcome</td></tr>
+          <tr><td>overtake</td><td>overtook</td><td>overtaken</td></tr>
+          <tr><td>pay</td><td>paid</td><td>paid</td></tr>
+          <tr><td>put</td><td>put</td><td>put</td></tr>
+          <tr><td>quit</td><td>quit</td><td>quit</td></tr>
+          <tr><td>read</td><td>read</td><td>read</td></tr>
+          <tr><td>rid</td><td>rid</td><td>rid</td></tr>
+          <tr><td>ride</td><td>rode</td><td>ridden</td></tr>
+          <tr><td>ring</td><td>rang</td><td>rung</td></tr>
+          <tr><td>rise</td><td>rose</td><td>risen</td></tr>
+          <tr><td>run</td><td>ran</td><td>run</td></tr>
+          <tr><td>say</td><td>said</td><td>said</td></tr>
+          <tr><td>see</td><td>saw</td><td>seen</td></tr>
+          <tr><td>seek</td><td>sought</td><td>sought</td></tr>
+          <tr><td>sell</td><td>sold</td><td>sold</td></tr>
+          <tr><td>send</td><td>sent</td><td>sent</td></tr>
+          <tr><td>set</td><td>set</td><td>set</td></tr>
+          <tr><td>sew</td><td>sewed</td><td>sewn</td></tr>
+          <tr><td>shake</td><td>shook</td><td>shaken</td></tr>
+          <tr><td>shed</td><td>shed</td><td>shed</td></tr>
+          <tr><td>shine</td><td>shone</td><td>shone</td></tr>
+          <tr><td>shoot</td><td>shot</td><td>shot</td></tr>
+          <tr><td>show</td><td>showed</td><td>shown</td></tr>
+          <tr><td>shrink</td><td>shrank</td><td>shrunk</td></tr>
+          <tr><td>shut</td><td>shut</td><td>shut</td></tr>
+          <tr><td>sing</td><td>sang</td><td>sung</td></tr>
+          <tr><td>sink</td><td>sank</td><td>sunk</td></tr>
+          <tr><td>sit</td><td>sat</td><td>sat</td></tr>
+          <tr><td>sleep</td><td>slept</td><td>slept</td></tr>
+          <tr><td>slide</td><td>slid</td><td>slid</td></tr>
+          <tr><td>sling</td><td>slung</td><td>slung</td></tr>
+          <tr><td>slit</td><td>slit</td><td>slit</td></tr>
+          <tr><td>smell</td><td>smelt / smelled</td><td>smelt / smelled</td></tr>
+          <tr><td>sow</td><td>sowed</td><td>sown</td></tr>
+          <tr><td>speak</td><td>spoke</td><td>spoken</td></tr>
+          <tr><td>speed</td><td>sped</td><td>sped</td></tr>
+          <tr><td>spell</td><td>spelt / spelled</td><td>spelt / spelled</td></tr>
+          <tr><td>spend</td><td>spent</td><td>spent</td></tr>
+          <tr><td>spill</td><td>spilt / spilled</td><td>spilt / spilled</td></tr>
+          <tr><td>spin</td><td>spun</td><td>spun</td></tr>
+          <tr><td>spit</td><td>spat</td><td>spat</td></tr>
+          <tr><td>split</td><td>split</td><td>split</td></tr>
+          <tr><td>spoil</td><td>spoilt / spoiled</td><td>spoilt / spoiled</td></tr>
+          <tr><td>spread</td><td>spread</td><td>spread</td></tr>
+          <tr><td>spring</td><td>sprang</td><td>sprung</td></tr>
+          <tr><td>stand</td><td>stood</td><td>stood</td></tr>
+          <tr><td>steal</td><td>stole</td><td>stolen</td></tr>
+          <tr><td>stick</td><td>stuck</td><td>stuck</td></tr>
+          <tr><td>sting</td><td>stung</td><td>stung</td></tr>
+          <tr><td>stink</td><td>stank</td><td>stunk</td></tr>
+          <tr><td>stride</td><td>strode</td><td>stridden</td></tr>
+          <tr><td>strike</td><td>struck</td><td>struck</td></tr>
+          <tr><td>string</td><td>strung</td><td>strung</td></tr>
+          <tr><td>strive</td><td>strove</td><td>striven</td></tr>
+          <tr><td>swear</td><td>swore</td><td>sworn</td></tr>
+          <tr><td>sweep</td><td>swept</td><td>swept</td></tr>
+          <tr><td>swell</td><td>swelled</td><td>swollen</td></tr>
+          <tr><td>swim</td><td>swam</td><td>swum</td></tr>
+          <tr><td>swing</td><td>swung</td><td>swung</td></tr>
+          <tr><td>take</td><td>took</td><td>taken</td></tr>
+          <tr><td>teach</td><td>taught</td><td>taught</td></tr>
+          <tr><td>tear</td><td>tore</td><td>torn</td></tr>
+          <tr><td>tell</td><td>told</td><td>told</td></tr>
+          <tr><td>think</td><td>thought</td><td>thought</td></tr>
+          <tr><td>throw</td><td>threw</td><td>thrown</td></tr>
+          <tr><td>thrust</td><td>thrust</td><td>thrust</td></tr>
+          <tr><td>tread</td><td>trod</td><td>trodden</td></tr>
+          <tr><td>undergo</td><td>underwent</td><td>undergone</td></tr>
+          <tr><td>understand</td><td>understood</td><td>understood</td></tr>
+          <tr><td>undertake</td><td>undertook</td><td>undertaken</td></tr>
+          <tr><td>upset</td><td>upset</td><td>upset</td></tr>
+          <tr><td>wake</td><td>woke</td><td>woken</td></tr>
+          <tr><td>wear</td><td>wore</td><td>worn</td></tr>
+          <tr><td>weave</td><td>wove</td><td>woven</td></tr>
+          <tr><td>weep</td><td>wept</td><td>wept</td></tr>
+          <tr><td>win</td><td>won</td><td>won</td></tr>
+          <tr><td>wind</td><td>wound</td><td>wound</td></tr>
+          <tr><td>withdraw</td><td>withdrew</td><td>withdrawn</td></tr>
+          <tr><td>withhold</td><td>withheld</td><td>withheld</td></tr>
+          <tr><td>wring</td><td>wrung</td><td>wrung</td></tr>
+          <tr><td>write</td><td>wrote</td><td>written</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+  </section>
+
+  <section id="mcq">
+    <h2>Part A: Multiple choice</h2>
+    <p class="how">Choose the one option that correctly completes each sentence.</p>
+    <div id="mcq-list"></div>
+  </section>
+
+  <section id="fill">
+    <h2>Part B: Fill in the blank</h2>
+    <p class="how">Type the one missing word. Spelling counts; capital letters don't.</p>
+    <div id="fill-list"></div>
+  </section>
+
+  <section id="tf">
+    <h2>Part C: True or false</h2>
+    <p class="how">Decide whether each statement about past tenses is true or false.</p>
+    <div id="tf-list"></div>
+  </section>
+
+  <section id="supply">
+    <h2>Part D: Supply the verb</h2>
+    <p class="how">Write the correct past form of the verb in brackets. Some answers need more than one word.</p>
+    <div id="supply-list"></div>
+  </section>
+
+  <div class="summary" id="summary">
+    <h2>Your result</h2>
+    <p class="who" id="who"></p>
+    <p id="summary-text">Check each item to build your score. Your result appears here as you go.</p>
+    <div class="row"><button id="print">Print or save result</button><button class="ghost" id="reset">Start again</button></div>
+  </div>
+</main>
+
+<footer class="wrap">CAPE Communication Studies · Past Tenses Reinforcement Activity</footer>
+
+<script>
+const MCQ = [
+  {s:"By the time the ambulance arrived, the patient ___ consciousness.",
+   o:["lost","had lost","has been losing","has lost"], a:1,
+   e:"“By the time” + simple past (arrived) signals that one action was already complete before another past action. The earlier action takes the past perfect: had + past participle."},
+  {s:"While the principal ___ the assembly, the fire alarm went off.",
+   o:["is addressing","was addressing","has addressed","addresses"], a:1,
+   e:"The past continuous (was/were + -ing) shows an action in progress when another, shorter past action interrupted it. The other options are present-tense forms, which clash with “went off.”"},
+  {s:"Yesterday the school choir ___ the national anthem beautifully.",
+   o:["sung","sang","singed","has sang"], a:1,
+   e:"Sing is irregular: sing – sang – sung. The simple past is “sang.” “Sung” is the past participle and needs an auxiliary (has sung / had sung). “Singed” is a different verb meaning “burned slightly.”"},
+  {s:"She told us that she ___ the report the night before.",
+   o:["finishes","has finished","had finished","will finish"], a:2,
+   e:"In reported speech after a past reporting verb (told), the tense shifts back. Her original words, “I finished the report last night,” become “she had finished the report the night before.”"},
+  {s:"When I was a child, I ___ walk to school every morning.",
+   o:["used to","use to","am used to","was used"], a:0,
+   e:"“Used to” + base verb describes a past habit that no longer happens. “Use to” appears only after did/didn’t (Did you use to…?). “Am used to” means “am accustomed to” and is present."},
+  {s:"They ___ for three hours when the rain finally stopped.",
+   o:["had been waiting","have been waiting","are waiting","wait"], a:0,
+   e:"The past perfect continuous (had been + -ing) shows an action that continued for a period up to a point in the past. “For three hours” gives the duration; “when the rain stopped” gives the past end point."},
+  {s:"Which sentence is correct in standard written English?",
+   o:["He lay the book on the table yesterday.","He laid the book on the table yesterday.","He layed the book on the table yesterday.","He lied the book on the table yesterday."], a:1,
+   e:"“Lay” (to put something down) takes an object: lay – laid – laid. “Lay” is also the past of “lie” (to recline), which takes no object. “Layed” is a misspelling, and “lied” means told an untruth."},
+  {s:"Name the tense of the underlined verb: The committee <u>had approved</u> the budget before the meeting ended.",
+   o:["Simple past","Past continuous","Past perfect","Past perfect continuous"], a:2,
+   e:"Had + past participle (approved) forms the past perfect. It marks the approval as happening before the other past action, the meeting ending."},
+  {s:"If I ___ about the traffic, I would have left earlier.",
+   o:["knew","had known","have known","was knowing"], a:1,
+   e:"This is a third conditional about an unreal past situation. The if-clause takes the past perfect (had known), matched with “would have left” in the main clause."},
+  {s:"Yesterday the sun ___ at 6:02 a.m.",
+   o:["raised","rose","rised","risen"], a:1,
+   e:"Rise is irregular: rise – rose – risen, and it takes no object. “Raised” belongs to “raise,” which needs an object (She raised her hand). “Rised” isn’t a word, and “risen” needs an auxiliary."},
+  {s:"I ___ my keys, so I couldn’t open the door.",
+   o:["lose","had lost","was losing","have lost"], a:1,
+   e:"Losing the keys happened before the past moment of not being able to open the door, so the past perfect (had lost) shows that sequence. “Lose” and “have lost” are present forms that clash with “couldn’t.”"},
+  {s:"Which sentence contains an error in tense consistency?",
+   o:["She opened the door and walked in.","He finished his meal and leaves the table.","They arrived late and missed the opening.","I called her, but she didn’t answer."], a:1,
+   e:"Verbs describing one past sequence should stay in the past. “Finished” is past but “leaves” is present; it should read “He finished his meal and left the table.”"}
+];
+
+const FILL = [
+  {s:"Where ___ you going when I saw you at the mall?", a:["were"],
+   e:"This is past continuous (was/were + going). With the subject “you,” the correct form of be is “were.”"},
+  {s:"I ___ never seen snow before I visited Canada last year.", a:["had"],
+   e:"“Seen” is a past participle, so it needs an auxiliary. The seeing (or not seeing) came before the past visit, so the past perfect auxiliary “had” is needed."},
+  {s:"___ you finish the assignment last night?", a:["did"],
+   e:"Questions in the simple past use the auxiliary “did” + base verb (finish). “Last night” confirms the finished past time."},
+  {s:"The students ___ not understand the poem until the teacher explained it.", a:["did"],
+   e:"Negatives in the simple past use “did not” + base verb. Because “understand” is in its base form, the only word that fits is “did.”"},
+  {s:"She ___ been studying all night, so she was exhausted.", a:["had"],
+   e:"“Been studying” needs “had” to form the past perfect continuous. It shows a long action leading up to a past state (she was exhausted)."},
+  {s:"We ___ watching the match when the power went out.", a:["were"],
+   e:"The past continuous (were + watching) shows the action in progress when it was interrupted. With “we,” the form of be is “were.”"},
+  {s:"My grandfather ___ to tell us stories about fishing off Mayaro.", a:["used"],
+   e:"“Used to” + base verb (tell) describes a repeated past habit. “Would” doesn’t fit here because it is never followed by “to.”"},
+  {s:"The letter ___ written by the manager herself last Friday.", a:["was"],
+   e:"This is the simple past passive: was/were + past participle (written). The subject “the letter” is singular, and “last Friday” is finished past time, so the verb is “was.”"},
+  {s:"The documents ___ been signed before the lawyer arrived.", a:["had"],
+   e:"“Been signed” is a passive participle phrase that needs “had” to form the past perfect passive. The signing came before the lawyer’s past arrival."},
+  {s:"What ___ you doing at 10 o’clock last night?", a:["were"],
+   e:"An action in progress at a specific past time uses the past continuous. With “you,” the form of be is “were.”"},
+  {s:"The minister ___ not attend the ceremony yesterday.", a:["did"],
+   e:"A simple past negative uses “did not” + base verb (attend). “Yesterday” confirms finished past time."},
+  {s:"The bridge ___ being repaired when we drove past last week.", a:["was"],
+   e:"“Being repaired” is the past continuous passive: was/were + being + past participle. “The bridge” is singular, so the verb is “was.”"}
+];
+
+const TF = [
+  {s:"The past perfect is used to show which of two past actions happened first.", a:true,
+   e:"True. The past perfect places one past action earlier than another: “The train had left when we arrived.”"},
+  {s:"“I have seen him yesterday” is correct in standard English.", a:false,
+   e:"False. The present perfect isn’t used with a finished time expression like “yesterday.” The correct sentence is “I saw him yesterday.”"},
+  {s:"The past continuous describes an action that was in progress at a specific time in the past.", a:true,
+   e:"True. “At 7 p.m. last night, I was cooking dinner” shows an action happening at that moment."},
+  {s:"“Brung” is the accepted past tense of “bring” in formal written English.", a:false,
+   e:"False. Bring is irregular: bring – brought – brought. “Brung” is non-standard and should be avoided in formal writing."},
+  {s:"In “She said she was tired,” the verb “was” shows backshifting in reported speech.", a:true,
+   e:"True. Her direct words were “I am tired.” After the past reporting verb “said,” “am” shifts back to “was.”"},
+  {s:"“Would” can describe both past habits and past states, as in “I would live in Georgetown.”", a:false,
+   e:"False. “Would” describes repeated past actions only (“Every Sunday we would go to the beach”). For past states, use “used to”: “I used to live in Georgetown.”"},
+  {s:"The simple past of “fly” is “flew.”", a:true,
+   e:"True. Fly is irregular: fly – flew – flown. “The plane flew over Maho Beach.”"},
+  {s:"After “didn’t,” we use the past form of the verb, as in “I didn’t went.”", a:false,
+   e:"False. “Did” already carries the past tense, so the main verb stays in its base form: “I didn’t go.”"},
+  {s:"The past perfect continuous emphasises how long an action lasted before another past point.", a:true,
+   e:"True. “She had been working there for ten years when the company closed” stresses the duration up to that past moment."},
+  {s:"Signal words such as “ago” and “last year” normally call for the present perfect.", a:false,
+   e:"False. “Ago” and “last year” mark finished past time, which calls for the simple past: “I moved here two years ago.”"}
+];
+
+const SUPPLY = [
+  {s:"The Treaty of Concordia ___ (sign) in 1648.", a:["was signed"],
+   e:"The treaty didn’t sign itself; people signed it. This calls for the simple past passive: was + past participle, giving “was signed.” The date 1648 shows finished past time."},
+  {s:"Last Tuesday, Keisha ___ (write) a letter to the editor.", a:["wrote"],
+   e:"“Last Tuesday” is finished past time, so the simple past is needed. Write is irregular: write – wrote – written."},
+  {s:"By the time the bell rang, we ___ (complete) the test.", a:["had completed"],
+   e:"“By the time” + a simple past action (rang) signals that our action was already finished before it. That calls for the past perfect: had completed."},
+  {s:"At 8 p.m. last night, my brother ___ (play) video games.", a:["was playing"],
+   e:"A specific moment in the past (8 p.m. last night) plus an action in progress calls for the past continuous: was + playing."},
+  {s:"Her eyes were red because she ___ (cry) — use the past perfect continuous.", a:["had been crying"],
+   e:"The past perfect continuous (had been + -ing) explains a past result (red eyes) caused by an ongoing earlier action."},
+  {s:"Yesterday the thief ___ (steal) a bicycle from outside the library.", a:["stole"],
+   e:"“Yesterday” is finished past time, so use the simple past. Steal is irregular: steal – stole – stolen."},
+  {s:"In 2017, Hurricane Irma ___ (damage) many homes on the island.", a:["damaged"],
+   e:"“In 2017” is a definite past time, so use the simple past. Damage is regular, so add -d: damaged."},
+  {s:"The students ___ (choose) their project topics last week.", a:["chose"],
+   e:"“Last week” is finished past time, so the simple past is needed. Choose is irregular: choose – chose – chosen."},
+  {s:"When I arrived, the meeting ___ (already, start).", a:["had already started"],
+   e:"The meeting started before the past moment of my arrival, so use the past perfect. “Already” goes between “had” and the past participle: had already started."},
+  {s:"The winning goal ___ (score) in the final minute of yesterday’s match.", a:["was scored"],
+   e:"The goal received the action, so this is passive. “Yesterday’s match” is finished past time, giving the simple past passive: was scored."}
+];
+
+const results = {}; // id -> true/false
+const REDO = {}; // id -> check(quiet), used to mark saved answers again
+let gsOff = false, gsT = 0;
+function gsSave(){ if(gsOff || !window.GameSave) return; try{ window.GameSave.save(); }catch(e){} }
+function gsLater(){ clearTimeout(gsT); gsT = setTimeout(gsSave, 400); }
+const infoIds = ["s-name","s-class","s-date"];
+function infoReady(){
+  let ok = true;
+  infoIds.forEach(id => {
+    const el = document.getElementById(id);
+    const empty = !el.value.trim();
+    el.classList.toggle("missing", empty);
+    if(empty) ok = false;
+  });
+  const note = document.getElementById("info-note");
+  note.classList.toggle("alert", !ok);
+  note.textContent = ok ? "Details saved for this attempt." : "Enter your name, class and date at the top before checking answers.";
+  if(!ok){ const first = infoIds.map(i=>document.getElementById(i)).find(e=>!e.value.trim()); first.scrollIntoView({block:"center"}); first.focus(); }
+  return ok;
+}
+function whoLine(){
+  const n=document.getElementById("s-name").value.trim(), c=document.getElementById("s-class").value.trim(), d=document.getElementById("s-date").value;
+  return n ? "Name: " + n + "   Class: " + c + "   Date: " + d : "";
+}
+try{ const d=document.getElementById("s-date"); if(!d.value) d.valueAsDate = new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000); }catch(e){}
+let total = MCQ.length + FILL.length + TF.length + SUPPLY.length;
+
+const norm = s => s.toLowerCase().replace(/[’‘]/g,"'").replace(/[.!?]+$/,"").replace(/\s+/g," ").trim();
+
+function feedback(el, ok, answerText, expl){
+  el.className = "fb show " + (ok ? "ok" : "no");
+  el.innerHTML = (ok ? '<strong class="verdict-ok">Correct.</strong> ' : '<strong class="verdict-no">Not quite.</strong> ')
+    + 'The correct answer is <strong>' + answerText + '</strong>. ' + expl;
+}
+
+function card(id, n, stemHTML){
+  const d = document.createElement("div");
+  d.className = "q"; d.id = id;
+  d.innerHTML = '<p class="stem"><span class="num">' + n + '.</span>' + stemHTML + '</p>';
+  return d;
+}
+
+function stemWithBlank(s){ return s.replace("___", '<span class="blank" aria-label="blank"></span>'); }
+
+function buildChoice(listId, items, prefix, isTF){
+  const list = document.getElementById(listId);
+  items.forEach((q, i) => {
+    const id = prefix + i;
+    const opts = isTF ? ["True","False"] : q.o;
+    const d = card(id, i+1, stemWithBlank(q.s));
+    const wrap = document.createElement("div");
+    wrap.className = isTF ? "tf" : "";
+    const box = document.createElement("div");
+    box.className = "opts"; box.setAttribute("role","radiogroup");
+    opts.forEach((o, j) => {
+      const l = document.createElement("label");
+      l.innerHTML = '<input type="radio" name="' + id + '" value="' + j + '"><span>' + (isTF ? "" : String.fromCharCode(97+j) + ") ") + o + '</span>';
+      box.appendChild(l);
+    });
+    wrap.appendChild(box); d.appendChild(wrap);
+    const row = document.createElement("div"); row.className = "row";
+    const btn = document.createElement("button"); btn.textContent = "Check answer";
+    row.appendChild(btn); d.appendChild(row);
+    const fb = document.createElement("div"); fb.className = "fb"; fb.setAttribute("aria-live","polite");
+    d.appendChild(fb);
+    const check = (quiet) => {
+      if(quiet !== true && !infoReady()) return;
+      const sel = d.querySelector("input:checked");
+      if(!sel){ fb.className = "fb show no"; fb.innerHTML = "Choose an option first, then check your answer."; return; }
+      const pick = +sel.value;
+      const correctIdx = isTF ? (q.a ? 0 : 1) : q.a;
+      const ok = pick === correctIdx;
+      const labels = box.querySelectorAll("label");
+      labels[correctIdx].classList.add("right");
+      if(!ok) labels[pick].classList.add("wrong");
+      box.querySelectorAll("input").forEach(x => x.disabled = true);
+      btn.disabled = true;
+      d.classList.add(ok ? "ok" : "no");
+      const ansText = isTF ? opts[correctIdx] : String.fromCharCode(97+correctIdx) + ") " + opts[correctIdx];
+      feedback(fb, ok, ansText, q.e);
+      record(id, ok);
+    };
+    btn.addEventListener("click", () => check(false));
+    REDO[id] = check;
+    list.appendChild(d);
+  });
+}
+
+function buildText(listId, items, prefix){
+  const list = document.getElementById(listId);
+  items.forEach((q, i) => {
+    const id = prefix + i;
+    const d = card(id, i+1, stemWithBlank(q.s));
+    const row = document.createElement("div"); row.className = "row";
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.autocomplete = "off"; inp.spellcheck = false;
+    inp.setAttribute("aria-label", "Answer for item " + (i+1));
+    inp.placeholder = "Type your answer";
+    const btn = document.createElement("button"); btn.textContent = "Check answer";
+    row.appendChild(inp); row.appendChild(btn); d.appendChild(row);
+    const fb = document.createElement("div"); fb.className = "fb"; fb.setAttribute("aria-live","polite");
+    d.appendChild(fb);
+    const check = (quiet) => {
+      if(quiet !== true && !infoReady()) return;
+      const v = norm(inp.value);
+      if(!v){ fb.className = "fb show no"; fb.innerHTML = "Type an answer first, then check it."; return; }
+      const ok = q.a.map(norm).includes(v);
+      inp.disabled = true; btn.disabled = true;
+      d.classList.add(ok ? "ok" : "no");
+      feedback(fb, ok, q.a[0], q.e);
+      record(id, ok);
+    };
+    btn.addEventListener("click", check);
+    REDO[id] = check;
+    inp.addEventListener("keydown", e => { if(e.key === "Enter") check(); });
+    list.appendChild(d);
+  });
+}
+
+function record(id, ok){
+  results[id] = ok; gsLater();
+  const done = Object.keys(results).length;
+  const right = Object.values(results).filter(Boolean).length;
+  document.getElementById("score").textContent = right + " / " + done + " correct";
+  document.getElementById("meter").style.width = (done / total * 100) + "%";
+  const t = document.getElementById("summary-text");
+  if(done < total){
+    t.textContent = "You've checked " + done + " of " + total + " items and got " + right + " right so far.";
+  } else {
+    const pct = Math.round(right / total * 100);
+    let msg;
+    if(pct >= 90) msg = "Excellent. You have a firm command of the past tenses.";
+    else if(pct >= 70) msg = "Good work. Reread the explanations for the items you missed, then try again.";
+    else msg = "Keep practising. Focus on the explanations for each missed item, especially past perfect and irregular verbs, then start again.";
+    document.getElementById("who").textContent = whoLine();
+    t.innerHTML = "<strong>" + right + " out of " + total + " (" + pct + "%).</strong> " + msg;
+  }
+}
+
+function buildAll(){
+  ["mcq-list","fill-list","tf-list","supply-list"].forEach(x => document.getElementById(x).innerHTML = "");
+  for(const k in results) delete results[k];
+  document.getElementById("score").textContent = "0 / 0 correct";
+  document.getElementById("meter").style.width = "0";
+  document.getElementById("summary-text").textContent = "Check each item to build your score. Your result appears here as you go.";
+  buildChoice("mcq-list", MCQ, "a", false);
+  buildText("fill-list", FILL, "b");
+  buildChoice("tf-list", TF, "c", true);
+  buildText("supply-list", SUPPLY, "d");
+}
+(function(){
+  const f=document.getElementById("vfind"), rows=[...document.querySelectorAll("#vtable tbody tr")], n=document.getElementById("vcount");
+  const upd=()=>{const q=f.value.trim().toLowerCase();let k=0;rows.forEach(r=>{const m=!q||r.textContent.toLowerCase().includes(q);r.hidden=!m;if(m)k++;});n.textContent=q?(k?k+" match"+(k>1?"es":""):"No verb matches that. Check the spelling, or it may be a regular verb (-ed)."):rows.length+" verbs";};
+  f.addEventListener("input",upd);upd();
+})();
+document.getElementById("print").addEventListener("click", () => { document.getElementById("who").textContent = whoLine(); window.print(); });
+document.getElementById("reset").addEventListener("click", () => { if(window.GameSave){ window.GameSave.startOver(); return; } buildAll(); window.scrollTo(0,0); });
+buildAll();
+/* ---------- saved progress (GameSave) ---------- */
+function gsGet(){
+  const a = {};
+  document.querySelectorAll(".q[id]").forEach(d => {
+    const r = d.querySelector("input[type=radio]:checked"), t = d.querySelector("input[type=text]");
+    if(r) a[d.id] = +r.value; else if(t && t.value) a[d.id] = t.value;
+  });
+  return { v: 1, info: { name: document.getElementById("s-name").value, cls: document.getElementById("s-class").value, date: document.getElementById("s-date").value }, a: a, done: Object.keys(results) };
+}
+function gsBack(d){
+  if(!d || d.v !== 1) return false;
+  let any = false; const info = d.info && typeof d.info === "object" ? d.info : {};
+  [["s-name", info.name], ["s-class", info.cls], ["s-date", info.date]].forEach(([id, v]) => { if(typeof v === "string" && v){ document.getElementById(id).value = v.slice(0, 120); if(id !== "s-date") any = true; } });
+  if(d.a && typeof d.a === "object") Object.keys(d.a).forEach(id => {
+    const card = /^[abcd]\d+$/.test(id) && document.getElementById(id); if(!card) return;
+    const v = d.a[id];
+    if(typeof v === "number"){ const r = card.querySelector('input[type=radio][value="' + v + '"]'); if(r){ r.checked = true; any = true; } }
+    else if(typeof v === "string"){ const t = card.querySelector("input[type=text]"); if(t){ t.value = v.slice(0, 200); any = true; } }
+  });
+  if(Array.isArray(d.done)) d.done.forEach(id => { if(typeof id === "string" && REDO[id] && !(id in results)) REDO[id](true); });
+  return any;
+}
+if(window.GameSave){
+  let gsData = null, back = false;
+  window.GameSave.onReset(() => { gsOff = true; clearTimeout(gsT); });
+  window.GameSave.persist({ key: "comm.pasttenses.save", welcome: false, get: gsGet, set: d => { gsData = d; } });
+  gsOff = true;
+  try{ back = gsBack(gsData); }catch(e){ back = false; buildAll(); }
+  gsOff = false;
+  if(back) setTimeout(() => { try{ window.GameSave.toast("Welcome back! Your progress was restored."); }catch(e){} }, 400);
+  document.addEventListener("input", gsLater);
+  document.addEventListener("change", gsLater);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html><html lang="en" data-gs-none><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Old School vs New School Media</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+:root{--bg:#060D26;--surface:rgba(15,30,74,.9);--ink:#F1F4FF;--muted:#AEB9DD;--line:rgba(245,197,66,.25);--gold:#F5C542;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 600px at 80% -10%,#0B1A46,transparent 60%),#060D26;background-attachment:fixed;color:var(--ink);font:16.5px/1.65 "Atkinson Hyperlegible",Verdana,system-ui,sans-serif}
+main{max-width:880px;margin:0 auto;padding-block:70px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+article{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,34px);box-shadow:0 18px 40px -18px rgba(0,0,0,.85)}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(1.7rem,4.5vw,2.4rem);color:#FFE38A;margin-top:0}
+h2{color:var(--gold);border-top:1px solid var(--line);padding-top:18px;margin-top:28px}
+a{color:#FFD766}
+.tw{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(245,197,66,.12)}
+li p{margin:.2em 0}
+[data-atom="mention"]{display:none}
+input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.credit{color:var(--muted);font-size:.85rem;text-align:center;margin-top:18px}
+</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body>
+<a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);border:1px solid rgba(245,197,66,.4)">← Back to course</a>
+<main><article><h1 id="traditional-vs-new-media-characteristics-assumptions">Old School vs New School Media: Characteristics &amp; Assumptions</h1>
+<p><strong>Communication Studies Syllabus</strong> · <time data-atom="date" datetime="2026-10-12">2026-10-12</time></p>
+<h2 id="course-overview">Course Overview</h2>
+<p>This two-week unit has students compare traditional and new media by their characteristics and by the assumptions each one carries about audiences, language and culture. It is built on Chapter 6, <em>Technology, Culture and Communication</em>, which the textbook ties to Module 2 and Specific Objectives 5, 7, 8, 9 and 10.</p>
+<ul><li><p><strong>Programme:</strong> CAPE Communication Studies, Unit 2: Understanding Communication in Society</p></li><li><p><strong>Proposed length:</strong> 6 sessions over 2 weeks (adjust to your timetable)</p></li><li><p><strong>Core text:</strong> Chapter 6, pp. 76–91, including Activities 6.1–6.8 and the Evaluation and Extension questions</p></li><li><p><strong>Central question:</strong> How do the tools we communicate with shape our language, culture and relationships, and who is included or left out when they change?</p></li><li><p><strong>Prior learning:</strong> Chapters 4 and 5 on language, Creoles and Standard English</p></li></ul>
+<h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of the unit, students will be able to:</p>
+<ol><li><p>Describe the interactive relationship among communication technologies, language and society.</p></li><li><p>Trace the shift from print and electromagnetic technologies (telegraph, telephone, radio, television) to internet-based media.</p></li><li><p>Identify the defining characteristics of traditional and new media and compare them on speed, reach, interactivity, volume and control.</p></li><li><p>Explain how culture influences language and how technology in turn reshapes both.</p></li><li><p>Evaluate the assumptions behind claims such as &quot;new media connects everyone&quot; or &quot;traditional media is outdated&quot;.</p></li><li><p>Discuss how differences in culture and access affect integration, marginalisation and alienation in a technology-driven society.</p></li><li><p>Choose an appropriate medium and register for a given purpose and audience, observing etiquette.</p></li></ol>
+<h2 id="traditional-media-characteristics">Traditional Media: Characteristics</h2>
+<p>Traditional media are the print and electronic channels that dominated before the internet: the printing press, handwritten and typed letters, the telegraph, telephone, radio and television. Chapter 6 credits the printing press with the first mass communication vehicle and dates electronic communication from the electromagnet in 1825.</p>
+<ul><li><p><strong>Physical and fixed:</strong> messages travel as paper, records, cassettes or broadcast signals, and people go to the library, the post office or the television set to receive them.</p></li><li><p><strong>One-to-many, one-way:</strong> a publisher, station or network sends and audiences receive, with little immediate reply.</p></li><li><p><strong>Slower and scheduled:</strong> a letter reply could take a week or two, and viewers once rushed home for a favourite programme.</p></li><li><p><strong>Gatekept:</strong> editors, producers and broadcasters decide what reaches the public, so production is limited to institutions.</p></li><li><p><strong>Formal conventions:</strong> letters follow set layout, paragraphing, greetings and closings.</p></li><li><p><strong>Bounded by geography and cost:</strong> reach depends on postage, transport, printing and transmission infrastructure.</p></li><li><p><strong>Broadcast influence on culture:</strong> the chapter notes how long exposure to North American television changed Caribbean vocabulary, dress and norms.</p></li></ul>
+<h2 id="new-media-characteristics">New Media: Characteristics</h2>
+<p>New media are digital, internet-based channels such as email, instant messaging, SMS, VOIP, blogs, social networks, streaming and online marketplaces. The chapter&#39;s main point is that speed, volume and interactivity change how, when and with whom we communicate.</p>
+<ul><li><p><strong>Speed and immediacy:</strong> responses arrive in seconds, even across continents, and people can run several conversations at once.</p></li><li><p><strong>Interactive and many-to-many:</strong> audiences reply, share and publish through chat rooms, blogs, e-groups and sites such as YouTube.</p></li><li><p><strong>Digital and portable:</strong> e-books, downloaded music, streamed shows and online courses reach people on phones and laptops, anywhere.</p></li><li><p><strong>Information overload:</strong> large volumes of messages require filtering, discernment and strong reading and listening skills.</p></li><li><p><strong>Informal, compressed language:</strong> abbreviations, Netlingo and short email notes replace formal letter conventions, and new words and meanings (&quot;tweet&quot;, &quot;surf&quot;, &quot;mouse&quot;) enter everyday speech.</p></li><li><p><strong>Anonymity and constructed identity:</strong> anyone can register an address or build a false profile, which raises privacy, cyber-bullying and trust concerns.</p></li><li><p><strong>Blurred public and private:</strong> intimate details and images are shared with strangers, once taboo in most cultures.</p></li><li><p><strong>English-dominant content:</strong> most journals and reference material online are in English, though translation tools such as Google Translate help.</p></li><li><p><strong>Commercial reach:</strong> online shopping, banking and marketing operate without travel, and post offices report more parcels but fewer letters.</p></li></ul>
+<h2 id="traditional-vs-new-media-at-a-glance">Old School vs New School Media at a Glance</h2>
+<p>The two are best read as ends of a spectrum, since the chapter shows older forms adapting (the letter becomes email, the record becomes a download) rather than disappearing.</p>
+<div class="tw"><table><thead><tr><th>Dimension</th><th>Traditional media</th><th>New media</th></tr></thead><tbody><tr><td>Flow of message</td><td>One-way, one-to-many</td><td>Two-way, many-to-many</td></tr><tr><td>Speed of reply</td><td>Days to weeks (mail), scheduled (broadcast)</td><td>Seconds, often real time</td></tr><tr><td>Who produces</td><td>Institutions: publishers, stations, post offices</td><td>Institutions and ordinary users</td></tr><tr><td>Format</td><td>Paper, vinyl, cassette, broadcast signal</td><td>Digital files, streams, apps</td></tr><tr><td>Language style</td><td>Formal, full paragraphs, set greetings</td><td>Informal, abbreviated, Netlingo</td></tr><tr><td>Access</td><td>Library, post office, television set</td><td>Any connected device, any place</td></tr><tr><td>Volume</td><td>Limited by print run or airtime</td><td>Very high, needs filtering</td></tr><tr><td>Identity</td><td>Sender usually known</td><td>Anonymity and false identities possible</td></tr><tr><td>Privacy</td><td>Mostly private or clearly public</td><td>Private and public blur</td></tr><tr><td>Cultural reach</td><td>Local and national, with imported broadcast influence</td><td>Global, dominated by English and larger economies</td></tr><tr><td>Example from Chapter 6</td><td>Handwritten letter, telegram, fax</td><td>Email, IM, SMS, VOIP, blogs, streaming</td></tr></tbody></table></div>
+<h2 id="assumptions-behind-each-model">Assumptions Behind Each Model</h2>
+<p>Every medium carries unstated beliefs about who communicates, who listens and what counts as good communication. Students test each assumption against evidence from the chapter and from their own experience.</p>
+<div class="tw"><table><thead><tr><th>Medium</th><th>Assumption</th><th>Question to test it</th><th>Evidence in Chapter 6</th></tr></thead><tbody><tr><td>Traditional</td><td>The audience is a receiver, not a producer</td><td>Who could answer back, and how quickly?</td><td>Letters took a week or two for a reply</td></tr><tr><td>Traditional</td><td>Formality signals respect and clarity</td><td>Does a formal letter always communicate better than a quick note?</td><td>Letter versus email comparison (Example 1 and 2, p. 85)</td></tr><tr><td>Traditional</td><td>Institutions decide what is worth sharing</td><td>Whose stories and language reached the public?</td><td>Imported North American television reshaping Caribbean language and norms</td></tr><tr><td>New</td><td>Everyone is connected and has access</td><td>Who lacks devices, bandwidth or language skills?</td><td>Question 5: is internet culture only young and middle class?</td></tr><tr><td>New</td><td>The internet is culturally neutral</td><td>Whose language and culture dominate online content?</td><td>English dominates; content reflects economically dominant societies</td></tr><tr><td>New</td><td>Faster and more is better</td><td>Does speed improve understanding or weaken listening?</td><td>Information overload and the need for discernment</td></tr><tr><td>New</td><td>Online identities are real</td><td>How can we verify who we are speaking with?</td><td>False identities, anonymity and cyber-bullying</td></tr><tr><td>New</td><td>Owning technology signals worth</td><td>Is self-worth tied to devices at the cost of traditional norms?</td><td>Fig. 6.4 cartoon and surrounding text</td></tr><tr><td>Both</td><td>Technology is simply a tool</td><td>Does technology change the culture that uses it?</td><td>Technology reshapes language and therefore culture</td></tr></tbody></table></div>
+<h2 id="caribbean-contexts">Caribbean Contexts</h2>
+<p>Students anchor each concept in media they know. The prompts below are suggestions; confirm local details before using them in class.</p>
+<ul><li><p><strong>Print:</strong> compare a local newspaper (for example, The Gleaner, the Trinidad Guardian or The Daily Herald) with its online presence. What changed in layout, speed and reader comments?</p></li><li><p><strong>Telecommunications:</strong> trace how island communication moved from fixed-line telephones to mobile data, messaging apps and VOIP, linking to the chapter&#39;s account of the telephone, SMS and Skype.</p></li><li><p><strong>Hurricane Irma (2017):</strong> which channels worked when networks failed, and which did people rely on afterwards? Use this to test the assumption that new media is always more reliable.</p></li><li><p><strong>Language:</strong> many Caribbean territories, such as Sint Maarten, Curaçao, Suriname and Belize, are multilingual. Discuss how English, Dutch, Spanish, French, Papiamentu and Creoles appear in texts, captions and group chats, linking to the chapter&#39;s discussion of migration and language change.</p></li><li><p><strong>Culture and music:</strong> connect Activity 6.3 to dancehall, soca and calypso, and how clothing and gestures communicate messages across cultures.</p></li><li><p><strong>Tourism and business:</strong> link to the chapter&#39;s section on online shopping and marketing, asking how local businesses and the airport and port economy use social media to reach visitors.</p></li><li><p><strong>Access:</strong> discuss who on the island has strong connectivity and devices, to examine the digital divide raised in Question 5.</p></li></ul>
+<h2 id="teaching-sequence">Teaching Sequence</h2>
+<p>Six sessions move from culture and language, through the two media models, to critique of their assumptions.</p>
+<div class="tw"><table><thead><tr><th>Session</th><th>Focus</th><th>Chapter 6 content</th><th>Activities</th></tr></thead><tbody><tr><td>1</td><td>Culture, language and communication</td><td>Definition of culture; Creoles, folklore, food and place names; North American influence; the David Victor passage on business language</td><td>6.1, 6.2</td></tr><tr><td>2</td><td>Music, clothing and body language</td><td>Peace sign versus dancehall gesture; clothing as a communication tool</td><td>6.3</td></tr><tr><td>3</td><td>Traditional media and the evolution of technology</td><td>Printing press, electromagnet (1825), telegraph, telephone, radio, television; NCREL interactive communication competencies</td><td>6.4</td></tr><tr><td>4</td><td>New media and changing language</td><td>Netlingo, new words and meanings, letter versus email, SMS, IM, VOIP</td><td>6.5, 6.6</td></tr><tr><td>5</td><td>New media in daily life and the assumptions test</td><td>Social networking (Rosen), reading, listening and learning, business culture, privacy and anonymity</td><td>6.7</td></tr><tr><td>6</td><td>Critique and consolidation</td><td>Integration, marginalisation and alienation; information overload; conclusion</td><td>6.8, Evaluation and Extension Q5</td></tr></tbody></table></div>
+<p><strong>Suggested session shape (about 60 minutes):</strong> a short starter on the previous session (5 min), a mini-lesson with textbook extract (15 min), group activity from the chapter (25 min), a plenary using one assumption question from the table above (10 min), and an exit ticket (5 min).</p>
+<h2 id="session-by-session-content">Session-by-Session Content</h2>
+<h3 id="session-1-culture-language-and-communication">Session 1: Culture, Language and Communication</h3>
+<ul><li><p><strong>Objectives:</strong> define culture; explain how culture shapes language; recognise how language differences affect business communication.</p></li><li><p><strong>Teach:</strong> culture as the common practices and beliefs of a group, expressed through language, proverbs, folk tales, music, food and interaction. Show how Creoles, folklore (the rolling calf, the Bolom, Tata Duhende), carnival names, place names and foods reflect colonisation, migration and heritage. Introduce the three categories of language difficulty in business: gross translation errors, subtle shadings of meaning, and variations within the same language (the &quot;embarazada&quot; slogan example).</p></li><li><p><strong>Activity:</strong> Activity 6.1 (list adopted North American words and judge whether they enhance or degrade; trace five local dishes to their source; compare local folklore characters with those of other islands). Activity 6.2 (identify the cultural factors David Victor says cause misunderstanding).</p></li><li><p><strong>Check:</strong> exit ticket naming one way culture influenced a word, dish or place name in your territory.</p></li></ul>
+<h3 id="session-2-music-clothing-and-body-language">Session 2: Music, Clothing and Body Language</h3>
+<ul><li><p><strong>Objectives:</strong> show that clothing, gesture and music communicate messages; explain how a symbol can change meaning across time and culture.</p></li><li><p><strong>Teach:</strong> the 1960s peace sign as a symbol of goodwill that crossed cultures, compared with the dancehall gesture linked to aggression. Discuss how music shapes dress and body language, and why audiences should notice the message in gesture as well as in song.</p></li><li><p><strong>Activity:</strong> Activity 6.3 (collect images of dancehall or hip hop wear and comment on the message sent; identify other genres with identifiable clothing and the messages they communicate). Extend with a quick &quot;same gesture, different meaning&quot; gallery walk.</p></li><li><p><strong>Check:</strong> students write two sentences explaining how one symbol changed meaning between cultures or decades.</p></li></ul>
+<h3 id="session-3-traditional-media-and-the-evolution-of-technology">Session 3: Traditional Media and the Evolution of Technology</h3>
+<ul><li><p><strong>Objectives:</strong> trace the development of communication technology; list the characteristics of traditional media; explain interactive communication competencies.</p></li><li><p><strong>Teach:</strong> technology as the means people use to improve their surroundings. Timeline: printing press (fifteenth century), electromagnet (1825), telegraph, telephone, radio, television, fax. Link each to how it changed speed and reach. Introduce the NCREL competencies for choosing modes of interaction and for behaving during interaction.</p></li><li><p><strong>Activity:</strong> Activity 6.4 (self-rate against the competencies; trace electronic technology from the electromagnet). Students build a class timeline and tag each item as one-way or two-way.</p></li><li><p><strong>Check:</strong> students name two traditional media and one characteristic of each, citing the timeline.</p></li></ul>
+<h3 id="session-4-new-media-and-changing-language">Session 4: New Media and Changing Language</h3>
+<ul><li><p><strong>Objectives:</strong> describe the characteristics of new media; explain how technology creates and changes words; adapt language style to medium and audience.</p></li><li><p><strong>Teach:</strong> the dominance of English online, new words (&quot;Blogger&quot;, &quot;Wiki&quot;), compound words (&quot;homepage&quot;, &quot;Facebook&quot;), new meanings for old words (&quot;surf&quot;, &quot;mouse&quot;, &quot;tweet&quot;), accepted abbreviations (USB, HTML, MP3) and Netlingo. Compare the handwritten letter and the email on greeting, paragraphing, closure and tone, and show how SMS, IM and VOIP replaced slower channels.</p></li><li><p><strong>Activity:</strong> Activity 6.5 (group chart of internet and digital words, and a list of technology abbreviations with their meanings). Activity 6.6 (rewrite the instant message conversation in Standard English). Then students convert the formal letter into an email and back.</p></li><li><p><strong>Check:</strong> students explain in one sentence when Netlingo is appropriate and when it is not.</p></li></ul>
+<h3 id="session-5-new-media-in-daily-life-and-the-assumptions-test">Session 5: New Media in Daily Life and the Assumptions Test</h3>
+<ul><li><p><strong>Objectives:</strong> analyse benefits and risks of new media in reading, listening, learning, social life and business; test assumptions about new media.</p></li><li><p><strong>Teach:</strong> e-books and e-readers, downloaded and streamed music and television, recorded lectures (with permission), online courses, chat rooms, blogs, YouTube, online shopping and banking. Use the Rosen article to weigh social networking&#39;s benefits (virtual empathy, practice socialising for introverts, teaching tools) against its risks (distraction, narcissistic tendencies, overuse). Introduce privacy, anonymity, false identities and cyber-bullying.</p></li><li><p><strong>Activity:</strong> Activity 6.7 (how social networking could be an innovative teaching tool; whether parents should monitor children&#39;s activity and why; how people will communicate in ten years). Run a four-corners debate on one assumption from the table above.</p></li><li><p><strong>Check:</strong> students name one assumption they now question and the evidence that changed their mind.</p></li></ul>
+<h3 id="session-6-critique-and-consolidation">Session 6: Critique and Consolidation</h3>
+<ul><li><p><strong>Objectives:</strong> discuss how culture and access affect integration, marginalisation and alienation; synthesise the unit.</p></li><li><p><strong>Teach:</strong> information overload and the need for discernment; the risk that internet culture mainly represents dominant, young and middle-class groups; the argument that interpersonal skills may weaken when communication moves online; the chapter&#39;s conclusion that effective communication means choosing the method and learning its protocol.</p></li><li><p><strong>Activity:</strong> Activity 6.8 (compare technology&#39;s effect on your life now and ten years ago; discuss trends that may affect your culture). Plan the extended response on Evaluation and Extension Question 5, with a paragraph outline built in pairs.</p></li><li><p><strong>Check:</strong> students submit the paragraph outline, and teams complete the assumptions debate if not already done.</p></li></ul>
+<h2 id="assessment">Assessment</h2>
+<p>Assessment is mostly formative, with one extended response that checks whether students can evaluate assumptions rather than only list characteristics.</p>
+<div class="tw"><table><thead><tr><th>Task</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td>Exit tickets</td><td>Formative, each session</td><td>One sentence naming a characteristic learned and one question remaining</td></tr><tr><td>Netlingo translation</td><td>Formative, session 4</td><td>Rewrite the Activity 6.6 chat in Standard English, then rewrite a formal letter as a text exchange and comment on what was lost or gained</td></tr><tr><td>Comparison chart</td><td>Group, session 5</td><td>Build a chart of traditional and new media on five chosen dimensions with one local example for each</td></tr><tr><td>Assumptions debate</td><td>Oral, session 6</td><td>Teams defend or challenge one assumption from the table, using chapter and local evidence</td></tr><tr><td>Extended response</td><td>Written, 20 marks</td><td>Question 5: &quot;The new language of technology has alienated or excluded large groups of society. Internet culture is representative only of the young and middle class.&quot; Discuss this view.</td></tr></tbody></table></div>
+<p><strong>Rubric for the extended response (20 marks)</strong></p>
+<div class="tw"><table><thead><tr><th>Criterion</th><th>Marks</th><th>What full marks look like</th></tr></thead><tbody><tr><td>Knowledge of media characteristics</td><td>4</td><td>Accurate use of traditional and new media features</td></tr><tr><td>Use of evidence</td><td>4</td><td>Specific examples from Chapter 6 and from the Caribbean</td></tr><tr><td>Analysis of assumptions</td><td>6</td><td>Tests both sides and explains who is included, marginalised or alienated, and why</td></tr><tr><td>Language and cultural awareness</td><td>3</td><td>Considers language, access and culture, not only technology</td></tr><tr><td>Organisation and register</td><td>3</td><td>Clear argument, suitable register, consistent spelling convention</td></tr></tbody></table></div>
+<h2 id="resources-and-references">Resources and References</h2>
+<p>The core text is Chapter 6, <em>Technology, Culture and Communication</em>, Unit 2: Understanding Communication in Society. The chapter&#39;s own references are listed below; its web sources date from 2012–2013, so check that links still work and consider refreshing examples.</p>
+<ul><li><p>Constance, Z. (2002). Duelling Voices in Bully, A., Constance, Z. &amp; Cumper, P., <em>Champions of the Gayelle</em>. Oxford: Macmillan, pp. 42–43.</p></li><li><p>Gates, B. (1999). <em>Business at the Speed of Thought: Using a digital nervous system</em>. GrandCentral Publishing, p. 37.</p></li><li><p>Hodge, M. (1997). <em>The Knots in English: A manual for Caribbean users</em>. Wellesley, Massachusetts: Calaloux Publications.</p></li><li><p>NCREL, Interactive Communication, accessed 15 May 2013 from http://pict.sdsu.edu/engauge21st.pdf, p. 56.</p></li><li><p>Marcus, A. (2004). Insights on Outsourcing. <em>Interaction</em>, July/August, p. 13.</p></li><li><p>Rosen, L. (2011). Poke Me: How Social Networks Can Both Help and Harm Our Kids. American Psychological Association convention. http://www.apa.org/news/press/releases/2011/08/social-kids.aspx</p></li></ul>
+<p><strong>Suggested additions:</strong> local newspaper and broadcaster websites, and a current example of a social media platform, so students can compare Chapter 6&#39;s examples with media they use now.</p>
+<p><em>CAPE Communication Studies</em></p>
+</article><p class="credit">CAPE Communication Studies</p></main>
+<script>document.querySelectorAll('input[type=checkbox][disabled]').forEach(function(c,i){c.disabled=false;var k='chk-'+location.pathname+'-'+i;try{c.checked=localStorage.getItem(k)==='1'}catch(e){}c.addEventListener('change',function(){try{localStorage.setItem(k,c.checked?'1':'0')}catch(e){}})});</script>
+</body></html>

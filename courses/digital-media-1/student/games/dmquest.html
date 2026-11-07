@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Digital Media Quest</title>
+<meta name="description" content="Digital Media Quest: Ms. Kester Small's review game for CAPE Digital Media Unit 1. Four worlds, three game modes and an easier mode. Works offline.">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>
+/* Layout: sticky top bar; home = hero + four world cards; world = three game modes; play = one card at a time, solid colours, no blur.
+   Offline: no web fonts are loaded; the stacks below use fonts already on the device. */
+:root{
+ --bg:#eaf1f9;--panel:#ffffff;--panel2:#dde8f4;--ink:#13202d;--muted:#4a5c72;--line:#c5d3e3;
+ --accent:#1a5fd6;--accent-ink:#ffffff;--good:#0f7a57;--good-ink:#ffffff;--bad:#c42b39;--bad-ink:#ffffff;--star:#9a6400;
+ --font-display:"Fredoka","Trebuchet MS","Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif;
+ --font-body:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+ --bg:#0b1420;--panel:#132131;--panel2:#1b2f45;--ink:#eef4fb;--muted:#a9bacd;--line:#2d4660;
+ --accent:#6aa8ff;--accent-ink:#06182e;--good:#4fd1a1;--good-ink:#06231a;--bad:#ff8590;--bad-ink:#3a0810;--star:#ffc533;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0b1420;--panel:#132131;--panel2:#1b2f45;--ink:#eef4fb;--muted:#a9bacd;--line:#2d4660;
+ --accent:#6aa8ff;--accent-ink:#06182e;--good:#4fd1a1;--good-ink:#06231a;--bad:#ff8590;--bad-ink:#3a0810;--star:#ffc533;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;font-weight:700;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1040px;margin:0 auto;padding-block:10px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.15;margin:0;text-wrap:balance;font-weight:700}
+h1{font-size:clamp(28px,5vw,44px)}h2{font-size:clamp(21px,3.4vw,28px)}h3{font-size:20px}
+p{margin:0}.muted{color:var(--muted)}
+.top{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:8px 0 12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;font-family:var(--font-display);font-weight:700;font-size:24px}
+.brand i{font-style:normal;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:0 9px;font-size:17px;line-height:30px}
+.spacer{flex:1}
+.star{color:var(--star)}
+.tot{font-weight:800}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:11px 20px;font-weight:800;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.btn.sm{padding:6px 12px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:16px}
+.sec{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+/* hero */
+.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:center;margin-top:6px}
+.hero p{font-size:18px;color:var(--muted);margin-top:10px;max-width:54ch}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tiles b{display:flex;align-items:center;justify-content:center;height:84px;border-radius:16px;font-size:44px;border-bottom:6px solid rgba(0,0,0,.25)}
+.tiles b:nth-child(1){background:#3b2a85}.tiles b:nth-child(2){background:#0a82b0}.tiles b:nth-child(3){background:#12906a}.tiles b:nth-child(4){background:#c2571a}
+@media(max-width:720px){.hero{grid-template-columns:1fr}}
+/* worlds */
+.worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+.wcard{position:relative;overflow:hidden;border:0;border-radius:20px;padding:18px;min-height:200px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;background:linear-gradient(145deg,var(--w1),var(--w2));box-shadow:0 5px 0 rgba(0,0,0,.28);transition:transform .15s}
+.wcard:hover{transform:translateY(-3px)}
+.wcard .sp{position:absolute;top:12px;right:16px;font-size:60px;line-height:1}
+.wcard .tag{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.wcard h3{font-size:26px}.wcard p{font-size:16px}.wcard .st{margin-top:6px;font-weight:800;font-size:15px}
+.w-space{--w1:#0a0d2e;--w2:#3b2a85}.w-ocean{--w1:#07507f;--w2:#0a82b0}.w-carib{--w1:#075c40;--w2:#0e8a62}.w-city{--w1:#6e2a0c;--w2:#b5501a}
+.whead{border-radius:20px;color:#fff;padding:20px;background:linear-gradient(145deg,var(--w1),var(--w2));display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.whead .sp{font-size:58px}.whead>div{flex:1;min-width:220px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.mode{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;min-height:150px}
+.mode:hover{border-color:var(--accent)}
+.mode .big{font-family:var(--font-display);font-weight:700;font-size:22px}
+.mode small{color:var(--muted);font-size:15px;font-weight:700}
+.stars{font-size:22px;letter-spacing:2px;margin-top:auto}.stars .off{color:var(--line)}
+.fact{background:var(--panel2);border-radius:14px;padding:12px 16px;text-align:left;font-size:17px}
+.fact b{display:block;font-family:var(--font-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+/* play */
+.hud{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 2px}
+.hud b{font-family:var(--font-display);font-size:20px}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-weight:800;font-size:15px}
+.prog{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:6px 0 14px}.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;border-top:6px solid var(--w2)}
+.qno{font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.qtxt{font-size:clamp(21px,3vw,28px);line-height:1.3}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:18px;font-weight:700;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .ltr{flex:none;width:32px;height:32px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--good);border-color:var(--good);color:var(--good-ink)}
+.opt.wrong{background:var(--bad);border-color:var(--bad);color:var(--bad-ink)}
+.opt.right .ltr,.opt.wrong .ltr{background:rgba(255,255,255,.25);color:inherit}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tf .opt{justify-content:center;font-family:var(--font-display);font-size:26px;padding:22px 10px}
+.fbk{border-radius:14px;padding:12px 16px;font-size:17px}
+.fbk.ok{background:var(--panel2);border-left:6px solid var(--good)}
+.fbk.no{background:var(--panel2);border-left:6px solid var(--bad)}
+.fbk b{margin-right:4px}
+.fbwrap{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.fcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;border-top:6px solid var(--w2)}
+.fcard .big{font-size:48px;line-height:1}
+.fcard .ft{font-size:clamp(19px,2.6vw,24px);max-width:36ch}
+.res{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;border-top:6px solid var(--w2)}
+.res .stars{font-size:38px;margin-top:0}
+.stats3{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.stats3 span{background:var(--panel2);border-radius:10px;padding:4px 12px;font-weight:800;font-size:15px}
+/* match */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mit{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:700;color:var(--ink);min-height:62px}
+.mit.term{font-family:var(--font-display);font-size:19px;font-weight:600}
+.mit:hover:not(:disabled){border-color:var(--accent)}
+.mit.sel{border-color:var(--accent);background:var(--panel2);outline:3px solid var(--accent);outline-offset:-1px}
+.mit.done{background:var(--good);border-color:var(--good);color:var(--good-ink);cursor:default}
+.mit.bad{background:var(--bad);border-color:var(--bad);color:var(--bad-ink);animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media(max-width:560px){.mgrid{gap:8px}.mit{font-size:15px;padding:10px}.mit.term{font-size:16px}}
+.chip{background:var(--panel);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:800;font-size:14px;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pt{position:fixed;z-index:60;font-size:26px;line-height:1;pointer-events:none;animation:pop .9s ease-out forwards}
+@keyframes pop{to{transform:translate(var(--dx),var(--dy)) scale(.6);opacity:0}}
+.qcard.shake{animation:shake .3s}
+.res .stars .star{display:inline-block;animation:starpop .45s cubic-bezier(.2,1.6,.4,1) both}
+.res .stars .star:nth-child(2){animation-delay:.25s}.res .stars .star:nth-child(3){animation-delay:.5s}
+@keyframes starpop{from{transform:scale(0) rotate(-40deg)}to{transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Course additions: accessibility, easier mode, footer, small screens */
+html,body{overflow-x:hidden}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:8px;top:-60px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:8px 14px;border-radius:10px;font-weight:800;text-decoration:none}
+.skip:focus{top:8px}
+h1:focus,h2:focus{outline:none}
+h1:focus-visible,h2:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:6px}
+.qtxt,.ft,.mit,.opt span,.fact,.fbk{overflow-wrap:anywhere}
+.easybar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--panel2);border-radius:12px;padding:8px 12px;font-size:15px;margin-bottom:10px}
+.easybar b{color:var(--accent)}
+.opt.gone{opacity:.35;text-decoration:line-through}
+.mit.hintme{outline:3px dashed var(--good);outline-offset:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.wcard{padding-top:80px}
+.course-foot{text-align:center;color:var(--muted);font-size:14px;font-weight:700;padding:10px 16px 24px}
+@media(max-width:480px){
+ body{font-size:16px}
+ .wrap{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+ .brand{font-size:20px}.chip{font-size:13px;padding:4px 10px}
+ .qcard,.fcard,.res{padding:16px;border-radius:16px}
+ .opt{font-size:16px;padding:10px 12px}
+ .tf .opt{font-size:22px;padding:16px 8px}
+ .wcard{min-height:170px}.wcard h3{font-size:22px}
+ .whead{padding:16px}.whead>div{min-width:0}.whead .sp{font-size:44px}
+ .mgrid{gap:6px}.mit{font-size:14px;padding:8px;min-height:54px}.mit.term{font-size:15px}
+ .tiles b{height:64px;font-size:34px}
+ .stats3 span{font-size:14px}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<a class="skip" href="#app">Skip to the game</a>
+<div class="wrap">
+ <header class="top">
+  <button type="button" class="brand" id="brand" aria-label="Digital Media Quest home"><i aria-hidden="true">DM</i>Digital Media Quest</button>
+  <span class="spacer"></span>
+  <button type="button" class="chip" id="easyBtn" aria-pressed="false" title="Easier mode: 50:50 in Mission Quiz, a second try in Fact or Fib, fewer pairs and hints in Match-Up">Dial it down: off</button>
+  <button type="button" class="chip" id="sndBtn" aria-pressed="true">Sound on</button>
+  <button type="button" class="chip" id="musBtn" aria-pressed="false">Music off</button>
+  <span class="tot" id="tot"><span class="star" aria-hidden="true">★</span> 0</span>
+ </header>
+ <main id="app" tabindex="-1"></main>
+ <div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</div>
+<footer class="course-foot">Digital Media Quest · Digital Media Unit 1 · Kester Small</footer>
+<script>
+'use strict';
+/* ---------- DATA ---------- */
+/* mcq row: [question, correct, wrong, wrong, wrong, explanation]; tf row: [statement, isTrue, explanation]; match row: [term, meaning] */
+const WORLDS={
+space:{id:'space',name:'Space Mission',subject:'Digital Art',sprite:'🚀',
+ blurb:'Mission Control needs your digital art skills. Launch each mission and bring the crew home.',
+ mcq:[
+ ["Images and animations made with specialised software for films, games and commercials are called:","Computer-generated imagery (CGI)","Giclée prints","Digitised artwork","Stop motion","CGI stands for computer-generated imagery. Artists model, texture, light and render scenes in software."],
+ ["Which software titles are named for CGI work?","Blender, Maya and Cinema 4D","Audacity, GarageBand and Logic Pro","Word, Excel and PowerPoint","Premiere Pro and DaVinci Resolve","Blender, Maya and Cinema 4D are used to model, texture, light and render scenes."],
+ ["Digital painting is usually created with:","A graphics tablet and painting software","A scanner and a photocopier","A 3D printer","A film camera","Artists draw on a graphics tablet in software such as Photoshop, Procreate or Clip Studio Paint."],
+ ["Which software is named for digital painting?","Photoshop, Procreate and Clip Studio Paint","Blender, Maya and ZBrush","Premiere Pro and Final Cut","Audacity and GarageBand","These programs give artists virtual brushes, textures and colour tools."],
+ ["What is a major advantage of digital painting?","You can undo mistakes and try colours instantly","It needs no software","It can only be saved once","It only works in black and white","Flexibility is the big advantage: undo, experiment, and export in many formats without physical media."],
+ ["What is giclée printing?","A high-quality digital inkjet process used to reproduce original artwork","A type of 3D modelling software","A video compression format","A brush used in painting software","Giclée prints on archival paper keep the colour depth and texture of the original."],
+ ["Which statement best describes hybrid artwork?","It blends traditional fine-art techniques, such as painting or printmaking, with digital methods","It is art made only by artificial intelligence","It is music combined with video","It is any art printed on canvas","Hybrid artists might sketch digitally, print to canvas, then finish with real paint."],
+ ["How is artwork digitised?","By scanning it or photographing it in high resolution","By building a 3D model of it","By recording its sound","By printing it twice","Digitised artwork starts as a physical work that is converted to a digital file."],
+ ["How many dimensions does 2D art have?","Two: height and width","Three: height, width and depth","One: length only","Four: including time","2D art lives on a flat surface, so it has only height and width."],
+ ["Which set of dimensions describes 3D art?","Height, width and depth","Height and width only","Width and colour","Length and sound","3D art has depth as well, like a digital sculpture."],
+ ["Why is digitising artwork useful for museums?","Their collections can be shared with people around the world","The originals can be thrown away","Colours are removed","Only one visitor can look at it","Digitising supports preservation of cultural heritage and global access."],
+ ["Which phrase best defines digital art?","Any artistic work created or presented using digital technology","Only paintings on canvas","Only photographs","Only video games","Digital art is a broad, growing category that includes CGI, painting, hybrid work and 2D/3D art."]
+ ],
+ tf:[
+ ["Digital art only includes paintings made on paper.",false,"Digital art means work created or presented with digital technology, such as CGI, digital painting and 3D art."],
+ ["Digital painting uses virtual brushes that mimic traditional media like oils and watercolours.",true,"Digital brushes copy, and often go beyond, the behaviour of real paint."],
+ ["CGI is used in films, television commercials and video games.",true,"CGI is the backbone of modern visual entertainment."],
+ ["2D art has height, width and depth.",false,"Depth belongs to 3D art. 2D art has height and width only."],
+ ["Giclée prints are made with a high-quality inkjet process.",true,"Giclée is a digital inkjet process used to reproduce original artwork."],
+ ["A scanned painting is an example of digitised artwork.",true,"Scanning or high-resolution photography turns a physical work into a digital file."],
+ ["Hybrid artwork never uses digital tools.",false,"Hybrid artwork blends traditional techniques with digital ones."],
+ ["3D models can be rendered into images or animations.",true,"Artists build, texture and light 3D models, then render them."]
+ ],
+ match:[
+ ["CGI","Computer-generated imagery: images and animations made with specialised software"],
+ ["Digital painting","Artwork made on a graphics tablet with painting software"],
+ ["Giclée","High-quality inkjet reproduction of an original artwork"],
+ ["Hybrid artwork","Traditional art blended with digital methods"],
+ ["Digitised artwork","A physical work converted by scanning or photography"],
+ ["3D art","A digital sculpture with height, width and depth"]
+ ],
+ facts:[
+ "Sunlight takes about eight minutes to travel from the Sun to Earth.",
+ "Venus takes about 243 Earth days to spin once on its axis, longer than the 225 days it takes to orbit the Sun.",
+ "Space telescopes record light with digital sensors, so every picture they send home is a file made of numbers.",
+ "Blender, a 3D tool used by CGI artists, is free to download.",
+ "Toy Story, released in 1995, was the first feature film made entirely with computer animation.",
+ "Saturn is so light for its size that it would float in a giant bathtub of water.",
+ "Neil Armstrong was the first person to walk on the Moon, in 1969."
+ ]},
+ocean:{id:'ocean',name:'Deep Blue Dive',subject:'Digital Audio',sprite:'🐙',
+ blurb:'Dive below the surface and tune in to how sound becomes data.',
+ mcq:[
+ ["How is digital audio defined?","Sound represented as numerical, binary values","Sound stored only on vinyl records","A type of video file","A method of digital painting","Digital audio turns the properties of a sound wave into a series of 1s and 0s."],
+ ["Which format is uncompressed and best for professional audio production and editing?","WAV","MP3","AAC","OGG","WAV keeps all the audio data, so it is used in production and editing."],
+ ["Which format is closely linked with Apple devices, iTunes and YouTube audio?","AAC","WMA","OGG","WAV","AAC is a compressed format used widely on Apple devices and YouTube."],
+ ["MP3 is best described as:","A compressed (lossy) format for general listening and streaming","An uncompressed format for studios","A type of compact disc","A video format","MP3 shrinks file size by removing some audio data."],
+ ["How does a compact disc (CD) store audio?","As microscopic pits and lands read by a laser","As magnetic patterns on tape","As grooves cut by a needle","As photographs of sound waves","A laser reads changes in reflected light and decodes them as binary data."],
+ ["Which format suits open-source apps and gaming audio?","OGG","WMA","WAV","AAC","OGG is a compressed format popular in open-source software and games."],
+ ["WMA is mostly used for:","Windows media players and older devices","Apple devices only","Professional editing","3D modelling","WMA is a compressed Windows format."],
+ ["Which of these stores sound in an analogue way?","Vinyl records and magnetic tape","MP3 files","WAV files","Streaming podcasts","Analogue media store sound physically, on tape or in grooves."],
+ ["Artificially created audio used in film, TV and game production is called:","Sound effects","Audiobooks","Podcasts","Digital painting","Sound effects are a major category of digital audio."],
+ ["Digital audio files are:","Non-physical files made by converting analogue signals to digital data","Physical discs only","Always silent","Only for one device","Files like MP3, AAC, WMA, OGG and WAV can be downloaded, streamed and played across devices."],
+ ["Compared with analogue media, digital audio can be copied and sent with no:","Loss of quality","Binary data","File name","Electricity","Because it is just numbers, a digital copy matches the original."],
+ ["Which format is digital music most often linked with?","MP3","Vinyl","Stop motion","Giclée","Digital music is often treated as another word for MP3."]
+ ],
+ tf:[
+ ["Digital audio uses binary numbers to describe a sound wave.",true,"1s and 0s encode the properties of the waveform."],
+ ["WAV files are compressed and lossy.",false,"WAV is uncompressed, which is why studios use it."],
+ ["A CD is a physical medium that holds digital audio.",true,"A CD stores digital audio as pits and lands."],
+ ["AAC and MP3 are both compressed (lossy) formats.",true,"Both reduce file size by discarding some data."],
+ ["Vinyl records store sound digitally.",false,"Vinyl records are analogue. Sound is cut into physical grooves."],
+ ["Podcasts and audiobooks are common digital audio files.",true,"Music, podcasts and audiobooks are the main ways people consume digital audio today."],
+ ["A laser reads the pits and lands on a CD.",true,"Changes in reflected laser power are decoded as binary data."],
+ ["Digital audio files can only be played on one type of device.",false,"They can be downloaded, streamed and played across many devices."]
+ ],
+ match:[
+ ["Digital audio","Sound represented as binary numbers"],
+ ["WAV","Uncompressed, used for professional editing"],
+ ["MP3","Compressed, for general listening and streaming"],
+ ["AAC","Apple devices, iTunes and YouTube audio"],
+ ["OGG","Open-source apps and gaming audio"],
+ ["CD","Pits and lands read by a laser"]
+ ],
+ facts:[
+ "Sound travels about four times faster in water than in air.",
+ "Blue whale calls are among the loudest sounds made by any animal.",
+ "Dolphins find their way with echolocation: they send out clicks and listen for the echoes.",
+ "An octopus has three hearts and blue blood.",
+ "Compact discs first went on sale in 1982.",
+ "The Mariana Trench is nearly 11 kilometres deep, deeper than Mount Everest is tall.",
+ "Coral reefs cover a tiny part of the ocean floor, yet support about a quarter of all marine species."
+ ]},
+carib:{id:'carib',name:'Caribbean Voyage',subject:'Geography and Digital Media',sprite:'⛵',
+ blurb:'Sail from island to island, learn your geography and see how the Caribbean fits into digital media.',
+ mcq:[
+ ["What is the capital of the Dutch side of Sint Maarten?","Philipsburg","Marigot","Willemstad","Oranjestad","Philipsburg is on the Dutch side. Marigot is the capital of the French side."],
+ ["Which is the largest island in the Caribbean?","Cuba","Jamaica","Barbados","Trinidad","Cuba is the largest island, and its capital is Havana."],
+ ["What is the capital of Jamaica?","Kingston","Nassau","Havana","Bridgetown","Kingston is the capital of Jamaica, the birthplace of reggae."],
+ ["Where was the steelpan invented?","Trinidad and Tobago","Jamaica","Barbados","Cuba","The steelpan is Trinidad and Tobago's gift to the world of music."],
+ ["Which body sets the CAPE examinations?","Caribbean Examinations Council (CXC)","UNESCO","UNICEF","University of Oxford","CXC serves the English-speaking Caribbean."],
+ ["Past-paper idea: in the digital revolution, the Caribbean is mostly described as:","Consumers of imported content","Exporters of content","Creators of local content","Owners of every platform","Because most content is imported, creating local content is an opportunity."],
+ ["Which phrase best describes local content?","Content for people in a certain locality","Content that is always free","Content bought from overseas","Content stored on a CD","Local content is made for, and often by, people in a community or place."],
+ ["Which best describes digital media?","Electronic content that can be transmitted over a computer network","Social media content only","Printed newspapers","Stand-alone computers with no network","Digital media is electronic content that travels over networks."],
+ ["What is the capital of Barbados?","Bridgetown","Basseterre","Kingstown","Castries","Bridgetown is the capital. Barbados became a republic in 2021."],
+ ["A carnival band films its parade and posts clips for the world to watch. What is this?","Digital video shared on social media","Giclée printing","Analogue tape recording","Hybrid artwork","Video becomes digitised content, and social media is the platform that shares it."],
+ ["Which two states share the island of Sint Maarten and Saint-Martin?","The Kingdom of the Netherlands and France","Spain and Portugal","The UK and the USA","The Kingdom of the Netherlands and Spain","The south is Sint Maarten, a country within the Kingdom of the Netherlands. The north is Saint-Martin, an overseas collectivity of France."],
+ ["What is the capital of The Bahamas?","Nassau","Havana","Kingston","Port of Spain","Nassau is on New Providence island."]
+ ],
+ tf:[
+ ["Cuba is the largest island in the Caribbean.",true,"Its capital is Havana."],
+ ["The Caribbean Sea is named after the Carib people.",true,"The Carib people lived on many of the islands."],
+ ["Digital media only means social media.",false,"Digital media includes platforms, digitised content and services of many kinds."],
+ ["Dominica is home to a Boiling Lake.",true,"It is a flooded volcanic vent in the rainforest."],
+ ["Havana is the capital of Jamaica.",false,"Havana is the capital of Cuba. Kingston is the capital of Jamaica."],
+ ["Creating local content helps the Caribbean share its own stories.",true,"Local content keeps culture visible in the digital world."],
+ ["The Bahamas is a single island.",false,"The Bahamas is made up of hundreds of islands."],
+ ["Barbados became a republic in 2021.",true,"Its capital is Bridgetown."]
+ ],
+ match:[
+ ["Philipsburg","Capital of Dutch Sint Maarten"],
+ ["Havana","Capital of Cuba, the largest Caribbean island"],
+ ["Kingston","Capital of Jamaica"],
+ ["Nassau","Capital of The Bahamas"],
+ ["Local content","Content made for people in a certain locality"],
+ ["CXC","The council that sets CAPE exams"]
+ ],
+ facts:[
+ "Sint Maarten shares its island with Saint-Martin. It is one of the smallest islands in the world divided between two countries.",
+ "The steelpan was invented in Trinidad and Tobago.",
+ "Dominica is home to the Boiling Lake, a flooded volcanic vent in the rainforest.",
+ "Haiti declared independence in 1804, after a revolution led by formerly enslaved people.",
+ "Kingston is the capital of Jamaica, the birthplace of reggae music.",
+ "The Caribbean Sea is named after the Carib people, who lived on many of the islands.",
+ "The Bahamas is made up of hundreds of islands. The capital, Nassau, is on New Providence."
+ ]},
+city:{id:'city',name:'Innovation City',subject:'Animation, Video and Apps',sprite:'💡',
+ blurb:'Tour the city where animation, video, mobile apps and big ideas come together.',
+ mcq:[
+ ["Which animation technique photographs physical objects one frame at a time?","Stop motion","Motion graphics","3D animation","2D animation","Objects are moved slightly between each shot, then the frames are played back at speed."],
+ ["Which type of animation uses CGI software to build 3D characters and environments?","3D animation","Stop motion","2D animation","Motion graphics","3D animation is modelled and rendered with CGI software."],
+ ["Motion graphics are commonly used for:","Explainer videos, user interfaces and broadcast media","Photographing clay figures","Mixing audio","Printing posters","Motion graphics animate text, shapes and icons."],
+ ["What are the three stages of digital video production?","Capture, editing and production","Filming, streaming and archiving","Scripting, shooting and marketing","Recording, uploading and sharing","Capture the footage, edit it, then produce and export the final video."],
+ ["Which software titles are named for video editing?","Premiere Pro, DaVinci Resolve and Final Cut","Blender, Maya and ZBrush","Photoshop and Procreate","Audacity and GarageBand","These editors arrange, cut, colour grade and add effects."],
+ ["Digital video can be edited non-destructively. What does that mean?","Your original footage stays safe while you try edits","The footage is deleted after each cut","It only works on magnetic tape","Edits can never be undone","Non-destructive editing lets you experiment without losing the original."],
+ ["Which best describes a multimedia mobile app?","An app that blends video, audio, text and graphics into an interactive experience","A basic calculator","A single-purpose alarm clock","A plain text notes app","Multimedia apps combine several content types in one portable experience."],
+ ["Which statement best sums up digital media overall?","An interconnected ecosystem where art, audio, video, animation and interactive technology converge","A single unified file format","Social media platforms only","Entertainment content only","Digital media is not one category. It is a connected ecosystem."],
+ ["Which stage must be completed before the actual making of a digital media product?","Pre-production","Production","Post-production","Distribution","Pre-production includes brainstorming, scriptwriting, storyboarding and planning."],
+ ["How many sections do the lines of the rule of thirds create?","Nine","Three","Six","Twelve","Two horizontal and two vertical lines make a 3 by 3 grid."],
+ ["Which tool can be used to edit photographs?","Pixlr","Audacity","Movie Maker","Storyboard Pro","Pixlr is a photo editor. Audacity edits audio and Movie Maker edits video."],
+ ["Brainstorming, scriptwriting and storyboarding are part of:","Pre-production","Final export","Marketing","Distribution","They all happen before the cameras roll."]
+ ],
+ tf:[
+ ["Modern stop motion often combines traditional capture with digital compositing.",true,"Studios mix handmade puppets with digital post-production tools."],
+ ["Motion graphics are animated text, shapes and icons.",true,"They are used in explainer videos, interfaces and broadcasts."],
+ ["3D animation is made by photographing clay figures.",false,"That is stop motion. 3D animation is built with CGI software."],
+ ["Capture, editing and production are the three stages of digital video production.",true,"Capture the footage, edit it, then produce the final deliverable."],
+ ["Mobile apps can mix audio, video, art and interactivity.",true,"That is what makes multimedia apps so engaging."],
+ ["Digital video can only be edited non-destructively on magnetic tape.",false,"Non-destructive editing is a strength of digital video. Magnetic tape is analogue."],
+ ["The rule of thirds divides an image into nine sections.",true,"It is a basic element of composition."],
+ ["Mind mapping is a tool for generating ideas.",true,"It helps you explore ideas during the creative process."]
+ ],
+ match:[
+ ["Stop motion","Frame-by-frame photography of physical objects"],
+ ["2D animation","Flat, frame-based animation using drawing tools"],
+ ["3D animation","CGI characters and environments"],
+ ["Motion graphics","Animated text, shapes and icons"],
+ ["Capture","Recording footage with a camera"],
+ ["Pre-production","Brainstorming, scripting and storyboarding before filming"]
+ ],
+ facts:[
+ "In 1957 the first digital image was scanned: a photo of a baby, only 176 by 176 pixels.",
+ "The first website went public in 1991. It was created by Tim Berners-Lee.",
+ "The first computer mouse was made of wood. It was invented in the 1960s.",
+ "Ada Lovelace wrote notes in the 1840s that are often called the first computer program.",
+ "The first text message was sent in December 1992.",
+ "A modern smartphone has far more computing power than the computers that guided the Apollo Moon missions.",
+ "A bit is a one or a zero. Eight bits make one byte."
+ ]}
+};
+const WORLD_ORDER=['space','ocean','carib','city'];
+const MODES=[
+ {id:'mission',name:'Mission Quiz',desc:'10 multiple-choice questions. A fact pops up every three questions.'},
+ {id:'fib',name:'Fact or Fib',desc:'Read each statement and decide: true or false?'},
+ {id:'match',name:'Match-Up',desc:'Pair each term with its meaning. Fewer slips, more stars.'}
+];
+
+/* ---------- CORE ---------- */
+const app=document.getElementById('app');
+let S={stars:{},played:0,right:0,total:0,sound:true,music:false,easy:false};
+try{const j=JSON.parse(localStorage.getItem('dmquest.v1')||'null');if(j)S=Object.assign(S,j)}catch(e){}
+function save(){try{localStorage.setItem('dmquest.v1',JSON.stringify(S))}catch(e){}}
+/* saved progress (GameSave): stars, totals and settings (dmquest.v1) and the round in play (dmquest.round: the questions drawn,
+   the question reached, score and streak, or the pairs matched) survive a reload; Start over clears them */
+if(!S.stars||typeof S.stars!=='object'||Array.isArray(S.stars))S.stars={};
+Object.keys(S.stars).forEach(k=>{const v=S.stars[k];if(!(Number.isInteger(v)&&v>=0&&v<=3))delete S.stars[k]});
+['played','right','total'].forEach(k=>{if(!(typeof S[k]==='number'&&isFinite(S[k])&&S[k]>=0))S[k]=0});
+['sound','music','easy'].forEach(k=>{S[k]=!!S[k]});
+let RUN=null,RESUME=null;
+if(window.GameSave){GameSave.register(['dmquest.v1','dmquest.round']);GameSave.persist({key:'dmquest.round',get:()=>RUN,set:v=>{RESUME=v},welcome:false})}
+function keepRun(r){RUN=r;if(window.GameSave)GameSave.save()}
+const nn=(v,lo,hi)=>Number.isInteger(v)&&v>=lo&&v<=hi?v:null;
+const okIx=(a,len,max)=>Array.isArray(a)&&a.length>0&&a.length<=max&&a.every((k,j)=>Number.isInteger(k)&&k>=0&&k<len&&a.indexOf(k)===j);
+const okPerm=(a,n)=>Array.isArray(a)&&a.length===n&&a.every((k,j)=>Number.isInteger(k)&&k>=0&&k<n&&a.indexOf(k)===j);
+function badRun(){throw new Error('saved round does not fit')}
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function starStr(n){let h='<span class="stars" role="img" aria-label="'+n+' of 3 stars">';for(let i=0;i<3;i++)h+=i<n?'<span class="star">★</span>':'<span class="off">★</span>';return h+'</span>'}
+function totalStars(){return Object.values(S.stars).reduce((a,b)=>a+b,0)}
+function worldStars(w){return MODES.reduce((n,m)=>n+(S.stars[w+':'+m.id]||0),0)}
+function updateTop(){
+ const t=totalStars(),mx=WORLD_ORDER.length*MODES.length*3;
+ $('#tot').innerHTML='<span class="star" aria-hidden="true">★</span> '+t+' / '+mx;$('#tot').setAttribute('aria-label','Stars collected: '+t+' of '+mx);
+ const ez=$('#easyBtn');ez.textContent='Dial it down: '+(S.easy?'on':'off');ez.setAttribute('aria-pressed',S.easy);
+ const s=$('#sndBtn'),m=$('#musBtn');
+ s.textContent=S.sound?'Sound on':'Sound off';s.setAttribute('aria-pressed',S.sound);
+ m.textContent=S.music?'Music on':'Music off';m.setAttribute('aria-pressed',S.music);
+}
+
+/* screen-reader announcements */
+function say(t){const r=$('#sr');r.textContent='';setTimeout(()=>{r.textContent=t},60)}
+
+/* ---------- AUDIO + EFFECTS (all synthesized, no files) ---------- */
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let AC=null,curW=null;
+function tone(f,d,type,v,delay,slideTo,bg){
+ if(bg?!S.music:!S.sound)return;
+ try{
+  AC=AC||new(window.AudioContext||window.webkitAudioContext)();
+  if(AC.state==='suspended')AC.resume();
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(delay||0);
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+  if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+d);
+  o.connect(g);g.connect(AC.destination);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.08,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.start(t);o.stop(t+d+.05);
+ }catch(e){}
+}
+/* each world has its own voice: space = sci-fi sweeps, ocean = bubbles, Caribbean = steelpan, city = 8-bit */
+function note(wid,f,d,v,delay,bg){
+ v=v||.09;
+ if(wid==='carib'){tone(f,d,'sine',v,delay,0,bg);tone(f*2,d*.6,'sine',v*.45,delay,0,bg)}
+ else if(wid==='ocean'){tone(f*.8,d,'sine',v,delay,f*1.15,bg)}
+ else if(wid==='space'){tone(f,d,'triangle',v,delay,f*1.2,bg)}
+ else{tone(f,d*.8,'square',v*.5,delay,0,bg)}
+}
+const SC=[523.3,587.3,659.3,784,880,1046.5];
+const sfx={
+ click(){tone(700,.05,'triangle',.05)},
+ start(wid){[0,1,2].forEach(i=>note(wid,SC[i]*.75*(1+i*.2),.18,.07,i*.09))},
+ correct(wid,streak){const b=Math.min(streak||1,4);note(wid,SC[b-1],.16,.1);note(wid,SC[b-1]*1.5,.22,.09,.09)},
+ wrong(){tone(220,.28,'sawtooth',.06,0,110)},
+ match(wid,n){const f=SC[(n-1)%SC.length];note(wid,f,.16,.1);note(wid,f*2,.12,.06,.07)},
+ fact(wid){[0,2,4,5].forEach((k,i)=>note(wid,SC[k],.2,.08,i*.1))},
+ win(wid,stars){const seq=[0,2,3,5];for(let i=0;i<=stars;i++)note(wid,SC[seq[i]],.28,.1,i*.13);if(stars===3)note(wid,SC[5]*2,.5,.08,.55)}
+};
+const BURST={space:['✨','⭐','🌟'],ocean:['🫧','💦','🐠'],carib:['🌴','🥥','☀️'],city:['⚡','💡','✨']};
+function spawn(wid,x,y,n,spread){
+ if(RM)return;
+ for(let i=0;i<n;i++){
+  const s=document.createElement('span');s.className='pt';s.textContent=rnd(BURST[wid]);
+  s.style.left=x+'px';s.style.top=y+'px';
+  s.style.setProperty('--dx',(Math.random()*2-1)*spread+'px');
+  s.style.setProperty('--dy',(-Math.random()*1.2-.1)*spread+'px');
+  document.body.appendChild(s);setTimeout(()=>s.remove(),950);
+ }
+}
+function burst(wid,el){if(!el)return;const r=el.getBoundingClientRect();spawn(wid,r.left+Math.min(r.width/2,70),r.top+r.height/2,8,80)}
+function confetti(wid){spawn(wid,innerWidth/2,innerHeight*.45,22,Math.min(innerWidth/2-20,300))}
+function shakeCard(){const c=$('.qcard');if(c&&!RM){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}}
+/* optional background music: a soft generative loop in each world's scale */
+const SCALES={space:[220,261.6,329.6,392,440,523.3],ocean:[196,246.9,293.7,392,493.9],carib:[261.6,329.6,392,440,523.3,659.3],city:[261.6,311.1,392,466.2,523.3]};
+let musT=null;
+function musicSync(wid){
+ clearInterval(musT);musT=null;
+ if(!wid||!S.music||document.hidden)return;
+ const sc=SCALES[wid],ms=wid==='city'?320:wid==='carib'?420:700;let n=0;
+ musT=setInterval(()=>{
+  const f=sc[Math.floor(Math.random()*sc.length)];
+  if(wid==='ocean'||wid==='space'){note(wid,f/2,1.2,.035,0,true);if(n%4===0)note(wid,f,.8,.02,.1,true)}
+  else note(wid,f,.25,.035,0,true);
+  n++;
+ },ms);
+}
+document.addEventListener('visibilitychange',()=>musicSync(curW));
+let keyH=null;
+document.addEventListener('keydown',e=>{if(keyH&&!e.ctrlKey&&!e.metaKey&&!e.altKey)keyH(e)});
+const SCR={};
+let booted=false;
+function focusHead(){const h=app.querySelector('.qtxt,h1,h2');if(h){h.tabIndex=-1;h.focus({preventScroll:true})}}
+function go(name,a,R){keyH=null;const was=RUN;RUN=null;window.scrollTo(0,0);curW=name==='home'?null:a;musicSync(curW);SCR[name](a,R);if(was&&!RUN&&window.GameSave)GameSave.save();updateTop();if(booted)focusHead();booted=true}
+$('#brand').addEventListener('click',()=>go('home'));
+$('#sndBtn').addEventListener('click',()=>{S.sound=!S.sound;save();updateTop();sfx.click()});
+$('#easyBtn').addEventListener('click',()=>{S.easy=!S.easy;save();updateTop();sfx.click();say(S.easy?'Easier mode on. Mission Quiz has a 50:50 button, Fact or Fib has fewer statements and gentler star targets, and Match-Up has four pairs and a hint button. It applies from the next game you start.':'Easier mode off.')});
+$('#musBtn').addEventListener('click',()=>{S.music=!S.music;save();updateTop();if(S.music)tone(660,.08,'triangle',.04,0,0,true);musicSync(curW)});
+document.addEventListener('click',e=>{if(e.target.closest('.wcard,.mode,.btn,.brand'))sfx.click()});
+const stage=()=>$('#stage');
+
+/* shared play frame */
+function frame(wid,title,hudRight){
+ const W=WORLDS[wid];sfx.start(wid);
+ app.innerHTML='<div class="w-'+wid+'"><div class="hud"><div><b>'+esc(W.name)+'</b> <span class="muted">'+esc(title)+'</span></div><div class="row"><span id="hudR" class="row"></span><button type="button" class="btn ghost sm" id="quit">Quit</button></div></div><div class="prog" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="pbar"></i></div>'+(S.easy?'<p class="easybar"><b>Dial it down is on.</b> '+esc(EASYTXT[title]||'')+'</p>':'')+'<div id="stage"></div></div>';
+ $('#quit').addEventListener('click',()=>go('world',wid));
+}
+const EASYTXT={'Mission Quiz':'Use the 50:50 button on any question to remove two wrong answers.','Fact or Fib':'Six statements instead of eight, and you need fewer correct answers for each star.','Match-Up':'Four pairs instead of six. Stuck? Press Hint to see a matching pair.'};
+function hudSet(parts,pct){$('#hudR').innerHTML=parts.map(p=>'<span class="pill">'+p+'</span>').join('');$('#pbar').style.width=Math.round(pct)+'%';const pb=$('.prog');if(pb)pb.setAttribute('aria-valuenow',Math.round(pct))}
+function factCard(wid,text,onGo){
+ sfx.fact(wid);
+ stage().innerHTML='<div class="fcard"><div class="big" aria-hidden="true">💡</div><h2>Did you know?</h2><p class="ft">'+esc(text)+'</p><button type="button" class="btn" id="cont">Keep going</button></div>';
+ const b=$('#cont');b.addEventListener('click',()=>{onGo();focusHead()});b.focus();say('Did you know? '+text);
+}
+function result(wid,mode,stars,stats,title){
+ const k=wid+':'+mode;S.stars[k]=Math.max(S.stars[k]||0,stars);S.played++;save();keepRun(null);updateTop();
+ const W=WORLDS[wid];const mi=MODES.findIndex(m=>m.id===mode);const nm=MODES[(mi+1)%MODES.length];
+ hudSet([MODES[mi].name+' complete'],100);
+ sfx.win(wid,stars);if(stars===3)confetti(wid);
+ if(S.easy)stats=stats.concat(['Easier mode']);
+ say(title+(/[.!?]$/.test(title)?' ':'. ')+stars+' of 3 stars. '+stats.join('. ')+'.');
+ stage().innerHTML='<div class="res"><h2>'+esc(title)+'</h2>'+starStr(stars)+'<div class="stats3">'+stats.map(s=>'<span>'+s+'</span>').join('')+'</div><div class="fact" style="width:100%"><b>Did you know?</b>'+esc(rnd(W.facts))+'</div><div class="row" style="justify-content:center"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn ghost" id="nextm">Try '+esc(nm.name)+'</button><button type="button" class="btn ghost" id="wm">World menu</button></div></div>';
+ $('#again').addEventListener('click',()=>go(mode,wid));
+ $('#nextm').addEventListener('click',()=>go(nm.id,wid));
+ $('#wm').addEventListener('click',()=>go('world',wid));
+ $('#again').focus();
+}
+const praise=a=>a>=.9?'Outstanding!':a>=.7?'Great work!':'Mission complete';
+
+/* ---------- HOME ---------- */
+SCR.home=function(){
+ const cards=WORLD_ORDER.map(id=>{const W=WORLDS[id];return '<button type="button" class="wcard w-'+id+'" data-w="'+id+'"><span class="sp" aria-hidden="true">'+W.sprite+'</span><span class="tag">'+esc(W.subject)+'</span><h3>'+esc(W.name)+'</h3><p>'+esc(W.blurb)+'</p><span class="st">★ '+worldStars(id)+' / 9</span></button>'}).join('');
+ const acc=S.total>0?Math.round(100*S.right/S.total):null;
+ app.innerHTML='<section class="hero"><div><h1>Explore four worlds and learn digital media</h1><p>Unit 1 review for CAPE Digital Media. Pick a world, play three kinds of game and collect stars. No typing needed, just tap or click.</p><p style="font-size:16px">'+(acc===null?'Your best answers will show up here once you play.':'Questions answered correctly so far: <b>'+acc+'%</b> ('+S.right+' of '+S.total+')')+'</p></div><div class="tiles" aria-hidden="true"><b>🚀</b><b>🐙</b><b>⛵</b><b>💡</b></div></section><section class="sec"><h2>Pick a world</h2><div class="worlds">'+cards+'</div></section>';
+ $$('.wcard').forEach(b=>b.addEventListener('click',()=>go('world',b.dataset.w)));
+};
+
+/* ---------- WORLD ---------- */
+SCR.world=function(wid){
+ const W=WORLDS[wid];
+ const modes=MODES.map(m=>'<button type="button" class="mode" data-m="'+m.id+'"><span class="big">'+esc(m.name)+'</span><small>'+esc(m.desc)+'</small>'+starStr(S.stars[wid+':'+m.id]||0)+'</button>').join('');
+ app.innerHTML='<div class="w-'+wid+' stack"><div class="whead"><span class="sp" aria-hidden="true">'+W.sprite+'</span><div><span style="font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:13px">'+esc(W.subject)+'</span><h1>'+esc(W.name)+'</h1><p>'+esc(W.blurb)+'</p></div></div><div class="fact"><b>Did you know?</b>'+esc(rnd(W.facts))+'</div><section class="stack"><h2>Choose a game</h2><div class="modes">'+modes+'</div></section><div><button type="button" class="btn ghost" id="back">Back to worlds</button></div></div>';
+ $$('.mode').forEach(b=>b.addEventListener('click',()=>go(b.dataset.m,wid)));
+ $('#back').addEventListener('click',()=>go('home'));
+};
+
+/* ---------- MISSION QUIZ ---------- */
+SCR.mission=function(wid,R){
+ const W=WORLDS[wid];
+ let ix=shuffle(W.mcq.map((r,k)=>k)).slice(0,10),oo=ix.map(()=>shuffle([0,1,2,3]));
+ if(R){if(!(okIx(R.ix,W.mcq.length,10)&&Array.isArray(R.oo)&&R.oo.length===R.ix.length&&R.oo.every(x=>okPerm(x,4))))badRun();ix=R.ix;oo=R.oo}
+ const qs=ix.map((k,n)=>{const r=W.mcq[k],o=r.slice(1,5);return {q:r[0],a:r[1],o:oo[n].map(j=>o[j]),e:r[5]}});
+ const N=qs.length,facts=shuffle(W.facts);
+ let i=0,right=0,streak=0,best=0,score=0,locked=false,fi=0;
+ if(R){i=nn(R.i,0,N);right=nn(R.right,0,N);streak=nn(R.streak,0,N);best=nn(R.best,0,N);score=nn(R.score,0,1e6);fi=nn(R.fi,0,1e4);if([i,right,streak,best,score,fi].includes(null))badRun()}
+ const keep=at=>keepRun({mode:'mission',wid,ix,oo,i:at,right,streak,best,score,fi});
+ frame(wid,'Mission Quiz');
+ function hud(){hudSet([score+' pts','Streak '+streak],100*i/N)}
+ function renderQ(){
+  locked=false;const q=qs[i];
+  stage().innerHTML='<div class="qcard"><p class="qno">Question '+(i+1)+' of '+N+'</p><h2 class="qtxt">'+esc(q.q)+'</h2><div class="opts" role="group" aria-label="Answer options">'+q.o.map((t,k)=>'<button type="button" class="opt" data-k="'+k+'"><span class="ltr" aria-hidden="true">'+'ABCD'[k]+'</span><span>'+esc(t)+'</span></button>').join('')+'</div>'+(S.easy?'<div class="tools"><button type="button" class="btn ghost sm" id="fifty">50:50 (remove two wrong answers)</button></div>':'')+'<div id="fb"></div></div>';
+  $$('.opt').forEach(b=>b.addEventListener('click',()=>pick(+b.dataset.k)));
+  const ff=$('#fifty');if(ff)ff.addEventListener('click',()=>{if(locked)return;const wrong=shuffle(q.o.map((t,k)=>k).filter(k=>q.o[k]!==q.a)).slice(0,2);wrong.forEach(k=>{const b=$$('.opt')[k];b.disabled=true;b.classList.add('gone');b.setAttribute('aria-label','Removed: '+q.o[k])});ff.disabled=true;sfx.click();say('Two wrong answers removed.');const first=$$('.opt').find(b=>!b.disabled);if(first)first.focus()});
+  hud();
+ }
+ function pick(k){
+  if(locked)return;locked=true;const q=qs[i];const ok=q.o[k]===q.a;
+  $$('.opt').forEach((b,j)=>{b.disabled=true;if(q.o[j]===q.a)b.classList.add('right');else if(j===k)b.classList.add('wrong')});
+  if(ok){right++;streak++;best=Math.max(best,streak);score+=100+10*Math.min(streak,5);sfx.correct(wid,streak);burst(wid,$$('.opt')[k])}else{streak=0;sfx.wrong();shakeCard()}
+  S.total++;if(ok)S.right++;save();keep(i+1);
+  const ff=$('#fifty');if(ff)ff.disabled=true;
+  $('#fb').innerHTML='<div class="fbwrap"><div class="fbk '+(ok?'ok':'no')+'"><b>'+(ok?'Correct!':'Not quite.')+'</b>'+esc(q.e)+'</div><button type="button" class="btn" id="nx">'+(i+1>=N?'See results':'Next')+'</button></div>';
+  say((ok?'Correct! ':'Not quite. The answer is '+q.a+'. ')+q.e);
+  const nx=$('#nx');nx.addEventListener('click',()=>{next();focusHead()});nx.focus();
+  hud();
+ }
+ function next(){
+  i++;
+  if(i>=N){finish();return}
+  if(i%3===0){hud();factCard(wid,facts[fi++%facts.length],renderQ)}else renderQ();
+ }
+ function finish(){
+  const acc=right/N;const stars=acc>=.9?3:acc>=.7?2:1;
+  result(wid,'mission',stars,[score+' pts',right+' of '+N+' correct','Best streak '+best],praise(acc));
+ }
+ keyH=e=>{if(e.target&&e.target.closest&&e.target.closest('button'))return;if(!locked&&/^[1-4]$/.test(e.key)&&$$('.opt')[+e.key-1]&&!$$('.opt')[+e.key-1].disabled)pick(+e.key-1)};
+ keep(i);
+ if(i>=N)finish();else renderQ();
+};
+
+/* ---------- FACT OR FIB ---------- */
+SCR.fib=function(wid,R){
+ const W=WORLDS[wid];
+ let ix=shuffle(W.tf.map((r,k)=>k)).slice(0,S.easy?6:8);
+ if(R){if(!okIx(R.ix,W.tf.length,8))badRun();ix=R.ix}
+ const qs=ix.map(k=>W.tf[k]).map(r=>({s:r[0],t:r[1],e:r[2]}));
+ const N=qs.length,facts=shuffle(W.facts);
+ let i=0,right=0,streak=0,best=0,locked=false,fi=0;
+ if(R){i=nn(R.i,0,N);right=nn(R.right,0,N);streak=nn(R.streak,0,N);best=nn(R.best,0,N);fi=nn(R.fi,0,1e4);if([i,right,streak,best,fi].includes(null))badRun()}
+ const keep=at=>keepRun({mode:'fib',wid,ix,i:at,right,streak,best,fi});
+ frame(wid,'Fact or Fib');
+ function hud(){hudSet([right+' right','Streak '+streak],100*i/N)}
+ function renderQ(){
+  locked=false;const q=qs[i];
+  stage().innerHTML='<div class="qcard"><p class="qno">Statement '+(i+1)+' of '+N+'</p><h2 class="qtxt">'+esc(q.s)+'</h2><div class="tf" role="group" aria-label="True or false"><button type="button" class="opt" data-v="1">True</button><button type="button" class="opt" data-v="0">False</button></div><div id="fb"></div></div>';
+  $$('.opt').forEach(b=>b.addEventListener('click',()=>pick(b.dataset.v==='1')));
+  hud();
+ }
+ function pick(v){
+  if(locked)return;locked=true;const q=qs[i];const ok=v===q.t;
+  $$('.opt').forEach(b=>{const bv=b.dataset.v==='1';b.disabled=true;if(bv===q.t)b.classList.add('right');else if(bv===v)b.classList.add('wrong')});
+  if(ok){right++;streak++;best=Math.max(best,streak);sfx.correct(wid,streak);burst(wid,$$('.opt').find(b=>(b.dataset.v==='1')===v))}else{streak=0;sfx.wrong();shakeCard()}
+  S.total++;if(ok)S.right++;save();keep(i+1);
+  $('#fb').innerHTML='<div class="fbwrap"><div class="fbk '+(ok?'ok':'no')+'"><b>'+(ok?'Correct!':'Not quite.')+' It is '+(q.t?'true':'false')+'.</b>'+esc(q.e)+'</div><button type="button" class="btn" id="nx">'+(i+1>=N?'See results':'Next')+'</button></div>';
+  say((ok?'Correct! ':'Not quite. ')+'It is '+(q.t?'true':'false')+'. '+q.e);
+  const nx=$('#nx');nx.addEventListener('click',()=>{next();focusHead()});nx.focus();
+  hud();
+ }
+ function next(){
+  i++;
+  if(i>=N){finish();return}
+  if(i===Math.floor(N/2)){hud();factCard(wid,facts[fi++%facts.length],renderQ)}else renderQ();
+ }
+ function finish(){
+  const acc=right/N;const stars=S.easy?(acc>=.8?3:acc>=.6?2:1):(acc>=.9?3:acc>=.7?2:1);
+  result(wid,'fib',stars,[right+' of '+N+' correct','Best streak '+best],praise(acc));
+ }
+ keyH=e=>{if(locked||e.target&&e.target.closest&&e.target.closest('button'))return;const k=e.key.toLowerCase();if(k==='t')pick(true);else if(k==='f')pick(false)};
+ keep(i);
+ if(i>=N)finish();else renderQ();
+};
+
+/* ---------- MATCH-UP ---------- */
+SCR.match=function(wid,RS){
+ const W=WORLDS[wid];
+ let pix=S.easy?shuffle(W.match.map((p,k)=>k)).slice(0,4):W.match.map((p,k)=>k);
+ if(RS){if(!okIx(RS.pix,W.match.length,W.match.length))badRun();pix=RS.pix}
+ const pairs=pix.map(k=>W.match[k]),N=pairs.length,facts=shuffle(W.facts);
+ let lo=shuffle(pairs.map((p,i)=>i)),ro=shuffle(pairs.map((p,i)=>i)),doneIds=[];
+ if(RS){if(!(okPerm(RS.lo,N)&&okPerm(RS.ro,N)&&Array.isArray(RS.done)&&RS.done.every((k,j)=>Number.isInteger(k)&&k>=0&&k<N&&RS.done.indexOf(k)===j)&&nn(RS.miss,0,1e4)!==null))badRun();lo=RS.lo;ro=RS.ro;doneIds=RS.done.slice()}
+ const L=lo.map(i=>({id:i,t:pairs[i][0]})),R=ro.map(i=>({id:i,t:pairs[i][1]}));
+ let sel=null,done=0,miss=0,busy=false,shown=false;
+ const keep=()=>keepRun({mode:'match',wid,pix,lo,ro,done:doneIds,miss,shown});
+ frame(wid,'Match-Up');
+ stage().innerHTML='<h2 class="muted" style="font-size:17px;font-family:var(--font-body);margin-bottom:12px">Tap a term, then tap its meaning. With a keyboard, use Tab and Enter.</h2>'+(S.easy?'<div class="tools" style="margin-bottom:10px"><button type="button" class="btn ghost sm" id="mhint">Hint: show me a pair</button></div>':'')+'<div class="mgrid"><div class="mcol" id="cl" role="group" aria-label="Terms">'+L.map(x=>'<button type="button" class="mit term" aria-pressed="false" data-s="l" data-id="'+x.id+'">'+esc(x.t)+'</button>').join('')+'</div><div class="mcol" id="cr" role="group" aria-label="Meanings">'+R.map(x=>'<button type="button" class="mit" aria-pressed="false" data-s="r" data-id="'+x.id+'">'+esc(x.t)+'</button>').join('')+'</div></div><div id="mf" style="margin-top:14px"></div>';
+ function hud(){hudSet(['Matched '+done+' of '+N,'Slips '+miss],100*done/N)}
+ function fin(){
+  const stars=S.easy?(miss<=2?3:miss<=5?2:1):(miss<=1?3:miss<=4?2:1);
+  result(wid,'match',stars,[N+' pairs matched',miss+' slips'],miss===0?'Perfect match!':praise(stars===3?.9:stars===2?.7:.5));
+ }
+ function onClick(b){
+  if(busy||b.classList.contains('done'))return;
+  if(!sel||sel.dataset.s===b.dataset.s){
+   if(sel){sel.classList.remove('sel');sel.setAttribute('aria-pressed','false')}
+   if(sel===b){sel=null;return}
+   sel=b;b.classList.add('sel');b.setAttribute('aria-pressed','true');sfx.click();say('Selected: '+b.textContent+'. Now choose its '+(b.dataset.s==='l'?'meaning':'term')+'.');return;
+  }
+  const a=sel;sel=null;a.classList.remove('sel');a.setAttribute('aria-pressed','false');
+  $$('.mit.hintme').forEach(x=>x.classList.remove('hintme'));
+  if(a.dataset.id===b.dataset.id){
+   [a,b].forEach(x=>{x.classList.add('done');x.disabled=true;x.setAttribute('aria-pressed','true')});done++;doneIds.push(+a.dataset.id);hud();sfx.match(wid,done);burst(wid,b);
+   say('Matched. '+done+' of '+N+' pairs.');
+   const nxt=$$('.mit.term').find(x=>!x.disabled);if(nxt)nxt.focus();
+   if(done===3&&!shown){shown=true;$('#mf').innerHTML='<div class="fact"><b>Did you know?</b>'+esc(facts[0])+'</div>'}
+   keep();
+   if(done===N)setTimeout(fin,600);
+  }else{
+   miss++;keep();busy=true;[a,b].forEach(x=>x.classList.add('bad'));hud();sfx.wrong();say('Not a pair. Try again.');
+   setTimeout(()=>{[a,b].forEach(x=>x.classList.remove('bad'));busy=false},450);
+  }
+ }
+ $$('.mit').forEach(b=>b.addEventListener('click',()=>onClick(b)));
+ const mh=$('#mhint');if(mh)mh.addEventListener('click',()=>{
+  $$('.mit.hintme').forEach(x=>x.classList.remove('hintme'));
+  let id=sel?sel.dataset.id:null;
+  if(id===null){const open=$$('.mit.term').filter(x=>!x.disabled);if(!open.length)return;id=rnd(open).dataset.id}
+  const pr=$$('.mit').filter(x=>x.dataset.id===id&&!x.disabled);pr.forEach(x=>x.classList.add('hintme'));
+  sfx.click();say('Hint: '+pr.map(x=>x.textContent).join(' goes with ')+'.');
+ });
+ if(RS){doneIds.forEach(id=>$$('.mit').filter(x=>+x.dataset.id===id).forEach(x=>{x.classList.add('done');x.disabled=true;x.setAttribute('aria-pressed','true')}));done=doneIds.length;miss=RS.miss;shown=!!RS.shown;if(shown)$('#mf').innerHTML='<div class="fact"><b>Did you know?</b>'+esc(facts[0])+'</div>'}
+ keep();
+ hud();
+ if(done===N)fin();
+};
+
+/* ---------- BOOT ---------- */
+let resumed=false;
+if(RESUME&&typeof RESUME==='object'&&['mission','fib','match'].includes(RESUME.mode)&&WORLD_ORDER.includes(RESUME.wid)){try{go(RESUME.mode,RESUME.wid,RESUME);resumed=true}catch(e){RUN=null}}
+if(!resumed)go('home');
+if(window.GameSave&&GameSave.toast&&(resumed||S.played>0||totalStars()>0))setTimeout(()=>GameSave.toast('Welcome back! Your progress was restored.'),400);
+</script>
+
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body></html>

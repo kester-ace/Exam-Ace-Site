@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2023 Digital Media Unit 1 Paper 2 — Locked Guided Practice</title>
+<style>
+:root{--m:#7a1f2b;--g:#0f766e;--b:#1d4ed8;--o:#b45309;--ink:#172033;--line:#d7dde8;--soft:#eef2ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#f8fafc,#eef2ff);color:var(--ink)}
+header{background:linear-gradient(135deg,var(--m),#351019);color:#fff;padding:18px 14px}
+header h1{margin:0 0 6px;font-size:1.28rem} header p{margin:0;line-height:1.4}
+.wrap{max-width:900px;margin:0 auto;padding:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 20px rgba(15,23,42,.08);padding:16px;margin-bottom:14px}
+.scorecard{position:sticky;top:0;z-index:10;border:2px solid #e9d5ff}
+label{font-weight:700;display:block;margin:10px 0 5px}input{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px;font-size:1rem}
+button{border:0;border-radius:12px;padding:11px 13px;margin:5px 4px 5px 0;font-weight:700;cursor:pointer;background:var(--m);color:#fff;min-height:42px}
+button.green{background:var(--g)}button.blue{background:var(--b)}button.grey{background:#334155}button.light{background:#e2e8f0;color:#0f172a}button.orange{background:var(--o)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:.85rem;font-weight:700;margin:3px;background:var(--soft);color:#3730a3}.marks{background:#fff7ed;color:#9a3412}
+.small{color:#5b6b82;font-size:.92rem;line-height:1.45}.progressbox{height:17px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin:10px 0}.progressbar{height:100%;width:0;background:linear-gradient(90deg,var(--g),#22c55e)}
+.navbtn{display:block;width:100%;text-align:left;background:#f1f5f9;color:#102033;border:1px solid #cbd5e1;margin:7px 0}.navbtn.active{background:var(--m);color:white}
+.scenario{background:#f8fafc;border-left:6px solid var(--g);padding:13px;border-radius:12px;margin:12px 0;line-height:1.5}.question{background:#fff7ed;border-left:6px solid var(--o);padding:13px;border-radius:12px;margin:12px 0;font-weight:700;line-height:1.5}
+.stage{border:1px solid var(--line);border-radius:16px;padding:14px;margin:14px 0;background:#fff}.stage h3{margin:0 0 8px;color:var(--m)}
+.locked{opacity:.95}.obj,.finalChoice{border:1px solid #cbd5e1;border-radius:14px;padding:10px;margin:8px 0;background:#f8fafc;display:flex;gap:8px;align-items:flex-start}.obj input,.finalChoice input{width:auto;margin-top:3px}
+.chunk{border:1px solid #cbd5e1;background:#fff;border-radius:14px;padding:12px;margin:8px 0}.chunk.use{border-color:#86efac;background:#f0fdf4}.chunk.exclude{border-color:#fecaca;background:#fef2f2}
+.choiceBtns{display:flex;gap:6px;margin-top:8px}.choiceBtns button{flex:1}
+.reply{display:none;border-radius:14px;padding:12px;margin:10px 0;line-height:1.45}.reply.show{display:block}.reply.good{background:#ecfdf5;border:1px solid #bbf7d0;color:#064e3b}.reply.bad{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12}.reply.info{background:#eef2ff;border:1px solid #c7d2fe;color:#312e81}
+.orderItem{background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:10px;margin:8px 0}.num{font-weight:800;color:var(--m)}
+.finalAnswer{background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:12px;margin-top:12px}.readbox{background:#fff;border-radius:12px;padding:10px;margin-top:10px}.readbox input{width:auto}.ok{color:#166534;font-weight:800}.badTxt{color:#b91c1c;font-weight:800}
+.grade{font-size:1.2rem;font-weight:900;color:var(--m)}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bottomNav{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.bottomNav button{flex:1;min-width:130px}.startModalOverlay{position:fixed;inset:0;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px}.startModalOverlay.open{display:flex}.startModalOverlay.open{display:flex}
+.startModal{background:#fff;border-radius:20px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.28);border:2px solid #e2e8f0}
+.startModal h2{margin:0 0 10px;color:var(--m)}
+.startModal p{line-height:1.5;margin:10px 0}
+.startModal ul{margin:10px 0 14px 20px;padding:0;line-height:1.55}
+.startModal button{width:100%;margin-top:8px}
+.two div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px}
+@media(max-width:700px){.two{grid-template-columns:1fr}.card{padding:14px}.choiceBtns{display:flex}.navbtn{font-size:.95rem}}
+@media print{button,.setup,.nav,.scorecard{display:none!important}.card{box-shadow:none;border:1px solid #aaa}body{background:white}}
+button:focus-visible,input:focus-visible{outline:3px solid var(--b);outline-offset:2px}
+.course-foot{max-width:900px;margin:0 auto;padding:10px 12px 22px;text-align:center;color:#475569;font-size:.85rem}
+@media(max-width:420px){header h1{font-size:1.1rem}.wrap{padding:8px}button{padding:10px 11px}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<header><h1>2023 Digital Media Unit 1 Paper 2 — Locked Guided Practice</h1><p>Press Start once to see the rule. You can tap any question number to jump at any time. Each Check and Lock button locks that part.</p></header>
+<div class="wrap">
+<section class="card setup">
+<h2>Start Here</h2>
+<label>Student name</label><input id="studentName" placeholder="Type your name">
+<label>Class / Grade</label><input id="studentClass" placeholder="Example: CAPE DM">
+<p class="small">DRM, spectator sports media products, intellectual property, Web 1.0–4.0, digital media careers, business opportunities, funding, digital currency, content creation factors, and a Caribbean sports product task.</p>
+<button class="green" onclick="startActivity()">Start / Continue</button>
+<div id="startNotice" class="reply info" style="display:none">
+  <b>Important:</b> You can tap any question number to move to another section at any time. 
+  Once you press a <b>Check and Lock</b> button for a part of a question, that part is locked and there are no do-overs.
+</div>
+<button class="grey" onclick="readCurrent()">Read Current Question</button>
+<button class="grey" onclick="stopRead()">Stop</button>
+</section>
+
+<section class="card scorecard">
+<h2 style="margin:0 0 8px">Score Tracker</h2>
+<div class="progressbox"><div id="scorebar" class="progressbar"></div></div>
+<div class="two">
+<div><b>Current score:</b> <span id="scoreText">0</span> / <span id="maxText">50</span></div>
+<div><b>Current estimated grade:</b> <span class="grade" id="gradeText">Grade 6</span></div>
+</div>
+<p class="small">The score changes only when a student presses a <b>Check and Lock</b> button. Selecting options alone does not change the score.</p>
+</section>
+
+<section class="card nav"><h2>Questions</h2><p class="small"><b>Tap any question below to jump to that section at any time.</b> The burgundy button shows where you are now.</p><div id="nav"></div></section>
+<main id="main"></main>
+</div>
+
+
+<div id="startModalOverlay" class="startModalOverlay">
+  <div class="startModal">
+    <h2>Before You Begin</h2>
+    <p><strong>Read this carefully:</strong></p>
+    <ul>
+      <li>You can tap any question number to move to another section at any time.</li>
+      <li>You can also use the <strong>Previous</strong> and <strong>Next Question</strong> buttons at the bottom of each question.</li>
+      <li>Once you press a <strong>Check and Lock</strong> button, that part is locked.</li>
+      <li>There are <strong>no do-overs</strong> after a part has been checked and locked.</li>
+    </ul>
+    <button class="green" onclick="closeStartModal()">I Understand — Continue</button>
+  </div>
+</div>
+
+<footer class="course-foot">2023 Paper 02 Locked Guided Practice · Digital Media Unit 1 · Kester Small</footer>
+<script id="paperData" type="application/json">{"title": "2023 Digital Media Unit 1 Paper 2 — Locked Guided Practice", "theme": "DRM, spectator sports media products, intellectual property, Web 1.0–4.0, digital media careers, business opportunities, funding, digital currency, content creation factors, and a Caribbean sports product task.", "totalMarks": 50, "gradeScaleNote": "Estimated practice grade only: Grade 1 = 75%+, Grade 2 = 65–74%, Grade 3 = 55–64%, Grade 4 = 45–54%, Grade 5 = 35–44%, Grade 6 = below 35%.", "questions": [{"title": "1(i) Purpose of DRM", "marks": 2, "scenario": "A sports media team is preparing digital content about Caribbean sporting events and wants to control how the product is copied, shared, and accessed online.", "question": "State the purpose of digital rights management (DRM) in digital media production.", "objectives": ["State why DRM is used to protect and control access to digital media content.", "Explain how the sports product should be designed for a Caribbean audience.", "Describe the development of web technology from Web 1.0 to Web 4.0."], "correctObjective": 0, "steps": ["State that DRM protects digital media rights.", "State that DRM controls access, copying, sharing, or distribution."], "correctParts": ["DRM protects digital media products from unauthorized copying, sharing, editing, or distribution.", "It allows the creator or rights holder to control who can access, use, licence, or pay for the media product."], "distractors": ["DRM improves the visual presentation of sports content by helping creators select suitable colours, images, and fonts.", "DRM helps the production team decide whether the sports content should be exported as a poster, flyer, or video.", "DRM makes sports media easier to share freely across public platforms so that more viewers can access it quickly."], "finalAnswers": [{"correct": false, "text": "DRM supports digital media production by improving the style of the product, helping creators choose colours, fonts, images, and layouts that make the sports content more attractive to viewers.", "feedback": "This is positive, but it describes design decisions, not digital rights management."}, {"correct": true, "text": "DRM protects digital media products from unauthorized copying, sharing, editing, or distribution, and it allows the creator or rights holder to control who can access, use, licence, or pay for the media product.", "feedback": "Correct. This answer focuses on rights protection and access control, which is the purpose of DRM."}, {"correct": false, "text": "DRM supports sports promotion by helping the team select whether the content should be exported as a flyer, poster, website, or short video for online distribution.", "feedback": "This is about choosing a product format, not protecting digital rights or controlling use."}, {"correct": false, "text": "DRM supports wider access by encouraging the media team to share the sports product openly across social platforms so more persons can view it without restrictions.", "feedback": "This sounds useful for promotion, but DRM is about controlling access and preventing unauthorized use."}], "choices": [{"text": "DRM protects digital media products from unauthorized copying, sharing, editing, or distribution.", "correct": true}, {"text": "DRM helps the production team decide whether the sports content should be exported as a poster, flyer, or video.", "correct": false}, {"text": "DRM improves the visual presentation of sports content by helping creators select suitable colours, images, and fonts.", "correct": false}, {"text": "DRM makes sports media easier to share freely across public platforms so that more viewers can access it quickly.", "correct": false}, {"text": "It allows the creator or rights holder to control who can access, use, licence, or pay for the media product.", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "1(ii) Digital Media Product for Spectator Sports", "marks": 4, "scenario": "The Ministry of Sports wants to communicate information about spectator sports and sporting events in the Caribbean region.", "question": "Identify ONE relevant digital media product and justify your product choice based on the target audience, shelf-life and usefulness.", "objectives": ["Select a suitable digital product and justify it using target audience, shelf-life, and usefulness.", "List popular spectator sports in the Caribbean without explaining a digital product.", "Explain only the intellectual property right that protects the media product."], "correctObjective": 0, "steps": ["Identify one product.", "Justify it based on target audience.", "Justify it based on shelf-life.", "Justify it based on usefulness."], "correctParts": ["A suitable digital media product is a short social media video promoting Caribbean spectator sports and sporting events.", "It suits the target audience because sports fans, young people, tourists, and regional audiences often view short videos on mobile devices and social media.", "Its shelf-life is useful because the video can promote recurring events, venues, healthy lifestyles, and Caribbean sporting culture, although dates should be updated when needed.", "It is useful because it can quickly show highlights, event details, locations, atmosphere, and a call to action for viewers to attend or participate."], "distractors": ["A printed ticket is a strong product because spectators can use it for entry, and it can carry basic details about the sporting event.", "A long sports history document is useful because it can include detailed background information about the development of Caribbean sports.", "A private folder of images is useful because it keeps all event photographs in one location for the Ministry’s internal planning team."], "finalAnswers": [{"correct": false, "text": "A suitable product is a printed event ticket because it can include the match name, date, venue, and sponsor details, while giving spectators a useful item for entry and event identification.", "feedback": "This sounds useful, but the question asks for a digital media product and justification based on digital communication."}, {"correct": false, "text": "A suitable product is a private digital image folder because it organizes photographs, helps the Ministry manage event media, and keeps sports content available for later internal use.", "feedback": "This is useful internally, but it does not directly communicate sports information to the target audience."}, {"correct": true, "text": "A suitable product is a short social media video promoting Caribbean spectator sports. It suits mobile sports fans, young people, tourists, and regional audiences, has useful shelf-life for recurring events and culture, and can quickly show highlights, event details, locations, atmosphere, and calls to action.", "feedback": "Correct. This answer identifies the product and justifies it using target audience, shelf-life, and usefulness."}, {"correct": false, "text": "A suitable product is a long digital sports history document because it can preserve information for a long time, explain regional sporting traditions, and provide detailed reading material for committed audiences.", "feedback": "This includes shelf-life, but it is not the strongest product for quick spectator-sport communication to the stated audience."}], "choices": [{"text": "A suitable digital media product is a short social media video promoting Caribbean spectator sports and sporting events.", "correct": true}, {"text": "A long sports history document is useful because it can include detailed background information about the development of Caribbean sports.", "correct": false}, {"text": "It suits the target audience because sports fans, young people, tourists, and regional audiences often view short videos on mobile devices and social media.", "correct": true}, {"text": "Its shelf-life is useful because the video can promote recurring events, venues, healthy lifestyles, and Caribbean sporting culture, although dates should be updated when needed.", "correct": true}, {"text": "A printed ticket is a strong product because spectators can use it for entry, and it can carry basic details about the sporting event.", "correct": false}, {"text": "A private folder of images is useful because it keeps all event photographs in one location for the Ministry’s internal planning team.", "correct": false}, {"text": "It is useful because it can quickly show highlights, event details, locations, atmosphere, and a call to action for viewers to attend or participate.", "correct": true}], "weights": {"objective": 0.6, "chunks": 1.0, "order": 1.2, "final": 1.2}}, {"title": "1(iii) Intellectual Property Right", "marks": 3, "scenario": "The sports digital product contains original video, photographs, captions, narration, layout, and possibly background music.", "question": "Suggest ONE appropriate intellectual property right that could be assigned to the digital media product and justify your suggestion.", "objectives": ["Choose an appropriate intellectual property right and justify how it protects the sports media product.", "Explain the shelf-life and target audience of the product again.", "Describe how Web 4.0 could personalize sports content."], "correctObjective": 0, "steps": ["Name the intellectual property right.", "Explain what it protects.", "Justify why it fits the product."], "correctParts": ["Copyright is an appropriate intellectual property right for the sports digital media product.", "Copyright protects original creative works such as video, photographs, graphics, narration, music, captions, and layout designs.", "It is suitable because the product is a creative media work that should not be copied, reposted, edited, sold, or distributed without permission."], "distractors": ["A patent is appropriate because the sports product can be treated as a new invention made through a digital production process.", "A trademark is appropriate because it can represent the identity of the sports campaign and make the product recognizable to viewers.", "Digital currency is appropriate because patrons may use electronic payments to access sports media products and services."], "finalAnswers": [{"correct": false, "text": "A trademark is appropriate because the campaign may need a recognizable name, logo, and identity that viewers can associate with Caribbean sports promotion.", "feedback": "A trademark could protect branding, but it does not best protect the creative video, images, captions, and narration."}, {"correct": false, "text": "Digital currency is appropriate because viewers may need a secure way to pay online before accessing the sports media product or service.", "feedback": "This refers to payment, not intellectual property protection."}, {"correct": false, "text": "A patent is appropriate because the product is created through a digital production process and may include a new method of presenting sports information to viewers.", "feedback": "This sounds technical, but a patent is for inventions, not the main protection for creative media content."}, {"correct": true, "text": "Copyright is appropriate because the product is an original creative media work. It protects video, photographs, graphics, narration, music, captions, and layout designs from being copied, reposted, edited, sold, or distributed without permission.", "feedback": "Correct. Copyright matches original creative media content."}], "choices": [{"text": "A trademark is appropriate because it can represent the identity of the sports campaign and make the product recognizable to viewers.", "correct": false}, {"text": "Copyright protects original creative works such as video, photographs, graphics, narration, music, captions, and layout designs.", "correct": true}, {"text": "A patent is appropriate because the sports product can be treated as a new invention made through a digital production process.", "correct": false}, {"text": "It is suitable because the product is a creative media work that should not be copied, reposted, edited, sold, or distributed without permission.", "correct": true}, {"text": "Digital currency is appropriate because patrons may use electronic payments to access sports media products and services.", "correct": false}, {"text": "Copyright is an appropriate intellectual property right for the sports digital media product.", "correct": true}], "weights": {"objective": 0.44999999999999996, "chunks": 0.75, "order": 0.8999999999999999, "final": 0.8999999999999999}}, {"title": "1(iv) Web 1.0 to Web 4.0", "marks": 6, "scenario": "A sports promotion campaign will use web technology to communicate with local, regional, and international audiences.", "question": "Trace the development of web technology from Web 1.0 to Web 4.0, outlining the main characteristics of EACH evolution of web technology that enables sports promotion.", "objectives": ["Explain the development of Web 1.0, Web 2.0, Web 3.0, and Web 4.0 and connect the evolution to sports promotion.", "Name the most popular social media platforms used by Caribbean sports fans.", "Plan the final sports media product without explaining web technology evolution."], "correctObjective": 0, "steps": ["Describe Web 1.0.", "Describe Web 2.0.", "Describe Web 3.0.", "Describe Web 4.0.", "Show the movement from static information to participation, personalization, and intelligent services.", "Connect the web evolution to promotion of Caribbean sports."], "correctParts": ["Web 1.0 was mainly a read-only web where users viewed static pages and information published by website owners.", "Web 2.0 introduced participation, sharing, social networking, comments, uploads, and user-generated content.", "Web 3.0 is more intelligent and data-driven, using metadata, personalization, recommendations, and linked data.", "Web 4.0 is a more connected and intelligent web that can use AI, automation, mobile connectivity, real-time services, and smart interaction.", "This development shows movement from simply viewing information to interacting with content, receiving personalized information, and using intelligent services.", "For sports promotion, the web can move from basic schedules and announcements to fan sharing, recommended videos or events, real-time updates, and personalized sports experiences."], "distractors": ["Web 1.0 should be treated as the most interactive stage because it supports livestreaming, social sharing, instant comments, and fan uploads.", "Web 3.0 should be described mainly as a printed-media stage where sports flyers are scanned and placed on websites for viewing.", "Web 4.0 should be described mainly as a static social media poster that presents information without interaction, personalization, or automation."], "finalAnswers": [{"correct": true, "text": "Web 1.0 was read-only with static pages. Web 2.0 added participation, sharing, comments, and user content. Web 3.0 uses data, metadata, personalization, and recommendations. Web 4.0 adds intelligent, connected, real-time services. This helps sports promotion move from basic schedules to fan interaction, recommended content, updates, and personalized experiences.", "feedback": "Correct. This traces the development and connects the web stages to sports promotion."}, {"correct": false, "text": "Web 1.0 was the strongest stage for sports interaction because it allowed livestreams, instant fan comments, and uploads. Later web stages mainly improved page design, giving sports websites clearer posters, better colours, and more attractive layouts for viewers.", "feedback": "This reverses key characteristics. Web 1.0 was not the interactive social stage."}, {"correct": false, "text": "Web 1.0 displayed sports pages, Web 2.0 improved the appearance of websites, Web 3.0 allowed printed flyers to be scanned online, and Web 4.0 focused on uploading static posters for public viewing.", "feedback": "This is positive in tone, but it misses participation, personalization, data, AI, and intelligent services."}, {"correct": false, "text": "Web 1.0 to Web 4.0 mainly describes the way sports products are exported, moving from PDF files to images, then video, and finally social media files that can be shared quickly.", "feedback": "This focuses on file formats, not the development of web technology."}], "choices": [{"text": "For sports promotion, the web can move from basic schedules and announcements to fan sharing, recommended videos or events, real-time updates, and personalized sports experiences.", "correct": true}, {"text": "Web 4.0 should be described mainly as a static social media poster that presents information without interaction, personalization, or automation.", "correct": false}, {"text": "Web 3.0 should be described mainly as a printed-media stage where sports flyers are scanned and placed on websites for viewing.", "correct": false}, {"text": "Web 4.0 is a more connected and intelligent web that can use AI, automation, mobile connectivity, real-time services, and smart interaction.", "correct": true}, {"text": "This development shows movement from simply viewing information to interacting with content, receiving personalized information, and using intelligent services.", "correct": true}, {"text": "Web 3.0 is more intelligent and data-driven, using metadata, personalization, recommendations, and linked data.", "correct": true}, {"text": "Web 1.0 was mainly a read-only web where users viewed static pages and information published by website owners.", "correct": true}, {"text": "Web 2.0 introduced participation, sharing, social networking, comments, uploads, and user-generated content.", "correct": true}, {"text": "Web 1.0 should be treated as the most interactive stage because it supports livestreaming, social sharing, instant comments, and fan uploads.", "correct": false}], "weights": {"objective": 0.8999999999999999, "chunks": 1.5, "order": 1.7999999999999998, "final": 1.7999999999999998}}, {"title": "2(i) Digital Media Career Opportunities", "marks": 2, "scenario": "Sports enthusiasts want to advance sports as a service using digital media.", "question": "State TWO digital media career opportunities that sports enthusiasts may pursue.", "objectives": ["State two digital media careers connected to sports content or sports services.", "State two sources of funding for a sports entrepreneur.", "Define digital currency used by regional patrons."], "correctObjective": 0, "steps": ["State one suitable digital media career.", "State a second suitable digital media career."], "correctParts": ["Sports content creator", "Sports video editor"], "distractors": ["Stadium security supervisor", "Physical education classroom teacher", "Grounds maintenance worker", "Ticket booth attendant for only physical ticket sales"], "finalAnswers": [{"correct": true, "text": "Two suitable digital media career opportunities are sports content creator and sports video editor.", "feedback": "Correct. Both careers are directly connected to digital sports media."}, {"correct": false, "text": "Two useful sports careers are stadium security supervisor and grounds maintenance worker.", "feedback": "These are sports-related, but they are not digital media careers."}, {"correct": false, "text": "Two useful opportunities are sports grant officer and event refreshments coordinator.", "feedback": "These may support events, but they are not the clearest digital media career opportunities."}, {"correct": false, "text": "Two useful sports careers are physical education teacher and ticket booth attendant.", "feedback": "These can support sports, but they do not answer the digital media career focus."}], "choices": [{"text": "Grounds maintenance worker", "correct": false}, {"text": "Sports video editor", "correct": true}, {"text": "Physical education classroom teacher", "correct": false}, {"text": "Stadium security supervisor", "correct": false}, {"text": "Ticket booth attendant for only physical ticket sales", "correct": false}, {"text": "Sports content creator", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "2(ii) Digital Media Business Opportunities", "marks": 2, "scenario": "Regional sports entrepreneurs want to build businesses in the digital media industry.", "question": "State TWO business opportunities in the digital media industry for regional sports entrepreneurs.", "objectives": ["State two business opportunities that use digital media to serve sports audiences or organizations.", "List two career opportunities without showing how they become businesses.", "Explain the meaning of digital currency."], "correctObjective": 0, "steps": ["State one digital sports business opportunity.", "State a second digital sports business opportunity."], "correctParts": ["Sports livestreaming service", "Sports highlight and video production business"], "distractors": ["Selling refreshments at a physical stadium as the main service", "Cleaning sports equipment after events as the digital media business", "Printing paper tickets without online promotion or digital access", "Running a traditional sports shop with no digital media service"], "finalAnswers": [{"correct": true, "text": "Two suitable digital media business opportunities are a sports livestreaming service and a sports highlight and video production business.", "feedback": "Correct. Both use digital media to create, distribute, or monetize sports content."}, {"correct": false, "text": "Two useful sports business opportunities are printing paper tickets and running a traditional sports goods shop.", "feedback": "These can support sport, but they do not focus on digital media products or services."}, {"correct": false, "text": "Two useful sports business opportunities are selling refreshments at matches and cleaning equipment after events.", "feedback": "These are sports-related, but they are not digital media industry opportunities."}, {"correct": false, "text": "Two useful business opportunities are stadium maintenance management and physical gate supervision.", "feedback": "These are operational event services, not digital media business opportunities."}], "choices": [{"text": "Sports highlight and video production business", "correct": true}, {"text": "Running a traditional sports shop with no digital media service", "correct": false}, {"text": "Selling refreshments at a physical stadium as the main service", "correct": false}, {"text": "Printing paper tickets without online promotion or digital access", "correct": false}, {"text": "Cleaning sports equipment after events as the digital media business", "correct": false}, {"text": "Sports livestreaming service", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "2(iii) Challenge for Sports Entrepreneurs", "marks": 4, "scenario": "A regional entrepreneur wants to start a sports livestreaming service for local sporting events.", "question": "Discuss ONE potential challenge that could be faced by sports entrepreneurs who wish to be engaged in ONE business opportunity stated in 2(ii).", "objectives": ["Discuss one realistic challenge connected to a digital sports business opportunity.", "State a funding source but do not explain the challenge.", "Name two digital currencies patrons could use."], "correctObjective": 0, "steps": ["Name the business opportunity.", "State the challenge.", "Explain why it is a challenge.", "Explain the effect on business success."], "correctParts": ["For a sports livestreaming service, one challenge is the high cost of equipment and reliable internet.", "The entrepreneur may need cameras, microphones, editing tools, data, streaming software, and trained staff.", "Poor connection or low-quality production can cause buffering, weak sound, unclear video, and a poor viewing experience.", "This may reduce audience trust, subscriptions, sponsorship, and future bookings."], "distractors": ["The main challenge is choosing a colourful logo because the platform handles all technical and business issues automatically.", "Livestreaming has little risk because social media platforms guarantee professional video quality for every event.", "The entrepreneur’s main challenge is that digital sports audiences usually prefer not to watch events online."], "finalAnswers": [{"correct": false, "text": "For a livestreaming service, one challenge is choosing a strong logo and colour scheme. A professional brand can attract viewers, help the service look modern, and encourage audiences to take the sports product seriously.", "feedback": "Branding is useful, but this does not discuss a strong operational challenge for the stated business."}, {"correct": true, "text": "For a sports livestreaming service, one challenge is the high cost of equipment and reliable internet. The entrepreneur may need cameras, microphones, editing tools, data, streaming software, and trained staff. Poor connection or weak production can cause buffering, poor sound, unclear video, and reduced audience trust, subscriptions, sponsorship, and bookings.", "feedback": "Correct. This names the opportunity, explains the challenge, and shows the business effect."}, {"correct": false, "text": "For a livestreaming service, the main challenge is that social media platforms already manage most technical issues, so the entrepreneur mainly needs to focus on posting content consistently.", "feedback": "This minimizes the real challenge. Livestreaming still needs equipment, internet, staff, permissions, and quality control."}, {"correct": false, "text": "For a livestreaming service, the main challenge is that online sports audiences usually prefer printed information, so the entrepreneur should focus on posters before building a video service.", "feedback": "This is not the strongest challenge. The question is about a digital media business opportunity."}], "choices": [{"text": "For a sports livestreaming service, one challenge is the high cost of equipment and reliable internet.", "correct": true}, {"text": "Poor connection or low-quality production can cause buffering, weak sound, unclear video, and a poor viewing experience.", "correct": true}, {"text": "The entrepreneur may need cameras, microphones, editing tools, data, streaming software, and trained staff.", "correct": true}, {"text": "The main challenge is choosing a colourful logo because the platform handles all technical and business issues automatically.", "correct": false}, {"text": "Livestreaming has little risk because social media platforms guarantee professional video quality for every event.", "correct": false}, {"text": "This may reduce audience trust, subscriptions, sponsorship, and future bookings.", "correct": true}, {"text": "The entrepreneur’s main challenge is that digital sports audiences usually prefer not to watch events online.", "correct": false}], "weights": {"objective": 0.6, "chunks": 1.0, "order": 1.2, "final": 1.2}}, {"title": "2(iv) Source of Funding", "marks": 1, "scenario": "The sports entrepreneur needs money to purchase equipment and launch the sports digital media business.", "question": "Identify ONE possible source of funding.", "objectives": ["Name one realistic funding source for the sports digital media business.", "Explain how digital currency works.", "List content creation factors."], "correctObjective": 0, "steps": ["Name one funding source."], "correctParts": ["A government or sports/tourism agency grant"], "distractors": ["The definition of digital currency", "The features of Web 4.0", "The export format of the final video", "The target audience of the campaign"], "finalAnswers": [{"correct": true, "text": "One possible source of funding is a government or sports/tourism agency grant.", "feedback": "Correct. A grant is a realistic funding source for this kind of project."}, {"correct": false, "text": "One possible source of funding is the target audience selected for the campaign.", "feedback": "The target audience guides design and marketing, but it is not itself a funding source."}, {"correct": false, "text": "One possible source of funding is the definition of digital currency used by online patrons.", "feedback": "This is a topic in the paper, but it is not a source of funding."}, {"correct": false, "text": "One possible source of funding is the export format selected for the final video.", "feedback": "The export format is a submission requirement, not a funding source."}], "choices": [{"text": "The definition of digital currency", "correct": false}, {"text": "A government or sports/tourism agency grant", "correct": true}, {"text": "The features of Web 4.0", "correct": false}, {"text": "The export format of the final video", "correct": false}, {"text": "The target audience of the campaign", "correct": false}], "weights": {"objective": 0.15, "chunks": 0.25, "order": 0.3, "final": 0.3}}, {"title": "2(v) How Funding Supports Entrepreneurs", "marks": 2, "scenario": "The sports entrepreneur receives funding to start the digital media business.", "question": "Explain how the identified source of funding can support sports entrepreneurs in pursuing digital media business opportunities.", "objectives": ["Explain how funding helps the entrepreneur start or grow the digital media business.", "Name funding sources only without explaining their use.", "Define digital currency."], "correctObjective": 0, "steps": ["State what the funding can pay for.", "Explain how this helps the business operate or grow."], "correctParts": ["Funding can help the entrepreneur buy cameras, microphones, lighting, software, computers, internet service, or platform hosting.", "This support allows the entrepreneur to produce better quality digital sports media and reach paying audiences, sponsors, or partners."], "distractors": ["Funding is mainly useful because it allows the entrepreneur to delay planning until after the product is launched.", "Funding should be used mostly for decoration because digital media businesses do not depend on equipment or labour.", "Funding replaces the need for marketing because audiences automatically find all new digital products."], "finalAnswers": [{"correct": false, "text": "Funding can help the entrepreneur delay planning until the product is launched, allowing the business to focus first on attracting attention and then improving production quality later.", "feedback": "This sounds positive, but it encourages delayed planning rather than explaining proper business support."}, {"correct": true, "text": "Funding can help the entrepreneur buy cameras, microphones, lighting, software, computers, internet service, or platform hosting, allowing the business to produce better quality digital sports media and reach paying audiences, sponsors, or partners.", "feedback": "Correct. This explains what funding pays for and how it supports the business."}, {"correct": false, "text": "Funding can help the entrepreneur decorate the brand and make the product appear professional, because most digital media businesses do not depend heavily on equipment or labour.", "feedback": "Branding can matter, but the answer wrongly reduces the need for equipment, labour, and production resources."}, {"correct": false, "text": "Funding can help the entrepreneur avoid marketing because digital audiences usually locate sports content automatically once a product is uploaded to the internet.", "feedback": "This is not accurate. Funding may support marketing; it does not replace the need for it."}], "choices": [{"text": "Funding should be used mostly for decoration because digital media businesses do not depend on equipment or labour.", "correct": false}, {"text": "Funding is mainly useful because it allows the entrepreneur to delay planning until after the product is launched.", "correct": false}, {"text": "Funding can help the entrepreneur buy cameras, microphones, lighting, software, computers, internet service, or platform hosting.", "correct": true}, {"text": "Funding replaces the need for marketing because audiences automatically find all new digital products.", "correct": false}, {"text": "This support allows the entrepreneur to produce better quality digital sports media and reach paying audiences, sponsors, or partners.", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "2(vi) Digital Currency", "marks": 2, "scenario": "Regional patrons may use online payment systems to access digital sports products or services.", "question": "Define the term digital currency.", "objectives": ["Define digital currency as money or value that exists electronically and can be used for digital transactions.", "Identify business opportunities for sports entrepreneurs.", "Explain Web 3.0 recommendations."], "correctObjective": 0, "steps": ["State that it is electronic money or value.", "State that it can be used for digital payments or transactions."], "correctParts": ["Digital currency is money or value that exists in electronic form rather than as physical cash.", "It can be used to make digital payments, transfers, or online transactions for products and services."], "distractors": ["Digital currency is any printed ticket that allows entry into a sports venue.", "Digital currency is the same as a digital poster because both can be stored on a computer.", "Digital currency is mainly a file format used to export sports videos."], "finalAnswers": [{"correct": true, "text": "Digital currency is money or value that exists in electronic form rather than as physical cash, and it can be used to make digital payments, transfers, or online transactions for products and services.", "feedback": "Correct. This defines digital currency and explains its use."}, {"correct": false, "text": "Digital currency is a digital poster that can be stored on a computer and shared online to promote a sports product or service.", "feedback": "This is a digital media product, not electronic money or value."}, {"correct": false, "text": "Digital currency is a printed ticket that allows patrons to enter a sporting venue and prove that they paid for a seat or event package.", "feedback": "This describes a physical ticket, not digital currency."}, {"correct": false, "text": "Digital currency is a file format used to export a sports video so that viewers can watch the media product on several devices.", "feedback": "This describes media formats, not digital currency."}], "choices": [{"text": "Digital currency is money or value that exists in electronic form rather than as physical cash.", "correct": true}, {"text": "Digital currency is the same as a digital poster because both can be stored on a computer.", "correct": false}, {"text": "Digital currency is mainly a file format used to export sports videos.", "correct": false}, {"text": "It can be used to make digital payments, transfers, or online transactions for products and services.", "correct": true}, {"text": "Digital currency is any printed ticket that allows entry into a sports venue.", "correct": false}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "2(vii) Types of Digital Currency", "marks": 2, "scenario": "Regional patrons want to pay online to access digital sports products or services.", "question": "Name TWO types of digital currency that regional patrons could utilize.", "objectives": ["Name two types or examples of digital currency that could be used for online access.", "Define digital currency again without naming examples.", "Explain one source of funding."], "correctObjective": 0, "steps": ["Name one digital currency.", "Name a second digital currency."], "correctParts": ["Bitcoin", "Ethereum"], "distractors": ["MP4", "PDF poster", "MPEG2", "Digital flyer"], "finalAnswers": [{"correct": false, "text": "Two digital options that patrons could utilize are MP4 and PDF.", "feedback": "These are file formats, not types of digital currency."}, {"correct": false, "text": "Two digital options that patrons could utilize are MP4 and MPEG2.", "feedback": "These are video file formats, not digital currencies."}, {"correct": false, "text": "Two digital options that patrons could utilize are PDF poster and digital flyer.", "feedback": "These are digital media products or formats, not currencies."}, {"correct": true, "text": "Two types of digital currency that patrons could utilize are Bitcoin and Ethereum.", "feedback": "Correct. Both are examples of digital currency. Strictly, Ether is the coin that runs on the Ethereum network. Other accepted answers include stablecoins and central bank digital currencies, such as Jamaica’s JAM-DEX and The Bahamas’ Sand Dollar."}], "choices": [{"text": "Digital flyer", "correct": false}, {"text": "MPEG2", "correct": false}, {"text": "Bitcoin", "correct": true}, {"text": "MP4", "correct": false}, {"text": "PDF poster", "correct": false}, {"text": "Ethereum", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "3(i) Factors Affecting Content Creation", "marks": 3, "scenario": "A team is preparing digital sports content for Caribbean audiences.", "question": "List THREE factors that affect the creation of digital media content.", "objectives": ["Identify three factors that influence how digital media content is created.", "Name two digital currencies.", "Explain the purpose of DRM."], "correctObjective": 0, "steps": ["State factor one.", "State factor two.", "State factor three."], "correctParts": ["Target audience", "Purpose or message of the content", "Budget and available resources"], "distractors": ["The weather on the day the exam is written", "The personal preference of one viewer only", "The colour of the computer used to design the product", "The name of the folder where the product is saved"], "finalAnswers": [{"correct": false, "text": "Three factors that affect digital media content are the folder name, the computer colour, and the weather on the day the exam is written.", "feedback": "These may exist around the task, but they do not meaningfully guide content creation."}, {"correct": true, "text": "Three factors that affect the creation of digital media content are target audience, purpose or message of the content, and budget and available resources.", "feedback": "Correct. These factors affect planning, design, production, and distribution decisions."}, {"correct": false, "text": "Three factors that affect digital media content are the print queue, the desk layout, and the room decoration used during production.", "feedback": "These are not strong content-creation factors for a digital media product."}, {"correct": false, "text": "Three factors that affect digital media content are one viewer’s personal preference, the saved file location, and the colour of the design computer.", "feedback": "These are too narrow or unrelated to the creation of digital media content."}], "choices": [{"text": "Purpose or message of the content", "correct": true}, {"text": "Budget and available resources", "correct": true}, {"text": "The name of the folder where the product is saved", "correct": false}, {"text": "The personal preference of one viewer only", "correct": false}, {"text": "The colour of the computer used to design the product", "correct": false}, {"text": "The weather on the day the exam is written", "correct": false}, {"text": "Target audience", "correct": true}], "weights": {"objective": 0.44999999999999996, "chunks": 0.75, "order": 0.8999999999999999, "final": 0.8999999999999999}}, {"title": "3(ii) How One Factor Affects Creation", "marks": 2, "scenario": "The sports media team must decide how to design the product for a specific audience.", "question": "Explain how ONE factor listed in 3(i) affects the creation of digital media content.", "objectives": ["Explain the effect of one content-creation factor on design or production decisions.", "List three factors again without explanation.", "Plan the final sports product."], "correctObjective": 0, "steps": ["Name one factor.", "Explain how it affects creation."], "correctParts": ["Target audience affects the language, images, platform, length, tone, and level of detail used in the product.", "For example, content aimed at young sports fans may use short videos, energetic music, captions, and social media-friendly design."], "distractors": ["Target audience only affects the colour of the title and does not influence message or platform.", "The factor should only be named because explanation is not needed.", "Budget affects only the file name and not the quality of production."], "finalAnswers": [{"correct": false, "text": "Purpose affects the product only after it is exported because the design team can decide the message once the final media file is complete.", "feedback": "Purpose should guide creation from the beginning, not only after export."}, {"correct": true, "text": "Target audience affects the language, images, platform, length, tone, and level of detail used in the product. For example, content aimed at young sports fans may use short videos, energetic music, captions, and social media-friendly design.", "feedback": "Correct. This names a factor and explains how it changes production decisions."}, {"correct": false, "text": "Target audience mainly affects the colour of the title because the main message, platform, images, and level of detail can remain the same for all viewers.", "feedback": "This is too limited. Audience affects far more than colour."}, {"correct": false, "text": "Budget affects only the file name because the quality of equipment, software, workers, and editing time can remain the same regardless of available resources.", "feedback": "This is not accurate. Budget strongly affects production resources and quality."}], "choices": [{"text": "Budget affects only the file name and not the quality of production.", "correct": false}, {"text": "Target audience only affects the colour of the title and does not influence message or platform.", "correct": false}, {"text": "Target audience affects the language, images, platform, length, tone, and level of detail used in the product.", "correct": true}, {"text": "The factor should only be named because explanation is not needed.", "correct": false}, {"text": "For example, content aimed at young sports fans may use short videos, energetic music, captions, and social media-friendly design.", "correct": true}], "weights": {"objective": 0.3, "chunks": 0.5, "order": 0.6, "final": 0.6}}, {"title": "Question 4 Sports Product Task", "marks": 15, "scenario": "You must design a sports-related digital media product to promote awareness and engagement in sporting activities in the Caribbean. The product should encourage healthy lifestyles through active participation in sports.", "question": "Plan the product using media from the toolkit and export it in an accepted format.", "objectives": ["Plan a Caribbean sports digital story or product with flow, media elements, design choices, and correct export format.", "Only list sports played in the Caribbean.", "Explain web technology evolution instead of planning the product."], "correctObjective": 0, "steps": ["State product type, title, purpose, and audience.", "Plan the story or content flow.", "Include toolkit media and design/software choices.", "Show Caribbean relevance and healthy lifestyle message.", "State duration/size and correct export format."], "correctParts": ["Product type: a 30-second video or an 8.5 x 11 inch poster/flyer.", "Title: Move Caribbean — Get Active Through Sports.", "Purpose: promote awareness and engagement in Caribbean sporting activities while encouraging healthy lifestyles.", "Target audience: Caribbean youth, families, schools, community groups, tourists, and sports fans.", "Opening: show energetic Caribbean sports images or clips with a clear title and upbeat audio.", "Middle: highlight sports such as cricket, football, athletics, netball, basketball, swimming, cycling, or sailing.", "Message: active participation in sports supports fitness, teamwork, discipline, confidence, and community pride.", "Media: use photographs, audio, and/or video from the toolkit with captions or narration.", "Design: use colours and imagery that feel Caribbean, with readable text, good contrast, and balanced layout.", "Flow: arrange scenes or sections logically from introduction, to benefits, to call to action.", "Call to action: join a team, attend an event, support local athletes, and live an active lifestyle.", "Software/tool: use an appropriate digital media tool such as Canva, Adobe Express, PowerPoint, CapCut, Premiere Rush, or another suitable editor.", "If the product is a video, it should not exceed 30 seconds.", "If the product is a poster, it should be 8.5 x 11 inches.", "Export: if video, save as MP4, MPEG2, or AVI; if poster, save as PNG or PDF and label it Question 4."], "distractors": ["The product should focus mainly on foreign sports examples because they may look more international.", "The product should use as many colours and images as possible, even if the layout becomes crowded.", "The file can be exported in any format because the content is more important than the submission rules.", "The product should avoid a call to action so that viewers decide what to do without guidance."], "finalAnswers": [{"correct": false, "text": "The product could be a 30-second video or poster titled Global Sports Energy. It should target wide audiences by using mostly international examples, many colourful images, and strong music, while encouraging viewers to enjoy sports and share the product online in any convenient format.", "feedback": "This is positive, but it weakens Caribbean relevance and ignores strict export requirements."}, {"correct": true, "text": "The product could be a 30-second video or 8.5 x 11 poster titled Move Caribbean — Get Active Through Sports. It should target Caribbean youth, families, schools, tourists, and sports fans; use toolkit photos, audio, or video; show Caribbean sports, healthy lifestyle benefits, readable design, clear flow, a call to action, suitable software, and the required export format.", "feedback": "Correct. This answer covers product type, audience, purpose, media, Caribbean relevance, flow, design, call to action, and export requirements."}, {"correct": false, "text": "The product could be a poster titled Caribbean Sports Life. It should include many images, bright colours, and general sports captions, giving viewers an attractive design that encourages healthy living while leaving the final action and export format flexible.", "feedback": "This includes useful design ideas, but it is incomplete because it weakens flow, media requirements, call to action, and export rules."}, {"correct": false, "text": "The product could be a short video titled Active Region. It should show sports clips, music, and positive messages about activity, while allowing the creator to decide the size, duration, export format, and submission label after the design is finished.", "feedback": "This sounds practical, but it ignores the specific duration, size, and export instructions in the question."}], "choices": [{"text": "Software/tool: use an appropriate digital media tool such as Canva, Adobe Express, PowerPoint, CapCut, Premiere Rush, or another suitable editor.", "correct": true}, {"text": "Opening: show energetic Caribbean sports images or clips with a clear title and upbeat audio.", "correct": true}, {"text": "The product should focus mainly on foreign sports examples because they may look more international.", "correct": false}, {"text": "The product should use as many colours and images as possible, even if the layout becomes crowded.", "correct": false}, {"text": "Media: use photographs, audio, and/or video from the toolkit with captions or narration.", "correct": true}, {"text": "Design: use colours and imagery that feel Caribbean, with readable text, good contrast, and balanced layout.", "correct": true}, {"text": "Flow: arrange scenes or sections logically from introduction, to benefits, to call to action.", "correct": true}, {"text": "Call to action: join a team, attend an event, support local athletes, and live an active lifestyle.", "correct": true}, {"text": "If the product is a poster, it should be 8.5 x 11 inches.", "correct": true}, {"text": "If the product is a video, it should not exceed 30 seconds.", "correct": true}, {"text": "Export: if video, save as MP4, MPEG2, or AVI; if poster, save as PNG or PDF and label it Question 4.", "correct": true}, {"text": "Middle: highlight sports such as cricket, football, athletics, netball, basketball, swimming, cycling, or sailing.", "correct": true}, {"text": "Message: active participation in sports supports fitness, teamwork, discipline, confidence, and community pride.", "correct": true}, {"text": "Title: Move Caribbean — Get Active Through Sports.", "correct": true}, {"text": "Target audience: Caribbean youth, families, schools, community groups, tourists, and sports fans.", "correct": true}, {"text": "The file can be exported in any format because the content is more important than the submission rules.", "correct": false}, {"text": "Product type: a 30-second video or an 8.5 x 11 inch poster/flyer.", "correct": true}, {"text": "The product should avoid a call to action so that viewers decide what to do without guidance.", "correct": false}, {"text": "Purpose: promote awareness and engagement in Caribbean sporting activities while encouraging healthy lifestyles.", "correct": true}], "weights": {"objective": 2.25, "chunks": 3.75, "order": 4.5, "final": 4.5}}]}</script>
+<script>
+const data=JSON.parse(document.getElementById('paperData').textContent);
+let idx=0,state={},utter=null,storageKey="locked_guided_2023_"+data.title.replace(/[^a-z0-9]/gi,"_");
+function randomOrder(n){
+  let arr=[...Array(n).keys()];
+  for(let i=arr.length-1;i>0;i--){
+    let j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  // Make sure Part 3 is not already in the correct order when there is more than one item.
+  if(n>1 && arr.every((v,i)=>v===i)){
+    [arr[0],arr[1]]=[arr[1],arr[0]];
+  }
+  return arr;
+}
+function emptyState(q){
+  return {
+    objective:null,
+    objectiveLocked:false,
+    objectiveScore:0,
+    choices:{},
+    chunksLocked:false,
+    chunksScore:0,
+    order:randomOrder(q.correctParts.length),
+    orderLocked:false,
+    orderScore:0,
+    final:null,
+    finalLocked:false,
+    finalScore:0,
+    feedbackRead:false
+  };
+}
+function load(){
+  try{state=JSON.parse(localStorage.getItem(storageKey)||"{}")}catch(e){state={}};
+  if(!state||typeof state!=="object"||Array.isArray(state))state={};
+  data.questions.forEach((q,i)=>{
+    if(!state[i]||typeof state[i]!=="object") state[i]=emptyState(q);
+    if(!state[i].choices||typeof state[i].choices!=="object")state[i].choices={};
+    if(!Array.isArray(state[i].order) || state[i].order.length!==q.correctParts.length){
+      state[i].order=randomOrder(q.correctParts.length);
+    }
+    // If the saved order is correct but Part 3 is not locked, reshuffle so students must actually organize it.
+    if(!state[i].orderLocked && q.correctParts.length>1 && state[i].order.every((v,pos)=>v===pos)){
+      state[i].order=randomOrder(q.correctParts.length);
+    }
+  });
+}
+/* saved progress (GameSave): every part you check and lock was already kept on this device; your name, class, the question you were
+   on and the Final Review now come back too (state.at). Start over clears it all and every part unlocks again. */
+let gsReview=false;
+function gsKeepAt(){const n=document.getElementById("studentName"),c=document.getElementById("studentClass");state.at={q:idx,name:n?n.value.slice(0,200):"",cls:c?c.value.slice(0,200):"",review:gsReview};}
+function save(){gsKeepAt();try{localStorage.setItem(storageKey,JSON.stringify(state))}catch(e){}}
+function shuffle(arr,seed){let x=seed||9;for(let i=arr.length-1;i>0;i--){x=(x*9301+49297)%233280;let j=Math.floor((x/233280)*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function q(){return data.questions[idx]}
+function weights(){return q().weights}
+function totalScore(){let s=0;data.questions.forEach((qq,i)=>{let st=state[i]||{};s+=(st.objectiveScore||0)+(st.chunksScore||0)+(st.orderScore||0)+(st.finalScore||0)});return s}
+function grade(pct){if(pct>=75)return "Grade 1"; if(pct>=65)return "Grade 2"; if(pct>=55)return "Grade 3"; if(pct>=45)return "Grade 4"; if(pct>=35)return "Grade 5"; return "Grade 6"}
+function fmt(n){return (Math.round(n*10)/10).toFixed(1)}
+function updateScore(){let sc=totalScore(),pct=sc/data.totalMarks*100;document.getElementById("scoreText").textContent=fmt(sc);document.getElementById("maxText").textContent=data.totalMarks;document.getElementById("scorebar").style.width=Math.min(100,pct)+"%";document.getElementById("gradeText").textContent=grade(pct)}
+function renderNav(){document.getElementById("nav").innerHTML=data.questions.map((qq,i)=>`<button class="navbtn ${i===idx?'active':''}" onclick="go(${i})">${i+1}. ${qq.title} (${qq.marks} marks)</button>`).join("")+`<button class="navbtn" onclick="finalReview()">Final Review</button>`}
+function go(i){idx=i;gsReview=false;save();renderNav();render();document.getElementById("main").scrollIntoView({behavior:"smooth"})}
+function nextQuestion(){if(idx<data.questions.length-1){go(idx+1)}}
+function prevQuestion(){if(idx>0){go(idx-1)}}
+function startActivity(){
+  const notice=document.getElementById("startNotice");
+  if(notice){notice.style.display="block"; notice.classList.add("show");}
+  const modal=document.getElementById("startModalOverlay");
+  if(modal){modal.classList.add("open");}
+}
+function closeStartModal(){
+  const modal=document.getElementById("startModalOverlay");
+  if(modal){modal.classList.remove("open");}
+  document.getElementById("main").scrollIntoView({behavior:"smooth"});
+}
+function partScoreLabel(part){return "Worth "+fmt(weights()[part])+" marks"}
+function render(){
+updateScore();
+let item=q(),s=state[idx];
+document.getElementById("main").innerHTML=`<section class="card" id="readArea">
+<span class="pill">Question ${idx+1}</span><span class="pill marks">${item.marks} marks</span>
+<h2>${item.title}</h2>
+<div class="scenario"><b>Scenario:</b> ${item.scenario}</div>
+<div class="question">${item.question}</div>
+
+<div class="stage ${s.objectiveLocked?'locked':''}">
+<h3>1 — Objective of the Question</h3>
+<p class="small">${partScoreLabel('objective')}. Choose the aim of the question. This locks after checking.</p>
+${item.objectives.map((o,i)=>`<label class="obj"><input type="radio" name="obj" ${s.objective===i?'checked':''} ${s.objectiveLocked?'disabled':''} onchange="state[idx].objective=${i};save();render()"><span>${o}</span></label>`).join("")}
+<button class="blue" ${s.objectiveLocked?'disabled':''} onclick="checkObjective()">Check and Lock Objective</button>
+<div class="reply ${(s.objectiveLocked||s.objectiveAttempted)?'show':''} ${s.objective===item.correctObjective?'good':'bad'}">${objectiveReply()}</div>
+</div>
+
+<div class="stage ${s.chunksLocked?'locked':''}">
+<h3>2 — Possible Answers</h3>
+<p class="small">${partScoreLabel('chunks')}. Select Use or Exclude for each option. This locks after checking.</p>
+${item.choices.map((c,i)=>`<div class="chunk ${s.choices[i]||''}"><b>Option ${i+1}:</b> ${c.text}<div class="choiceBtns"><button class="green" ${s.chunksLocked?'disabled':''} onclick="choose(${i},'use')">Use</button><button class="grey" ${s.chunksLocked?'disabled':''} onclick="choose(${i},'exclude')">Exclude</button></div></div>`).join("")}
+<button class="blue" ${s.chunksLocked?'disabled':''} onclick="checkChunks()">Check and Lock Possible Answers</button>
+<div class="reply ${(s.chunksLocked||s.chunksAttempted)?'show':''} ${chunksAreCorrect()?'good':'bad'}">${chunkReply()}</div>
+</div>
+
+${s.chunksLocked?part3HTML(item,s):`<div class="stage"><h3>3 — Organize the Correct Parts</h3><p class="small">This section opens after you check and lock Part 2.</p></div>`}
+
+${s.orderLocked?part4HTML(item,s):`<div class="stage"><h3>4 — Choose the Strongest Final Answer</h3><p class="small">This section is locked until you complete and check Part 3.</p></div>`}
+
+<div class="finalAnswer"><b>Your current selected answer parts:</b><p>${selectedParts()}</p></div>
+<div class="bottomNav">
+  <button class="light" onclick="prevQuestion()" ${idx===0?'disabled':''}>Previous</button>
+  <button class="green" onclick="nextQuestion()" ${idx===data.questions.length-1?'disabled':''}>Next Question</button>
+  <button class="grey" onclick="finalReview()">Final Review</button>
+</div>
+</section>`;
+}
+function choose(i,val){state[idx].choices[i]=val;save();render()}
+function confirmLock(){return true}
+
+function checkObjective(){
+let s=state[idx],item=q();
+if(s.objective===null||s.objective===undefined){
+  s.objectiveLocked=false;
+  s.objectiveScore=0;
+  s.objectiveAttempted=true;
+  save();render();
+  return;
+}
+s.objectiveLocked=true;
+s.objectiveScore=(s.objective===item.correctObjective)?weights().objective:0;
+save();render();
+}
+function objectiveReply(){
+let s=state[idx],item=q();
+if(s.objectiveAttempted && (s.objective===null||s.objective===undefined))return `<b class="badTxt">Select an objective before checking.</b> This part is not locked yet.`;
+if(!s.objectiveLocked)return "";
+if(s.objective===item.correctObjective)return `<b class="ok">Correct.</b> +${fmt(s.objectiveScore)} marks. You identified the aim of the question.`;
+return `<b class="badTxt">Not correct.</b> +0 marks. The correct objective is: ${item.objectives[item.correctObjective]}`;
+}
+function chunksAreCorrect(){let item=q(),s=state[idx];for(let i=0;i<item.choices.length;i++){let should=item.choices[i].correct,ch=s.choices[i];if((should&&ch!=="use")||(!should&&ch!=="exclude"))return false}return true}
+function checkChunks(){
+let item=q(),s=state[idx];
+let unanswered=[];
+item.choices.forEach((c,i)=>{if(!s.choices[i])unanswered.push(i+1)});
+if(unanswered.length){
+  s.chunksAttempted=true;
+  s.unansweredChunks=unanswered;
+  save();render();
+  return;
+}
+let correctDecisions=0;
+item.choices.forEach((c,i)=>{
+  let should=c.correct,ch=s.choices[i];
+  if((should&&ch==="use")||(!should&&ch==="exclude"))correctDecisions++;
+});
+s.chunksLocked=true;
+s.chunksAttempted=false;
+s.unansweredChunks=[];
+s.chunksScore=weights().chunks*(correctDecisions/item.choices.length);
+save();render();
+}
+function chunkReply(){
+let item=q(),s=state[idx];
+if(s.chunksAttempted && s.unansweredChunks && s.unansweredChunks.length){
+  return `<b class="badTxt">Complete all options before checking.</b> You still need to mark option(s): ${s.unansweredChunks.join(", ")}. This part is not locked yet.`;
+}
+if(!s.chunksLocked)return "";
+let correctDecisions=0,miss=[],extra=[];
+item.choices.forEach((c,i)=>{
+  let should=c.correct,ch=s.choices[i];
+  if((should&&ch==="use")||(!should&&ch==="exclude"))correctDecisions++;
+  if(should&&ch!=="use")miss.push(i+1);
+  if(!should&&ch==="use")extra.push(i+1);
+});
+let msg=`<b>Score:</b> +${fmt(s.chunksScore)} / ${fmt(weights().chunks)} marks. `;
+if(chunksAreCorrect())return `<b class="ok">Correct selections.</b> ${msg}Part 3 is now open. The correct parts are randomized so you must organize them.`;
+if(miss.length)msg+=`Recommended option(s) to reconsider: ${miss.join(", ")}. `;
+if(extra.length)msg+=`Option(s) that sounded possible but did not directly answer: ${extra.join(", ")}. `;
+return `<b class="badTxt">Selections locked.</b> ${msg}Part 3 is now open with the correct parts randomized so you can practise organizing them.`;
+}
+function part3HTML(item,s){return `<div class="stage ${s.orderLocked?'locked':''}">
+<h3>3 — Organize the Correct Parts</h3>
+<p class="small">${partScoreLabel('order')}. The correct parts are shown below in a random order. Arrange them into the best answer order, then check and lock.</p>
+${s.order.map((partIndex,pos)=>`<div class="orderItem"><div class="num">${pos+1}</div><p>${item.correctParts[partIndex]}</p><button class="light" ${s.orderLocked?'disabled':''} onclick="moveOrder(${pos},-1)">Move Up</button><button class="light" ${s.orderLocked?'disabled':''} onclick="moveOrder(${pos},1)">Move Down</button></div>`).join("")}
+<button class="blue" ${s.orderLocked?'disabled':''} onclick="checkOrder()">Check and Lock Order</button>
+<div class="reply ${s.orderLocked?'show':''} ${orderIsCorrect()?'good':'bad'}">${orderReply()}</div>
+</div>`}
+function moveOrder(pos,dir){let arr=state[idx].order,np=pos+dir;if(np<0||np>=arr.length)return;[arr[pos],arr[np]]=[arr[np],arr[pos]];save();render()}
+function orderIsCorrect(){let arr=state[idx].order||[];for(let i=0;i<arr.length;i++){if(arr[i]!==i)return false}return true}
+function checkOrder(){if(!confirmLock())return;let s=state[idx],arr=s.order||[],right=0;for(let i=0;i<arr.length;i++){if(arr[i]===i)right++}s.orderLocked=true;s.orderScore=weights().order*(right/arr.length);save();render()}
+function orderReply(){let s=state[idx];if(!s.orderLocked)return "";if(orderIsCorrect())return `<b class="ok">Correct order.</b> +${fmt(s.orderScore)} marks. Part 4 is now open.`;return `<b class="badTxt">Order locked.</b> +${fmt(s.orderScore)} / ${fmt(weights().order)} marks. Part 4 is now open.`;
+}
+function part4HTML(item,s){return `<div class="stage ${s.finalLocked?'locked':''}">
+<h3>4 — Choose the Strongest Final Answer</h3>
+<p class="small">${partScoreLabel('final')}. Choose one of the four answers. They are written closely, so read carefully. This locks after checking.</p>
+${item.finalAnswers.map((a,i)=>`<label class="finalChoice"><input type="radio" name="final" ${s.final===i?'checked':''} ${s.finalLocked?'disabled':''} onchange="state[idx].final=${i};save();render()"><span>${a.text}</span></label>`).join("")}
+<button class="blue" ${s.finalLocked?'disabled':''} onclick="checkFinal()">Check and Lock Final Answer</button>
+<div class="reply ${(s.finalLocked||s.finalAttempted)?'show':''} ${finalIsCorrect()?'good':'bad'}">${finalReply()}</div>
+${s.finalLocked?`<div class="readbox"><label><input type="checkbox" ${s.feedbackRead?'checked':''} onchange="state[idx].feedbackRead=this.checked;save();updateScore()"> I have read the feedback.</label></div>`:""}
+</div>`}
+function finalIsCorrect(){let item=q(),s=state[idx];return s.final!==null&&s.final!==undefined&&item.finalAnswers[s.final]&&item.finalAnswers[s.final].correct}
+function checkFinal(){
+let s=state[idx];
+if(s.final===null||s.final===undefined){
+  s.finalAttempted=true;
+  save();render();
+  return;
+}
+s.finalLocked=true;
+s.finalAttempted=false;
+s.finalScore=finalIsCorrect()?weights().final:0;
+save();render();
+}
+function finalReply(){
+let item=q(),s=state[idx];
+if(s.finalAttempted && (s.final===null||s.final===undefined))return `<b class="badTxt">Choose one final answer before checking.</b> This part is not locked yet.`;
+if(!s.finalLocked)return "";
+let chosen=item.finalAnswers[s.final];
+let lead=chosen.correct?`<b class="ok">Correct.</b> +${fmt(s.finalScore)} marks. `:`<b class="badTxt">Not correct.</b> +0 marks. `;
+return lead+chosen.feedback;
+}
+function selectedParts(){let item=q(),s=state[idx],arr=[];item.choices.forEach((c,i)=>{if(s.choices[i]==="use")arr.push(c.text)});return arr.length?arr.join(" "):"No answer parts selected yet."}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function finalReview(){gsReview=true;save();let name=esc(document.getElementById("studentName").value||"Student"),cls=esc(document.getElementById("studentClass").value||"");let sc=totalScore(),pct=sc/data.totalMarks*100;document.getElementById("main").innerHTML=`<section class="card" id="readArea"><h2>Final Review</h2><p><b>Name:</b> ${name}</p><p><b>Class:</b> ${cls}</p><p><b>Current score:</b> ${fmt(sc)} / ${data.totalMarks} (${fmt(pct)}%)</p><p><b>Current estimated grade:</b> ${grade(pct)}</p><button onclick="window.print()">Print / Save as PDF</button><button class="green" onclick="downloadAnswers()">Download Selected Parts</button></section>`+data.questions.map((qq,i)=>{let st=state[i]||{},ans=[];qq.choices.forEach((c,n)=>{if(st.choices&&st.choices[n]==="use")ans.push(c.text)});return `<section class="card"><h3>${i+1}. ${qq.title}</h3><p><b>Selected parts:</b> ${ans.join(" ")||"No answer parts selected."}</p><p><b>Checked score:</b> ${fmt((st.objectiveScore||0)+(st.chunksScore||0)+(st.orderScore||0)+(st.finalScore||0))} / ${qq.marks}</p></section>`}).join("");document.getElementById("main").scrollIntoView({behavior:"smooth"})}
+function downloadAnswers(){let txt=data.title+"\nScore: "+fmt(totalScore())+" / "+data.totalMarks+"\nEstimated grade: "+grade(totalScore()/data.totalMarks*100)+"\n\n";data.questions.forEach((qq,i)=>{let st=state[i]||{},ans=[];qq.choices.forEach((c,n)=>{if(st.choices&&st.choices[n]==="use")ans.push(c.text)});txt+=(i+1)+". "+qq.title+" ("+qq.marks+" marks)\nSelected parts: "+(ans.join(" ")||"No answer parts selected.")+"\n\n"});let blob=new Blob([txt],{type:"text/plain"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="2023_locked_guided_selected_parts.txt";a.click();URL.revokeObjectURL(url)}
+function readCurrent(){stopRead();let t=document.getElementById("readArea")?.innerText||document.body.innerText;utter=new SpeechSynthesisUtterance(t);utter.rate=.88;speechSynthesis.speak(utter)}
+function stopRead(){if("speechSynthesis" in window)speechSynthesis.cancel()}
+function resetAll(){
+try{localStorage.removeItem(storageKey)}catch(e){}
+state={};
+load();
+renderNav();
+render();
+updateScore();
+}
+load();
+(function(){const a=state.at;if(!a||typeof a!=="object")return;if(Number.isInteger(a.q)&&a.q>=0&&a.q<data.questions.length)idx=a.q;
+ const n=document.getElementById("studentName"),c=document.getElementById("studentClass");if(n&&typeof a.name==="string")n.value=a.name.slice(0,200);if(c&&typeof a.cls==="string")c.value=a.cls.slice(0,200);})();
+renderNav();render();updateScore();
+if(state.at&&state.at.review===true){try{finalReview();}catch(e){gsReview=false;render();}}
+if(window.GameSave){GameSave.register([storageKey]);let gsT=null;
+ ["studentName","studentClass"].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener("input",()=>{clearTimeout(gsT);gsT=setTimeout(save,500);});});
+ const had=data.questions.some((qq,i)=>{const st=state[i]||{};return st.objectiveLocked||st.chunksLocked||st.orderLocked||st.finalLocked||(st.objective!==null&&st.objective!==undefined)||Object.keys(st.choices||{}).length>0;})||!!(state.at&&(state.at.q>0||state.at.name));
+ if(had&&GameSave.toast)setTimeout(()=>GameSave.toast("Welcome back! Your progress was restored."),400);}
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body></html>

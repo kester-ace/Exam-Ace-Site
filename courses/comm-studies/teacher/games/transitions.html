@@ -1,0 +1,435 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+<title>Causeway Crew: Transitional Words and Phrases</title>
+<style>
+:root{--bg:#EEF4FA;--surface:#FFFFFF;--ink:#13233A;--soft:#536479;--line:#CFDCEA;--lagoon:#1478A8;--lagoon2:#0C4F74;--sand:#F4D9A0;--wood:#9A6A3A;--gold:#F2B33D;--good:#1E8C5A;--bad:#C2412D;--font-d:Georgia,"Times New Roman",serif;--font-b:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07182A;--surface:#0F2741;--ink:#E7F0FA;--soft:#9DB2C8;--line:#22405F;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#07182A;--surface:#0F2741;--ink:#E7F0FA;--soft:#9DB2C8;--line:#22405F;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)!important;color:var(--ink)!important;font:400 16px/1.55 var(--font-b)!important;padding:0 0 80px}
+.hero{background:linear-gradient(180deg,#5FB7E0 0%,var(--lagoon) 55%,var(--lagoon2) 100%);color:#fff;padding:26px 16px 18px}
+.hero .in{max-width:1000px;margin:0 auto}
+.hero h1{font:700 clamp(1.9rem,5vw,3.1rem)/1.05 var(--font-d);margin:0 0 6px}
+.hero p{margin:0;max-width:62ch;color:#E3F4FC}
+.bridge{max-width:1000px;margin:14px auto 0;display:block;width:100%;height:auto}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.stat{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 13px;font-weight:700;font-size:.92rem}
+.wrap{max-width:1000px;margin:16px auto 0;padding:0 16px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tab{font:700 .97rem var(--font-b);border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 16px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:#2B1A00}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,24px);margin-bottom:14px;min-width:0}
+h2{font:700 1.55rem/1.15 var(--font-d);margin:0 0 6px}h3{font:700 1.12rem/1.2 var(--font-d);margin:0 0 6px}
+.lead{color:var(--soft);margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.job{border:1.5px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:14px;background:var(--surface)}
+.job .w{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.job .w span{border:1.5px solid var(--c);border-radius:999px;padding:1px 10px;font-size:.92rem;font-weight:600}
+.job .w span.inf{border-style:dashed;opacity:.75}
+.ex{border-left:4px solid var(--c,var(--lagoon));background:color-mix(in srgb,var(--c,var(--lagoon)) 9%,transparent);border-radius:0 10px 10px 0;padding:8px 12px;margin:6px 0;font-style:italic}
+.rule{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0}
+.rule b.ok{color:var(--good)}.rule b.no{color:var(--bad)}
+.btn{font:700 1rem var(--font-b);border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--lagoon);color:#fff}
+.btn.gold{background:var(--gold);color:#2B1A00}.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.lv{text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+.lv b{font:700 1.08rem var(--font-d)}.lv .s{color:var(--gold);font-size:1.2rem;letter-spacing:2px}
+.task{background:linear-gradient(135deg,var(--lagoon),var(--lagoon2));color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.task .k{font:700 .76rem var(--font-b);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.task p{margin:4px 0 0;font-size:1.06rem}
+.gap{display:inline-block;min-width:90px;border-bottom:3px solid var(--gold);text-align:center;font-weight:700;color:var(--gold)}
+.gap.cur{background:rgba(242,179,61,.18);border-radius:4px}
+.opts{display:grid;gap:9px}
+.opt{text-align:left;font:600 1rem/1.45 var(--font-b);color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.opt .L{flex:none;width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--bg);font-weight:800}
+.opt:hover:not(:disabled){border-color:var(--lagoon)}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--surface))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.opt:disabled{cursor:default}
+.fb{border-radius:12px;padding:11px 14px;margin:12px 0;font-weight:600}
+.fb.good{background:color-mix(in srgb,var(--good) 14%,transparent);border:1.5px solid var(--good)}
+.fb.bad{background:color-mix(in srgb,var(--bad) 12%,transparent);border:1.5px solid var(--bad)}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 12px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lagoon),var(--gold));transition:width .3s}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--soft);font-weight:700}
+.big{font:700 3rem var(--font-d);margin:0;color:var(--lagoon)}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+footer{max-width:1000px;margin:22px auto 0;padding:0 16px;color:var(--soft);font-size:.9rem}
+@media print{.hero,.tabs,footer,.noprint,a[href="../index.html#games"]{display:none!important}body{background:#fff!important;color:#000!important}.card{border:0;padding:0}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.lv:disabled{cursor:not-allowed;opacity:.55}.lv .lk,.lk{display:block;margin-top:6px;font-weight:700;font-size:.9rem}.tbadge{display:inline-block;margin-bottom:10px;border:1.5px dashed currentColor;border-radius:999px;padding:3px 12px;font-weight:700;font-size:.88rem;opacity:.85}
+</style>
+
+<header class="hero"><div class="in">
+  <h1>Causeway Crew</h1>
+  <p>Transitional words and phrases are the bridges between your ideas. Every correct answer lays a plank on the causeway across the harbour. Build the whole bridge and your essays will never fall into the water again.</p>
+  <div class="stats"><span class="stat" id="stPlanks">🪵 0 planks laid</span><span class="stat" id="stStreak">🔥 Streak 0</span><span class="stat" id="stStars">⭐ 0 stars</span></div>
+</div>
+<svg class="bridge" viewBox="0 0 1000 120" aria-hidden="true" id="bridge"></svg>
+</header>
+
+<main class="wrap">
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="bank" aria-selected="true">🧰 Word bank</button>
+    <button class="tab" role="tab" data-tab="rules" aria-selected="false">📏 Rules and traps</button>
+    <button class="tab" role="tab" data-tab="play" aria-selected="false">🌉 Build the bridge</button>
+  </div>
+  <div id="view" aria-live="polite"></div>
+</main>
+<footer>Kester Small</footer>
+
+<script>
+(function () {
+  var JOBS = [
+    { id: 'add', name: 'Adding a point', c: '#1478A8', words: ['Furthermore', 'Moreover', 'In addition', 'Additionally', 'Also', 'Besides', 'Not only… but also'], inf: ['Plus', 'And another thing'], ex: 'The festival brings in tourists. <b>Furthermore</b>, it gives local vendors their busiest week of the year.' },
+    { id: 'con', name: 'Contrast', c: '#C2563A', words: ['However', 'On the other hand', 'In contrast', 'Conversely', 'Nevertheless', 'Yet', 'Whereas', 'Although'], inf: ['But (to start a sentence)', 'Anyways'], ex: 'Cruise ships bring visitors to St. John’s. <b>However</b>, many passengers spend less than four hours on shore.' },
+    { id: 'cau', name: 'Cause and effect', c: '#7A4BB0', words: ['Therefore', 'Consequently', 'As a result', 'Thus', 'Hence', 'Because of this', 'Due to'], inf: ['So (to start a sentence)'], ex: 'The drains were blocked with plastic. <b>As a result</b>, Bay Street flooded after only an hour of rain.' },
+    { id: 'exa', name: 'Giving an example', c: '#1E8C5A', words: ['For example', 'For instance', 'To illustrate', 'Such as', 'In particular', 'Specifically', 'A case in point is'], inf: ['Like (as in "like, for example")'], ex: 'The writer uses emotive language. <b>For instance</b>, she calls the closed beaches "stolen".' },
+    { id: 'seq', name: 'Sequence and time', c: '#D4861A', words: ['First', 'Next', 'Then', 'Subsequently', 'Meanwhile', 'Afterwards', 'Finally', 'Initially', 'Previously'], inf: ['Firstly… Lastly (overused lists)'], ex: '<b>Initially</b>, the Council posted the notice online. <b>Subsequently</b>, it was read on the radio.' },
+    { id: 'emp', name: 'Emphasis', c: '#B0316F', words: ['Indeed', 'In fact', 'Above all', 'Most importantly', 'Clearly', 'Undoubtedly', 'Especially'], inf: ['Literally', 'Totally'], ex: 'The extract is persuasive. <b>Indeed</b>, every paragraph ends with a call to act.' },
+    { id: 'cmp', name: 'Comparison', c: '#2D5DA8', words: ['Similarly', 'Likewise', 'In the same way', 'Equally', 'Correspondingly'], inf: ['Same way'], ex: 'Creole marks identity in Jamaica. <b>Similarly</b>, Papiamentu marks identity in Curaçao.' },
+    { id: 'cnc', name: 'Concession', c: '#6B7A1E', words: ['Admittedly', 'Granted', 'Of course', 'Even though', 'Despite', 'While it is true that'], inf: ['I mean'], ex: '<b>Admittedly</b>, tourism creates jobs. Nevertheless, it should not cost residents their beaches.' },
+    { id: 'cla', name: 'Clarifying', c: '#0E8A8A', words: ['In other words', 'That is', 'To put it simply', 'Namely', 'Put differently'], inf: ['Basically'], ex: 'The speaker code-switches. <b>In other words</b>, she moves between Creole and English to suit her listener.' },
+    { id: 'sum', name: 'Concluding', c: '#4E5A6B', words: ['In conclusion', 'To conclude', 'Overall', 'In summary', 'Ultimately', 'On the whole'], inf: ['So yeah', 'At the end of the day'], ex: '<b>Ultimately</b>, the writer\'s expertise outweighs the risk of bias.' }
+  ];
+
+  // Level 1: transition -> job
+  var L1 = [['Consequently', 'cau'], ['Nevertheless', 'con'], ['For instance', 'exa'], ['Moreover', 'add'], ['Likewise', 'cmp'], ['Admittedly', 'cnc'], ['In other words', 'cla'], ['Subsequently', 'seq'], ['Above all', 'emp'], ['On the whole', 'sum'], ['Conversely', 'con'], ['Hence', 'cau'], ['To illustrate', 'exa'], ['Meanwhile', 'seq']];
+  // Level 2: fill the gap
+  var L2 = [
+    { s: 'The road to Gros Islet was closed for repairs. ____, buses took the longer route through Babonneau.', a: 'As a result,', o: ['For example,', 'Similarly,', 'In contrast,'], why: 'The second sentence is the EFFECT of the closure.' },
+    { s: 'Many students think register only matters in essays. ____, it matters just as much in a job interview.', a: 'In fact,', o: ['Consequently,', 'For instance,', 'Likewise,'], why: '"In fact" corrects a mistaken belief with emphasis.' },
+    { s: 'The writer quotes a marine biologist. ____, she cites a 2024 government survey.', a: 'In addition,', o: ['However,', 'Therefore,', 'In conclusion,'], why: 'A second piece of evidence is ADDED to the first.' },
+    { s: 'Granny speaks Creole at home. ____, she switches to Standard English at the bank.', a: 'However,', o: ['Moreover,', 'As a result,', 'For example,'], why: 'The two behaviours CONTRAST.' },
+    { s: 'The extract uses several language techniques. ____, the metaphor "a shoreline locked behind fences" presents access as theft.', a: 'For example,', o: ['Nevertheless,', 'Meanwhile,', 'Conversely,'], why: 'The second sentence gives a specific EXAMPLE of the first.' },
+    { s: '____ the writer offers few statistics, her personal experience makes the argument convincing.', a: 'Although', o: ['Therefore', 'Similarly', 'In addition'], why: '"Although" concedes a weakness before stating the strength.' },
+    { s: 'Trinidadians say "lime" for hanging out. ____, Jamaicans may say "link up".', a: 'Similarly,', o: ['Consequently,', 'Nevertheless,', 'In conclusion,'], why: 'Two parallel examples are being COMPARED.' },
+    { s: 'The campaign used radio, posters and social media. ____, the WhatsApp voice notes reached the most young people.', a: 'Above all,', o: ['As a result,', 'In other words,', 'Likewise,'], why: '"Above all" picks out the most important item.' },
+    { s: 'The poet mixes Creole and English. ____, she moves between the language of home and the language of school.', a: 'In other words,', o: ['For instance,', 'However,', 'Subsequently,'], why: 'The second sentence RESTATES the first more clearly.' },
+    { s: 'The information is current and comes from an expert. ____, the writer belongs to a lobby group and may be biased.', a: 'On the other hand,', o: ['Furthermore,', 'Therefore,', 'For example,'], why: 'A weakness BALANCES the strengths: contrast.' },
+    { s: 'First, the committee chose a theme. ____, it booked the venue and invited the speakers.', a: 'Next,', o: ['In contrast,', 'Indeed,', 'Likewise,'], why: 'The steps follow a SEQUENCE.' },
+    { s: 'The writer is qualified, uses current data and quotes the law directly. ____, the information is largely credible.', a: 'Therefore,', o: ['For instance,', 'Meanwhile,', 'Admittedly,'], why: 'The judgement is a CONCLUSION drawn from the reasons.' }
+  ];
+  // Level 3: fix the paragraph (3 gaps each)
+  var L3 = [
+    { title: 'A Module 1 body paragraph', parts: ['The writer\'s second strategy is statistical evidence. ', ' She reports that 11 of 37 beaches have no marked access. ', ' readers see that the problem is widespread rather than one family\'s bad luck. ', ' the statistics come from a heritage group that may share her views, so their source should be questioned.'],
+      gaps: [['For example,', ['However,', 'In conclusion,', 'Likewise,']], ['As a result,', ['For instance,', 'Meanwhile,', 'Although']], ['Admittedly,', ['Therefore,', 'Similarly,', 'First,']]],
+      why: ['"For example" introduces the specific statistic.', '"As a result" shows the effect of the statistic on readers.', '"Admittedly" concedes a weakness in the evidence.'] },
+    { title: 'A Module 2 paragraph on code-switching', parts: ['Harris speaks formal Standard English to impress his English guests. ', ' Five speaks Trinidadian Creole loudly and freely. ', ' their language reveals two different attitudes to identity: Harris hides his origins, while Five celebrates them. ', ' Harris\'s stiff posture matches his stiff speech.'],
+      gaps: [['In contrast,', ['Therefore,', 'For example,', 'Finally,']], ['In other words,', ['Meanwhile,', 'For instance,', 'Similarly,']], ['Moreover,', ['However,', 'As a result,', 'In conclusion,']]],
+      why: ['Five\'s speech CONTRASTS with Harris\'s.', '"In other words" restates the difference as an insight.', '"Moreover" adds a new point about non-verbal behaviour.'] },
+    { title: 'A Module 3 campaign plan', parts: ['', ' the team will hold a launch assembly at each school. ', ' members will post short videos on the club\'s social media pages. ', ' a beach clean-up in May will turn awareness into action.'],
+      gaps: [['First,', ['However,', 'Similarly,', 'In contrast,']], ['Next,', ['Therefore,', 'For instance,', 'Admittedly,']], ['Finally,', ['In other words,', 'Moreover,', 'For example,']]],
+      why: ['The plan begins with a clear first step.', '"Next" continues the sequence.', '"Finally" signals the last stage.'] },
+    { title: 'A conclusion', parts: ['', ' the writer combines personal anecdote with hard statistics to persuade residents that beaches must stay public. ', ' her membership of a lobby group raises the possibility of bias, ', ' her professional expertise and current evidence make the article largely credible.'],
+      gaps: [['In conclusion,', ['For example,', 'Next,', 'Similarly,']], ['Although', ['Because', 'Indeed,', 'Moreover,']], ['overall', ['for instance', 'meanwhile', 'likewise']]],
+      why: ['The paragraph is a conclusion.', '"Although" concedes the weakness inside one sentence.', '"Overall" gives the final balanced judgement.'] }
+  ];
+  // Level 4: punctuation
+  var L4 = [
+    { a: 'The road was closed; however, the buses still ran.', o: ['The road was closed, however the buses still ran.', 'The road was closed however, the buses still ran.', 'The road was closed; however the buses still ran.'], why: 'Between two complete sentences, use a semicolon BEFORE "however" and a comma AFTER it. A comma alone creates a comma splice.' },
+    { a: 'For example, the writer quotes an expert.', o: ['For example the writer quotes an expert.', 'For, example the writer quotes an expert.', 'For example; the writer quotes an expert.'], why: 'An introductory transition is followed by a comma.' },
+    { a: 'The extract is, in fact, an advertisement.', o: ['The extract is in fact, an advertisement.', 'The extract is, in fact an advertisement.', 'The extract is; in fact, an advertisement.'], why: 'A transition in the middle of a sentence needs a comma on BOTH sides.' },
+    { a: 'Although the writer is biased, her facts are accurate.', o: ['Although, the writer is biased, her facts are accurate.', 'Although the writer is biased her facts are accurate.', 'Although the writer is biased; her facts are accurate.'], why: 'No comma after "although"; put the comma at the end of the "although" clause.' },
+    { a: 'Tourism creates jobs. Therefore, it must be managed carefully.', o: ['Tourism creates jobs, therefore it must be managed carefully.', 'Tourism creates jobs therefore, it must be managed carefully.', 'Tourism creates jobs. Therefore it, must be managed carefully.'], why: '"Therefore" joining two sentences needs a full stop or semicolon before it, not a comma.' },
+    { a: 'The poem uses Creole, whereas the essay uses Standard English.', o: ['The poem uses Creole. Whereas the essay uses Standard English.', 'The poem uses Creole whereas, the essay uses Standard English.', 'The poem uses Creole; whereas, the essay uses Standard English.'], why: '"Whereas" joins a dependent clause; a comma before it is enough. On its own it is a fragment.' },
+    { a: 'Overall, the information is credible.', o: ['Over all the information is credible.', 'Overall the information, is credible.', 'Overall; the information is credible.'], why: '"Overall" is one word, followed by a comma when it opens the sentence.' },
+    { a: 'Not only does she quote experts, but she also cites recent data.', o: ['Not only she quotes experts but also she cites recent data.', 'Not only does she quote experts, she also cites recent data but.', 'She not only quotes experts, but also, cites recent data.'], why: '"Not only… but also" needs inversion after "not only" when it opens the sentence, with "but… also" in the second clause.' }
+  ];
+  // Upgrade: informal -> formal
+  var UP = [
+    { s: 'So, the writer is trying to scare the reader.', a: 'Consequently,', o: ['So yeah,', 'Plus,', 'Like,'] },
+    { s: 'Plus, she uses statistics from 2024.', a: 'Furthermore,', o: ['And,', 'Also too,', 'Basically,'] },
+    { s: 'But the source is not named.', a: 'However,', o: ['Anyways,', 'But still,', 'Although,'] },
+    { s: 'At the end of the day, the article is credible.', a: 'Ultimately,', o: ['Basically,', 'So yeah,', 'In the end of the day,'] },
+    { s: 'Basically, the poet is mixing two languages.', a: 'In other words,', o: ['Literally,', 'Like,', 'Totally,'] },
+    { s: 'Like, for example, the writer uses a metaphor.', a: 'For instance,', o: ['Like,', 'Example,', 'Say,'] }
+  ];
+  var LEVELS = [
+    { id: 1, name: 'Name the job', blurb: 'What job does each transition do?', n: L1.length },
+    { id: 2, name: 'Fill the gap', blurb: 'Choose the transition that makes the link logical.', n: L2.length },
+    { id: 3, name: 'Fix the paragraph', blurb: 'Three gaps in real CAPE-style paragraphs.', n: L3.length * 3 },
+    { id: 4, name: 'Punctuate it', blurb: 'Pick the correctly punctuated sentence.', n: L4.length },
+    { id: 5, name: 'Upgrade the register', blurb: 'Swap informal openers for formal ones.', n: UP.length }
+  ];
+
+  var KEY = 'causewayCrew', st = { planks: 0, streak: 0, best: {} };
+  try { var sv = JSON.parse(localStorage.getItem(KEY) || 'null'); if (sv) st = Object.assign(st, sv); } catch (e) {}
+  var gsOff = false;
+  function gsSave() { if (gsOff || !window.GameSave) return; try { window.GameSave.save(); } catch (e) {} }
+  function save() { if (gsOff) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  function teacher() { return /*EDITION*/false; }
+  function unlocked(lv) { return lv === 1 || (st.best[lv - 1] || 0) >= 1 || !!(teacher() && st.tun && st.tun[lv]); }
+  function tBar(n) { if (!teacher()) return ''; return '<div class="row" style="margin-bottom:10px"><span class="tbadge" style="margin:0">👩🏾‍🏫 Teacher version</span><button class="btn gold" data-act="tunall">🔓 Unlock all levels</button><button class="btn ghost" data-act="tlock">🔒 Re-lock all</button></div>'; }
+  function tBtn(lv) { return teacher() && !unlocked(lv) ? '<button class="btn ghost" style="margin-top:6px;width:100%" data-act="tunlock" data-lv="' + lv + '">🔓 Unlock Level ' + lv + '</button>' : ''; }
+  function lockNote(lv) { return '🔒 Earn at least 1 star on Level ' + (lv - 1) + ' to unlock'; }
+
+  var tab = 'bank', game = null, view = document.getElementById('view');
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function stars() { var t = 0; for (var k in st.best) t += st.best[k]; return t; }
+  function jobOf(id) { return JOBS.filter(function (j) { return j.id === id; })[0]; }
+
+  var AC = null;
+  function tone(fs, type, dur, gap, vol) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); fs.forEach(function (f, i) { var t = AC.currentTime + i * gap, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.05); }); } catch (e) {} }
+  function sGood() { tone([196, 392], 'square', 0.09, 0.07, 0.08); tone([784], 'triangle', 0.25, 0, 0.12); }
+  function sBad() { tone([160, 120], 'sine', 0.3, 0.12, 0.15); }
+  function sWin() { tone([523.25, 659.25, 783.99, 1046.5], 'triangle', 0.3, 0.11, 0.15); }
+
+  function drawBridge() {
+    var n = Math.min(40, st.planks % 41), svg = document.getElementById('bridge'), h = '';
+    h += '<path d="M0 70 Q125 60 250 70 T500 70 T750 70 T1000 70 L1000 120 L0 120 Z" fill="rgba(255,255,255,.18)"/>';
+    h += '<path d="M0 55 L60 55 L60 120 L0 120 Z" fill="#F4D9A0"/><path d="M940 55 L1000 55 L1000 120 L940 120 Z" fill="#F4D9A0"/>';
+    for (var p = 0; p < 5; p++) h += '<rect x="' + (110 + p * 190) + '" y="58" width="12" height="62" fill="#5B4029"/>';
+    for (var i = 0; i < 40; i++) { var x = 60 + i * 22; h += '<rect x="' + x + '" y="48" width="20" height="9" rx="2" fill="' + (i < n ? '#B07A44' : 'rgba(255,255,255,.12)') + '" stroke="' + (i < n ? '#6E4A26' : 'rgba(255,255,255,.25)') + '"/>'; }
+    h += '<text x="30" y="44" font-size="22" text-anchor="middle">🏝️</text><text x="970" y="44" font-size="22" text-anchor="middle">🏝️</text>';
+    if (n) h += '<text x="' + (60 + n * 22 - 4) + '" y="44" font-size="22" text-anchor="middle">🚶🏾</text>';
+    svg.innerHTML = h;
+    document.getElementById('stPlanks').textContent = '🪵 ' + st.planks + ' planks laid' + (st.planks >= 40 ? ' · bridge ' + Math.floor(st.planks / 40) + ' built!' : '');
+    document.getElementById('stStreak').textContent = '🔥 Streak ' + st.streak;
+    document.getElementById('stStars').textContent = '⭐ ' + stars() + ' of ' + LEVELS.length * 3 + ' stars';
+  }
+
+  function bankHTML() {
+    return '<div class="card"><h2>Transitional words and phrases</h2><p class="lead">Transitions show the <b>relationship</b> between ideas: adding, contrasting, explaining a cause, giving an example. In CAPE essays they earn marks under <b>Organization</b> (7 marks), where the examiner looks for "appropriate use of transitional devices and connectives". Choose the transition for its <b>job</b>, not because it sounds impressive. Dashed words are informal: avoid them in exam writing.</p><div class="grid">' +
+      JOBS.map(function (j) { return '<div class="job" style="--c:' + j.c + '"><h3>' + j.name + '</h3><div class="w">' + j.words.map(function (w) { return '<span>' + esc(w) + '</span>'; }).join('') + j.inf.map(function (w) { return '<span class="inf" title="informal">' + esc(w) + '</span>'; }).join('') + '</div><div class="ex">' + j.ex + '</div></div>'; }).join('') +
+      '</div></div><div class="card"><h3>Transitions in a CAPE essay: where they go</h3><table><thead><tr><th>Where</th><th>Job</th><th>Try</th></tr></thead><tbody>' +
+      [['Start of body paragraph 2', 'Add the next strategy', 'Another strategy the writer employs is… / Furthermore,'], ['Inside a PEEL paragraph', 'Give the evidence', 'For instance, / This is evident in…'], ['After the quote', 'Explain the effect', 'As a result, / Consequently, / This suggests…'], ['End of paragraph (Link)', 'Tie back to purpose', 'Thus, the writer… / In this way,'], ['Credibility paragraph', 'Weigh both sides', 'Admittedly,… Nevertheless,'], ['Last paragraph', 'Conclude', 'In conclusion, / Overall, / Ultimately,']].map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td><i>' + esc(r[2]) + '</i></td></tr>'; }).join('') +
+      '</tbody></table><div class="row noprint" style="margin-top:12px"><button class="btn gold" data-act="tab" data-tab="play">🌉 Build the bridge</button><button class="btn ghost" data-act="print">🖨️ Print the word bank</button></div></div>';
+  }
+  function rulesHTML() {
+    var R = [
+      ['However between two sentences', 'The road was closed<b>; however,</b> the buses ran.', 'The road was closed<b>, however</b> the buses ran.', 'A comma before "however" joining two sentences is a comma splice. Use a semicolon before and a comma after, or start a new sentence.'],
+      ['Comma after an opening transition', '<b>For example,</b> the writer quotes an expert.', '<b>For example</b> the writer quotes an expert.', 'Put a comma after transitions that open a sentence.'],
+      ['Commas on both sides in the middle', 'The extract is<b>, in fact,</b> an advertisement.', 'The extract is in fact<b>,</b> an advertisement.', 'A transition interrupting a sentence takes a comma on each side.'],
+      ['No comma after "although" or "because"', '<b>Although</b> she is biased, her facts are accurate.', '<b>Although,</b> she is biased, her facts are accurate.', 'These are conjunctions, not adverbs. The comma goes at the end of their clause.'],
+      ['Do not start with "And", "But" or "So" in formal writing', '<b>However,</b> the source is not named.', '<b>But</b> the source is not named.', 'Examiners treat these openers as informal. Upgrade them.'],
+      ['Match the job to the logic', 'It rained. <b>As a result,</b> the match was cancelled.', 'It rained. <b>Furthermore,</b> the match was cancelled.', '"Furthermore" adds; it cannot show cause. A wrong transition confuses the reader and costs Organization marks.'],
+      ['Do not overload', 'One transition where the link needs signalling.', 'Furthermore, moreover, in addition, the writer also…', 'Stacking transitions sounds mechanical. Vary them, and let some links come from repeated key words and pronouns.'],
+      ['Avoid the mechanical list', 'The writer\'s first strategy… Another… A final…', 'Firstly… Secondly… Thirdly… Lastly…', 'Numbered lists in every paragraph read like a checklist. Use topic sentences that name the strategy.']
+    ];
+    return '<div class="card"><h2>Rules and traps</h2><p class="lead">Most marks lost on transitions come from punctuation and from choosing the wrong job. Learn these eight rules.</p>' +
+      R.map(function (r) { return '<div class="rule"><h3>' + r[0] + '</h3><p>✔ <b class="ok">Right:</b> ' + r[1] + '</p><p>✘ <b class="no">Wrong:</b> ' + r[2] + '</p><p class="lead" style="margin:0">' + r[3] + '</p></div>'; }).join('') + '</div>';
+  }
+
+  function makeQ(lv, i) {
+    if (lv === 1) { var it = L1[i], j = jobOf(it[1]), others = shuffle(JOBS.filter(function (x) { return x.id !== it[1]; })).slice(0, 3); return { prompt: '<span class="k">Transition</span><p style="font-size:1.4rem;font-weight:700">' + esc(it[0]) + '</p>', q: 'What job does it do?', opts: shuffle([{ t: j.name, ok: true }].concat(others.map(function (o) { return { t: o.name, ok: false }; }))), why: '"' + it[0] + '" is used for ' + j.name.toLowerCase() + '. Example: ' + j.ex.replace(/<[^>]+>/g, '') }; }
+    if (lv === 2) { var q = L2[i]; return { prompt: '<span class="k">Fill the gap</span><p>' + esc(q.s).replace('____', '<span class="gap cur">____</span>') + '</p>', q: 'Which transition fits?', opts: shuffle([{ t: q.a, ok: true }].concat(q.o.map(function (o) { return { t: o, ok: false }; }))), why: q.why }; }
+    if (lv === 3) { var P = L3[Math.floor(i / 3)], g = i % 3, txt = esc(P.parts[0]); for (var k = 0; k < 3; k++) { txt += (k < g ? '<span class="gap">' + esc(P.gaps[k][0]) + '</span>' : '<span class="gap' + (k === g ? ' cur' : '') + '">' + (k === g ? '?' : '____') + '</span>') + esc(P.parts[k + 1]); } return { prompt: '<span class="k">' + esc(P.title) + ' · gap ' + (g + 1) + ' of 3</span><p>' + txt + '</p>', q: 'Which transition fills the highlighted gap?', opts: shuffle([{ t: P.gaps[g][0], ok: true }].concat(P.gaps[g][1].map(function (o) { return { t: o, ok: false }; }))), why: P.why[g] }; }
+    if (lv === 4) { var r = L4[i]; return { prompt: '<span class="k">Punctuate it</span><p>Which sentence is punctuated correctly?</p>', q: '', opts: shuffle([{ t: r.a, ok: true }].concat(r.o.map(function (o) { return { t: o, ok: false }; }))), why: r.why }; }
+    var u = UP[i]; return { prompt: '<span class="k">Upgrade the register</span><p>' + esc(u.s) + '</p>', q: 'Which formal transition should replace the informal opener?', opts: shuffle([{ t: u.a, ok: true }].concat(u.o.map(function (o) { return { t: o, ok: false }; }))), why: '"' + u.a + '" keeps the same job in formal written English.' };
+  }
+  function playHTML() {
+    if (!game) return '<div class="card"><h2>Build the bridge</h2><p class="lead">Five levels. Earn at least one star to open the next level, and up to three on each. Every correct answer lays a plank on the Causeway.</p>' + tBar() + '<div class="levels">' +
+      LEVELS.map(function (l) { var s = st.best[l.id] || 0, open = unlocked(l.id); return '<div><button class="lv" style="width:100%" data-act="start" data-lv="' + l.id + '"' + (open ? '' : ' disabled aria-disabled="true"') + '>' + (open ? '' : '🔒 ') + '<span class="s">' + '★★★'.slice(0, s) + '<span style="opacity:.3">' + '★★★'.slice(s) + '</span></span><br><b>Level ' + l.id + ': ' + l.name + '</b><p style="color:var(--soft);margin:4px 0 0">' + l.blurb + '</p><p style="color:var(--soft);margin:2px 0 0">' + l.n + ' questions</p>' + (open ? '' : '<span class="lk">' + lockNote(l.id) + '</span>') + '</button>' + tBtn(l.id) + '</div>'; }).join('') + '</div></div>';
+    var g = game;
+    if (g.i >= g.n) {
+      var pct = g.score / g.n, s = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
+      if (s > (st.best[g.lv] || 0)) { st.best[g.lv] = s; save(); } drawBridge();
+      return '<div class="card" style="text-align:center"><p class="big">' + g.score + ' / ' + g.n + '</p><p style="font-size:2rem;color:var(--gold);margin:0">' + '★★★'.slice(0, s) + '<span style="opacity:.3">' + '★★★'.slice(s) + '</span></p><h2>' + (s === 3 ? 'Bridge engineer!' : s === 2 ? 'Solid crossing.' : s === 1 ? 'A few planks loose.' : 'Into the lagoon. Try again!') + '</h2><div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-act="start" data-lv="' + g.lv + '">Play again</button><button class="btn ghost" data-act="levels">All levels</button>' + (g.lv < 5 ? (unlocked(g.lv + 1) ? '<button class="btn" data-act="start" data-lv="' + (g.lv + 1) + '">Next level →</button>' : '<span class="lk">' + lockNote(g.lv + 1) + '</span>') : '') + '</div></div>';
+    }
+    var q = g.cur, h = '<div class="card"><button class="btn ghost" style="padding:6px 14px;margin-bottom:10px" data-act="levels">← All levels</button><div class="top"><span>Level ' + g.lv + ' · ' + LEVELS[g.lv - 1].name + '</span><span>' + (g.i + 1) + ' of ' + g.n + ' · 🪵 ' + g.score + '</span></div><div class="bar"><i style="width:' + (g.i / g.n * 100) + '%"></i></div><div class="task">' + q.prompt + '</div>' + (q.q ? '<p><b>' + q.q + '</b></p>' : '') + '<div class="opts">' +
+      q.opts.map(function (o, i) { var c = ''; if (g.picked != null) { if (o.ok) c = 'right'; else if (i === g.picked) c = 'wrong'; } return '<button class="opt ' + c + '" data-act="pick" data-i="' + i + '"' + (g.picked != null ? ' disabled' : '') + '><span class="L">' + 'ABCD'[i] + '</span><span>' + esc(o.t) + '</span></button>'; }).join('') + '</div>';
+    if (g.picked != null) { var ok = q.opts[g.picked].ok; h += '<div class="fb ' + (ok ? 'good' : 'bad') + '">' + (ok ? '🪵 Plank laid! ' : '🌊 Splash! ') + esc(q.why) + '</div><div class="row"><button class="btn gold" data-act="next">' + (g.i + 1 < g.n ? 'Next →' : 'See my bridge') + '</button></div>'; }
+    return h + '</div>';
+  }
+  function order(lv) { var n = LEVELS[lv - 1].n, idx = []; for (var i = 0; i < n; i++) idx.push(i); if (lv === 3) { var ps = shuffle([0, 1, 2, 3]), out = []; ps.forEach(function (p) { out.push(p * 3, p * 3 + 1, p * 3 + 2); }); return out; } return shuffle(idx); }
+  function start(lv) { game = { lv: lv, ord: order(lv), i: 0, n: LEVELS[lv - 1].n, score: 0, picked: null }; game.cur = makeQ(lv, game.ord[0]); }
+
+  function render() {
+    document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false'); });
+    view.innerHTML = tab === 'bank' ? bankHTML() : tab === 'rules' ? rulesHTML() : playHTML();
+    drawBridge();
+    gsSave();
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('.tab'); if (t) { tab = t.dataset.tab; render(); return; }
+    var b = e.target.closest('[data-act]'); if (!b) return; var a = b.dataset.act;
+    if (a === 'tab') { tab = b.dataset.tab; game = null; render(); window.scrollTo(0, 0); return; }
+    if (a === 'print') { window.print(); return; }
+    if (a === 'levels') { game = null; render(); return; }
+    if (a === 'tunlock' || a === 'tunall' || a === 'tlock') { if (!teacher()) return; st.tun = st.tun || {}; if (a === 'tunlock') st.tun[+b.dataset.lv] = 1; else if (a === 'tunall') { for (var z = 2; z <= LEVELS.length; z++) st.tun[z] = 1; } else st.tun = {}; save(); render(); return; }
+    if (a === 'start') { if (!unlocked(+b.dataset.lv)) return; start(+b.dataset.lv); render(); return; }
+    if (a === 'pick' && game && game.picked == null) { var i = +b.dataset.i; game.picked = i; if (game.cur.opts[i].ok) { game.score++; st.planks++; st.streak++; sGood(); if (st.streak % 5 === 0) sWin(); } else { st.streak = 0; sBad(); } save(); render(); return; }
+    if (a === 'next' && game) { game.i++; game.picked = null; if (game.i < game.n) game.cur = makeQ(game.lv, game.ord[game.i]); else sWin(); render(); return; }
+  });
+  /* saved progress (GameSave): the tab and the round in progress */
+  function gsBack(s) {
+    var int = function (v, lo, hi) { return typeof v === 'number' && Math.floor(v) === v && v >= lo && v <= hi; };
+    if (!s || typeof s !== 'object' || !int(s.lv, 1, LEVELS.length) || !unlocked(s.lv)) return null;
+    var n = LEVELS[s.lv - 1].n;
+    if (!Array.isArray(s.ord) || s.ord.length !== n || !s.ord.slice().sort(function (a, b) { return a - b; }).every(function (v, i) { return v === i; })) return null;
+    if (!int(s.i, 0, n) || !int(s.score, 0, n)) return null;
+    var g = { lv: s.lv, ord: s.ord.slice(), i: s.i, n: n, score: s.score, picked: null };
+    if (g.i < n) {
+      var c = s.cur, ok = c && typeof c.prompt === 'string' && typeof c.why === 'string' && Array.isArray(c.opts) && c.opts.length >= 2 && c.opts.every(function (o) { return o && typeof o.t === 'string'; }) && c.opts.filter(function (o) { return o.ok; }).length === 1;
+      if (ok) { g.cur = { prompt: c.prompt, q: typeof c.q === 'string' ? c.q : '', opts: c.opts, why: c.why }; g.picked = int(s.picked, 0, c.opts.length - 1) ? s.picked : null; }
+      else g.cur = makeQ(g.lv, g.ord[g.i]);
+    }
+    return g;
+  }
+  if (window.GameSave) {
+    var gsData = null;
+    window.GameSave.register([KEY]);
+    window.GameSave.onReset(function () { gsOff = true; });
+    window.GameSave.persist({ key: 'comm.transitions.save', welcome: false, get: function () { return { v: 1, tab: tab, game: game }; }, set: function (d) { gsData = d; } });
+    try {
+      if (gsData && gsData.v === 1) {
+        if (['bank', 'rules', 'play'].indexOf(gsData.tab) >= 0) tab = gsData.tab;
+        game = gsBack(gsData.game);
+        if (game) setTimeout(function () { try { window.GameSave.toast('Welcome back! Your progress was restored.'); } catch (e) {} }, 400);
+      }
+    } catch (e) { tab = 'bank'; game = null; }
+  }
+
+  render();
+})();
+</script>
+
+</body></html>

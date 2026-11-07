@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One-Light Studio</title>
+<meta name="description" content="Drag a single light around a portrait to create Rembrandt, loop, split, butterfly and rim lighting, then beat the six lighting challenges. Kester Small">
+<style>
+:root{
+  --bg:#12141c; --panel:#1b1e2a; --panel2:#232738; --ink:#f2f3f8; --muted:#b4b9cc; --line:#363b52;
+  --gold:#f5c542; --gold-ink:#1b1400; --ok:#5fd39a; --bad:#ff8a7a; --focus:#8fc2ff;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5}
+body{min-width:320px}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 8px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:12px}
+h1{margin:0;font-size:1.45rem;letter-spacing:.2px}
+h1 span{color:var(--gold)}
+.sub{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tab{font:inherit;font-weight:700;border:0;border-radius:999px;padding:7px 14px;background:transparent;color:var(--muted);cursor:pointer;min-height:40px}
+.tab[aria-selected="true"]{background:var(--gold);color:var(--gold-ink)}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;min-width:0}
+.card h2{margin:0 0 8px;font-size:1rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+svg{display:block;width:100%;height:auto;touch-action:none}
+#stage{cursor:grab;border-radius:12px}
+#stage.drag{cursor:grabbing}
+.controls{display:grid;gap:10px;margin-top:10px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.lbl{font-size:.85rem;color:var(--muted);font-weight:700;min-width:64px}
+.btn,.seg button{font:inherit;font-size:.92rem;font-weight:700;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:7px 11px;cursor:pointer;min-height:40px}
+.btn:hover,.seg button:hover{border-color:#5a6080}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.btn.go{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.readout{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;margin:6px 0 0}
+.feedback{margin-top:12px;background:var(--panel2);border-radius:12px;padding:10px 12px;border-left:4px solid var(--gold)}
+.feedback .name{font-weight:800;font-size:1.08rem}
+.feedback p{margin:4px 0 0}
+.challenge{margin-top:14px}
+.target{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.target b{font-size:1.1rem}
+.score{font-weight:800;font-variant-numeric:tabular-nums}
+.stars{font-size:1.5rem;letter-spacing:3px;color:var(--gold)}
+.stars .off{color:#4a4f66}
+.result{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--panel2)}
+.result.good{border-left:4px solid var(--ok)} .result.bad{border-left:4px solid var(--bad)}
+.hint{color:var(--muted);font-size:.86rem}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:.9rem;color:var(--muted);cursor:pointer;min-height:40px}
+.check input{width:20px;height:20px;accent-color:var(--gold)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+footer{max-width:1180px;margin:8px auto 0;padding:12px 16px 18px;color:var(--muted);font-size:.85rem;text-align:center;border-top:1px solid var(--line)}
+.shade{transition:opacity .25s ease}
+.pop{animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)} h1{font-size:1.25rem}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>One-Light <span>Studio</span></h1>
+      <p class="sub">One light. Six classic portrait patterns. Drag the light around the subject and watch the shadows change.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button class="tab" role="tab" id="tabFree" aria-selected="true" aria-controls="freePanel">Free studio</button>
+      <button class="tab" role="tab" id="tabChal" aria-selected="false" aria-controls="chalPanel">Challenge</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="pTitle">
+      <h2 id="pTitle">What the camera sees</h2>
+      <svg id="portrait" viewBox="0 0 300 340" role="img" aria-labelledby="pDesc"><desc id="pDesc">A stylised head-and-shoulders portrait lit by one light.</desc></svg>
+      <div class="controls">
+        <div class="row"><span class="lbl" id="skinLbl">Skin tone</span><div class="swatches" role="group" aria-labelledby="skinLbl" id="swatches"></div></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="sTitle">
+      <h2 id="sTitle">Top-down stage</h2>
+      <svg id="stage" viewBox="0 0 300 300"></svg>
+      <p class="readout" id="readout"></p>
+      <div class="controls">
+        <div class="row"><span class="lbl">Rotate</span>
+          <button class="btn" id="rotL" aria-label="Rotate light 15 degrees anticlockwise">&#8634; 15°</button>
+          <button class="btn" id="rotLs" aria-label="Rotate light 5 degrees anticlockwise">&#8634; 5°</button>
+          <button class="btn" id="rotRs" aria-label="Rotate light 5 degrees clockwise">5° &#8635;</button>
+          <button class="btn" id="rotR" aria-label="Rotate light 15 degrees clockwise">15° &#8635;</button>
+        </div>
+        <div class="row"><span class="lbl" id="hLbl">Height</span>
+          <div class="seg" role="group" aria-labelledby="hLbl" id="heightSeg">
+            <button data-h="low" aria-pressed="false">Low</button>
+            <button data-h="eye" aria-pressed="false">Eye level</button>
+            <button data-h="above" aria-pressed="true">Above</button>
+          </div>
+        </div>
+        <div class="row"><span class="lbl" id="qLbl">Light</span>
+          <div class="seg" role="group" aria-labelledby="qLbl" id="qualSeg">
+            <button data-q="soft" aria-pressed="true">Softbox (soft)</button>
+            <button data-q="hard" aria-pressed="false">Bare bulb (hard)</button>
+          </div>
+          <div class="seg"><button id="featherBtn" aria-pressed="false">Feather the beam</button></div>
+        </div>
+        <div class="row"><label class="check"><input type="checkbox" id="hints" checked> Show zone hints on the stage</label></div>
+        <p class="hint">Keyboard: focus the light (Tab), then use the arrow keys. Left/Right rotate 5° (hold Shift for 15°); Up/Down change the height; Home puts the light beside the camera; End puts it behind the subject.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="feedback" id="feedback" aria-live="polite"><div class="name" id="fbName"></div><p id="fbText"></p></div>
+
+  <section class="card challenge" id="chalPanel" hidden aria-labelledby="chTitle">
+    <h2 id="chTitle">Challenge mode</h2>
+    <div id="chalBody"></div>
+  </section>
+  <section id="freePanel" class="sr" aria-label="Free studio mode is active"></section>
+</div>
+<footer>One-Light Studio · Digital Media Unit 1 · Kester Small</footer>
+
+<script>
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  if (window.GameSave) GameSave.register(['onelight_best', 'onelight.save']);
+  var S = { angle: 120, height: 'above', soft: true, feather: false, skin: 0, mode: 'free', hints: true };
+  var SKINS = [
+    { n: 'Neutral grey', lit: '#c9c9c9', hair: '#474747' },
+    { n: 'Light', lit: '#f1d3bd', hair: '#3b2a20' },
+    { n: 'Light-medium', lit: '#e0b18e', hair: '#2e211a' },
+    { n: 'Medium', lit: '#c68a5e', hair: '#241912' },
+    { n: 'Medium-deep', lit: '#9b6440', hair: '#1d1410' },
+    { n: 'Deep', lit: '#72462a', hair: '#17100c' },
+    { n: 'Very deep', lit: '#4e2f1c', hair: '#120c09' }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var norm = function (a) { a = a % 360; return a < 0 ? a + 360 : a; };
+  function mix(hex, to, t) {
+    var a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16);
+    var r = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+    var g = Math.round(((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+    var bl = Math.round((a & 255) * (1 - t) + (b & 255) * t);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+  }
+  function lerpTable(tab, x) {
+    for (var i = 1; i < tab.length; i++) if (x <= tab[i][0]) { var a = tab[i - 1], b = tab[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); }
+    return tab[tab.length - 1][1];
+  }
+  // side angle (0 = beside camera, 180 = behind) and side (+1 = camera-left)
+  function geo() { var a = norm(S.angle); return { a: a <= 180 ? a : 360 - a, side: (a > 0 && a < 180) ? 1 : (a > 180 ? -1 : 1), raw: a }; }
+
+  // ---------- pattern classification ----------
+  var PAT = {
+    flat: { name: 'Flat front light', text: 'The light is beside the camera at or below eye level, so the face is evenly lit with almost no shadow. It is safe but flat. Raise the light above the subject for butterfly lighting, or move it round to 30–45° for loop lighting.' },
+    butterfly: { name: 'Butterfly (Paramount) lighting', text: 'Light directly in front of and above the subject, pointing down. A small butterfly-shaped shadow sits under the nose, with flattering shadows under the cheekbones and chin: the glamour and beauty setup.' },
+    loop: { name: 'Loop lighting', text: 'Light about 30–45° to the side and slightly above eye level. The nose casts a small loop on the cheek that does not touch the cheek shadow: versatile, flattering and natural.' },
+    rembrandt: { name: 'Rembrandt lighting', text: 'Light at about 45° and slightly above eye level. The nose and cheek shadows meet, leaving a small triangle of light on the shadowed cheek: moody and three-dimensional, perfect for portraits with depth and character.' },
+    split: { name: 'Split lighting', text: 'Light at 90° to the side. The face divides into two equal halves, one lit and one in shadow: high-contrast and dramatic, used to suggest intensity, mystery or inner conflict.' },
+    kicker: { name: 'Edge light (between split and backlight)', text: 'The light is behind the side of the subject, so only the edge of the face and hair is lit. Move it further behind for a full rim or backlight, or forward to 90° for split lighting.' },
+    back: { name: 'Backlighting (rim light)', text: 'Light behind the subject, facing the camera. The face falls into shadow and a glowing rim outlines the hair and shoulders, separating the subject from the background: a halo or silhouette effect.' },
+    under: { name: 'Under-lighting (light too low)', text: 'With the light below eye level, shadows fall upwards and the face looks eerie, the "torch under the chin" look. None of the six classic setups uses it. Raise the light to eye level or above.' }
+  };
+  function classify() {
+    var g = geo(), a = g.a, h = S.height, id;
+    if (h === 'low' && a < 115) id = 'under';
+    else if (a <= 14) id = h === 'above' ? 'butterfly' : 'flat';
+    else if (a <= 40) id = 'loop';
+    else if (a <= 60) id = 'rembrandt';
+    else if (a <= 115) id = 'split';
+    else if (a <= 155) id = 'kicker';
+    else id = 'back';
+    var feathered = S.feather && a >= 15 && a <= 65 && h !== 'low';
+    return { id: id, feathered: feathered };
+  }
+
+  // ---------- portrait ----------
+  var P = $('portrait'), ST = $('stage');
+  function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  var HEAD = { cx: 150, cy: 140, rx: 62, ry: 80 };
+  var bodyPath = 'M28,340 C36,282 84,258 124,250 L124,214 C124,206 176,206 176,214 L176,250 C216,258 264,282 272,340 Z';
+  var Tab = [[0, 1.2], [14, 1.08], [25, 0.95], [32, 0.8], [38, 0.52], [44, 0.2], [55, 0.08], [90, 0], [120, -0.45], [150, -0.85], [180, -1.2]];
+
+  function headShadowPath(T, side) {
+    var pts = [], y, dy, x, top = HEAD.cy - HEAD.ry - 6, bot = HEAD.cy + HEAD.ry + 6;
+    for (y = top; y <= bot; y += 4) { dy = (y - HEAD.cy) / HEAD.ry; x = HEAD.cx + side * T * HEAD.rx * Math.sqrt(Math.max(0, 1 - dy * dy)); pts.push(x.toFixed(1) + ',' + y.toFixed(1)); }
+    var far = HEAD.cx + side * (HEAD.rx + 30);
+    return 'M' + pts.join(' L') + ' L' + far + ',' + bot + ' L' + far + ',' + top + ' Z';
+  }
+  function bodyShadowPath(T, side) {
+    var x = 150 + side * T * 70, far = 150 + side * 160;
+    return 'M' + x.toFixed(1) + ',200 L' + (150 + side * T * 125).toFixed(1) + ',340 L' + far + ',340 L' + far + ',200 Z';
+  }
+
+  function buildPortrait() {
+    P.innerHTML = '<desc id="pDesc">A stylised head-and-shoulders portrait lit by one light.</desc>' +
+      '<defs>' +
+      '<radialGradient id="bgG" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#3a3f52"/><stop offset="1" stop-color="#1a1c25"/></radialGradient>' +
+      '<radialGradient id="haloG" cx="50%" cy="40%" r="45%"><stop offset="0" stop-color="#fff6dc" stop-opacity=".85"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="foreG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".85"/><stop offset=".55" stop-color="#000" stop-opacity="0"/></linearGradient>' +
+      '<clipPath id="headClip"><ellipse cx="150" cy="140" rx="62" ry="80"/></clipPath>' +
+      '<clipPath id="bodyClip"><path d="' + bodyPath + '"/></clipPath>' +
+      '<filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur id="blurN" stdDeviation="4"/></filter>' +
+      '<filter id="soft6" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>' +
+      '<filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3"/></filter>' +
+      '</defs>' +
+      '<rect width="300" height="340" fill="url(#bgG)"/>' +
+      '<ellipse id="halo" cx="150" cy="150" rx="150" ry="150" fill="url(#haloG)" opacity="0" class="shade"/>' +
+      '<path id="body" d="' + bodyPath + '"/>' +
+      '<g clip-path="url(#bodyClip)"><path id="bodyShadow" class="shade" filter="url(#blur)"/></g>' +
+      '<ellipse id="earL" cx="88" cy="146" rx="9" ry="16"/><ellipse id="earR" cx="212" cy="146" rx="9" ry="16"/>' +
+      '<ellipse id="head" cx="150" cy="140" rx="62" ry="80"/>' +
+      '<g clip-path="url(#headClip)" id="headShade">' +
+        '<rect id="fore" x="80" y="56" width="140" height="170" fill="url(#foreG)" opacity="0" class="shade"/>' +
+        '<g filter="url(#soft6)"><ellipse id="sockL" cx="126" cy="124" rx="16" ry="9" opacity="0" class="shade"/><ellipse id="sockR" cx="174" cy="124" rx="16" ry="9" opacity="0" class="shade"/>' +
+        '<ellipse id="cheekL" cx="104" cy="178" rx="7" ry="17" opacity="0" class="shade"/><ellipse id="cheekR" cx="196" cy="178" rx="7" ry="17" opacity="0" class="shade"/></g>' +
+        '<path id="headShadow" class="shade" filter="url(#blur)"/>' +
+        '<polygon id="tri" class="shade" filter="url(#blur)" opacity="0"/>' +
+        '<g id="noseSh" class="shade" filter="url(#blur)"></g>' +
+        '<ellipse id="chin" cx="150" cy="226" rx="40" ry="14" opacity="0" class="shade"/>' +
+      '</g>' +
+      '<path id="hair" d="M86,128 C80,70 112,52 150,52 C190,52 222,72 214,128 C206,96 186,80 150,80 C114,80 94,96 86,128 Z"/>' +
+      '<g id="feat" fill="none" stroke-linecap="round">' +
+        '<path id="browL" d="M110,114 Q126,106 140,113" stroke-width="3"/><path id="browR" d="M160,113 Q174,106 190,114" stroke-width="3"/>' +
+        '<ellipse id="eyeL" cx="126" cy="128" rx="9" ry="5" stroke="none"/><ellipse id="eyeR" cx="174" cy="128" rx="9" ry="5" stroke="none"/>' +
+        '<path id="nose" d="M150,132 L142,170 Q150,176 158,170" stroke-width="2.2"/>' +
+        '<path id="lips" d="M132,194 Q150,204 168,194" stroke-width="3"/>' +
+      '</g>' +
+      '<circle id="clL" r="2" fill="#fff" opacity="0"/><circle id="clR" r="2" fill="#fff" opacity="0"/>' +
+      '<g id="rim" filter="url(#glow)" fill="none" stroke="#fff6dc" stroke-linecap="round">' +
+        '<path id="rimTop" d="M92,108 C96,64 124,54 150,54 C176,54 204,64 208,108"/>' +
+        '<path id="rimL" d="M89,112 C84,150 96,196 124,214"/><path id="rimR" d="M211,112 C216,150 204,196 176,214"/>' +
+        '<path id="rimSL" d="M32,330 C40,282 84,260 124,252"/><path id="rimSR" d="M268,330 C260,282 216,260 176,252"/>' +
+      '</g>';
+  }
+
+  function renderPortrait(cls) {
+    var g = geo(), a = g.a, side = g.side, h = S.height, sk = SKINS[S.skin];
+    var lit = sk.lit, shadow = mix(lit, '#08080c', 0.66), line = mix(lit, '#000000', 0.55);
+    var back = clamp((a - 115) / 55, 0, 1);
+    var faceLit = mix(lit, '#08080c', back * 0.55);
+    ['head', 'earL', 'earR'].forEach(function (id) { $(id).setAttribute('fill', faceLit); $(id).setAttribute('stroke', line); $(id).setAttribute('stroke-width', '1.2'); });
+    $('body').setAttribute('fill', mix(mix('#8a8f9e', '#08080c', 0.15), '#08080c', back * 0.55)); $('body').setAttribute('stroke', '#20222b');
+    $('hair').setAttribute('fill', sk.hair);
+    ['browL', 'browR'].forEach(function (id) { $(id).setAttribute('stroke', sk.hair); });
+    ['eyeL', 'eyeR'].forEach(function (id) { $(id).setAttribute('fill', '#1a1512'); });
+    $('nose').setAttribute('stroke', line); $('lips').setAttribute('stroke', mix(lit, '#3a1010', 0.55));
+
+    var blur = S.feather ? 8 : (S.soft ? 4.5 : 1.3);
+    $('blurN').setAttribute('stdDeviation', blur);
+    var op = S.feather ? 0.7 : (S.soft ? 0.8 : 0.93);
+
+    var T = lerpTable(Tab, a);
+    var hs = $('headShadow'); hs.setAttribute('d', headShadowPath(T, side)); hs.setAttribute('fill', shadow); hs.setAttribute('opacity', op);
+    var bs = $('bodyShadow'); bs.setAttribute('d', bodyShadowPath(T, side)); bs.setAttribute('fill', '#08080c'); bs.setAttribute('opacity', op * 0.55);
+
+    // Rembrandt triangle (light patch on the shadowed cheek)
+    var tw = h === 'low' ? 0 : clamp((a - 37) / 7, 0, 1) * clamp((66 - a) / 8, 0, 1);
+    var tri = $('tri');
+    tri.setAttribute('points', [[150 + side * 13, 146], [150 + side * 44, 140], [150 + side * 17, 182]].map(function (p) { return p.join(','); }).join(' '));
+    tri.setAttribute('fill', faceLit); tri.setAttribute('opacity', tw);
+
+    // nose shadow
+    var ns = $('noseSh'); ns.innerHTML = '';
+    var nOp = a < 75 ? op * (a < 60 ? 1 : (75 - a) / 15) : 0;
+    if (h === 'low') {
+      el('ellipse', { cx: 150 + side * (6 + 8 * Math.min(a, 60) / 60), cy: 142, rx: 6, ry: 13, fill: shadow, opacity: nOp * 0.9 }, ns);
+    } else if (a <= 14 && h === 'above') {
+      el('ellipse', { cx: 146, cy: 179, rx: 4.5, ry: 3, transform: 'rotate(-35 146 179)', fill: shadow, opacity: op }, ns);
+      el('ellipse', { cx: 154, cy: 179, rx: 4.5, ry: 3, transform: 'rotate(35 154 179)', fill: shadow, opacity: op }, ns);
+    } else if (a > 14) {
+      var k = Math.min(a, 60) / 60, cx = 150 + side * (7 + 12 * k), cy = h === 'above' ? 180 : 172;
+      el('ellipse', { cx: cx, cy: cy, rx: 5 + 6 * k, ry: h === 'above' ? 4.5 : 3.5, transform: 'rotate(' + (side * (h === 'above' ? 30 : 10)) + ' ' + cx + ' ' + cy + ')', fill: shadow, opacity: nOp }, ns);
+    }
+
+    // height effects
+    $('chin').setAttribute('fill', shadow); $('chin').setAttribute('opacity', h === 'above' ? op * 0.85 : (h === 'eye' ? op * 0.35 : 0));
+    ['sockL', 'sockR'].forEach(function (id) { $(id).setAttribute('fill', shadow); $(id).setAttribute('opacity', h === 'above' ? 0.22 : 0); });
+    var bf = (a <= 20 && h === 'above') ? 0.38 * op : 0;
+    ['cheekL', 'cheekR'].forEach(function (id) { $(id).setAttribute('fill', shadow); $(id).setAttribute('opacity', bf); });
+    $('fore').setAttribute('opacity', h === 'low' && a < 140 ? 0.55 : 0);
+
+    // catchlights
+    var showCL = a < 100 && h !== 'low' && back < 0.2;
+    var dx = -side * 3, dy = h === 'above' ? -2 : 0;
+    $('clL').setAttribute('cx', 126 + dx); $('clL').setAttribute('cy', 127 + dy);
+    $('clR').setAttribute('cx', 174 + dx); $('clR').setAttribute('cy', 127 + dy);
+    var nearL = side === 1;
+    $('clL').setAttribute('opacity', showCL && (a < 45 || nearL) ? 0.95 : 0);
+    $('clR').setAttribute('opacity', showCL && (a < 45 || !nearL) ? 0.95 : 0);
+
+    // rim light and halo
+    var w = 2 + 4 * back, far = back * clamp((a - 150) / 30, 0, 1);
+    var rimL = side === 1 ? back : far, rimR = side === 1 ? far : back;
+    $('rimTop').setAttribute('stroke-width', w); $('rimTop').setAttribute('opacity', back * 0.95);
+    $('rimL').setAttribute('stroke-width', w); $('rimL').setAttribute('opacity', rimL);
+    $('rimR').setAttribute('stroke-width', w); $('rimR').setAttribute('opacity', rimR);
+    $('rimSL').setAttribute('stroke-width', w); $('rimSL').setAttribute('opacity', rimL * 0.85);
+    $('rimSR').setAttribute('stroke-width', w); $('rimSR').setAttribute('opacity', rimR * 0.85);
+    $('halo').setAttribute('opacity', (back * (S.soft ? 0.55 : 0.4)).toFixed(2));
+
+    var p = PAT[cls.id];
+    $('pDesc').textContent = 'Portrait showing ' + p.name + (cls.feathered ? ', feathered for softer shadows' : '') + '. Skin tone: ' + sk.n + '.';
+  }
+
+  // ---------- stage ----------
+  var C = { x: 150, y: 140, R: 100 };
+  var ZONES = [
+    { a0: 0, a1: 14, id: 'butterfly', short: 'Butterfly', c: '#e7a3ff' },
+    { a0: 15, a1: 40, id: 'loop', short: 'Loop', c: '#7fd1ff' },
+    { a0: 40, a1: 60, id: 'rembrandt', short: 'Rembrandt', c: '#ffd36b' },
+    { a0: 60, a1: 115, id: 'split', short: 'Split', c: '#ff9f80' },
+    { a0: 115, a1: 155, id: 'kicker', short: 'Edge', c: '#9aa3bf' },
+    { a0: 155, a1: 180, id: 'back', short: 'Back', c: '#8ff0c0' }
+  ];
+  function pos(theta, r) { var t = theta * Math.PI / 180; return { x: C.x - r * Math.sin(t), y: C.y + r * Math.cos(t) }; }
+  function arc(a0, a1, r) { var p0 = pos(a0, r), p1 = pos(a1, r), large = Math.abs(a1 - a0) > 180 ? 1 : 0, sweep = a1 > a0 ? 1 : 0; return 'M' + p0.x.toFixed(1) + ',' + p0.y.toFixed(1) + ' A' + r + ',' + r + ' 0 ' + large + ' ' + sweep + ' ' + p1.x.toFixed(1) + ',' + p1.y.toFixed(1); }
+
+  function buildStage() {
+    ST.setAttribute('role', 'group');
+    ST.setAttribute('aria-label', 'Top-down studio: the camera is at the bottom, the subject in the middle. Drag the light around the ring, or focus it and use the arrow keys.');
+    var h = '<rect width="300" height="300" rx="12" fill="#161924"/>' +
+      '<g id="zones"></g>' +
+      '<circle cx="150" cy="140" r="100" fill="none" stroke="#3a4060" stroke-dasharray="4 5"/>' +
+      '<line x1="150" y1="140" x2="150" y2="262" stroke="#4a5070" stroke-dasharray="3 4"/>' +
+      '<path id="angArc" fill="none" stroke="#f5c542" stroke-width="2"/>' +
+      '<text id="angTxt" font-size="12" font-weight="700" fill="#f5c542" text-anchor="middle"></text>' +
+      '<polygon id="cone" fill="#f5c542" opacity=".16"/><line id="beam" stroke="#f5c542" stroke-width="2" opacity=".75"/>' +
+      '<ellipse cx="150" cy="148" rx="34" ry="14" fill="#5d6273"/>' +
+      '<circle id="subHead" cx="150" cy="140" r="20" fill="#9a9a9a" stroke="#2a2a2a" stroke-width="1.5"/>' +
+      '<path d="M144,158 L150,168 L156,158 Z" fill="#9a9a9a" stroke="#2a2a2a" stroke-width="1.2"/>' +
+      '<text x="182" y="128" font-size="11" fill="#b4b9cc">subject</text>' +
+      '<g transform="translate(150,272)"><rect x="-17" y="-9" width="34" height="20" rx="4" fill="#d6d9e6"/><circle cx="0" cy="-10" r="7" fill="#d6d9e6"/><circle cx="0" cy="1" r="5" fill="#161924"/></g>' +
+      '<text x="176" y="282" font-size="11" fill="#b4b9cc">camera</text>' +
+      '<text x="12" y="20" font-size="10.5" fill="#b4b9cc">camera-left</text><text x="288" y="20" font-size="10.5" fill="#b4b9cc" text-anchor="end">camera-right</text>' +
+      '<g id="light" tabindex="0" role="slider" aria-label="Light position" aria-valuemin="0" aria-valuemax="359" style="cursor:grab">' +
+        '<circle id="lightHit" r="22" fill="transparent"/>' +
+        '<circle id="lightGlow" r="16" fill="#f5c542" opacity=".25"/>' +
+        '<rect id="lightBox" x="-8" y="-13" width="16" height="26" rx="3" fill="#f5c542" stroke="#6b5200" stroke-width="1.5"/>' +
+      '</g>' +
+      '<text id="hTxt" font-size="10.5" font-weight="700" fill="#f5c542" text-anchor="middle"></text>';
+    ST.innerHTML = h;
+    var z = $('zones'), zh = '';
+    ZONES.forEach(function (Z) {
+      [1, -1].forEach(function (sd) {
+        var a0 = sd === 1 ? Z.a0 : 360 - Z.a1, a1 = sd === 1 ? Z.a1 : 360 - Z.a0;
+        if (Z.a0 === 0 && sd === -1) { a0 = 346; a1 = 360; }
+        zh += '<path d="' + arc(a0, a1, 112) + '" stroke="' + Z.c + '" stroke-width="7" fill="none" opacity=".6"/>';
+      });
+      var mid = (Z.a0 + Z.a1) / 2, lp = pos(Z.id === 'butterfly' ? 0 : mid, 128);
+      if (Z.id === 'butterfly') zh += '<text x="' + (lp.x + 34) + '" y="' + (lp.y - 6) + '" font-size="10" font-weight="700" fill="' + Z.c + '" text-anchor="middle">Butterfly</text>';
+      else zh += '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + 4).toFixed(1) + '" font-size="10" font-weight="700" fill="' + Z.c + '" text-anchor="middle">' + Z.short + '</text>';
+    });
+    z.innerHTML = zh;
+  }
+
+  function renderStage(cls) {
+    var g = geo(), lp = pos(g.raw, C.R);
+    var L = $('light'); L.setAttribute('transform', 'translate(' + lp.x.toFixed(1) + ',' + lp.y.toFixed(1) + ')');
+    var rot = Math.atan2(C.y - lp.y, C.x - lp.x) * 180 / Math.PI;
+    $('lightBox').setAttribute('transform', 'rotate(' + rot.toFixed(1) + ')');
+    var size = S.height === 'above' ? 1.25 : (S.height === 'eye' ? 1 : 0.8);
+    $('lightGlow').setAttribute('r', (14 * size).toFixed(1));
+    $('lightBox').setAttribute('width', S.soft ? 16 : 9); $('lightBox').setAttribute('x', S.soft ? -8 : -4.5);
+    $('lightBox').setAttribute('height', S.soft ? 26 : 12); $('lightBox').setAttribute('y', S.soft ? -13 : -6);
+    // beam
+    var aim = Math.atan2(C.y - lp.y, C.x - lp.x);
+    if (S.feather) aim += (g.side === 1 ? -1 : 1) * (g.raw > 90 && g.raw < 270 ? -1 : 1) * 0.42;
+    var len = Math.hypot(C.x - lp.x, C.y - lp.y) + 20, spread = S.soft ? 0.3 : 0.16;
+    var e = { x: lp.x + Math.cos(aim) * len, y: lp.y + Math.sin(aim) * len };
+    $('beam').setAttribute('x1', lp.x); $('beam').setAttribute('y1', lp.y); $('beam').setAttribute('x2', e.x.toFixed(1)); $('beam').setAttribute('y2', e.y.toFixed(1));
+    var c1 = { x: lp.x + Math.cos(aim - spread) * len, y: lp.y + Math.sin(aim - spread) * len }, c2 = { x: lp.x + Math.cos(aim + spread) * len, y: lp.y + Math.sin(aim + spread) * len };
+    $('cone').setAttribute('points', lp.x.toFixed(1) + ',' + lp.y.toFixed(1) + ' ' + c1.x.toFixed(1) + ',' + c1.y.toFixed(1) + ' ' + c2.x.toFixed(1) + ',' + c2.y.toFixed(1));
+    // angle arc from camera axis
+    var a = g.a, sd = g.side;
+    if (a >= 2) { var a1 = sd === 1 ? a : 360 - a; $('angArc').setAttribute('d', sd === 1 ? arc(0, a1, 40) : arc(360, a1, 40)); var mp = pos(sd === 1 ? a / 2 : 360 - a / 2, 54); $('angTxt').setAttribute('x', mp.x.toFixed(1)); $('angTxt').setAttribute('y', (mp.y + 4).toFixed(1)); $('angTxt').textContent = Math.round(a) + '°'; }
+    else { $('angArc').setAttribute('d', ''); $('angTxt').textContent = ''; }
+    var hl = S.height === 'above' ? 'above' : (S.height === 'eye' ? 'eye level' : 'low');
+    var tp = pos(g.raw, C.R - 30);
+    $('hTxt').setAttribute('x', tp.x.toFixed(1)); $('hTxt').setAttribute('y', (tp.y + 4).toFixed(1)); $('hTxt').textContent = hl;
+    $('zones').style.display = S.hints ? '' : 'none';
+    var where = a < 2 ? 'beside the camera' : (a > 178 ? 'directly behind the subject' : Math.round(a) + '° camera-' + (sd === 1 ? 'left' : 'right'));
+    var htxt = S.height === 'above' ? 'above eye level' : (S.height === 'eye' ? 'at eye level' : 'below eye level');
+    L.setAttribute('aria-valuenow', Math.round(g.raw));
+    L.setAttribute('aria-valuetext', 'Light ' + where + ', ' + htxt + ', ' + (S.soft ? 'softbox' : 'bare bulb') + (S.feather ? ', feathered' : ''));
+    $('readout').textContent = 'Light: ' + where + ' · ' + htxt + ' · ' + (S.soft ? 'softbox (soft)' : 'bare bulb (hard)') + (S.feather ? ' · feathered' : '');
+  }
+
+  // ---------- feedback ----------
+  function renderFeedback(cls) {
+    var p = PAT[cls.id];
+    var name = 'Closest pattern: ' + p.name + (cls.feathered ? ' (feathered)' : '');
+    var text = p.text + (cls.feathered ? ' Feathering: the light is aimed slightly away so the soft edge of the beam lights the face, giving softer, more even light with gentle shadows.' : (S.feather ? ' (Feathering softens the edges here too, but it works best with the light 15–65° to the side.)' : '')) + (!S.soft && !S.feather ? ' The bare bulb makes the shadow edges hard and crisp.' : '');
+    if ($('fbName').textContent !== name) $('fbName').textContent = name;
+    // the live region only changes when the pattern or light quality changes, so dragging does not flood screen readers
+    if ($('fbText').textContent !== text) $('fbText').textContent = text;
+  }
+
+  function render() { var cls = classify(); renderPortrait(cls); renderStage(cls); renderFeedback(cls); }
+
+  buildPortrait(); buildStage();
+
+  // ---------- input ----------
+  function setAngle(v) { S.angle = Math.round(norm(v)); render(); }
+  var dragging = false;
+  function ptAngle(ev) {
+    var r = ST.getBoundingClientRect(), x = (ev.clientX - r.left) * 300 / r.width, y = (ev.clientY - r.top) * 300 / r.height;
+    return norm(Math.atan2(-(x - C.x), y - C.y) * 180 / Math.PI);
+  }
+  ST.addEventListener('pointerdown', function (ev) { dragging = true; ST.classList.add('drag'); try { ST.setPointerCapture(ev.pointerId); } catch (e) {} setAngle(ptAngle(ev)); ev.preventDefault(); });
+  ST.addEventListener('pointermove', function (ev) { if (dragging) setAngle(ptAngle(ev)); });
+  function endDrag() { dragging = false; ST.classList.remove('drag'); }
+  ST.addEventListener('pointerup', endDrag); ST.addEventListener('pointercancel', endDrag);
+  var HTS = ['low', 'eye', 'above'];
+  function setHeight(h) { S.height = h; [].forEach.call(document.querySelectorAll('#heightSeg button'), function (b) { b.setAttribute('aria-pressed', b.dataset.h === h ? 'true' : 'false'); }); render(); }
+  $('light').addEventListener('keydown', function (ev) {
+    var st = ev.shiftKey ? 15 : 5, k = ev.key, i = HTS.indexOf(S.height);
+    if (k === 'ArrowLeft') setAngle(S.angle + st);
+    else if (k === 'ArrowRight') setAngle(S.angle - st);
+    else if (k === 'ArrowUp') setHeight(HTS[Math.min(2, i + 1)]);
+    else if (k === 'ArrowDown') setHeight(HTS[Math.max(0, i - 1)]);
+    else if (k === 'Home') setAngle(0);
+    else if (k === 'End') setAngle(180);
+    else return;
+    ev.preventDefault();
+  });
+  $('rotL').onclick = function () { setAngle(S.angle + 15); };
+  $('rotLs').onclick = function () { setAngle(S.angle + 5); };
+  $('rotRs').onclick = function () { setAngle(S.angle - 5); };
+  $('rotR').onclick = function () { setAngle(S.angle - 15); };
+  [].forEach.call(document.querySelectorAll('#heightSeg button'), function (b) { b.onclick = function () { setHeight(b.dataset.h); }; });
+  [].forEach.call(document.querySelectorAll('#qualSeg button'), function (b) { b.onclick = function () { S.soft = b.dataset.q === 'soft'; [].forEach.call(document.querySelectorAll('#qualSeg button'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); render(); }; });
+  $('featherBtn').onclick = function () { S.feather = !S.feather; this.setAttribute('aria-pressed', S.feather ? 'true' : 'false'); render(); };
+  $('hints').onchange = function () { S.hints = this.checked; render(); };
+  var sws = $('swatches');
+  SKINS.forEach(function (s, i) {
+    var b = document.createElement('button'); b.className = 'sw'; b.style.background = s.lit; b.setAttribute('aria-label', 'Skin tone: ' + s.n); b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.onclick = function () { S.skin = i; [].forEach.call(sws.children, function (x, j) { x.setAttribute('aria-pressed', j === i ? 'true' : 'false'); }); render(); };
+    sws.appendChild(b);
+  });
+
+  // ---------- challenge mode ----------
+  var ROUNDS = [
+    { id: 'split', title: 'Create split lighting', start: { angle: 20, height: 'above' }, tip: 'Split lighting: light at 90° to the side, about eye level. Two equal halves, one lit and one in shadow, for intensity or mystery.' },
+    { id: 'rembrandt', title: 'Create Rembrandt lighting', start: { angle: 300, height: 'eye' }, tip: 'Rembrandt: 45° to the side and slightly above eye level. Look for the small triangle of light on the shadowed cheek.' },
+    { id: 'loop', title: 'Create loop lighting', start: { angle: 100, height: 'low' }, tip: 'Loop: 30–45° to the side, slightly above eye level. The nose loop must not touch the cheek shadow; go further round and it becomes Rembrandt.' },
+    { id: 'butterfly', title: 'Create butterfly (Paramount) lighting', start: { angle: 70, height: 'eye' }, tip: 'Butterfly: directly in front of the subject and above, pointing down. The glamour setup: cheekbones and a small butterfly under the nose.' },
+    { id: 'back', title: 'Create backlighting (a rim light)', start: { angle: 40, height: 'above' }, tip: 'Backlighting: behind the subject, facing the camera. Hide the lamp behind the head to avoid flare; the rim separates the subject from the background.' },
+    { id: 'feather', title: 'Create feathered light for a gentle portrait', start: { angle: 90, height: 'eye' }, tip: 'Feathering: aim the light slightly away so the soft edge of the beam lights the face. Combine it with a softbox at about 30–50° and slightly above eye level.' }
+  ];
+  var CH = null;
+  function ideal(id, a, h) {
+    switch (id) {
+      case 'split': return Math.abs(a - 90) <= 10 && h === 'eye';
+      case 'rembrandt': return Math.abs(a - 45) <= 7 && h === 'above';
+      case 'loop': return a >= 25 && a <= 40 && h === 'above';
+      case 'butterfly': return a <= 8 && h === 'above';
+      case 'back': return a >= 170 && h !== 'low';
+      case 'feather': return S.soft && h === 'above';
+    }
+    return false;
+  }
+  var NEAR = { split: ['rembrandt', 'kicker'], rembrandt: ['loop', 'split'], loop: ['rembrandt', 'butterfly'], butterfly: ['flat', 'loop'], back: ['kicker'], feather: [] };
+  function grade(r) {
+    var cls = classify(), a = geo().a, h = S.height, stars, right;
+    if (r.id === 'feather') { right = cls.feathered; stars = right ? (ideal('feather', a, h) ? 3 : 2) : (S.feather ? 1 : 0); }
+    else { right = cls.id === r.id; stars = right ? (ideal(r.id, a, h) ? 3 : 2) : (NEAR[r.id].indexOf(cls.id) >= 0 ? 1 : 0); }
+    return { stars: stars, right: right, got: PAT[cls.id].name + (cls.feathered ? ' (feathered)' : '') };
+  }
+  function starsHTML(n) { var s = ''; for (var i = 0; i < 3; i++) s += i < n ? '★' : '<span class="off">★</span>'; return '<span class="stars" aria-label="' + n + ' of 3 stars">' + s + '</span>'; }
+  function best() { try { return +(localStorage.getItem('onelight_best') || 0); } catch (e) { return 0; } }
+  function saveBest(v) { try { if (v > best()) localStorage.setItem('onelight_best', String(v)); } catch (e) {} }
+  function loadRound() {
+    var r = ROUNDS[CH.i];
+    S.angle = r.start.angle; S.feather = false; S.soft = true;
+    $('featherBtn').setAttribute('aria-pressed', 'false');
+    [].forEach.call(document.querySelectorAll('#qualSeg button'), function (x) { x.setAttribute('aria-pressed', x.dataset.q === 'soft' ? 'true' : 'false'); });
+    setHeight(r.start.height);
+    CH.shot = null; drawChallenge();
+  }
+  function drawChallenge() {
+    var b = $('chalBody'), r = CH && ROUNDS[CH.i];
+    if (!CH) return;
+    if (CH.done) {
+      var max = ROUNDS.length * 3, msg = CH.score >= 16 ? 'Lighting director! You can build every one-light setup on demand.' : (CH.score >= 11 ? 'Strong work. Replay to turn your 2-star rounds into 3 stars.' : 'Good start. Revisit the lesson screens, then try again.');
+      b.innerHTML = '<div class="result good pop" role="status"><p><b>Challenge complete: ' + CH.score + ' / ' + max + ' stars.</b></p><p>' + msg + '</p><p class="hint">Best score on this device: ' + Math.max(best(), CH.score) + ' / ' + max + '</p></div>' +
+        '<div class="row" style="margin-top:10px"><button class="btn go" id="again">Play again</button><button class="btn" id="toFree">Back to the free studio</button></div>';
+      $('again').onclick = startChallenge; $('toFree').onclick = function () { setMode('free'); };
+      $('again').focus();
+      return;
+    }
+    var h = '<div class="target"><div><span class="hint">Round ' + (CH.i + 1) + ' of ' + ROUNDS.length + '</span><br><b id="chTarget">' + r.title + '</b></div><div class="score" id="chScore">Score: ' + CH.score + ' / ' + (ROUNDS.length * 3) + ' ★</div></div>';
+    if (!CH.shot) h += '<p class="hint">Move the light, set the height and quality, then take the shot. Zone hints are hidden in challenge mode; switch them back on if you need help.</p><div class="row"><button class="btn go" id="shoot">Take the shot</button></div>';
+    else {
+      var g = CH.shot;
+      h += '<div class="result ' + (g.stars >= 2 ? 'good' : 'bad') + '" role="status"><p>' + starsHTML(g.stars) + ' <b>' + (g.stars === 3 ? 'Perfect setup.' : g.stars === 2 ? 'Correct pattern.' : g.stars === 1 ? 'Close, but not quite.' : 'Not this time.') + '</b> You created: ' + g.got + '.</p><p><b>Tip:</b> ' + r.tip + '</p></div>' +
+        '<div class="row" style="margin-top:10px"><button class="btn go" id="next">' + (CH.i + 1 < ROUNDS.length ? 'Next round' : 'See my score') + '</button></div>';
+    }
+    b.innerHTML = h;
+    if ($('shoot')) $('shoot').onclick = function () { var g = grade(r); CH.shot = g; CH.score += g.stars; drawChallenge(); $('next').focus(); };
+    if ($('next')) $('next').onclick = function () { CH.i++; if (CH.i >= ROUNDS.length) { CH.done = true; saveBest(CH.score); drawChallenge(); } else { loadRound(); $('chTarget').setAttribute('tabindex', '-1'); $('chTarget').focus(); } };
+  }
+  function startChallenge() { CH = { i: 0, score: 0, done: false, shot: null }; S.hints = false; $('hints').checked = false; loadRound(); }
+  function setMode(m) {
+    S.mode = m;
+    $('tabFree').setAttribute('aria-selected', m === 'free' ? 'true' : 'false');
+    $('tabChal').setAttribute('aria-selected', m === 'chal' ? 'true' : 'false');
+    $('chalPanel').hidden = m !== 'chal';
+    if (m === 'chal') { startChallenge(); $('chalPanel').scrollIntoView({ block: 'nearest' }); }
+    else { CH = null; S.hints = true; $('hints').checked = true; render(); }
+  }
+  $('tabFree').onclick = function () { setMode('free'); };
+  $('tabChal').onclick = function () { setMode('chal'); };
+
+  // test hook (read-only state plus a setter used by automated checks)
+  window.OneLight = { state: S, classify: classify, set: function (o) { for (var k in o) S[k] = o[k]; syncUI(); render(); } };
+  function syncUI() {
+    [].forEach.call(document.querySelectorAll('#heightSeg button'), function (b) { b.setAttribute('aria-pressed', b.dataset.h === S.height ? 'true' : 'false'); });
+    [].forEach.call(document.querySelectorAll('#qualSeg button'), function (b) { b.setAttribute('aria-pressed', (b.dataset.q === 'soft') === S.soft ? 'true' : 'false'); });
+    $('featherBtn').setAttribute('aria-pressed', S.feather ? 'true' : 'false');
+    [].forEach.call(sws.children, function (x, j) { x.setAttribute('aria-pressed', j === S.skin ? 'true' : 'false'); });
+  }
+
+  render();
+
+  /* ---------- saved progress (GameSave): the light setup, the mode and the challenge round in progress survive a reload ---------- */
+  if (window.GameSave) {
+    var gsTouched = false, gsT = 0;
+    var gsSoon = function () { gsTouched = true; clearTimeout(gsT); gsT = setTimeout(function () { GameSave.save(); }, 500); };
+    GameSave.persist({
+      key: 'onelight.save',
+      get: function () {
+        if (!gsTouched) return undefined;
+        return { v: 1, S: { angle: S.angle, height: S.height, soft: S.soft, feather: S.feather, skin: S.skin, hints: S.hints }, mode: S.mode, CH: CH ? { i: CH.i, score: CH.score, done: CH.done, shot: CH.shot } : null };
+      },
+      set: function (d) {
+        if (!d || d.v !== 1 || !d.S) throw 0;
+        var s = d.S, ch = d.CH;
+        if (!isFinite(s.angle) || HTS.indexOf(s.height) < 0 || !SKINS[s.skin]) throw 0;
+        if (d.mode === 'chal' && !(ch && ch.i >= 0 && ch.i <= ROUNDS.length)) throw 0;
+        S.angle = Math.round(norm(+s.angle)); S.height = s.height; S.soft = !!s.soft; S.feather = !!s.feather; S.skin = s.skin;
+        if (d.mode === 'chal') {
+          S.mode = 'chal'; $('tabFree').setAttribute('aria-selected', 'false'); $('tabChal').setAttribute('aria-selected', 'true'); $('chalPanel').hidden = false;
+          CH = { i: ch.done ? ROUNDS.length : Math.min(ch.i | 0, ROUNDS.length - 1), score: +ch.score || 0, done: !!ch.done, shot: ch.shot && typeof ch.shot === 'object' ? ch.shot : null };
+          S.hints = !!s.hints;
+        } else S.hints = s.hints !== false;
+        $('hints').checked = S.hints;
+        syncUI(); render(); if (CH) drawChallenge();
+        gsTouched = true;
+      }
+    });
+    ['click', 'change', 'pointerup', 'keyup'].forEach(function (t) { document.addEventListener(t, gsSoon, true); });
+  }
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

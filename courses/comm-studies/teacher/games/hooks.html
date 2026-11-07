@@ -1,0 +1,771 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head><body><a href="../index.html#games" style="position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:calc(14px + env(safe-area-inset-left,0px));z-index:9999;background:#0B1736;color:#F5C542;font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35)">← Back to course</a>
+<title>Hook, Line and Genre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF6F6;--surface:#FFFFFF;--ink:#0D2B36;--soft:#4E6B75;--line:#C9E2E4;
+  --sea:#0C6E83;--sea2:#0A4F63;--deep:#062F3E;--gold:#F2B33D;--coral:#E8664A;--good:#1E8C5A;--bad:#C2412D;
+  --font-d:"Fraunces",Georgia,serif;--font-b:"Nunito Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#061E28;--surface:#0D2E3B;--ink:#E8F6F7;--soft:#9FC0C7;--line:#1D4A58;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#061E28;--surface:#0D2E3B;--ink:#E8F6F7;--soft:#9FC0C7;--line:#1D4A58;--good:#4CC98C;--bad:#FF8A70;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)!important;color:var(--ink)!important;font:400 16px/1.55 var(--font-b)!important;padding:0 0 80px}
+.hero{background:linear-gradient(180deg,var(--sea) 0%,var(--sea2) 70%,var(--deep) 100%);color:#fff;padding:28px 16px 70px;position:relative;overflow:hidden}
+.hero .in{max-width:1000px;margin:0 auto;position:relative;z-index:2}
+.hero h1{font:800 clamp(2rem,5.5vw,3.4rem)/1.05 var(--font-d);margin:0 0 8px;letter-spacing:-.01em}
+.hero p{margin:0;max-width:60ch;color:#D6F1F4;font-size:1.05rem}
+.waves{position:absolute;left:0;right:0;bottom:-2px;height:60px;z-index:1}
+.waves path{fill:var(--bg)}
+.boat{position:absolute;right:6%;top:18px;font-size:clamp(46px,8vw,78px);z-index:2;animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(8px) rotate(3deg)}}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 14px;font-weight:800;font-size:.95rem}
+.wrap{max-width:1000px;margin:-30px auto 0;padding:0 16px;position:relative;z-index:3}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{font:800 .98rem var(--font-b);border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 18px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:#2B1A00}
+.tab:focus-visible,.btn:focus-visible,.opt:focus-visible,.gcard:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,26px);margin-bottom:16px;min-width:0}
+h2{font:800 1.6rem/1.15 var(--font-d);margin:0 0 6px}
+h3{font:800 1.15rem/1.2 var(--font-d);margin:0 0 6px}
+.lead{color:var(--soft);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.gcard{text-align:left;cursor:pointer;font:inherit;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:16px;border-top:6px solid var(--c);transition:transform .15s}
+.gcard:hover{transform:translateY(-2px)}
+.gcard .ic{font-size:1.8rem}
+.gcard .p{color:var(--soft);font-size:.95rem;margin:4px 0 0}
+.detail{border-top:6px solid var(--c)}
+.detail h4{margin:16px 0 6px;font:800 .82rem var(--font-b);letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.detail ul{margin:0;padding-left:20px}.detail li{margin:3px 0}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1.5px solid var(--c,var(--sea));border-radius:999px;padding:2px 12px;font-size:.92rem;font-weight:600}
+.pill.no{border-style:dashed;opacity:.8;text-decoration:line-through}
+.ex{background:color-mix(in srgb,var(--c,var(--sea)) 10%,transparent);border-left:4px solid var(--c,var(--sea));border-radius:0 12px 12px 0;padding:10px 14px;margin:8px 0;font-style:italic}
+.btn{font:800 1rem var(--font-b);border:0;border-radius:999px;padding:11px 22px;cursor:pointer;background:var(--sea);color:#fff}
+.btn.gold{background:var(--gold);color:#2B1A00}.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.lv{text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:16px}
+.lv b{font:800 1.1rem var(--font-d)}.lv .s{color:var(--gold);font-size:1.2rem;letter-spacing:2px}
+.task{background:linear-gradient(135deg,var(--sea),var(--sea2));color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.task .k{font:800 .78rem var(--font-b);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.task p{margin:4px 0 0;font-size:1.08rem}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;font:600 1rem/1.45 var(--font-b);color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.opt .L{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--bg);font-weight:800}
+.opt:hover:not(:disabled){border-color:var(--sea)}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--surface))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.opt:disabled{cursor:default}
+.opt .why{display:block;font-weight:400;font-size:.93rem;color:var(--soft);margin-top:4px}
+.fb{border-radius:14px;padding:12px 16px;margin:12px 0;font-weight:600}
+.fb.good{background:color-mix(in srgb,var(--good) 14%,transparent);border:1.5px solid var(--good)}
+.fb.bad{background:color-mix(in srgb,var(--bad) 12%,transparent);border:1.5px solid var(--bad)}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sea),var(--gold));transition:width .3s}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--soft);font-weight:700}
+.fish{position:fixed;font-size:46px;pointer-events:none;z-index:50;left:50%;bottom:-60px;animation:jump 1.1s ease-out forwards}
+@keyframes jump{0%{transform:translate(-50%,0) rotate(0)}50%{transform:translate(-10%,-55vh) rotate(-30deg)}100%{transform:translate(30%,0) rotate(-90deg);opacity:0}}
+.big{font:800 3rem var(--font-d);margin:0;color:var(--sea)}
+textarea{width:100%;min-height:110px;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px}
+select{font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:8px 10px;max-width:100%}
+label.ck{display:flex;gap:10px;align-items:flex-start;margin:6px 0}
+footer{max-width:1000px;margin:24px auto 0;padding:0 16px;color:var(--soft);font-size:.9rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){.boat,.fish{animation:none}.gcard{transition:none}}
+.lv:disabled{cursor:not-allowed;opacity:.55}.lv .lk,.lk{display:block;margin-top:6px;font-weight:700;font-size:.9rem}.tbadge{display:inline-block;margin-bottom:10px;border:1.5px dashed currentColor;border-radius:999px;padding:3px 12px;font-weight:700;font-size:.88rem;opacity:.85}
+</style>
+
+<header class="hero">
+  <div class="boat" aria-hidden="true">🎣</div>
+  <div class="in">
+    <h1>Hook, Line and Genre</h1>
+    <p>Every genre has its own features, every opening needs the right hook, and every persuasive voice uses rhetorical devices. Learn them, then cast your line: identify, match and select the right one.</p>
+    <div class="stats"><span class="stat" id="stFish">🐟 0 fish caught</span><span class="stat" id="stStreak">🔥 Streak 0</span><span class="stat" id="stBest">⭐ 0 stars</span></div>
+  </div>
+  <svg class="waves" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C150 0 300 60 450 30 C600 0 750 60 900 30 C1050 0 1150 50 1200 30 L1200 60 L0 60 Z"/></svg>
+</header>
+
+<main class="wrap">
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="guide" aria-selected="true">📘 Genre field guide</button>
+    <button class="tab" role="tab" data-tab="tackle" aria-selected="false">🧰 Hook tackle box</button>
+    <button class="tab" role="tab" data-tab="rhet" aria-selected="false">🗣️ Rhetorical devices</button>
+    <button class="tab" role="tab" data-tab="play" aria-selected="false">🎣 Cast your line</button>
+    <button class="tab" role="tab" data-tab="write" aria-selected="false">✍️ Write your own hook</button>
+  </div>
+  <div id="view" aria-live="polite"></div>
+</main>
+<footer>Kester Small</footer>
+
+<script>
+(function () {
+  /* ======================= CONTENT ======================= */
+  var GENRES = [
+    { id: 'nar', name: 'Narrative', ic: '📖', c: '#C2563A',
+      purpose: 'To tell a story: to entertain, and often to reveal an insight about life.',
+      features: ['A plot that moves from exposition through rising action and climax to a resolution', 'Characters, a setting and a conflict', 'A narrator with a point of view (first person "I" or third person "she, they")', 'Usually chronological order, sometimes with flashback', 'Dialogue that reveals character', 'Mostly past tense, with vivid action verbs', 'A theme or message the reader works out'],
+      formats: ['Short story', 'Anecdote', 'Memoir', 'Folk tale (Anansi stories)', 'Narrative poem', 'Calypso that tells a story'],
+      clues: ['"Suddenly…", "That night…", "Years later…"', 'Speech marks and dialogue tags', 'A character facing a problem'],
+      best: ['In medias res', 'Dialogue', 'Sensory image', 'Anecdote'], avoid: ['Startling statistic', 'Definition'],
+      example: '"The radio crackled once, then died, and Papa\'s boat was still not back past Pelican Key."' },
+    { id: 'des', name: 'Descriptive', ic: '🎨', c: '#7A4BB0',
+      purpose: 'To create a vivid picture of a person, place, object or event so the reader can see, hear and feel it.',
+      features: ['Sensory details: sight, sound, smell, taste, touch', 'Figurative language: simile, metaphor, personification', 'One dominant impression (peaceful, chaotic, eerie)', 'Spatial order: near to far, top to bottom, left to right', 'Precise nouns and strong adjectives', 'Little or no plot; the description is the point'],
+      formats: ['Travel writing', 'Character sketch', 'Description of a setting', 'Feature article', 'Descriptive poem'],
+      clues: ['Many sense words', 'Long noun phrases', 'Comparisons: "like", "as… as"'],
+      best: ['Sensory image', 'Contrast'], avoid: ['Bold claim', 'Definition', 'Startling statistic'],
+      example: '"At five in the morning, Castries market smells of salt, diesel and fresh bakes."' },
+    { id: 'exp', name: 'Expository', ic: '🧭', c: '#0C6E83',
+      purpose: 'To inform or explain: to help the reader understand a topic, process or issue.',
+      features: ['A clear thesis or controlling idea', 'Facts, statistics, examples and definitions', 'An objective, neutral tone; usually third person', 'Organisational strategies: cause and effect, compare and contrast, process, classification', 'Topic sentences and clear transitions', 'Formal register; headings in reports'],
+      formats: ['Report', 'Textbook section', 'News article', 'How-to guide', 'Information leaflet', 'Expository essay'],
+      clues: ['"This is caused by…", "There are three types…", "First…, next…"', 'Numbers and data', 'No "I think"'],
+      best: ['Startling statistic', 'Definition', 'Rhetorical question'], avoid: ['In medias res', 'Direct address that pressures the reader'],
+      example: '"Sargassum seaweed can grow by up to 10 per cent a day in warm water, and the Caribbean Sea is warming."' },
+    { id: 'arg', name: 'Argumentative', ic: '⚖️', c: '#2D5DA8',
+      purpose: 'To prove a claim with reasons and evidence, so a thinking reader accepts it as the most reasonable position.',
+      features: ['A clear claim (thesis) stated early', 'Reasons supported by evidence: statistics, expert opinion, examples', 'A counterargument that is conceded and then rebutted', 'Logical connectives: therefore, however, consequently', 'Logos (logic) more than pathos (emotion)', 'Formal, measured tone'],
+      formats: ['Debate speech', 'Editorial', 'Academic essay', 'Position paper', 'Letter to the editor (reasoned)'],
+      clues: ['"Some argue that… However…"', '"The evidence shows…"', 'Balanced, formal wording'],
+      best: ['Bold claim', 'Startling statistic', 'Quotation', 'Contrast'], avoid: ['Dialogue', 'In medias res'],
+      example: '"Banning single-use plastics is not an attack on business; it is the cheapest flood-prevention plan we have."' },
+    { id: 'per', name: 'Persuasive', ic: '📣', c: '#D4861A',
+      purpose: 'To move the audience to believe something or, above all, to DO something.',
+      features: ['Emotional appeals (pathos) alongside credibility (ethos)', 'Direct address ("you") and inclusive "we"', 'Rhetorical questions', 'Repetition, tricolon (groups of three) and slogans', 'Emotive, loaded words', 'A clear call to action'],
+      formats: ['Advertisement', 'Campaign speech', 'Public service announcement', 'Flyer or poster', 'Fundraising letter'],
+      clues: ['Imperatives: "Join", "Act now", "Say no"', '"You" everywhere', 'Strong emotion'],
+      best: ['Direct address', 'Rhetorical question', 'Anecdote', 'Startling statistic'], avoid: ['Definition', 'Dry overview'],
+      example: '"You would never leave your phone at home in a hurricane. So why leave your neighbour behind?"' },
+    { id: 'ref', name: 'Reflective', ic: '🪞', c: '#1E8C5A',
+      purpose: 'To explore a personal experience and show what you learned or how you changed.',
+      features: ['First person "I"', 'Describes an experience, then explores feelings about it', 'Evaluates what went well and what did not', 'States a lesson, insight or change in thinking', 'Moves between past (what happened) and present (what I now understand)', 'Honest, thoughtful, semi-formal tone'],
+      formats: ['Reflective essay', 'Journal entry', 'Learning log', 'Personal blog post', 'Paper 032 Section B reflective piece'],
+      clues: ['"Looking back…", "I realised…", "Now I understand…"', 'Feelings and insights, not just events'],
+      best: ['Anecdote', 'Rhetorical question', 'Quotation', 'Contrast'], avoid: ['Startling statistic', 'Definition'],
+      example: '"I used to think a presentation was about the slides. Then my laptop died in front of forty people."' }
+  ];
+
+  var HOOKS = [
+    { name: 'Anecdote', def: 'A very short true-sounding story that leads into the topic.', ex: 'Last Carnival, my cousin lost her phone, her wallet and her voice, and still called it the best day of the year.', good: 'Narrative, persuasive and reflective writing; speeches.' },
+    { name: 'Startling statistic', def: 'A surprising number or fact that makes the reader sit up.', ex: 'Nine out of ten Caribbean students own a smartphone, yet fewer than half have ever backed up a file.', good: 'Expository and argumentative writing; persuasive campaigns.' },
+    { name: 'Rhetorical question', def: 'A question asked for effect, not for an answer; it makes the reader think.', ex: 'When did we decide that speaking Creole makes a child less intelligent?', good: 'Persuasive and argumentative writing; reflective pieces.' },
+    { name: 'Sensory image', def: 'A vivid picture built from sight, sound, smell, taste or touch.', ex: 'The pans rang out over Frederick Street, sweet and sharp as sugar-cake.', good: 'Descriptive and narrative writing.' },
+    { name: 'In medias res', def: 'Latin for "in the middle of things": start in the middle of the action.', ex: 'The wave hit the bow before anyone could shout.', good: 'Narrative writing.' },
+    { name: 'Dialogue', def: 'Open with someone speaking, so the reader meets a character straight away.', ex: '"Yuh going to the beach in that?" Granny asked, eyeing my new shoes.', good: 'Narrative writing; some reflective pieces.' },
+    { name: 'Quotation or proverb', def: 'A well-chosen saying or quotation from an authority that frames the topic.', ex: '"Every mickle mek a muckle." My grandmother said it about saving money; it is just as true of saving water.', good: 'Argumentative, reflective and persuasive writing.' },
+    { name: 'Bold claim', def: 'A strong, confident statement of your position, sometimes controversial.', ex: 'Homework, as we now set it, is doing more harm than good.', good: 'Argumentative and persuasive writing.' },
+    { name: 'Definition', def: 'A clear explanation of a key term so the reader starts with the same understanding.', ex: 'Code-switching is the movement between two languages or varieties within a single conversation.', good: 'Expository writing (use sparingly: avoid "Webster\'s Dictionary defines…").' },
+    { name: 'Direct address', def: 'Speak straight to the reader or listener as "you".', ex: 'You have thirty seconds. That is how long it takes a toddler to slip under the water.', good: 'Persuasive writing, speeches and campaigns.' },
+    { name: 'Contrast', def: 'Set two opposite ideas, times or images side by side to create tension.', ex: 'Forty years ago, Grace Bay was a quiet fishing beach. Today it is a wall of resorts.', good: 'Argumentative, descriptive and reflective writing.' }
+  ];
+
+  // Level 1: genre + task -> best hook TYPE
+  var L1 = [
+    { task: 'Narrative · A short story for a school anthology about a fisherman caught in a sudden storm.', a: 'In medias res', o: ['Startling statistic', 'Definition', 'Bold claim'],
+      why: 'Stories grip readers fastest when they start in the middle of the action: the storm is already happening.', w: { 'Startling statistic': 'Numbers belong in reports, not stories; they pull the reader out of the scene.', 'Definition': 'Defining "storm" would kill the suspense.', 'Bold claim': 'A claim argues a point; a story should show, not argue.' } },
+    { task: 'Expository · A Geography report explaining the causes of beach erosion on Barbados’s west coast.', a: 'Startling statistic', o: ['Dialogue', 'Sensory image', 'Direct address'],
+      why: 'A report informs, so a surprising, sourced fact shows at once why the topic matters.', w: { 'Dialogue': 'Dialogue suits a story, not an objective report.', 'Sensory image': 'A short image might work in a feature article, but a report needs facts first.', 'Direct address': 'Speaking to "you" is persuasive; a report should stay neutral.' } },
+    { task: 'Persuasive · A one-minute PSA urging teenagers to wear seatbelts in the back seat.', a: 'Direct address', o: ['Definition', 'Dialogue', 'Contrast'],
+      why: 'A PSA wants action from a specific audience, so speaking straight to "you" makes each listener feel targeted.', w: { 'Definition': 'Teenagers know what a seatbelt is; defining it wastes your few seconds.', 'Dialogue': 'Dialogue can work in a PSA drama, but on its own it delays the message.', 'Contrast': 'Contrast can help later, but it is less direct than speaking to the listener.' } },
+    { task: 'Descriptive · A travel piece capturing Coronation Market in Kingston on a Saturday morning.', a: 'Sensory image', o: ['Startling statistic', 'Bold claim', 'Definition'],
+      why: 'Descriptive writing lives on the senses: open with the smells, sounds and colours of the market.', w: { 'Startling statistic': 'Visitor numbers do not paint a picture.', 'Bold claim': 'Description creates an impression; it does not argue.', 'Definition': 'Nobody needs "market" defined.' } },
+    { task: 'Argumentative · An editorial claiming that CXC should allow Creole in oral examinations.', a: 'Bold claim', o: ['In medias res', 'Sensory image', 'Dialogue'],
+      why: 'Argument starts with a clear, confident position that the rest of the essay will prove.', w: { 'In medias res': 'Starting mid-action suits fiction, not a reasoned editorial.', 'Sensory image': 'Imagery does little to set up a claim.', 'Dialogue': 'A line of Creole dialogue could be a clever hook, but it delays the claim; a bold claim is the safer exam choice.' } },
+    { task: 'Reflective · A journal entry on what you learned from failing your first driving test.', a: 'Anecdote', o: ['Startling statistic', 'Definition', 'Bold claim'],
+      why: 'Reflection begins with the experience itself; a brief anecdote puts the reader in that moment.', w: { 'Startling statistic': 'Pass-rate figures make it impersonal.', 'Definition': 'A definition is far too detached for a personal reflection.', 'Bold claim': 'Reflection explores; it does not open by arguing.' } },
+    { task: 'Expository · A leaflet explaining what "code-switching" is for parents at a PTA meeting.', a: 'Definition', o: ['In medias res', 'Bold claim', 'Sensory image'],
+      why: 'When the audience may not know a key term, a clear plain-language definition is the most useful opening.', w: { 'In medias res': 'Action openings belong in stories.', 'Bold claim': 'A leaflet that informs parents should not open by arguing.', 'Sensory image': 'Imagery does not explain a term.' } },
+    { task: 'Persuasive · A speech asking the student council to fund a school recycling programme.', a: 'Rhetorical question', o: ['Definition', 'Dialogue', 'Sensory image'],
+      why: 'A rhetorical question makes the council think about the problem and sets up your call to action.', w: { 'Definition': 'Everyone knows what recycling is.', 'Dialogue': 'Quoting a conversation is weaker than engaging the council directly.', 'Sensory image': 'An image of overflowing bins could work, but a rhetorical question involves the audience more directly.' } },
+    { task: 'Argumentative · An essay arguing that tourism has changed Aruba more than any other force.', a: 'Contrast', o: ['Dialogue', 'Definition', 'In medias res'],
+      why: 'A then-and-now contrast shows the scale of change at once and leads straight into the claim.', w: { 'Dialogue': 'Dialogue is a narrative technique.', 'Definition': 'Defining tourism adds nothing.', 'In medias res': 'Mid-action openings suit fiction.' } },
+    { task: 'Narrative · A story about a girl meeting her grandfather for the first time at the airport.', a: 'Dialogue', o: ['Startling statistic', 'Bold claim', 'Definition'],
+      why: 'Opening with the first words spoken at the airport introduces both characters and the emotion of the meeting.', w: { 'Startling statistic': 'Numbers do not belong in this story.', 'Bold claim': 'Stories show; they do not argue.', 'Definition': 'There is nothing to define.' } },
+    { task: 'Reflective · A Paper 032 reflective piece on how your attitude to speaking Creole has changed.', a: 'Contrast', o: ['Startling statistic', 'Definition', 'Direct address'],
+      why: 'Reflection is about change; "I used to… Now I…" contrast shows the shift immediately.', w: { 'Startling statistic': 'Statistics make a personal piece impersonal.', 'Definition': 'Defining Creole is expository, not reflective.', 'Direct address': 'Speaking to "you" pushes; reflection explores your own thinking.' } },
+    { task: 'Persuasive · A fundraising letter for families who lost their homes in a hurricane.', a: 'Anecdote', o: ['Definition', 'Bold claim', 'Contrast'],
+      why: 'One family\'s brief story creates the empathy (pathos) that makes readers give.', w: { 'Definition': 'A definition has no emotional pull.', 'Bold claim': 'A claim argues; a fundraising letter must make people feel.', 'Contrast': 'Contrast can help, but one human story moves readers more.' } }
+  ];
+
+  // Level 2: task -> best opening LINE
+  var L2 = [
+    { genre: 'Narrative', task: 'Short story: a teenager discovers her best friend has been lying to her.',
+      o: [['"You were never at your aunt\'s house," I said, holding up the photo.', 1, 'In medias res with dialogue: the conflict is already exploding, and we meet both characters at once.'],
+          ['Lying is defined as making a statement one knows to be false.', 0, 'A definition turns a story into a lesson.'],
+          ['According to a survey, 60 per cent of teenagers lie to friends.', 0, 'A statistic suits an expository piece, not a story.'],
+          ['Friendship is the most important thing in a teenager\'s life.', 0, 'A general claim; it tells instead of shows.']] },
+    { genre: 'Expository', task: 'Report for Social Studies: the impact of sargassum seaweed on Caribbean tourism.',
+      o: [['In 2018 alone, an estimated 20 million tonnes of sargassum washed into the Caribbean Sea.', 1, 'A specific, striking fact establishes the scale of the problem in a neutral, informative tone.'],
+          ['Imagine you are lying on the beach and a brown, stinking carpet rolls in…', 0, 'Vivid, but it is persuasive and descriptive; a report should open objectively.'],
+          ['"Ugh, what is that smell?" asked the tourist.', 0, 'Dialogue belongs in fiction.'],
+          ['Seaweed is the worst thing that has ever happened to the Caribbean.', 0, 'Exaggerated and opinionated; not suitable for a report.']] },
+    { genre: 'Persuasive', task: 'Speech to Form 5 students asking them to donate blood at the school drive.',
+      o: [['Somewhere on this island right now, someone is waiting for a bag of blood that only you can give.', 1, 'Direct address plus urgency: the audience feels personally responsible.'],
+          ['Blood is a fluid that carries oxygen around the body.', 0, 'A dry definition with no emotional pull.'],
+          ['The history of blood transfusion begins in the seventeenth century.', 0, 'A history lecture loses a teenage audience in seconds.'],
+          ['Some people donate blood and some people do not.', 0, 'Flat and obvious; it gives no reason to act.']] },
+    { genre: 'Descriptive', task: 'Description of the Roseau bayfront just before a hurricane makes landfall.',
+      o: [['The sky over Roseau turned the colour of a bruise, and the sea began to breathe in long, heavy sighs.', 1, 'Metaphor and personification create a dominant impression of menace.'],
+          ['Hurricanes are classified on the Saffir-Simpson scale from 1 to 5.', 0, 'Expository fact; it paints no picture.'],
+          ['Everyone should prepare for hurricanes in advance.', 0, 'Persuasive advice, not description.'],
+          ['Roseau is the capital of Dominica.', 0, 'Bland and obvious; no sensory detail.']] },
+    { genre: 'Argumentative', task: 'Debate speech: "School uniforms should be abolished."',
+      o: [['A uniform teaches students to dress alike; it does not teach them to think alike, and that is exactly why it must stay.', 0, 'A strong line, but it argues the OPPOSITE side of the motion.'],
+          ['Uniforms cost Caribbean families hundreds of dollars a year for clothes that teach nothing but obedience; it is time to let them go.', 1, 'A bold claim with a reason and evidence, clearly on the side of the motion.'],
+          ['"Tuck in your shirt!" shouted Mr. Richardson.', 0, 'Dialogue could work as colour, but it does not state the position the debate needs.'],
+          ['A uniform is a set of standard clothes worn by members of an organisation.', 0, 'A definition wastes your strongest moment.']] },
+    { genre: 'Reflective', task: 'Reflective journal: what you learned from leading a group project that went badly.',
+      o: [['Three days before the deadline, I opened our shared document and found it empty, except for my own name.', 1, 'A brief, honest anecdote places us in the moment the learning began.'],
+          ['Group projects are used in schools to develop teamwork skills.', 0, 'Expository and impersonal.'],
+          ['Studies show that 70 per cent of students dislike group work.', 0, 'A statistic distances you from your own experience.'],
+          ['You should always choose your group members carefully.', 0, 'Advice to "you" is persuasive; reflection examines yourself.']] },
+    { genre: 'Persuasive', task: 'Flyer encouraging residents to attend a beach clean-up at Shoal Bay.',
+      o: [['Shoal Bay gave you your best Saturdays. This Saturday, give something back.', 1, 'Direct address, contrast and an immediate call to action in two short lines: perfect for a flyer.'],
+          ['Marine debris is any solid material discarded into the sea.', 0, 'A definition will not get people out of bed on a Saturday.'],
+          ['The beach clean-up is on Saturday.', 0, 'Information only; there is no hook at all.'],
+          ['It was a hot day when the plastic bottle first floated in.', 0, 'A story opening; too slow for a flyer.']] },
+    { genre: 'Expository', task: 'Essay explaining the differences between a dialect and a language.',
+      o: [['Why is Jamaican Creole called a "dialect" by some and a "language" by linguists?', 1, 'A rhetorical question frames exactly what the essay will explain.'],
+          ['"Wah gwaan?" he said.', 0, 'Dialogue alone does not set up an explanation.'],
+          ['Creole is better than Standard English.', 0, 'An unsupported opinion; this is an explanation, not an argument.'],
+          ['The waves crashed on the shore as I thought about language.', 0, 'Irrelevant scene-setting.']] },
+    { genre: 'Narrative', task: 'Story for a Caribbean folklore competition about a jumbie in the cane field.',
+      o: [['Nobody walked past the old cane field after dark, not since the night Mr. Joseph went in and came out without his shadow.', 1, 'An intriguing, suspenseful statement that plunges the reader into the mystery.'],
+          ['Jumbies are spirits found in Caribbean folklore.', 0, 'Expository; it explains instead of telling a story.'],
+          ['Do you believe in jumbies?', 0, 'A rhetorical question is weaker than dropping the reader into the tale.'],
+          ['There are many folk tales in the Caribbean.', 0, 'Vague and flat.']] },
+    { genre: 'Argumentative', task: 'Letter to the editor arguing that the island needs more public buses.',
+      o: [['Every weekday morning, hundreds of workers stand on Bush Road for buses that may never come, and our economy pays for every minute they lose.', 1, 'Concrete evidence linked to a clear claim about economic cost.'],
+          ['Buses are large vehicles that carry passengers.', 0, 'A pointless definition.'],
+          ['Honk! Honk! The traffic was terrible.', 0, 'Onomatopoeia without a claim; it reads like a story.'],
+          ['I am writing this letter because I want to.', 0, 'No hook and no purpose.']] }
+  ];
+
+  // Level 3: line -> hook type
+  var L3 = [
+    { line: 'The water was already at my knees when I realised the drain was not going to save us.', a: 'In medias res', why: 'It starts in the middle of a crisis, with no background first.' },
+    { line: 'One in three Caribbean adults lives with high blood pressure.', a: 'Startling statistic', why: 'A surprising number is used to grab attention.' },
+    { line: 'What is the point of saving the turtles if we keep selling their beaches?', a: 'Rhetorical question', why: 'The question is asked for effect, not for an answer.' },
+    { line: 'The bus smelled of hair grease, mango and somebody\'s too-sweet perfume.', a: 'Sensory image', why: 'It is built from smells, the senses doing the work.' },
+    { line: '"Pickney, put down that phone and come help me," Mama called from the yard.', a: 'Dialogue', why: 'It opens with a character speaking.' },
+    { line: '"Who don\'t hear will feel." My grandfather warned me about the stove; I learned it about deadlines.', a: 'Quotation or proverb', why: 'A Caribbean proverb frames the topic and is then linked to the writer\'s experience.' },
+    { line: 'Social media has done more to divide Caribbean families than any hurricane.', a: 'Bold claim', why: 'A strong, debatable position is stated confidently.' },
+    { line: 'Register is the variety of language a speaker chooses to suit the situation and the listener.', a: 'Definition', why: 'It explains a key term before the discussion begins.' },
+    { line: 'You walk past it every day. You never notice it. Until the day it is gone.', a: 'Direct address', why: 'The writer speaks straight to the reader as "you".' },
+    { line: 'My grandmother crossed to Anguilla by sloop; I cross to Anguilla on Instagram.', a: 'Contrast', why: 'Two opposite experiences are placed side by side.' },
+    { line: 'The summer I turned fifteen, I sold coconut water on the Boardwalk and learned more about people than I did all year at school.', a: 'Anecdote', why: 'A brief personal story leads into the topic.' },
+    { line: 'Our reefs are not dying; we are killing them.', a: 'Bold claim', why: 'It overturns a common phrase to state a forceful position.' }
+  ];
+
+  // Level 4: feature clue -> genre
+  var L4 = [
+    { clue: 'The writer concedes, "Some argue that tourism creates jobs," and then rebuts it with evidence.', a: 'Argumentative', why: 'Concession and rebuttal is a hallmark of argument.' },
+    { clue: 'The piece ends: "Join us on Saturday. Bring gloves. Bring friends. Bring hope."', a: 'Persuasive', why: 'A call to action with repetition (tricolon) is persuasive.' },
+    { clue: 'Characters, a conflict, a climax and dialogue, told mostly in the past tense.', a: 'Narrative', why: 'Plot, characters and dialogue mark narrative.' },
+    { clue: 'Headings, statistics, a neutral tone and the phrase "There are three main causes…".', a: 'Expository', why: 'Objective information organised by classification is expository.' },
+    { clue: '"The market hums like a hive; mangoes glow like small suns in their baskets."', a: 'Descriptive', why: 'Similes and sensory detail create a picture.' },
+    { clue: '"Looking back, I realise my nerves came from caring too much about what others thought."', a: 'Reflective', why: '"Looking back… I realise" signals personal insight.' },
+    { clue: 'Direct address, emotive words like "heartless" and the slogan "Don\'t trash our future".', a: 'Persuasive', why: 'Emotional appeal and slogans aim to move the reader to act.' },
+    { clue: 'Spatial order, moving from the shoreline, up the hill, to the fort at the top.', a: 'Descriptive', why: 'Spatial organisation is typical of description.' },
+    { clue: 'A step-by-step process: "First, switch off the main breaker. Next…"', a: 'Expository', why: 'Process explanation informs the reader how to do something.' },
+    { clue: 'Logos dominates: expert opinion, data and the connective "consequently".', a: 'Argumentative', why: 'Logical reasoning with evidence proves a claim.' },
+    { clue: 'Flashback to the night of the fire, then back to the present day.', a: 'Narrative', why: 'Flashback is a narrative time technique.' },
+    { clue: 'Describes a mistake, explores the feelings, evaluates it and states what will change next time.', a: 'Reflective', why: 'Describe, feel, evaluate, learn: the reflective cycle.' }
+  ];
+
+
+  // Rhetorical devices and appeals (M1 SO4, M3 SO11)
+  var RDEV = [
+    { name: 'Rhetorical question', def: 'A question asked for effect, with no answer expected.', ex: 'How many more children must drown before we fence the pond?', eff: 'Makes the audience think and quietly agree with the speaker.' },
+    { name: 'Anaphora', def: 'Repeating the same word or phrase at the START of successive sentences or clauses.', ex: 'We will rebuild. We will replant. We will return.', eff: 'Builds rhythm, momentum and determination.' },
+    { name: 'Epistrophe', def: 'Repeating the same word or phrase at the END of successive clauses.', ex: 'When the storm came, we stood together. When the lights failed, we stood together.', eff: 'Drives one key idea home at each pause.' },
+    { name: 'Tricolon', def: 'A group of three parallel words, phrases or clauses (the rule of three).', ex: 'Clean beaches, clear water, a cleaner future.', eff: 'Sounds complete and memorable; easy to remember and repeat.' },
+    { name: 'Antithesis', def: 'Opposite ideas placed side by side in a balanced structure.', ex: 'It is not the size of the island that matters, but the size of its heart.', eff: 'Sharpens the contrast and makes the message quotable.' },
+    { name: 'Parallelism', def: 'Using the same grammatical structure in a series of phrases or sentences.', ex: 'Read widely, think deeply, speak clearly.', eff: 'Creates balance and makes ideas easy to follow.' },
+    { name: 'Hyperbole', def: 'Deliberate exaggeration that is not meant literally.', ex: 'I have told you a million times to back up your files.', eff: 'Adds emphasis, humour or emotional force.' },
+    { name: 'Understatement', def: 'Presenting something as smaller or less important than it really is.', ex: 'Losing the roof in Hurricane Irma was a bit of an inconvenience.', eff: 'Creates irony or dry humour, often making the reader feel the real size of the problem.' },
+    { name: 'Alliteration', def: 'Repeating the same consonant sound at the start of nearby words.', ex: 'Save our sea, our sand, our future.', eff: 'Makes slogans catchy and memorable.' },
+    { name: 'Inclusive language', def: 'Using "we", "us" and "our" to place speaker and audience on the same side.', ex: 'Our island, our responsibility.', eff: 'Builds unity and shared responsibility.' },
+    { name: 'Imperative', def: 'A command that tells the audience what to do.', ex: 'Switch it off. Unplug it. Save it.', eff: 'Creates urgency and a direct call to action.' },
+    { name: 'Allusion', def: 'A brief reference to a well-known person, event, story or text.', ex: 'Like Anansi, the scammer wins with words, not strength.', eff: 'Adds depth by borrowing meaning the audience already knows.' },
+    { name: 'Ethos', def: 'An appeal to the speaker\'s credibility, expertise or good character.', ex: 'As a nurse who has worked twenty years at the Medical Center, I have seen what diabetes does.', eff: 'Makes the audience trust the speaker.' },
+    { name: 'Pathos', def: 'An appeal to the audience\'s emotions.', ex: 'She waited by the window every night for a father who never came home from the sea.', eff: 'Moves the audience to feel, and then to act.' },
+    { name: 'Logos', def: 'An appeal to logic, using facts, statistics and reasoning.', ex: 'Solar panels cut the school\'s electricity bill by 40 per cent in one year; therefore they pay for themselves in five.', eff: 'Convinces the audience that the claim is reasonable.' },
+    { name: 'Kairos', def: 'An appeal to timing: why this matters right now.', ex: 'Hurricane season starts in nine days. The time to prepare is today.', eff: 'Creates urgency by stressing the opportune moment.' }
+  ];
+  var L5 = [
+    { line: 'We shall clean the beaches, we shall clean the streets, we shall clean the gutters.', a: 'Anaphora', why: '"We shall clean" is repeated at the start of each clause.' },
+    { line: 'Ask not what your island can do for you; ask what you can do for your island.', a: 'Antithesis', why: 'Opposite ideas are balanced in mirrored clauses (it also echoes a famous speech, so allusion is close, but the structure is antithesis).' },
+    { line: 'Is a free lunch really free if our children pay for it in debt?', a: 'Rhetorical question', why: 'No answer is expected; the question leads the listener to the speaker\'s view.' },
+    { line: 'Our reefs. Our responsibility. Our future.', a: 'Tricolon', why: 'Three short parallel phrases make a complete, memorable unit (each also begins with "our", but the group of three is the main device).' },
+    { line: 'This queue at the immigration counter has lasted roughly a century.', a: 'Hyperbole', why: 'An obvious exaggeration for emphasis and humour.' },
+    { line: 'Seventy per cent of the island\'s waste is plastic; therefore a plastic ban targets the biggest problem first.', a: 'Logos', why: 'A statistic and the connective "therefore" build a logical argument.' },
+    { line: 'As a fisherman for thirty-five years, I can tell you these waters have never been this empty.', a: 'Ethos', why: 'The speaker establishes credibility through experience.' },
+    { line: 'Picture a little girl, wet and shivering, asking why her school is still closed.', a: 'Pathos', why: 'A pitiful image targets the audience\'s emotions.' },
+    { line: 'Don\'t wait. Don\'t watch. Volunteer.', a: 'Imperative', why: 'A series of commands calls the audience to act.' },
+    { line: 'Plastic plates and paper cups pollute our precious ponds.', a: 'Alliteration', why: 'The repeated "p" sound makes the line catchy.' },
+    { line: 'Registration closes on Friday. After that, your voice is gone for five years.', a: 'Kairos', why: 'The appeal stresses timing: act now, before the moment passes.' },
+    { line: 'We built this school together; together we will save it.', a: 'Inclusive language', why: '"We" and "together" place speaker and audience on the same side.' },
+    { line: 'Getting a 12 out of 100 on the test was not my finest hour.', a: 'Understatement', why: 'A very bad result is described mildly for ironic effect.' },
+    { line: 'He thought he could outwit everyone, a real Anansi in a business suit.', a: 'Allusion', why: 'A reference to Anansi, the trickster of Caribbean folklore.' },
+    { line: 'Teachers taught it, parents preached it, students ignored it.', a: 'Parallelism', why: 'Each clause uses the same subject-verb-object structure.' },
+    { line: 'When we pollute, we lose. When we waste, we lose. When we stay silent, we lose.', a: 'Epistrophe', why: '"We lose" is repeated at the end of each clause.' }
+  ];
+
+  var LEVELS = [
+    { id: 1, name: 'Right hook, right genre', blurb: 'Read the task. Choose the hook TYPE that fits it best.', n: L1.length },
+    { id: 2, name: 'Best opening line', blurb: 'Four real openings. Only one fits the genre, task and audience.', n: L2.length },
+    { id: 3, name: 'Name that hook', blurb: 'Read the opening line and name the hook it uses.', n: L3.length },
+    { id: 4, name: 'Genre spotter', blurb: 'Read the features. Which genre is it?', n: L4.length },
+    { id: 5, name: 'Spot the device', blurb: 'Read the line. Identify the rhetorical device or appeal.', n: L5.length },
+    { id: 6, name: 'Match it', blurb: 'Match each rhetorical device to its definition. First-try matches count.', n: 8 }
+  ];
+
+  /* ======================= STATE ======================= */
+  var KEY = 'hookLineGenre';
+  var st = { fish: 0, streak: 0, best: {} };
+  try { var sv = JSON.parse(localStorage.getItem(KEY) || 'null'); if (sv && typeof sv === 'object') st = Object.assign(st, sv); } catch (e) {}
+  function save() { if (gsOff) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  function teacher() { return /*EDITION*/true; }
+  function unlocked(lv) { return lv === 1 || (st.best[lv - 1] || 0) >= 1 || !!(teacher() && st.tun && st.tun[lv]); }
+  function tBar(n) { if (!teacher()) return ''; return '<div class="row" style="margin-bottom:10px"><span class="tbadge" style="margin:0">👩🏾‍🏫 Teacher version</span><button class="btn gold" data-act="tunall">🔓 Unlock all levels</button><button class="btn ghost" data-act="tlock">🔒 Re-lock all</button></div>'; }
+  function tBtn(lv) { return teacher() && !unlocked(lv) ? '<button class="btn ghost" style="margin-top:6px;width:100%" data-act="tunlock" data-lv="' + lv + '">🔓 Unlock Level ' + lv + '</button>' : ''; }
+  function lockNote(lv) { return '🔒 Earn at least 1 star on Level ' + (lv - 1) + ' to unlock'; }
+
+  var tab = 'guide', openGenre = null, game = null;
+  var view = document.getElementById('view');
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function stars(lv) { return st.best[lv] || 0; }
+  function totalStars() { var t = 0; for (var k in st.best) t += st.best[k]; return t; }
+  function hud() {
+    document.getElementById('stFish').textContent = '🐟 ' + st.fish + ' fish caught';
+    document.getElementById('stStreak').textContent = '🔥 Streak ' + st.streak;
+    document.getElementById('stBest').textContent = '⭐ ' + totalStars() + ' of ' + LEVELS.length * 3 + ' stars';
+  }
+
+  /* ======================= SOUND ======================= */
+  var AC = null;
+  function tone(freqs, type, dur, gap, vol) {
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === 'suspended') AC.resume();
+      freqs.forEach(function (f, i) {
+        var t = AC.currentTime + i * gap, o = AC.createOscillator(), g = AC.createGain();
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.05);
+      });
+    } catch (e) {}
+  }
+  function sGood() { tone([659.25, 987.77], 'triangle', 0.25, 0.09, 0.18); }
+  function sBad() { tone([220, 185], 'sawtooth', 0.22, 0.12, 0.07); }
+  function sWin() { tone([523.25, 659.25, 783.99, 1046.5], 'triangle', 0.35, 0.12, 0.16); }
+  function sSplash() { tone([300, 600, 900], 'sine', 0.08, 0.03, 0.06); }
+  function jumpFish() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var f = document.createElement('div'); f.className = 'fish'; f.textContent = ['🐟', '🐠', '🐡', '🦈'][Math.floor(Math.random() * 4)];
+    f.style.left = (20 + Math.random() * 60) + '%'; document.body.appendChild(f); setTimeout(function () { f.remove(); }, 1200);
+  }
+
+  /* ======================= VIEWS ======================= */
+  function guideHTML() {
+    if (openGenre) {
+      var g = GENRES.filter(function (x) { return x.id === openGenre; })[0];
+      return '<div class="card detail" style="--c:' + g.c + '"><div class="row" style="justify-content:space-between"><h2>' + g.ic + ' ' + g.name + '</h2><button class="btn ghost" data-act="back">← All genres</button></div>' +
+        '<p class="lead"><b>Purpose:</b> ' + esc(g.purpose) + '</p>' +
+        '<h4>Features to look for and use</h4><ul>' + g.features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
+        '<h4>Typical formats</h4><div class="pills">' + g.formats.map(function (f) { return '<span class="pill">' + esc(f) + '</span>'; }).join('') + '</div>' +
+        '<h4>Language clues</h4><ul>' + g.clues.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
+        '<h4>Best hooks for this genre</h4><div class="pills">' + g.best.map(function (f) { return '<span class="pill">' + esc(f) + '</span>'; }).join('') + '</div>' +
+        '<h4>Hooks to avoid</h4><div class="pills">' + g.avoid.map(function (f) { return '<span class="pill no">' + esc(f) + '</span>'; }).join('') + '</div>' +
+        '<h4>A hook that works</h4><div class="ex">' + esc(g.example) + '</div>' +
+        '<div class="row" style="margin-top:14px"><button class="btn gold" data-act="tab" data-tab="play">🎣 Test yourself</button></div></div>';
+    }
+    return '<div class="card"><h2>Genre field guide</h2><p class="lead">The CAPE syllabus names four forms of discourse: narrative, descriptive, expository and argumentative or persuasive. Paper 032 adds the reflective piece. Tap a genre to see its purpose, features, formats and the hooks that suit it.</p><div class="grid">' +
+      GENRES.map(function (g) { return '<button class="gcard" style="--c:' + g.c + '" data-act="genre" data-id="' + g.id + '"><span class="ic">' + g.ic + '</span><h3>' + g.name + '</h3><p class="p">' + esc(g.purpose) + '</p></button>'; }).join('') +
+      '</div></div><div class="card"><h3>Quick comparison</h3><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:560px"><thead><tr>' + ['Genre', 'Main aim', 'Point of view', 'Key feature', 'Typical hook'].map(function (h) { return '<th style="text-align:left;border-bottom:2px solid var(--line);padding:8px">' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      [['Narrative', 'Tell a story', '1st or 3rd person', 'Plot and conflict', 'In medias res'], ['Descriptive', 'Paint a picture', 'Any', 'Sensory detail', 'Sensory image'], ['Expository', 'Inform or explain', '3rd person', 'Facts and organisation', 'Startling statistic'], ['Argumentative', 'Prove a claim', '3rd person mostly', 'Evidence and rebuttal', 'Bold claim'], ['Persuasive', 'Move to action', '"You" and "we"', 'Appeals and call to action', 'Direct address'], ['Reflective', 'Explore what I learned', '1st person', 'Insight and change', 'Anecdote']]
+        .map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td style="border-bottom:1px solid var(--line);padding:8px">' + (i ? esc(c) : '<b>' + esc(c) + '</b>') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
+  }
+
+  function tackleHTML() {
+    return '<div class="card"><h2>Hook tackle box</h2><p class="lead">A hook is the first sentence or two that grabs your reader. Choose it to match your <b>genre</b>, <b>purpose</b> and <b>audience</b>. A great hook in the wrong genre is still the wrong hook.</p><div class="grid">' +
+      HOOKS.map(function (h) { return '<div class="gcard" style="--c:var(--sea);cursor:default"><h3>🪝 ' + esc(h.name) + '</h3><p class="p">' + esc(h.def) + '</p><div class="ex">' + esc(h.ex) + '</div><p class="p"><b>Best for:</b> ' + esc(h.good) + '</p></div>'; }).join('') +
+      '</div></div><div class="card"><h3>Three rules for choosing a hook</h3><ol><li><b>Match the genre.</b> Stories show; reports inform; arguments claim; persuasion pushes; reflection explores.</li><li><b>Match the audience.</b> A board of directors needs a statistic; a class of Form 1s needs a story or a question.</li><li><b>Link it.</b> The sentence after the hook must connect it to your topic or thesis. A hook that leads nowhere loses marks for organisation.</li></ol><p class="lead" style="margin:0"><b>Avoid:</b> "Webster\'s Dictionary defines…", "In this essay I will…", and questions with obvious answers ("Do you like money?").</p></div>';
+  }
+
+  function rhetHTML() {
+    return '<div class="card"><h2>Rhetorical devices</h2><p class="lead">Rhetorical devices are the tools speakers and writers use to persuade. For each one you meet in an extract, the examiner wants three things: <b>name it</b>, <b>quote it</b> and <b>explain its effect</b> on the audience.</p><div class="grid">' +
+      RDEV.map(function (d) { var ap = /^(Ethos|Pathos|Logos|Kairos)$/.test(d.name); return '<div class="gcard" style="--c:' + (ap ? 'var(--coral)' : 'var(--gold)') + ';cursor:default"><h3>' + (ap ? '🎯 ' : '🗣️ ') + esc(d.name) + (ap ? ' <span class="pill" style="font-size:.75rem">appeal</span>' : '') + '</h3><p class="p">' + esc(d.def) + '</p><div class="ex">' + esc(d.ex) + '</div><p class="p"><b>Effect:</b> ' + esc(d.eff) + '</p></div>'; }).join('') +
+      '</div></div><div class="card"><h3>How to write about a device (PEEL)</h3><div class="ex" style="font-style:normal">The speaker uses <b>anaphora</b> <i>(name)</i> in "We will rebuild. We will replant. We will return." <i>(quote)</i> The repeated "We will" builds a rhythm of determination <i>(effect)</i>, which persuades the audience that recovery is certain and that they are part of it <i>(link to purpose)</i>.</div><div class="row" style="margin-top:12px">' + (unlocked(5) ? '<button class="btn gold" data-act="start5">🎣 Spot the device</button>' : '<span class="lk">🔒 Spot the device (Level 5) unlocks after a star on Level 4</span>') + (unlocked(6) ? '<button class="btn" data-act="start6">🧩 Match it</button>' : '') + '</div></div>';
+  }
+
+  function matchHTML() {
+    var g = game;
+    if (g.done) {
+      var pct = g.first / g.pairs.length, s = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
+      if (s > (st.best[6] || 0)) { st.best[6] = s; save(); }
+      hud();
+      return '<div class="card" style="text-align:center"><p class="big">' + g.first + ' / ' + g.pairs.length + '</p><p class="lead">matched on the first try</p><p style="font-size:2rem;color:var(--gold);margin:0">' + '★★★'.slice(0, s) + '<span style="opacity:.3">' + '★★★'.slice(s) + '</span></p><div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-act="start" data-lv="6">New board</button><button class="btn ghost" data-act="levels">All levels</button><button class="btn" data-act="tab" data-tab="rhet">Review the devices</button></div></div>';
+    }
+    var col = function (side) {
+      return g[side].map(function (k) {
+        var d = g.pairs[k], done = g.matched[k], sel = (side === 'L' && g.selL === k) || (side === 'R' && g.selR === k), bad = g.flash && g.flash[side] === k;
+        return '<button class="opt ' + (done ? 'right' : bad ? 'wrong' : '') + '" style="' + (sel ? 'border-color:var(--gold);box-shadow:0 0 0 3px var(--gold) inset' : '') + '" data-act="m' + side + '" data-k="' + k + '"' + (done ? ' disabled' : '') + '><span>' + (side === 'L' ? '<b>' + esc(d.name) + '</b>' : esc(d.def)) + '</span></button>';
+      }).join('');
+    };
+    var n = Object.keys(g.matched).length;
+    return '<div class="card"><div class="top"><span>Level 6 · Match it</span><span>' + n + ' of ' + g.pairs.length + ' matched · first try: ' + g.first + '</span></div><div class="bar"><i style="width:' + (n / g.pairs.length * 100) + '%"></i></div><p><b>Tap a device, then tap its definition.</b></p>' + (g.msg ? '<div class="fb ' + g.msgc + '">' + g.msg + '</div>' : '') + '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px"><div class="opts">' + col('L') + '</div><div class="opts">' + col('R') + '</div></div></div>';
+  }
+
+  function playHTML() {
+    if (!game) {
+      return '<div class="card"><h2>Cast your line</h2><p class="lead">Six levels. Earn at least one star to open the next level, and up to three on each. Every answer tells you why, so you learn even when the fish gets away.</p>' + tBar() + '<div class="levels">' + LEVELS.map(function (l) { var s = stars(l.id), open = unlocked(l.id); return '<div><button class="lv" style="width:100%" data-act="start" data-lv="' + l.id + '"' + (open ? '' : ' disabled aria-disabled="true"') + '>' + (open ? '' : '🔒 ') + '<span class="s">' + '★★★'.slice(0, s) + '<span style="opacity:.3">' + '★★★'.slice(s) + '</span></span><br><b>Level ' + l.id + ': ' + esc(l.name) + '</b><p class="p" style="color:var(--soft);margin:4px 0 0">' + esc(l.blurb) + '</p><p class="p" style="color:var(--soft);margin:4px 0 0">' + l.n + ' casts</p>' + (open ? '' : '<span class="lk">' + lockNote(l.id) + '</span>') + '</button>' + tBtn(l.id) + '</div>'; }).join('') + '</div></div>';
+    }
+    if (game.lv === 6) return matchHTML();
+    var g = game, q = g.qs[g.i];
+    if (g.i >= g.qs.length) {
+      var pct = g.score / g.qs.length, s = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
+      if (s > (st.best[g.lv] || 0)) { st.best[g.lv] = s; save(); }
+      hud();
+      return '<div class="card" style="text-align:center"><p class="big">' + g.score + ' / ' + g.qs.length + '</p><p style="font-size:2rem;color:var(--gold);margin:0">' + '★★★'.slice(0, s) + '<span style="opacity:.3">' + '★★★'.slice(s) + '</span></p><h2>' + (s === 3 ? 'Master angler!' : s === 2 ? 'Good catch!' : s === 1 ? 'A few got away.' : 'The sea won this round.') + '</h2><p class="lead">' + (s < 3 ? 'Review the field guide and tackle box, then cast again.' : 'Try the next level, or write your own hook.') + '</p><div class="row" style="justify-content:center"><button class="btn gold" data-act="start" data-lv="' + g.lv + '">Cast again</button><button class="btn ghost" data-act="levels">All levels</button>' + (g.lv < 6 ? (unlocked(g.lv + 1) ? '<button class="btn" data-act="start" data-lv="' + (g.lv + 1) + '">Next level →</button>' : '<span class="lk">' + lockNote(g.lv + 1) + '</span>') : '<button class="btn" data-act="tab" data-tab="write">Write your own hook →</button>') + '</div></div>';
+    }
+    var h = '<div class="card"><button class="btn ghost" style="padding:6px 14px;margin-bottom:10px" data-act="levels">← All levels</button><div class="top"><span>Level ' + g.lv + ' · ' + esc(LEVELS[g.lv - 1].name) + '</span><span>Cast ' + (g.i + 1) + ' of ' + g.qs.length + ' · 🐟 ' + g.score + '</span></div><div class="bar"><i style="width:' + (g.i / g.qs.length * 100) + '%"></i></div>';
+    if (g.lv === 1) h += '<div class="task"><span class="k">Writing task</span><p>' + esc(q.task) + '</p></div><p><b>Which hook type fits best?</b></p>';
+    if (g.lv === 2) h += '<div class="task"><span class="k">' + esc(q.genre) + '</span><p>' + esc(q.task) + '</p></div><p><b>Which opening line is the best hook?</b></p>';
+    if (g.lv === 3) h += '<div class="task"><span class="k">Opening line</span><p>' + esc(q.line) + '</p></div><p><b>Which hook is this?</b></p>';
+    if (g.lv === 4) h += '<div class="task"><span class="k">Features spotted</span><p>' + esc(q.clue) + '</p></div><p><b>Which genre is it?</b></p>';
+    if (g.lv === 5) h += '<div class="task"><span class="k">From a speech</span><p>' + esc(q.line) + '</p></div><p><b>Which rhetorical device or appeal is the main one here?</b></p>';
+    h += '<div class="opts">' + g.opts.map(function (o, i) {
+      var cls = '', why = '';
+      if (g.picked != null) { if (o.ok) cls = 'right'; else if (i === g.picked) cls = 'wrong'; if (o.why && (o.ok || i === g.picked || g.lv === 2)) why = '<span class="why">' + esc(o.why) + '</span>'; }
+      return '<button class="opt ' + cls + '" data-act="pick" data-i="' + i + '"' + (g.picked != null ? ' disabled' : '') + '><span class="L">' + 'ABCD'[i] + '</span><span>' + esc(o.t) + why + '</span></button>';
+    }).join('') + '</div>';
+    if (g.picked != null) {
+      var ok = g.opts[g.picked].ok;
+      h += '<div class="fb ' + (ok ? 'good' : 'bad') + '">' + (ok ? '🐟 Caught it! ' : '🌊 It got away. ') + esc(g.expl) + '</div><div class="row"><button class="btn gold" data-act="next">' + (g.i + 1 < g.qs.length ? 'Next cast →' : 'See my catch') + '</button></div>';
+    }
+    return h + '</div>';
+  }
+
+  function makeOpts(lv, q) {
+    if (lv === 1) return { expl: q.why, opts: shuffle([{ t: q.a, ok: true, why: q.why }].concat(q.o.map(function (x) { return { t: x, ok: false, why: q.w[x] }; }))) };
+    if (lv === 2) { var right = q.o.filter(function (x) { return x[1]; })[0]; return { expl: right[2], opts: shuffle(q.o.map(function (x) { return { t: x[0], ok: !!x[1], why: x[2] }; })) }; }
+    if (lv === 3) { var pool = shuffle(HOOKS.map(function (h) { return h.name; }).filter(function (n) { return n !== q.a; })).slice(0, 3); return { expl: q.why, opts: shuffle([{ t: q.a, ok: true }].concat(pool.map(function (n) { return { t: n, ok: false }; }))) }; }
+    if (lv === 5) { var dp = shuffle(RDEV.map(function (d) { return d.name; }).filter(function (n) { return n !== q.a; })).slice(0, 3); return { expl: q.why, opts: shuffle([{ t: q.a, ok: true }].concat(dp.map(function (n) { return { t: n, ok: false }; }))) }; }
+    var gp = shuffle(GENRES.map(function (g) { return g.name; }).filter(function (n) { return n !== q.a; })).slice(0, 3);
+    return { expl: q.why, opts: shuffle([{ t: q.a, ok: true }].concat(gp.map(function (n) { return { t: n, ok: false }; }))) };
+  }
+  function startLevel(lv) {
+    if (lv === 6) {
+      var pairs = shuffle(RDEV).slice(0, 8), idx = pairs.map(function (_, i) { return i; });
+      game = { lv: 6, pairs: pairs, L: shuffle(idx), R: shuffle(idx), matched: {}, tried: {}, first: 0, selL: null, selR: null };
+      return;
+    }
+    var qs = shuffle([L1, L2, L3, L4, L5][lv - 1]);
+    game = { lv: lv, qs: qs, i: 0, score: 0, picked: null };
+    var m = makeOpts(lv, qs[0]); game.opts = m.opts; game.expl = m.expl;
+  }
+
+  function writeHTML() {
+    return '<div class="card"><h2>Write your own hook</h2><p class="lead">Choose a genre and a task, write your hook, then check it against the list. Your hook stays on this device only.</p>' +
+      '<div class="row" style="margin-bottom:10px"><label for="wg"><b>Genre</b></label><select id="wg">' + GENRES.map(function (g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join('') + '</select></div>' +
+      '<div class="task" id="wtask"></div>' +
+      '<label for="wt" class="sr">Your hook</label><textarea id="wt" placeholder="Write one or two sentences that hook your reader…"></textarea>' +
+      '<h3 style="margin-top:14px">Check your hook</h3>' +
+      ['It matches the genre (look at the best hooks for this genre).', 'It suits the audience in the task.', 'It is one or two sentences, not a whole paragraph.', 'It does NOT begin "In this essay I will…" or with a dictionary definition.', 'I know what my NEXT sentence will be, linking the hook to my topic or thesis.'].map(function (c, i) { return '<label class="ck"><input type="checkbox" data-ck="' + i + '"> <span>' + c + '</span></label>'; }).join('') +
+      '<div id="wfb"></div><div class="row" style="margin-top:10px"><button class="btn gold" data-act="wcheck">Check it</button><button class="btn ghost" data-act="wnew">New task</button></div></div>';
+  }
+  var TASKS = {
+    nar: ['A short story about a power cut during an important football match.', 'A story about a stranger who arrives on the ferry from Saba.'],
+    des: ['A description of a cruise-ship day in Nassau for a travel magazine.', 'A description of your grandmother\'s kitchen on Christmas morning.'],
+    exp: ['A report explaining how hurricanes form, for Form 2 students.', 'An article explaining what "register" means for a school newsletter.'],
+    arg: ['An editorial arguing that cell phones should be allowed in class.', 'An essay arguing that Papiamentu and Creole deserve a place in the curriculum.'],
+    per: ['A speech convincing your class to join a reef-protection club.', 'A radio advert encouraging young people to register to vote.'],
+    ref: ['A reflective piece on the first time you spoke in public.', 'A journal entry on what you learned from a part-time job.']
+  };
+  function setTask(keep) {
+    var gsel = document.getElementById('wg'); if (!gsel) return;
+    if (keep && TASKS[UI.wg]) gsel.value = UI.wg;
+    var list = TASKS[gsel.value], ti = keep && UI.wg === gsel.value && list[UI.wt] ? UI.wt : Math.floor(Math.random() * list.length), t = list[ti], g = GENRES.filter(function (x) { return x.id === gsel.value; })[0];
+    document.getElementById('wtask').innerHTML = '<span class="k">' + g.name + '</span><p>' + esc(t) + '</p><p style="font-size:.92rem;opacity:.85;margin-top:6px">Best hooks: ' + g.best.join(', ') + '</p>';
+    try { var d = localStorage.getItem(KEY + '-draft'); if (d && !document.getElementById('wt').value) document.getElementById('wt').value = d; } catch (e) {}
+    UI.wg = gsel.value; UI.wt = ti;
+    if (keep) document.querySelectorAll('[data-ck]').forEach(function (c) { c.checked = UI.ck.indexOf(+c.dataset.ck) >= 0; });
+    gsSave();
+  }
+
+  function render() {
+    document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false'); });
+    view.innerHTML = tab === 'guide' ? guideHTML() : tab === 'tackle' ? tackleHTML() : tab === 'rhet' ? rhetHTML() : tab === 'play' ? playHTML() : writeHTML();
+    if (tab === 'write') setTask(true);
+    hud();
+    gsSave();
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]'); if (t && t.classList.contains('tab')) { tab = t.dataset.tab; openGenre = null; render(); window.scrollTo(0, 0); return; }
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var a = b.dataset.act;
+    if (a === 'genre') { openGenre = b.dataset.id; sSplash(); render(); return; }
+    if (a === 'back') { openGenre = null; render(); return; }
+    if (a === 'tab') { tab = b.dataset.tab; openGenre = null; game = null; render(); window.scrollTo(0, 0); return; }
+    if (a === 'levels') { game = null; render(); return; }
+    if ((a === 'start5' || a === 'start6') && !unlocked(a === 'start5' ? 5 : 6)) { tab = 'play'; game = null; render(); window.scrollTo(0, 0); return; }
+    if (a === 'start5' || a === 'start6') { tab = 'play'; startLevel(a === 'start5' ? 5 : 6); sSplash(); render(); window.scrollTo(0, 0); return; }
+    if ((a === 'mL' || a === 'mR') && game && game.lv === 6) {
+      var k = +b.dataset.k; game.flash = null; game.msg = '';
+      if (a === 'mL') game.selL = k; else game.selR = k;
+      if (game.selL != null && game.selR != null) {
+        var L = game.selL, R = game.selR;
+        if (L === R) {
+          game.matched[L] = true; if (!game.tried[L]) game.first++;
+          st.fish++; st.streak++; sGood(); jumpFish();
+          game.msg = '✅ <b>' + esc(game.pairs[L].name) + '</b>: ' + esc(game.pairs[L].eff); game.msgc = 'good';
+        } else {
+          game.tried[L] = true; game.tried[R] = true; st.streak = 0; sBad();
+          game.flash = { L: L, R: R }; game.msg = 'Not a match. <b>' + esc(game.pairs[L].name) + '</b> means: ' + esc(game.pairs[L].def); game.msgc = 'bad';
+        }
+        game.selL = game.selR = null; save();
+        if (Object.keys(game.matched).length === game.pairs.length) { game.done = true; sWin(); }
+      }
+      render(); return;
+    }
+    if (a === 'tunlock' || a === 'tunall' || a === 'tlock') { if (!teacher()) return; st.tun = st.tun || {}; if (a === 'tunlock') st.tun[+b.dataset.lv] = 1; else if (a === 'tunall') { for (var z = 2; z <= LEVELS.length; z++) st.tun[z] = 1; } else st.tun = {}; save(); render(); return; }
+    if (a === 'start') { if (!unlocked(+b.dataset.lv)) return; startLevel(+b.dataset.lv); sSplash(); render(); return; }
+    if (a === 'pick' && game && game.picked == null) {
+      var i = +b.dataset.i; game.picked = i;
+      if (game.opts[i].ok) { game.score++; st.fish++; st.streak++; sGood(); jumpFish(); if (st.streak % 5 === 0) sWin(); }
+      else { st.streak = 0; sBad(); }
+      save(); render(); return;
+    }
+    if (a === 'next' && game) {
+      game.i++; game.picked = null;
+      if (game.i < game.qs.length) { var m = makeOpts(game.lv, game.qs[game.i]); game.opts = m.opts; game.expl = m.expl; } else sWin();
+      render(); return;
+    }
+    if (a === 'wnew') { setTask(); return; }
+    if (a === 'wcheck') {
+      var txt = document.getElementById('wt').value.trim(), n = document.querySelectorAll('[data-ck]:checked').length, fb = document.getElementById('wfb');
+      var words = txt ? txt.split(/\s+/).length : 0, notes = [];
+      if (!txt) notes.push('Write your hook first.');
+      if (words > 45) notes.push('That is ' + words + ' words. A hook is usually one or two sentences; trim it.');
+      if (/^in this (essay|speech|report)/i.test(txt)) notes.push('"In this essay…" is an announcement, not a hook.');
+      if (/dictionary defines/i.test(txt)) notes.push('Avoid "the dictionary defines…"; write your own definition, or choose another hook.');
+      var ok = txt && !notes.length && n === 5;
+      fb.innerHTML = '<div class="fb ' + (ok ? 'good' : 'bad') + '">' + (ok ? '🎣 Strong hook! Read it aloud: does it make you want the next sentence? If yes, you have landed it.' : (notes.concat(n < 5 ? ['Tick each check only when it is true; ' + (5 - n) + ' still to go.'] : [])).map(esc).join('<br>')) + '</div>';
+      if (ok) { sWin(); jumpFish(); }
+      return;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.id === 'wg') setTask();
+    else if (e.target.hasAttribute && e.target.hasAttribute('data-ck')) { UI.ck = [].slice.call(document.querySelectorAll('[data-ck]:checked')).map(function (c) { return +c.dataset.ck; }); gsSave(); }
+  });
+  document.addEventListener('input', function (e) { if (e.target.id === 'wt' && !gsOff) { try { localStorage.setItem(KEY + '-draft', e.target.value); } catch (er) {} } });
+  /* ======================= SAVED PROGRESS (GameSave) ======================= */
+  var UI = { wg: null, wt: 0, ck: [] }, gsOff = false, gsData = null;
+  function gsSave() { if (!gsOff && window.GameSave) { try { window.GameSave.save(); } catch (e) {} } }
+  function gsInt(v, lo, hi) { return typeof v === 'number' && Math.floor(v) === v && v >= lo && v <= hi; }
+  function gsGame() {
+    var g = game; if (!g) return null;
+    if (g.lv === 6) return { lv: 6, pairs: g.pairs.map(function (d) { return RDEV.indexOf(d); }), L: g.L, R: g.R, matched: g.matched, tried: g.tried, first: g.first };
+    var pool = [L1, L2, L3, L4, L5][g.lv - 1];
+    return { lv: g.lv, qs: g.qs.map(function (q) { return pool.indexOf(q); }), i: g.i, score: g.score, picked: g.picked, opts: g.opts, expl: g.expl };
+  }
+  function gsGameBack(s) {
+    if (!s || typeof s !== 'object' || !gsInt(s.lv, 1, 6) || !unlocked(s.lv)) return null;
+    if (s.lv === 6) {
+      if (!Array.isArray(s.pairs) || !s.pairs.length || !s.pairs.every(function (k) { return gsInt(k, 0, RDEV.length - 1); })) return null;
+      var n = s.pairs.length, perm = function (a) { return Array.isArray(a) && a.length === n && a.slice().sort(function (x, y) { return x - y; }).every(function (v, i) { return v === i; }); };
+      if (!perm(s.L) || !perm(s.R)) return null;
+      var keys = function (o) { var r = {}; if (o && typeof o === 'object') Object.keys(o).forEach(function (k) { if (gsInt(+k, 0, n - 1) && o[k]) r[k] = true; }); return r; };
+      var m6 = { lv: 6, pairs: s.pairs.map(function (k) { return RDEV[k]; }), L: s.L, R: s.R, matched: keys(s.matched), tried: keys(s.tried), first: gsInt(s.first, 0, n) ? s.first : 0, selL: null, selR: null };
+      if (Object.keys(m6.matched).length === n) m6.done = true;
+      return m6;
+    }
+    var pool = [L1, L2, L3, L4, L5][s.lv - 1];
+    if (!Array.isArray(s.qs) || s.qs.length !== pool.length || !s.qs.every(function (k) { return gsInt(k, 0, pool.length - 1); })) return null;
+    if (!gsInt(s.i, 0, pool.length) || !gsInt(s.score, 0, pool.length)) return null;
+    var g = { lv: s.lv, qs: s.qs.map(function (k) { return pool[k]; }), i: s.i, score: s.score, picked: null };
+    if (g.i < g.qs.length) {
+      var ok = Array.isArray(s.opts) && s.opts.length >= 2 && s.opts.every(function (o) { return o && typeof o.t === 'string'; }) && s.opts.filter(function (o) { return o.ok; }).length === 1;
+      if (ok) { g.opts = s.opts; g.expl = typeof s.expl === 'string' ? s.expl : ''; g.picked = gsInt(s.picked, 0, s.opts.length - 1) ? s.picked : null; }
+      else { var mo = makeOpts(g.lv, g.qs[g.i]); g.opts = mo.opts; g.expl = mo.expl; }
+    }
+    return g;
+  }
+  if (window.GameSave) {
+    window.GameSave.register([KEY, KEY + '-draft']);
+    window.GameSave.onReset(function () { gsOff = true; });
+    window.GameSave.persist({ key: 'comm.hooks.save', welcome: false, get: function () { return { v: 1, tab: tab, genre: openGenre, game: gsGame(), ui: UI }; }, set: function (d) { gsData = d; } });
+    try {
+      var d = gsData;
+      if (d && d.v === 1) {
+        if (['guide', 'tackle', 'rhet', 'play', 'write'].indexOf(d.tab) >= 0) tab = d.tab;
+        if (GENRES.some(function (x) { return x.id === d.genre; })) openGenre = d.genre;
+        if (d.ui && TASKS[d.ui.wg]) { UI.wg = d.ui.wg; UI.wt = gsInt(d.ui.wt, 0, TASKS[d.ui.wg].length - 1) ? d.ui.wt : 0; }
+        if (d.ui && Array.isArray(d.ui.ck)) UI.ck = d.ui.ck.filter(function (k) { return gsInt(k, 0, 4); });
+        game = gsGameBack(d.game);
+        if (game) setTimeout(function () { try { window.GameSave.toast('Welcome back! Your progress was restored.'); } catch (e) {} }, 400);
+      }
+    } catch (e) { tab = 'guide'; openGenre = null; game = null; }
+  }
+
+  render();
+})();
+</script>
+
+</body></html>

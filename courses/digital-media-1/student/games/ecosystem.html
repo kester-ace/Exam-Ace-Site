@@ -1,0 +1,2129 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ecosystem Builder</title>
+<meta name="description" content="Run a Caribbean digital media start-up and build its ecosystem. CAPE Digital Media Unit 1, Module 2.">
+<style>
+/* Ecosystem Builder: night-time island network. One dark theme by design; print is light. */
+:root{
+  --bg:#081221; --bg2:#0d1b30; --panel:#12233d; --panel2:#172d4c; --panel3:#1d375b; --line:#284670; --line2:#355a8a;
+  --text:#eaf2fb; --muted:#a5b8d1; --dim:#7b90ad;
+  --primary:#ff7a59; --primary-hi:#ff9a7f; --on-primary:#1a0d08;
+  --focus:#ffe27a;
+  --content:#2ee6c5; --money:#ffc53d; --data:#b48dff;
+  --z-create:#ff9f6e; --z-host:#63a4ff; --z-consume:#7fdc8f; --z-support:#c9d3e3;
+  --good:#52d98f; --bad:#ff6b6b; --warn:#ffc53d;
+  --r:14px; --r-sm:10px;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:"Avenir Next","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(1200px 600px at 85% -10%,rgba(46,230,197,.10),transparent 60%),
+                   radial-gradient(900px 500px at -10% 20%,rgba(255,122,89,.08),transparent 60%);
+  background-attachment:fixed;
+  color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;min-height:100vh;overflow-x:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:8px}
+[tabindex="-1"]:focus{outline:none}
+[hidden]{display:none!important}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1240px;margin:0 auto;padding:14px 16px 0}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0}
+h2{font-size:clamp(1.35rem,3.2vw,1.9rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:.4em 0}
+a{color:var(--content)}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Header */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-logo{width:46px;height:46px;flex:none}
+h1{font-size:clamp(1.4rem,3.4vw,2rem);font-weight:800;letter-spacing:-.02em}
+h1 span{color:var(--content)}
+.sub{display:block;color:var(--muted);font-size:.82rem;letter-spacing:.04em;margin-top:3px}
+.modes{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:4px}
+.modes button{border:0;background:transparent;border-radius:999px;padding:8px 14px;font-weight:650;color:var(--muted);min-height:40px;display:inline-flex;align-items:center;gap:6px}
+.modes .sm-only{display:none}
+.modes button[aria-pressed="true"]{background:var(--panel3);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--panel2);padding:10px 16px;font-weight:650;min-height:44px;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{background:var(--panel3);border-color:#4a71a6}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn.primary:hover{background:var(--primary-hi);border-color:var(--primary-hi)}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:6px 11px;font-size:.88rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+/* HUD */
+.hud{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin:12px 0 0}
+.hud-venture{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;min-width:0;flex:1 1 220px}
+.hud-venture .vic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+.hud-venture b{display:block;font-family:var(--display);font-size:1rem;line-height:1.1}
+.hud-venture span{color:var(--muted);font-size:.8rem}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;flex:3 1 560px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:7px 10px;min-width:0}
+.stat small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{font-family:var(--display);font-size:1.12rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .bar{height:4px;border-radius:4px;background:var(--bg2);margin-top:4px;overflow:hidden}
+.stat .bar i{display:block;height:100%;border-radius:4px;background:var(--content);transition:width .5s}
+.stat.flash{animation:flash .8s}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,226,122,.7)}100%{box-shadow:0 0 0 10px rgba(255,226,122,0)}}
+
+/* Stepper */
+.stepper{margin:12px 0 0;overflow-x:auto;position:relative;scrollbar-width:thin}
+.stepper ol{list-style:none;margin:0;padding:0 0 4px;display:flex;gap:6px;min-width:max-content}
+.stepper button{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:6px 13px 6px 6px;font-size:.88rem;font-weight:600;color:var(--muted);min-height:40px;white-space:nowrap}
+.stepper button .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--panel2);font-size:.8rem;font-weight:800;color:var(--text)}
+.stepper button[aria-current="step"]{border-color:var(--primary);color:var(--text);background:var(--panel)}
+.stepper button[aria-current="step"] .n{background:var(--primary);color:var(--on-primary)}
+.stepper button.done .n{background:var(--good);color:#06240f}
+.stepper button[disabled]{opacity:.45;cursor:not-allowed}
+
+main{padding:16px 0 30px;min-height:60vh}
+.screen{display:none}
+.screen.on{display:block;animation:rise .35s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.screen-head{margin-bottom:14px;max-width:880px}
+.screen-head p{color:var(--muted)}
+.kicker{display:inline-block;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--content);font-weight:700;margin-bottom:4px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card + .card{margin-top:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.next-row{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* Venture picker */
+.intro-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:center;margin-bottom:18px}
+.intro-hero .lede{font-size:1.06rem;color:var(--muted);max-width:640px}
+.journey{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;list-style:none;padding:0;margin:12px 0 0}
+.journey li{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.86rem;color:var(--muted)}
+.journey li b{color:var(--text);display:block;font-size:.9rem}
+.ventures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.vcard{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}
+.vcard:hover{border-color:var(--line2);transform:translateY(-2px)}
+.vcard[aria-pressed="true"]{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary) inset}
+.vcard .vic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center}
+.vcard .vic svg{width:26px;height:26px}
+.vcard h3{font-size:1.15rem}
+.vcard .kind{color:var(--content);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.vcard p{color:var(--muted);font-size:.92rem;margin:0}
+.vcard .req{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;padding-top:6px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;color:var(--muted);background:var(--bg2)}
+
+/* Map */
+.map-layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:14px;align-items:start}
+.tray{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;scrollbar-width:thin}
+.tray-handle{display:none}
+.tray h3{font-size:.95rem;margin-bottom:4px}
+.tray-help{font-size:.82rem;color:var(--muted);margin:0 0 10px}
+.chips{display:flex;flex-direction:column;gap:5px}
+.chip{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:.84rem;font-weight:600;line-height:1.2;min-height:40px;touch-action:none;user-select:none;-webkit-user-select:none}
+.chip .dot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;color:#0b1626}
+.chip .dot svg{width:16px;height:16px;stroke-width:2.2}
+.chip:hover{border-color:var(--line2)}
+.chip.armed{border-color:var(--focus);box-shadow:0 0 0 2px var(--focus) inset;background:var(--panel2)}
+.chip.placed{opacity:.42}
+.chip.placed::after{content:"\2713";margin-left:auto;font-size:.85rem;color:var(--good);font-weight:800}
+.chip.need{position:relative}
+.chip .needmark{margin-left:auto;font-size:.68rem;color:var(--primary);font-weight:700;letter-spacing:.04em}
+.chip.placed .needmark{display:none}
+
+.board-wrap{min-width:0}
+.board-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 12px;font-size:.84rem;font-weight:650;color:var(--muted);min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--panel3);color:var(--text)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:34px;height:10px}
+.board-frame{position:relative;border:1px solid var(--line);border-radius:var(--r);background:#0a1628;overflow:hidden}
+#board{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#board .node{cursor:grab}
+#board .node:focus{outline:none}
+#board .node:focus-visible .nb, #board .node.kfocus .nb{stroke:var(--focus);stroke-width:3}
+#board .zone-hit:focus{outline:none}
+#board .zone-hit:focus-visible{stroke:var(--focus);stroke-width:3}
+#board .lhit{cursor:pointer}
+#board.armed .zone-hit{cursor:copy}
+.board-empty{position:absolute;inset:auto 0 46% 0;text-align:center;color:var(--muted);font-size:.95rem;pointer-events:none;padding:0 20px}
+.infobar{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;min-height:52px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.92rem}
+.infobar .def{flex:1 1 280px;color:var(--muted)}
+.infobar .def b{color:var(--text)}
+.flowbtn{border:2px solid currentColor;background:transparent;border-radius:999px;padding:6px 14px;font-weight:700;min-height:38px}
+.flowbtn.content{color:var(--content)} .flowbtn.money{color:var(--money)} .flowbtn.data{color:var(--data)}
+.flowbtn.sugg{background:rgba(255,255,255,.07)}
+.flowbtn.sugg::after{content:" (suggested)";font-weight:500;font-size:.78rem;opacity:.8}
+.links-list{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 12px}
+.links-list summary{cursor:pointer;font-weight:650;padding:6px 0;min-height:32px}
+.links-list ul{list-style:none;margin:0;padding:0 0 6px;display:flex;flex-direction:column;gap:4px}
+.links-list li{display:flex;align-items:center;gap:8px;font-size:.88rem;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:5px}
+.links-list li .ln{flex:1 1 200px}
+.fdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.map-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+
+.feedback{margin-top:12px}
+.fb-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.score-ring{width:72px;height:72px;flex:none}
+.fb-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.fb-list li{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.92rem}
+.fb-list li .mk{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;margin-top:1px}
+.fb-list li.ok .mk{background:var(--good);color:#06240f}
+.fb-list li.bad .mk{background:var(--bad);color:#2a0606}
+.fb-list li.tip .mk{background:var(--warn);color:#2a1d00}
+.note{border-left:4px solid var(--content);background:var(--bg2);border-radius:0 10px 10px 0;padding:10px 12px;margin:10px 0;font-size:.93rem}
+.note.warn{border-color:var(--warn)}
+.note.bad{border-color:var(--bad)}
+.note.good{border-color:var(--good)}
+
+/* Value chain */
+.chain-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.chain-list{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.chain-list li{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.chain-list li .pos{width:28px;height:28px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-weight:800;flex:none;font-size:.85rem}
+.chain-list li .act{flex:1;font-size:.92rem}
+.chain-list li .act small{display:block;color:var(--content);font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
+.chain-list li.right{border-color:var(--good)}
+.chain-list li.wrong{border-color:var(--bad)}
+.mv{display:flex;flex-direction:column;gap:3px}
+.mv button{width:34px;height:28px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);display:grid;place-items:center;padding:0}
+.mv button svg{width:14px;height:14px}
+.budget{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.bud label{display:flex;justify-content:space-between;gap:8px;font-weight:650;font-size:.92rem}
+.bud label output{font-family:var(--mono);color:var(--money)}
+.bud small{display:block;color:var(--muted);font-size:.8rem}
+input[type=range]{width:100%;accent-color:var(--primary);height:28px}
+.budget-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--bg2);margin-top:6px;border:1px solid var(--line)}
+.budget-bar i{display:block;height:100%;transition:width .2s}
+.remain{font-family:var(--mono);font-weight:700}
+.sim{margin-top:14px}
+.sim-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:center;margin-top:10px}
+.weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;height:170px;padding:10px;background:var(--bg2);border-radius:12px;border:1px solid var(--line)}
+.wk{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.wk .col{width:100%;max-width:56px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,var(--content),#1a8f7d);height:0;transition:height .5s ease}
+.wk small{color:var(--muted);font-size:.76rem}
+.wk .val{font-size:.76rem;font-family:var(--mono)}
+.simstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.simstats div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.simstats small{display:block;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.simstats b{font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+details.calc{margin-top:12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+details.calc summary{cursor:pointer;font-weight:700;min-height:32px;padding-top:4px}
+.formula{font-family:var(--mono);font-size:.84rem;background:#08111f;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;overflow-wrap:anywhere}
+.formula b{color:var(--money);font-weight:700}
+
+/* Events */
+.ev-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pips{display:flex;gap:6px}
+.pips i{width:30px;height:8px;border-radius:4px;background:var(--panel3);display:block}
+.pips i.done{background:var(--good)}
+.pips i.cur{background:var(--primary)}
+.event-card{max-width:760px;margin:0 auto;background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.ev-head{display:flex;gap:14px;align-items:center;padding:18px 20px;background:linear-gradient(120deg,rgba(255,122,89,.22),rgba(46,230,197,.10));border-bottom:1px solid var(--line)}
+.ev-icon{width:58px;height:58px;border-radius:16px;background:var(--bg);display:grid;place-items:center;flex:none;border:1px solid var(--line2)}
+.ev-icon svg{width:32px;height:32px;color:var(--primary)}
+.ev-head .tag{margin-bottom:4px}
+.ev-head h3{font-size:1.35rem}
+.ev-body{padding:16px 20px 20px}
+.ev-body > p{font-size:1.04rem}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.choice{text-align:left;background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;min-height:48px}
+.choice:hover{border-color:var(--primary)}
+.choice .k{width:26px;height:26px;border-radius:8px;background:var(--panel3);display:grid;place-items:center;font-weight:800;flex:none;font-size:.85rem}
+.choice.picked{border-color:var(--primary);background:var(--panel3)}
+.choice[disabled]{cursor:default}
+.choice[disabled]:not(.picked){opacity:.5}
+.effects{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.eff{font-size:.8rem;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid}
+.eff.up{color:var(--good);border-color:rgba(82,217,143,.5);background:rgba(82,217,143,.08)}
+.eff.down{color:var(--bad);border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.08)}
+.concept{display:inline-flex;gap:6px;align-items:center;font-size:.8rem;font-weight:700;color:var(--content);text-transform:uppercase;letter-spacing:.05em}
+
+/* Funding */
+.fund-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;text-align:left}
+.fcard[aria-pressed="true"]{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary) inset}
+.fcard.blocked{opacity:.75}
+.fcard h3{font-size:1rem}
+.fcard .amt{font-family:var(--display);font-size:1.25rem;font-weight:800;color:var(--money)}
+.fcard dl{margin:0;font-size:.82rem;display:grid;grid-template-columns:auto 1fr;gap:2px 8px}
+.fcard dt{color:var(--muted)}
+.fcard dd{margin:0}
+.fcard .fsel{margin-top:auto}
+.ftype{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;border-radius:6px;padding:2px 7px;align-self:flex-start}
+.ftype.debt{background:rgba(255,107,107,.15);color:#ff9b9b}
+.ftype.equity{background:rgba(180,141,255,.18);color:#cdb6ff}
+.ftype.free{background:rgba(82,217,143,.15);color:#8fe9b6}
+.ftype.reward{background:rgba(255,197,61,.15);color:#ffd877}
+.ftype.own{background:rgba(99,164,255,.16);color:#9cc4ff}
+.tradeoff{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center}
+.tradeoff .kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tradeoff .kv div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.tradeoff .kv small{display:block;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em}
+.tradeoff .kv b{font-family:var(--display);font-size:1.15rem}
+.compare{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:10px}
+.compare th,.compare td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+.compare th{color:var(--muted);font-weight:650;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.table-scroll{overflow-x:auto}
+.mcq{display:flex;flex-direction:column;gap:14px;margin-top:8px}
+.mcq fieldset{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0}
+.mcq legend{font-weight:650;padding:0 4px}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.opt{text-align:left;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:9px 12px;min-height:44px}
+.opt:hover{border-color:var(--content)}
+.opt.right{border-color:var(--good);background:rgba(82,217,143,.12)}
+.opt.wrong{border-color:var(--bad);background:rgba(255,107,107,.12)}
+.opt[disabled]{cursor:default}
+.explain{font-size:.88rem;color:var(--muted);margin-top:6px}
+
+/* PEST */
+.pest-pool{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.pest-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pcol{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-height:120px}
+.pcol h3{display:flex;align-items:center;gap:8px;font-size:.98rem;margin-bottom:8px}
+.pcol h3 .L{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:900;color:#0b1626}
+.pcol .stack{display:flex;flex-direction:column;gap:6px}
+.pfac{background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.pfac .pb{display:flex;gap:4px;margin-top:6px}
+.pfac .pb button{flex:1;border:1px solid var(--line2);background:var(--panel2);border-radius:7px;font-weight:800;min-height:34px;padding:0}
+.pfac .pb button[aria-pressed="true"]{background:var(--panel3);border-color:var(--text)}
+.pfac.right{border-color:var(--good)}
+.pfac.wrong{border-color:var(--bad)}
+.pfac .why{font-size:.8rem;color:var(--muted);margin-top:5px}
+
+/* Report */
+.report{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.rep-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}
+.rep-head h2{font-size:1.6rem}
+.rep-fields{display:flex;gap:10px;flex-wrap:wrap}
+.rep-fields label{display:flex;flex-direction:column;font-size:.78rem;color:var(--muted);gap:3px}
+.rep-fields input{background:var(--bg2);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;min-height:40px;width:200px;max-width:100%}
+.gauges{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.gauge{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.gauge svg{width:84px;height:84px}
+.gauge b{display:block;font-family:var(--display)}
+.gauge small{color:var(--muted);font-size:.78rem;display:block}
+.gauge.overall{border-color:var(--primary)}
+.rep-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px}
+.rep-map{background:#0a1628;border:1px solid var(--line);border-radius:12px;padding:6px;margin:0}
+.rep-map img{display:block;width:100%;height:auto;border-radius:8px}
+.rep-map figcaption{font-size:.78rem;color:var(--muted);padding:4px 4px 0}
+.kvt{width:100%;border-collapse:collapse;font-size:.9rem}
+.kvt th,.kvt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.kvt th{color:var(--muted);font-weight:600}
+.kvt td{font-variant-numeric:tabular-nums;font-weight:650}
+.declog{margin:6px 0 0;padding-left:22px;font-size:.92rem}
+.declog li{margin:4px 0}
+.declog li span{color:var(--muted)}
+.reflect textarea{width:100%;min-height:150px;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;resize:vertical;line-height:1.5}
+.reflect .prompts{font-size:.86rem;color:var(--muted);margin:4px 0 8px;padding-left:18px}
+.print-mirror{display:none;white-space:pre-wrap}
+.rep-foot{margin-top:14px;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+/* Learn */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.filters button{border:1px solid var(--line2);background:var(--bg2);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:650;min-height:36px;color:var(--muted)}
+.filters button[aria-pressed="true"]{background:var(--panel3);color:var(--text);border-color:var(--content)}
+.search{background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;min-height:42px;width:280px;max-width:100%}
+.lcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.lcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px}
+.lcard .cat{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--content)}
+.lcard h3{font-size:1.02rem}
+.lcard p{font-size:.9rem;margin:0}
+.lcard .eg{font-size:.84rem;color:var(--muted);border-top:1px dashed var(--line2);padding-top:6px;margin-top:auto}
+.credit{font-size:.84rem;color:var(--muted);font-style:italic}
+
+/* Quiz */
+.qwrap{max-width:760px;margin:0 auto}
+.qcard{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:18px;padding:18px}
+.qmeta{display:flex;justify-content:space-between;gap:10px;align-items:center;color:var(--muted);font-size:.86rem;margin-bottom:8px;flex-wrap:wrap}
+.timer{height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.timer i{display:block;height:100%;background:var(--money);width:100%}
+.qcard h3{font-size:1.2rem;margin-bottom:10px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--primary)}
+.review{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+.review li{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.review li.ok{border-left:4px solid var(--good)}
+.review li.no{border-left:4px solid var(--bad)}
+
+/* Tooltip, ghost */
+#tip{position:fixed;z-index:50;max-width:290px;background:#f4f8fd;color:#0d1b30;border-radius:10px;padding:9px 11px;font-size:.84rem;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+#tip.on{opacity:1;transform:none}
+#tip b{display:block;font-size:.9rem;margin-bottom:2px}
+.drag-ghost{position:fixed;z-index:60;pointer-events:none;transform:translate(-50%,-50%);opacity:.92;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+
+footer.foot{border-top:1px solid var(--line);padding:16px 0 26px;text-align:center;color:var(--muted);font-size:.88rem}
+
+/* Responsive */
+@media (max-width:1060px){
+  .fund-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .gauges{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .ventures{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .intro-hero{grid-template-columns:1fr}
+  .chain-grid,.grid2,.rep-grid,.sim-grid{grid-template-columns:1fr}
+  .pest-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pest-pool{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tradeoff{grid-template-columns:1fr}
+  .tradeoff svg{justify-self:center}
+}
+@media (max-width:760px){
+  .map-layout{grid-template-columns:1fr}
+  body.on-map{padding-bottom:70px}
+  .tray{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;border-radius:18px 18px 0 0;border-bottom:0;padding:0 12px 12px;
+        max-height:62vh;display:flex;flex-direction:column;transform:translateY(calc(100% - 56px));transition:transform .25s ease;box-shadow:0 -12px 40px rgba(0,0,0,.5)}
+  .tray.open{transform:none}
+  .tray-handle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;background:transparent;min-height:56px;font-weight:750;font-size:.98rem;flex:none}
+  .tray-handle::before{content:"";position:absolute;top:7px;left:50%;width:44px;height:4px;border-radius:2px;background:var(--line2);transform:translateX(-50%)}
+  .tray-handle svg{transition:transform .2s}
+  .tray.open .tray-handle svg{transform:rotate(180deg)}
+  .tray-body{overflow-y:auto;min-height:0}
+  .tray h3{display:none}
+  .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .journey{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  .wrap{padding:10px 12px 0}
+  .ventures{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .stat{padding:6px 8px}
+  .stat b{font-size:1rem}
+  .fund-grid{grid-template-columns:1fr}
+  .pest-pool,.pest-cols{grid-template-columns:1fr}
+  .gauges{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gauge.overall{grid-column:1/-1}
+  .tradeoff .kv{grid-template-columns:1fr 1fr}
+  .modes{width:100%;justify-content:space-between}
+  .modes .lg{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .modes .sm-only{display:inline}
+  .modes button{flex:1;justify-content:center;padding:8px 6px;font-size:.88rem}
+  .ev-head{padding:14px}
+  .ev-body{padding:12px 14px 16px}
+  .simstats b{font-size:1.1rem}
+  .report{padding:14px}
+  .brand-logo{width:38px;height:38px}
+}
+@media (max-width:380px){
+  .chips{grid-template-columns:1fr 1fr}
+  .chip{font-size:.8rem;padding:6px}
+  .chip .dot{width:22px;height:22px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* Print: only the report */
+@media print{
+  :root{color-scheme:light}
+  body{background:#fff!important;color:#111;font-size:11pt}
+  header.top,.hud,.stepper,footer.foot,.no-print,.screen:not(#s-report),#tip{display:none!important}
+  .wrap{max-width:none;padding:0}
+  main{padding:0}
+  #s-report{display:block!important;animation:none}
+  .report{background:#fff;border:0;padding:0;color:#111}
+  .report *{color:#111!important;border-color:#bbb!important}
+  .gauge,.rep-map,.note{background:#fff!important}
+  .rep-map{border:1px solid #bbb}
+  .gauge svg circle.track{stroke:#ddd}
+  .rep-fields input{border:0;border-bottom:1px solid #888!important;background:#fff;border-radius:0}
+  .reflect textarea{display:none}
+  .print-mirror{display:block;border:1px solid #888;min-height:140px;padding:8px;border-radius:6px}
+  .rep-grid{grid-template-columns:1.2fr 1fr}
+  .gauges{grid-template-columns:repeat(5,1fr)}
+  h2,h3{break-after:avoid}
+  .rep-map,.gauges,.reflect{break-inside:avoid}
+  .rep-foot{color:#444!important}
+  .declog{padding-left:30px}
+}
+
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <rect width="48" height="48" rx="13" fill="#12233d" stroke="#355a8a"/>
+      <path d="M14 15L24 24M24 24L35 14M24 24L33 35M24 24L13 33" stroke="#2ee6c5" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M14 15L35 14" stroke="#ffc53d" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/>
+      <path d="M13 33L33 35" stroke="#b48dff" stroke-width="2" stroke-dasharray="1 3.5" stroke-linecap="round"/>
+      <circle cx="24" cy="24" r="5.5" fill="#ff7a59"/><circle cx="14" cy="15" r="3.6" fill="#eaf2fb"/><circle cx="35" cy="14" r="3.6" fill="#eaf2fb"/><circle cx="33" cy="35" r="3.6" fill="#eaf2fb"/><circle cx="13" cy="33" r="3.6" fill="#eaf2fb"/>
+    </svg>
+    <div><h1>Ecosystem <span>Builder</span></h1><span class="sub">CAPE Digital Media · Unit 1 · Module 2: The Digital Media Ecosystem</span></div>
+  </div>
+  <nav class="modes" aria-label="Mode">
+    <button type="button" data-mode="play" aria-pressed="true"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Play</button>
+    <button type="button" data-mode="learn" aria-pressed="false"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6M20 4v14h-6"/></svg>Learn</button>
+    <button type="button" data-mode="quiz" aria-pressed="false"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg><span class="lg">Quick-fire quiz</span><span class="sm-only" aria-hidden="true">Quiz</span></button>
+  </nav>
+</header>
+
+<div id="playChrome">
+  <div id="hud" class="hud" hidden>
+    <div class="hud-venture"><div class="vic" id="hudIc"></div><div><b id="hudName"></b><span id="hudKind"></span></div></div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <nav class="stepper" aria-label="Game stages"><ol id="stepper"></ol></nav>
+</div>
+
+<main id="main">
+<!-- 1 Venture -->
+<section class="screen" id="s-venture" aria-labelledby="h-venture">
+  <div class="intro-hero">
+    <div>
+      <span class="kicker">Stage 1 · Pick a start-up</span>
+      <h2 id="h-venture" tabindex="-1">You run a Caribbean digital media start-up</h2>
+      <p class="lede">No player in the digital ecosystem works alone. Choose a venture, map the players it depends on, run its value chain, survive a month of shocks, raise funding and scan the PEST environment. You finish with an ecosystem report for your SBA and Paper 02 practice.</p>
+    </div>
+    <ol class="journey">
+      <li><b>Map</b>Elements and flows</li><li><b>Value chain</b>Order and budget</li><li><b>Events</b>Five shocks</li>
+      <li><b>Funding</b>Debt or equity</li><li><b>PEST</b>Scan 12 factors</li><li><b>Report</b>Print and reflect</li>
+    </ol>
+  </div>
+  <div class="ventures" id="ventures" role="group" aria-label="Start-ups"></div>
+  <div class="next-row"><button class="btn primary" id="toMap" disabled>Build the ecosystem →</button></div>
+</section>
+
+<!-- 2 Map -->
+<section class="screen" id="s-map" aria-labelledby="h-map">
+  <div class="screen-head">
+    <span class="kicker">Stage 2 · Ecosystem map</span>
+    <h2 id="h-map" tabindex="-1">Map your ecosystem</h2>
+    <p id="mapIntro"></p>
+  </div>
+  <div class="map-layout">
+    <aside class="tray" id="tray" aria-label="Elements tray">
+      <button type="button" class="tray-handle" id="trayHandle" aria-expanded="false" aria-controls="trayBody">Elements tray <span id="trayCount"></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+      <div class="tray-body" id="trayBody">
+        <h3>Elements</h3>
+        <p class="tray-help" id="trayHelp"></p>
+        <div class="chips" id="chips"></div>
+      </div>
+    </aside>
+    <div class="board-wrap" id="boardWrap">
+      <div class="board-tools">
+        <div class="seg" role="group" aria-label="Input mode">
+          <button type="button" id="modeDrag" aria-pressed="true"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg> Drag</button>
+          <button type="button" id="modeTap" aria-pressed="false"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V5a2 2 0 0 1 4 0v6M12 11V4a2 2 0 0 1 4 0v8M16 9a2 2 0 0 1 4 0v5a8 8 0 0 1-8 8h-1a7 7 0 0 1-6-3l-2.5-4a2 2 0 0 1 3.4-2L8 15"/></svg> Tap</button>
+        </div>
+        <button type="button" class="btn sm ghost" id="btnAnim" aria-pressed="true">Animate flows</button>
+        <button type="button" class="btn sm ghost" id="btnHint"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg> Hint</button>
+        <button type="button" class="btn sm ghost" id="btnClear"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg> Clear</button>
+        <span class="spacer"></span>
+        <div class="legend" aria-label="Flow key">
+          <span><svg viewBox="0 0 34 10" aria-hidden="true"><path d="M2 5H32" stroke="#2ee6c5" stroke-width="3"/></svg>Content</span>
+          <span><svg viewBox="0 0 34 10" aria-hidden="true"><path d="M2 5H32" stroke="#ffc53d" stroke-width="3" stroke-dasharray="9 6"/></svg>Money</span>
+          <span><svg viewBox="0 0 34 10" aria-hidden="true"><path d="M2 5H32" stroke="#b48dff" stroke-width="3" stroke-dasharray="1.5 6" stroke-linecap="round"/></svg>Data</span>
+        </div>
+      </div>
+      <div class="board-frame">
+        <svg id="board" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Ecosystem map board" aria-describedby="boardHelp"></svg>
+        <div class="board-empty" id="boardEmpty"></div>
+      </div>
+      <p class="sr" id="boardHelp">Choose an element in the tray and press Enter to place it in its suggested zone, or Tab to a zone and press Enter. On the board, press Enter on an element to start a connection, then Enter on a second element to finish it. Arrow keys move an element; Delete removes it; Escape cancels.</p>
+      <div class="infobar" id="infobar"></div>
+      <details class="links-list" id="linksBox"><summary>Connections (<span id="linkCount">0</span>)</summary><ul id="linkList"></ul></details>
+      <div class="map-actions">
+        <button class="btn primary" id="btnCheck"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg> Check my ecosystem</button>
+        <span class="spacer"></span>
+        <button class="btn" id="toChain" disabled>Continue to value chain →</button>
+      </div>
+      <div class="feedback" id="mapFb" tabindex="-1"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 Value chain -->
+<section class="screen" id="s-chain" aria-labelledby="h-chain">
+  <div class="screen-head">
+    <span class="kicker">Stage 3 · Value chain run</span>
+    <h2 id="h-chain" tabindex="-1">Run the value chain</h2>
+    <p>The value chain is the sequence of activities through which a product or service is created and delivered to the end user. Each stage adds value. Order the activities, share out your starter budget, then watch a month play out.</p>
+  </div>
+  <div class="chain-grid">
+    <div class="card">
+      <h3>1. Put the activities in order</h3>
+      <p class="muted small">Use the arrow buttons to move each activity from the first stage (top) to the last (bottom).</p>
+      <ol class="chain-list" id="chainList"></ol>
+      <div class="row"><button class="btn" id="btnOrder"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg> Check order</button></div>
+      <div id="orderFb" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h3>2. Share out your US$5,000 starter budget</h3>
+      <p class="muted small">Left over: <span class="remain" id="remain">$0</span>. Unspent money stays in the bank, but every stage needs some investment.</p>
+      <div class="budget-bar" id="budgetBar" aria-hidden="true"></div>
+      <div class="budget" id="budget"></div>
+    </div>
+  </div>
+  <div class="card sim">
+    <div class="row"><h3>3. Simulate month one</h3><span class="spacer"></span><button class="btn primary" id="btnRun"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg> Run the month</button></div>
+    <div class="sim-grid">
+      <div class="weeks" id="weeks" aria-hidden="true"></div>
+      <div class="simstats" id="simstats" aria-live="polite"></div>
+    </div>
+    <div id="simFb"></div>
+    <details class="calc" id="calc"><summary>How it’s calculated</summary><div id="calcBody"></div></details>
+  </div>
+  <div class="next-row"><button class="btn" id="toEvents" disabled>Continue to event cards →</button></div>
+</section>
+
+<!-- 4 Events -->
+<section class="screen" id="s-events" aria-labelledby="h-events">
+  <div class="screen-head">
+    <span class="kicker">Stage 4 · Event cards</span>
+    <h2 id="h-events" tabindex="-1">Survive the month</h2>
+    <p>Five random events will hit your start-up. Each choice changes your stats, and the feedback names the ecosystem concept involved. Elements on your map can soften the blow.</p>
+  </div>
+  <div class="ev-top"><div class="pips" id="pips" aria-hidden="true"></div><span class="muted small" id="evCount"></span></div>
+  <div id="eventArea"></div>
+  <div class="next-row"><button class="btn" id="toFunding" disabled>Continue to the funding round →</button></div>
+</section>
+
+<!-- 5 Funding -->
+<section class="screen" id="s-funding" aria-labelledby="h-funding">
+  <div class="screen-head">
+    <span class="kicker">Stage 5 · Funding round</span>
+    <h2 id="h-funding" tabindex="-1">Raise money to grow</h2>
+    <p id="fundIntro"></p>
+  </div>
+  <div class="fund-grid" id="fundGrid"></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Trade-offs of your choice</h3>
+    <div class="tradeoff" id="tradeoff"></div>
+    <div class="table-scroll"><table class="compare" id="compare"></table></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="btnFund" disabled>Confirm funding</button></div>
+    <div id="fundFb" aria-live="polite"></div>
+  </div>
+  <div class="card">
+    <h3>Debt vs equity check</h3>
+    <p class="muted small">Answer all six to unlock the PEST scan.</p>
+    <div class="mcq" id="deq"></div>
+  </div>
+  <div class="next-row"><button class="btn" id="toPest" disabled>Continue to the PEST scan →</button></div>
+</section>
+
+<!-- 6 PEST -->
+<section class="screen" id="s-pest" aria-labelledby="h-pest">
+  <div class="screen-head">
+    <span class="kicker">Stage 6 · PEST scan</span>
+    <h2 id="h-pest" tabindex="-1">Scan the environment</h2>
+    <p>Before you grow, analyse the environment. Classify each Caribbean factor as <b>P</b>olitical, <b>E</b>conomic, <b>S</b>ocial or <b>T</b>echnological. Tap a letter and the card moves to that column.</p>
+  </div>
+  <h3 style="margin-bottom:8px">To sort <span class="muted small" id="poolCount"></span></h3>
+  <div class="pest-pool" id="pestPool"></div>
+  <div class="pest-cols" id="pestCols"></div>
+  <div class="row" style="margin-top:12px"><button class="btn primary" id="btnPest" disabled><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg> Check my scan</button><span id="pestScore" class="muted" aria-live="polite"></span></div>
+  <div class="next-row"><button class="btn" id="toReport" disabled>See my ecosystem report →</button></div>
+</section>
+
+<!-- 7 Report -->
+<section class="screen" id="s-report" aria-labelledby="h-report">
+  <div class="report" id="report">
+    <div class="rep-head">
+      <div><span class="kicker">Ecosystem report</span><h2 id="h-report" tabindex="-1">Ecosystem report</h2><p class="muted" id="repSub"></p></div>
+      <div class="rep-fields">
+        <label>Student name<input id="stuName" autocomplete="name"></label>
+        <label>Class<input id="stuClass"></label>
+      </div>
+    </div>
+    <div class="gauges" id="gauges"></div>
+    <div class="rep-grid">
+      <figure class="rep-map"><img id="repMap" alt="The student's ecosystem map"><figcaption id="repMapCap"></figcaption></figure>
+      <div><h3 style="margin-bottom:6px">Final position</h3><table class="kvt" id="repStats"></table></div>
+    </div>
+    <h3 style="margin-top:16px">Decisions taken</h3>
+    <ol class="declog" id="repLog"></ol>
+    <h3 style="margin-top:16px">Knowledge check</h3>
+    <table class="kvt" id="repKnow"></table>
+    <div class="reflect" style="margin-top:16px">
+      <h3><label for="reflectBox">Reflection: Explain how one change in the ecosystem affected the whole system.</label></h3>
+      <ul class="prompts">
+        <li>Name the change (an event, a funding decision or a PEST factor).</li>
+        <li>Identify the element it hit first, then trace at least two knock-on effects through other elements.</li>
+        <li>Use the terms <i>interdependence</i>, <i>value chain</i> and at least one stakeholder.</li>
+      </ul>
+      <textarea id="reflectBox" placeholder="When … happened, it first affected … . Because … depends on …, this led to … . This shows that …"></textarea>
+      <div class="print-mirror" id="reflectPrint"></div>
+    </div>
+    <p class="rep-foot">Ecosystem Builder · CAPE Digital Media Unit 1, Module 2 · Kester Small</p>
+  </div>
+  <div class="next-row no-print">
+    <button class="btn" id="btnAgain"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg> Play again</button>
+    <button class="btn primary" id="btnPrint"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H3v-7h18v7h-3M7 14h10v7H7z"/></svg> Print or save as PDF</button>
+  </div>
+</section>
+
+<!-- Learn -->
+<section class="screen" id="m-learn" aria-labelledby="h-learn">
+  <div class="screen-head">
+    <span class="kicker">Learn mode</span>
+    <h2 id="h-learn" tabindex="-1">Key definitions</h2>
+    <p class="credit">Based on the Module 2 notes, using the wording of the syllabus.</p>
+  </div>
+  <div class="row"><input class="search" id="lsearch" type="search" placeholder="Search terms…" aria-label="Search definitions"><span class="muted small" id="lcount" aria-live="polite"></span></div>
+  <div class="filters" id="lfilters" role="group" aria-label="Filter by topic"></div>
+  <div class="lcards" id="lcards"></div>
+</section>
+
+<!-- Quiz -->
+<section class="screen" id="m-quiz" aria-labelledby="h-quiz">
+  <div class="qwrap">
+    <div class="screen-head">
+      <span class="kicker">Quick-fire quiz</span>
+      <h2 id="h-quiz" tabindex="-1">Quick-fire quiz</h2>
+      <p>Sixteen questions on elements, the value chain, funding, stakeholders and digital natives and immigrants.</p>
+    </div>
+    <div id="quizArea"></div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">Ecosystem Builder · Digital Media Unit 1 · Kester Small</footer>
+</div>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+<div id="tip" role="tooltip" aria-hidden="true"></div>
+<script>
+/* ===== DATA ===== */
+const ICONS={
+  creators:'M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v4M8 21h8',
+  platforms:'M3 5h18v14H3zM10 9l5 3-5 3z',
+  distributors:'M5 12a7 7 0 1 0 14 0a7 7 0 1 0-14 0M5 12h14M12 5c2.5 2.5 2.5 11.5 0 14M12 5c-2.5 2.5-2.5 11.5 0 14',
+  devices:'M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2',
+  consumers:'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
+  advertisers:'M3 10v4h4l6 4V6L7 10zM17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11',
+  payment:'M2 6h20v12H2zM2 10h20M6 15h4',
+  aggregators:'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5',
+  regulators:'M12 3l8 3v6c0 5-4 8-8 9c-4-1-8-4-8-9V6zM9 12l2 2 4-4',
+  isp:'M2 9a15 15 0 0 1 20 0M5 13a10 10 0 0 1 14 0M8.5 16.5a5 5 0 0 1 7 0M12 20h.01',
+  investors:'M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+  tools:'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z',
+  analytics:'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  communities:'M9 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M16 5a3 3 0 0 1 0 6M22 20a7 7 0 0 0-5-6.7',
+  storm:'M6 16a4 4 0 0 1 0-8a6 6 0 0 1 11.3-1.5A4.5 4.5 0 0 1 18 16M13 12l-3 5h4l-3 5',
+  spark:'M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z',
+  alert:'M12 3l10 18H2zM12 10v5M12 18h.01',
+  lock:'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
+  copy:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18zM15 9.5a4 4 0 1 0 0 5',
+  award:'M12 15a6 6 0 1 0 0-12a6 6 0 0 0 0 12zM8.5 14L7 22l5-3 5 3-1.5-8',
+  flag:'M4 22V4M4 4h13l-2 4 2 4H4',
+  mask:'M3 7c3-2 15-2 18 0c0 6-3 10-9 10S3 13 3 7zM8 10h2M14 10h2',
+  up:'M6 15l6-6 6 6', down:'M6 9l6 6 6-6', check:'M5 12l5 5 9-10', x:'M6 6l12 12M18 6L6 18',
+  chev:'M6 15l6-6 6 6', play:'M7 4l13 8-13 8z', book:'M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6M20 4v14h-6',
+  quiz:'M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01',
+  print:'M6 9V3h12v6M6 18H3v-7h18v7h-3M7 14h10v7H7z', reset:'M3 12a9 9 0 1 0 3-6.7M3 4v5h5',
+  hand:'M8 13V5a2 2 0 0 1 4 0v6M12 11V4a2 2 0 0 1 4 0v8M16 9a2 2 0 0 1 4 0v5a8 8 0 0 1-8 8h-1a7 7 0 0 1-6-3l-2.5-4a2 2 0 0 1 3.4-2L8 15',
+  move:'M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20',
+  bulb:'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z',
+  trash:'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3'
+};
+function ic(name,cls){return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[name]||'')+'"/></svg>';}
+
+const FLOWS={
+  content:{l:'Content',c:'#2ee6c5',dash:''},
+  money:{l:'Money',c:'#ffc53d',dash:'9 6'},
+  data:{l:'Data',c:'#b48dff',dash:'1.5 6'}
+};
+const ZONES={
+  create:{l:'Create & produce',c:'#ff9f6e'},
+  host:{l:'Host & distribute',c:'#63a4ff'},
+  consume:{l:'Consume & engage',c:'#7fdc8f'},
+  support:{l:'Fund, govern & measure',c:'#c9d3e3'}
+};
+const ZONE_ORDER=['create','host','consume','support'];
+
+/* Definitions follow the Module 2 notes and the syllabus wording. */
+const ELEMENTS={
+  creators:{l:'Creators / Producers',n:'Creators',s:'Creators',zone:'create',
+    def:'Creators are individuals who generate original content (videos, articles, podcasts, graphics), often independently through social platforms and the creator economy. Producers are companies or teams that develop, package and finance digital media products at scale.'},
+  tools:{l:'Tools & software (CMS)',n:'Tools & software',s:'Tools',zone:'create',
+    def:'Software that supports creation and publishing, including content management systems such as WordPress and Contentful that organise, publish and manage digital content at scale, plus editing and design apps.'},
+  platforms:{l:'Platforms',n:'Platforms',s:'Platforms',zone:'host',
+    def:'Digital environments where content is hosted and discovered: social networks, streaming services, app stores and websites.'},
+  aggregators:{l:'Aggregators',n:'Aggregators',s:'Aggregators',zone:'host',
+    def:'Aggregators bundle and curate content for specific audiences, for example playlists, podcast directories and news apps.'},
+  distributors:{l:'Distributors / CDN',n:'Distributors / CDN',s:'CDN',zone:'host',
+    def:'Entities that deliver content to audiences through networks, CDNs (content delivery networks), ISPs and digital syndication channels.'},
+  isp:{l:'Internet service providers',n:'ISPs',s:'ISPs',zone:'host',
+    def:'Infrastructure providers are the backbone of the ecosystem: cloud services, hosting providers and telecommunications companies (ISPs) that keep everything running.'},
+  devices:{l:'Devices',n:'Devices',s:'Devices',zone:'consume',
+    def:'Phones, tablets, laptops, smart TVs and consoles through which audiences reach content. Device penetration and infrastructure quality determine what is technically possible.'},
+  consumers:{l:'Consumers / End users',n:'Consumers',s:'End users',zone:'consume',
+    def:'Audiences are the consumers of digital content. They are active participants who comment, share and co-create, not just passive viewers. In the value chain, the end user consumes, shares and responds to content.'},
+  communities:{l:'Communities / Fans',n:'Communities',s:'Fans',zone:'consume',
+    def:'Engaged fan groups, including diaspora networks, who share, promote and co-create content and support creators directly through memberships, tips and crowdfunding.'},
+  advertisers:{l:'Advertisers',n:'Advertisers',s:'Advertisers',zone:'support',
+    def:'Brands and agencies that fund much of the ecosystem by paying for audience attention through targeted digital advertising. In the value chain they fund the chain by paying for audience access.'},
+  payment:{l:'Payment systems',n:'Payment systems',s:'Payments',zone:'support',
+    def:'Digital payment gateways, subscription billing and monetisation tools that enable commerce across the ecosystem.'},
+  investors:{l:'Investors / Funders',n:'Investors',s:'Investors',zone:'support',
+    def:'Sources of funding such as lending institutions, government and cultural agencies, angel investors, venture capitalists, accelerators and incubators. They provide capital as loans, grants or in exchange for equity.'},
+  regulators:{l:'Regulators / Government',n:'Regulators',s:'Regulators',zone:'support',
+    def:'Government bodies and industry watchdogs that set rules for content, data, competition and platform accountability.'},
+  analytics:{l:'Data & analytics',n:'Data & analytics',s:'Analytics',zone:'support',
+    def:'Analytics systems are tools that measure audience behaviour, content performance and campaign effectiveness to drive data-informed decisions.'}
+};
+const EL_ORDER=['creators','tools','platforms','aggregators','distributors','isp','devices','consumers','communities','advertisers','payment','investors','regulators','analytics'];
+
+/* Sensible directed flows: [from, to, flow, why] */
+const RULE_LIST=[
+  ['creators','platforms','content','Creators upload content to platforms, where it is hosted and discovered.'],
+  ['creators','aggregators','content','Creators supply content that aggregators bundle and curate.'],
+  ['creators','distributors','content','Creators hand finished content to a distributor or host to deliver.'],
+  ['creators','communities','content','Creators share content directly with their fan communities.'],
+  ['creators','consumers','content','Creators can reach end users directly, for example on their own website.'],
+  ['tools','creators','content','Tools and software enable creation and packaging.'],
+  ['tools','platforms','content','A CMS publishes and manages content on the platform.'],
+  ['aggregators','platforms','content','Aggregators feed curated bundles and playlists into platforms.'],
+  ['aggregators','consumers','content','Aggregators serve curated content to specific audiences.'],
+  ['aggregators','devices','content','Aggregator apps deliver curated content to devices.'],
+  ['platforms','aggregators','content','Platforms supply content that aggregators curate.'],
+  ['platforms','distributors','content','Platforms push content through CDNs and distributors to reach audiences at scale.'],
+  ['platforms','isp','content','Platform content travels over ISP networks.'],
+  ['platforms','devices','content','Platforms stream content to audiences’ devices.'],
+  ['platforms','consumers','content','Platforms deliver content to end users.'],
+  ['distributors','isp','content','CDNs hand content to ISP networks for the last mile.'],
+  ['distributors','devices','content','Distributors deliver content to devices.'],
+  ['distributors','consumers','content','Distributors deliver content to audiences.'],
+  ['isp','devices','content','ISPs carry content to audiences’ devices.'],
+  ['isp','consumers','content','ISPs connect end users to content.'],
+  ['devices','consumers','content','Devices are the screens through which end users consume content.'],
+  ['consumers','communities','content','End users share and co-create content in fan communities.'],
+  ['communities','consumers','content','Fans share content and pull in new audiences by word of mouth.'],
+  ['communities','platforms','content','Fans post, remix and share content back onto platforms.'],
+  ['consumers','platforms','content','Active audiences comment, share and co-create on platforms.'],
+  ['communities','creators','content','Fans co-create with creators (collaborations, user-generated content).'],
+  ['advertisers','platforms','content','Advertisers supply ads that platforms place beside content.'],
+  ['advertisers','platforms','money','Advertisers pay platforms for audience attention.'],
+  ['advertisers','creators','money','Brand partnerships: advertisers pay creators for sponsored content.'],
+  ['advertisers','aggregators','money','Advertisers pay aggregators to reach their curated audiences.'],
+  ['platforms','creators','money','Platforms share ad revenue and royalties with creators (platform monetisation).'],
+  ['platforms','aggregators','money','Platforms pay royalties to aggregators and distributors.'],
+  ['aggregators','creators','money','Aggregators pass royalties back to creators.'],
+  ['distributors','creators','money','Distributors pay royalties back to creators.'],
+  ['platforms','distributors','money','Platforms pay CDNs to deliver content.'],
+  ['platforms','isp','money','Platforms pay for hosting and bandwidth.'],
+  ['consumers','payment','money','End users pay through payment systems (subscriptions, purchases, tips).'],
+  ['communities','payment','money','Fans pay memberships, tips and pledges through payment systems.'],
+  ['payment','creators','money','Payment systems settle money into the creator’s account.'],
+  ['payment','platforms','money','Payment systems pass subscription money to the platform.'],
+  ['consumers','platforms','money','End users pay platforms for subscriptions.'],
+  ['consumers','creators','money','End users support creators directly (ideally through a payment system).'],
+  ['communities','creators','money','Fans support creators directly with donations and crowdfunding.'],
+  ['consumers','isp','money','End users pay ISPs for data plans.'],
+  ['consumers','devices','money','End users buy the devices they consume content on.'],
+  ['creators','isp','money','Creators pay for internet, hosting and cloud storage.'],
+  ['creators','tools','money','Creators pay for software subscriptions.'],
+  ['creators','distributors','money','Creators pay hosting or distribution fees.'],
+  ['creators','platforms','money','Creators pay platforms to boost posts or for seller fees.'],
+  ['investors','creators','money','Investors and funders provide capital to the venture.'],
+  ['creators','investors','money','Repayments, interest or a share of profits flow back to funders.'],
+  ['regulators','creators','money','Government and cultural agencies award grants.'],
+  ['creators','regulators','money','Businesses pay taxes and licence fees to government.'],
+  ['consumers','analytics','data','Audience behaviour data feeds analytics systems.'],
+  ['devices','analytics','data','Devices report usage and location data to analytics.'],
+  ['platforms','analytics','data','Platforms capture views, watch time and clicks for analytics.'],
+  ['communities','analytics','data','Fan engagement (comments, shares) is measured by analytics.'],
+  ['payment','analytics','data','Sales and subscription data feed analytics.'],
+  ['distributors','analytics','data','Delivery data (where and when content is watched) feeds analytics.'],
+  ['aggregators','analytics','data','Aggregators report listening and reading data.'],
+  ['analytics','creators','data','Analytics informs production decisions.'],
+  ['analytics','advertisers','data','Advertisers depend on audience data for targeting.'],
+  ['analytics','platforms','data','Analytics drives recommendation algorithms.'],
+  ['analytics','investors','data','Funders use performance data to judge traction.'],
+  ['analytics','regulators','data','Data reports help show regulators you comply with the rules.'],
+  ['platforms','advertisers','data','Platforms give advertisers audience insights.'],
+  ['platforms','creators','data','Platforms give creators insight dashboards.'],
+  ['consumers','creators','data','Comments and feedback inform creators.'],
+  ['communities','creators','data','Fan feedback informs creators.'],
+  ['regulators','platforms','data','Regulators set rules (copyright, data protection) that platforms must follow.'],
+  ['regulators','creators','data','Regulators set rules for content, intellectual property and data.'],
+  ['regulators','payment','data','Regulators set rules for payments and consumer protection.'],
+  ['regulators','isp','data','Regulators license and set rules for telecommunications.'],
+  ['regulators','analytics','data','Data protection law controls what analytics may collect.'],
+  ['regulators','advertisers','data','Regulators set advertising standards (e.g. disclosure of sponsored posts).'],
+  ['regulators','distributors','data','Regulators set rules for broadcasting and distribution.'],
+  ['creators','regulators','data','Businesses report to regulators (licences, compliance).'],
+  ['platforms','regulators','data','Platforms report to regulators on accountability.']
+];
+const RULES={};RULE_LIST.forEach(r=>{(RULES[r[0]+'>'+r[1]]=RULES[r[0]+'>'+r[1]]||{})[r[2]]=r[3];});
+const WRONG={
+  'platforms>advertisers|money':'Money flows the other way: advertisers pay platforms for audience attention.',
+  'creators>advertisers|money':'In a brand partnership the advertiser pays the creator, not the other way round.',
+  'creators>consumers|money':'Money flows from end users to creators (through payment systems), not out to consumers.',
+  'payment>consumers|money':'Payment systems collect money from consumers; refunds aside, money does not flow out to them.',
+  'creators>payment|money':'Payment systems settle money into the creator’s account: try Payment systems → Creators.',
+  'analytics>consumers|data':'Pushing audience data out to consumers raises privacy concerns. Data flows from consumers into analytics.',
+  'platforms>creators|content':'Content usually flows from creators to platforms. Did you mean money (revenue share) or data (insights)?',
+  'consumers>devices|content':'Content reaches consumers through devices: try Devices → Consumers.',
+  'investors>consumers|money':'Investors fund the venture, not its audience. Connect Investors → Creators.',
+  'advertisers>consumers|money':'Advertisers pay for audience attention through platforms or creators, not directly to consumers.'
+};
+
+/* Start-ups */
+const VENTURES=[
+  {id:'music',name:'Salt Pond Sounds',kind:'Island music-streaming label',c:'#ff7a59',ic:'creators',
+   blurb:'An Anguilla label releasing soca, dancehall and zouk from local artists to streaming services worldwide.',
+   req:['creators','platforms','aggregators','distributors','consumers','payment','regulators','analytics'],
+   why:{regulators:'Copyright and royalty rules protect your artists’ recordings.',aggregators:'Playlists and music aggregators get your tracks in front of new listeners.',distributors:'A digital distributor delivers your releases to every streaming service.'},
+   key:[{flow:'money',from:['platforms','aggregators','distributors'],to:'creators',ok:'Royalties flow back from streaming platforms to your artists.',bad:'Show how streaming royalties get back to your artists (money from Platforms or a Distributor to Creators).'}],
+   model:'Streaming royalties, fan memberships and merch',arpu:4.5,ad:4,base:2600,eng:.05,fanTarget:700,expand:'build a small recording studio in The Valley',
+   acts:['Artists write and record a soca single in a home studio in The Valley','Mix, master, add artwork and song metadata','Deliver the track through a digital distributor to Spotify, Apple Music and YouTube','Fans stream, playlist and share the song during Carnival season','Collect streaming royalties and sell merch through a payment gateway']},
+  {id:'food',name:'Guavaberry Kitchen',kind:'Food-vlog channel',c:'#ffc53d',ic:'platforms',
+   blurb:'A food-vlog channel cooking johnnycakes, saltfish and pate across French Quarter, Marigot and Philipsburg.',
+   req:['creators','tools','platforms','consumers','communities','advertisers','devices','analytics'],
+   why:{advertisers:'Ad revenue and sponsored segments are your main income.',tools:'Editing apps turn raw footage into polished episodes.',devices:'Most viewers watch on phones, so you design for vertical screens.'},
+   key:[{flow:'money',from:['advertisers'],to:'creators',ok:'Advertiser money reaches the channel (directly or through the platform).',bad:'Show how advertiser money reaches you: Advertisers → Platforms → Creators, or a direct brand deal.'}],
+   model:'Ad revenue, sponsored segments and a recipe e-book',arpu:2.5,ad:18,base:3000,eng:.06,fanTarget:800,expand:'buy a mobile kitchen set and a pro camera',
+   acts:['Plan and film a johnnycake and saltfish episode at a Marigot market','Edit, colour-grade, add captions and a thumbnail','Upload to YouTube and cut vertical clips for TikTok and Reels','Viewers watch, comment, try the recipe and share it','Earn ad revenue, a sponsored segment and recipe e-book sales']},
+  {id:'esports',name:'Phoenix Esports GY',kind:'E-sports team',c:'#b48dff',ic:'devices',
+   blurb:'A five-player team from Georgetown, Guyana, that competes online and live-streams every match.',
+   req:['creators','platforms','isp','devices','consumers','communities','advertisers','payment'],
+   why:{isp:'Low-latency internet is life or death in competitive play and streaming.',communities:'Your Discord fan base is what sponsors pay for.',devices:'Gaming PCs and consoles are where the content is made and watched.'},
+   key:[{flow:'content',from:['isp'],to:'*',ok:'Your ISP link is on the map: streaming depends on infrastructure providers.',bad:'Connect your ISP: live-streaming and online play depend on the internet connection (e.g. ISPs → Devices, content).',test:'isp-out'}],
+   model:'Sponsorships, channel subscriptions, tips and jerseys',arpu:5,ad:10,base:2200,eng:.08,fanTarget:650,expand:'buy gaming PCs and a fibre line for the team house',
+   acts:['Players train and scrim; the team plans stream segments','Set up overlays, highlight reels and team branding','Live-stream tournaments on Twitch and YouTube over a low-latency connection','Fans watch live, chat and join the Discord','Earn sponsorships, subscriptions, tips and jersey sales']},
+  {id:'ar',name:'Punda AR Trails',kind:'Tourism AR app',c:'#2ee6c5',ic:'distributors',
+   blurb:'An augmented-reality walking app that brings Fort Amsterdam, the Handelskade and the Queen Emma Bridge in Willemstad, Curaçao, to life for visitors.',
+   req:['creators','platforms','devices','consumers','payment','analytics','regulators','isp'],
+   why:{regulators:'Location data is personal data, so data protection rules apply.',devices:'AR only works on capable smartphones.',isp:'Tourists need mobile data or Wi-Fi to download trails.'},
+   key:[{flow:'data',from:['regulators'],to:'*',ok:'Regulators are connected: location tracking is covered by data protection rules.',bad:'Connect Regulators (data flow) to Analytics or Platforms: an app that tracks location must follow data protection law.',test:'reg-out'}],
+   model:'Premium tours, in-app purchases and partner ads',arpu:6,ad:6,base:2000,eng:.07,fanTarget:500,expand:'build an Android version and three new trails',
+   acts:['Research heritage sites and design AR stories for Fort Amsterdam and the Handelskade','Build 3D models, test the app and prepare app-store listings','Publish on the App Store and Google Play and partner with cruise lines','Tourists download it, walk the trail and share AR photos','Sell premium tours, in-app purchases and partner ads']},
+  {id:'news',name:'The Pulse BZ',kind:'Local news podcast',c:'#63a4ff',ic:'advertisers',
+   blurb:'A weekly podcast on island news, politics and culture, recorded in Belize City.',
+   req:['creators','tools','platforms','aggregators','consumers','advertisers','regulators','analytics'],
+   why:{aggregators:'Podcast directories curate shows and help listeners find you.',regulators:'Media, defamation and advertising rules shape what news you can publish.',advertisers:'Host-read ads from local businesses pay the bills.'},
+   key:[{flow:'money',from:['advertisers'],to:'creators',ok:'Advertiser money reaches the podcast team.',bad:'Show how ad money reaches you: Advertisers → Platforms → Creators, or Advertisers → Creators for host-read ads.'}],
+   model:'Host-read ads, listener support and sponsorship',arpu:3,ad:22,base:2400,eng:.05,fanTarget:600,expand:'fit out a studio and hire a part-time reporter',
+   acts:['Research and record interviews on local issues','Edit audio, write show notes and add chapter markers','Publish through a podcast host to Spotify, Apple Podcasts and directories','Listeners stream, subscribe and share episodes','Earn from host-read ads, listener support and sponsorships']},
+  {id:'carnival',name:'Mas Mode',kind:'Online Carnival costume store',c:'#7fdc8f',ic:'payment',
+   blurb:'An online store designing and selling Carnival costumes and accessories to masqueraders at home and abroad.',
+   req:['creators','tools','platforms','consumers','communities','payment','advertisers','analytics'],
+   why:{payment:'No payment gateway, no sales: the store depends on online payments.',communities:'Carnival troupes and diaspora masqueraders are your core community.',tools:'An e-commerce CMS runs your product pages.'},
+   key:[{flow:'money',from:['consumers','communities'],to:'payment',ok:'Customers pay through a payment system.',bad:'Show how customers pay: Consumers → Payment systems (money).',test:'direct'}],
+   model:'Costume sales, accessories and pre-sales',arpu:9,ad:3,base:1800,eng:.05,fanTarget:450,expand:'buy bulk fabric and sign a shipping partner',
+   acts:['Design costume sections inspired by this year’s Carnival theme','Photograph costumes and build product pages in the online store','Promote on Instagram and ship to masqueraders at home and abroad','Masqueraders browse, order and post photos in costume','Take payments online, upsell accessories and run pre-sales']}
+];
+
+const STAGES=[
+  {id:'create',l:'Creation',d:'Ideas and original content are generated.',buy:'Talent, ideas, recording and filming time'},
+  {id:'produce',l:'Production & packaging',d:'Content is developed, edited and packaged for release.',buy:'Editing, design, equipment hire, metadata'},
+  {id:'distribute',l:'Distribution',d:'Content is delivered to audiences through platforms and networks.',buy:'Distribution fees, hosting, boosted posts, partnerships'},
+  {id:'consume',l:'Consumption',d:'Audiences access, share and respond to content.',buy:'Community management, engagement, events'},
+  {id:'monetise',l:'Monetisation',d:'Value is captured as revenue from audiences and advertisers.',buy:'Payment set-up, merch, sales tools, ad sales'}
+];
+
+/* Event cards. e: cash (US$), reach/fans (multipliers), res/eth/gro (points). */
+const EVENTS=[
+  {id:'algo',ic:'alert',tag:'Platform shock',t:'Algorithm change',txt:'Your main platform changes its recommendation algorithm overnight. {name}’s reach drops by 40%.',ch:[
+    {l:'Diversify: post on two more platforms and start an email and WhatsApp list',e:{cash:-300,reach:.8,res:12,gro:4},fb:'Spreading content across several platforms reduces your dependence on one gatekeeper, so you lost 20% instead of 40%.',c:'Interdependence & disruption risk'},
+    {l:'Pay to boost posts on the same platform',e:{cash:-500,reach:.9,res:-2},fb:'Boosting bought back some reach, but it deepened your dependence on the platform. You became one of its advertisers.',c:'Platforms & advertisers'},
+    {l:'Do nothing and hope it recovers',e:{reach:.6,res:-8,gro:-6},fb:'A shift in one element, a new algorithm, reshaped your whole value chain. Doing nothing left you exposed.',c:'Disruption risk'}],
+   bonus:{el:'communities',e:{reach:1.1},txt:'Your fan community kept sharing your work, which softened the blow (+10% reach).'}},
+  {id:'storm',ic:'storm',tag:'Infrastructure',t:'Hurricane outage',txt:'A hurricane passes close to the island. Power and internet are down across the island for three days.',ch:[
+    {l:'Switch to pre-scheduled posts and cloud-hosted back-ups',e:{cash:-150,reach:.9,res:14},fb:'Your content was hosted in the cloud and scheduled, so distribution carried on while local infrastructure was down.',c:'Infrastructure providers'},
+    {l:'Pause, check on your team, then post an honest update when service returns',e:{reach:.75,fans:1.03,eth:6,res:2},fb:'Audiences are active participants, and honesty built loyalty. But three days offline cut your reach. Connectivity is a regional challenge.',c:'Regional challenge: connectivity'},
+    {l:'Rent a generator and a satellite hotspot to keep posting live',e:{cash:-600,reach:.95,res:6},fb:'You bought your own back-up infrastructure. It was expensive, and it shows how much creators depend on ISPs and power.',c:'Infrastructure dependency'}],
+   bonus:{el:'distributors',e:{reach:1.1},txt:'Your CDN kept serving cached content to fans overseas, protecting reach (+10%).'}},
+  {id:'copy',ic:'copy',tag:'Policy',t:'Copyright strike',txt:'{name} receives a copyright strike: a recent post used a song clip without a licence.',ch:[
+    {l:'Remove it, apologise and license the material properly',e:{cash:-250,eth:12,reach:.95},fb:'Respecting intellectual property is a non-negotiable professional ethic. Regulators and rights holders shape what can be distributed.',c:'Regulators & professional ethics'},
+    {l:'Dispute it and claim “fair use”, even though you know it isn’t',e:{eth:-15,reach:.7,res:-6},fb:'The platform upheld the strike and restricted your account. Misusing disputes damages trust across the ecosystem.',c:'Intellectual property law (policy factor)'},
+    {l:'Contact the rights holder and offer a revenue-sharing deal',e:{cash:-100,eth:8,gro:4},fb:'Revenue-sharing is a recognised funding and income model, and it turned a conflict into a partnership.',c:'Revenue-sharing & stakeholders'}],
+   bonus:{el:'regulators',e:{eth:3},txt:'You had mapped regulators, so you already had a rights checklist and fixed it quickly (+3 ethics).'}},
+  {id:'viral',ic:'spark',tag:'Opportunity',t:'Viral TikTok moment',txt:'A 15-second clip from {name} goes viral on TikTok, with 200,000 views overnight.',ch:[
+    {l:'Post fast follow-up clips and pin a link to your main channel',e:{reach:1.6,fans:1.25,gro:12},fb:'Short-form and vertical video have redefined audience attention. Acting quickly turned views into fans.',c:'Emerging trend: short-form video'},
+    {l:'Buy 10,000 fake followers to look even bigger',e:{cash:-200,eth:-20,res:-8},fb:'Fake followers distort analytics data and break platform rules. Advertisers who depend on real audience data lose trust.',c:'Analytics & ethics'},
+    {l:'Enjoy it, but stick to your normal schedule',e:{reach:1.2,fans:1.05},fb:'Some reach stuck, but most viewers drifted away. Going viral needs a plan to move audiences along the value chain.',c:'Value chain: consumption'}],
+   bonus:{el:'analytics',e:{fans:1.1},txt:'Your analytics showed which clip worked, so you made more like it (+10% fans).',ch:[0,2]}},
+  {id:'isp',ic:'isp',tag:'Economic',t:'ISP price rise',txt:'The island’s main ISP raises data prices by 30%. Some of your audience cut back on streaming.',ch:[
+    {l:'Offer lighter versions: compressed video, audio-only and low-data options',e:{cash:-150,res:8,eth:3},fb:'High data costs are a regional challenge. Designing for low bandwidth keeps content accessible, and access is a right of the digital generation.',c:'Regional challenge: cost & access'},
+    {l:'Do nothing: it’s the ISP’s problem',e:{reach:.8,res:-4},fb:'Your audience depends on ISPs. When infrastructure gets more expensive, consumption falls across the ecosystem.',c:'Interdependence'},
+    {l:'Join other creators to petition the telecoms regulator about prices',e:{reach:.9,eth:5,res:4,gro:2},fb:'Regulators and policy shape the environment. This is a Political factor in a PEST scan.',c:'Regulators (political factor)'}],
+   bonus:{el:'isp',e:{res:4},txt:'Your ISP was on the map, so you had already budgeted for data costs (+4 resilience).'}},
+  {id:'law',ic:'lock',tag:'Political',t:'New data protection law',txt:'A new data protection law requires clear consent before collecting personal data, with fines for breaches.',ch:[
+    {l:'Update your privacy policy, add consent prompts and collect only what you need',e:{cash:-300,eth:15,res:6},fb:'Privacy, the protection of personal data and digital identity, is a right of the digital generation. Complying builds trust.',c:'Regulators & privacy rights'},
+    {l:'Ignore it: you’re too small to be noticed',e:{cash:-1000,eth:-15,res:-10},fb:'You were fined US$1,000 after a complaint. Regulators set rules for data across the whole ecosystem, whatever your size.',c:'Regulators'},
+    {l:'Stop collecting any audience data at all',e:{eth:5,gro:-8,reach:.9},fb:'This is safe, but you lost the analytics that inform production and targeting. Data flows connect every layer.',c:'Data flows'}],
+   bonus:{el:'regulators',e:{cash:100},txt:'Mapping regulators early meant you already knew your obligations, which saved US$100.'}},
+  {id:'brand',ic:'advertisers',tag:'Income',t:'Influencer brand deal',txt:'A sports-drink brand offers US$1,500 for three sponsored posts, but asks you not to label them as ads.',ch:[
+    {l:'Accept, but insist on clear #ad or “paid partnership” labels',e:{cash:1500,eth:8,gro:4},fb:'Brand partnerships are a key creator income model, and clear disclosure keeps your audience’s trust.',c:'Creator income: brand partnerships'},
+    {l:'Accept and hide the sponsorship',e:{cash:1500,eth:-20,fans:.92},fb:'Fans spotted it. Hidden advertising breaks advertising standards and your audience’s trust.',c:'Professional ethics'},
+    {l:'Decline: the brand doesn’t fit your audience',e:{eth:5,gro:-2},fb:'Choosing brands that fit protects your brand, though you turned down income.',c:'Branding'}],
+   bonus:{el:'advertisers',e:{cash:300},txt:'Advertisers were already on your map, so you negotiated a better rate (+US$300).',ch:[0,1]}},
+  {id:'rival',ic:'flag',tag:'Market',t:'Competitor launch',txt:'A well-funded regional competitor launches a service like {name}, with a big marketing budget.',ch:[
+    {l:'Double down on authentic local stories and culture',e:{fans:1.1,gro:8,res:6},fb:'Caribbean cultural content is a globally distinctive asset that competitors cannot easily copy.',c:'Opportunity: cultural content'},
+    {l:'Start a price war: cut prices or give everything away free',e:{cash:-500,fans:1.05,res:-8},fb:'Small domestic markets limit revenue. A price war drains cash faster than it builds fans.',c:'Regional challenge: market size'},
+    {l:'Propose a collaboration or cross-promotion',e:{reach:1.2,gro:6},fb:'Interdependence can be an opportunity: partners share their audiences.',c:'Interdependencies of players'}]},
+  {id:'pay',ic:'payment',tag:'Infrastructure',t:'Payment-system outage',txt:'Your payment gateway goes down for a whole weekend, your busiest sales period.',ch:[
+    {l:'Switch on a back-up (second gateway, mobile money or bank transfer)',e:{cash:-100,res:12},fb:'Payment systems enable commerce across the ecosystem. A second one removes a single point of failure. Payment access is a known regional issue.',c:'Payment systems'},
+    {l:'Wait for it to be fixed',e:{cash:-400,res:-6},fb:'Without payments, consumption cannot become revenue. The value chain broke at monetisation.',c:'Value chain: monetisation'},
+    {l:'Take orders now and let fans pay later',e:{cash:-150,fans:1.04,eth:4},fb:'Fans appreciated the trust, though some never paid. Community goodwill is an asset.',c:'Audience relationships'}]},
+  {id:'diaspora',ic:'distributors',tag:'Social',t:'Diaspora fans surge',txt:'Islanders abroad, in the UK, the Netherlands, the US and across the Caribbean, discover {name}. Overseas fans are surging.',ch:[
+    {l:'Add subtitles, post at diaspora-friendly times and enable international payments and shipping',e:{cash:-200,reach:1.4,fans:1.2,gro:10},fb:'Globalisation has removed geographic barriers: Caribbean content can reach global audiences instantly.',c:'Globalisation'},
+    {l:'Keep focusing only on the local audience',e:{reach:1.1},fb:'You missed a wider target market, one of the key opportunities digital media offers regional businesses.',c:'Opportunity: wider target markets'}],
+   bonus:{el:'communities',e:{fans:1.05},txt:'Your fan communities welcomed the newcomers (+5% fans).'}},
+  {id:'ai',ic:'mask',tag:'Emerging trend',t:'AI-generated fakes',txt:'AI-generated fake videos using your logo and voice appear, promoting a scam “giveaway” to your fans.',ch:[
+    {l:'Warn fans, report the fakes, verify your accounts and pin an official notice',e:{cash:-50,eth:10,res:10,fans:.98},fb:'AI-generated content is an emerging trend with real risks. Safety, meaning freedom from exploitation and misinformation, is a right of the digital generation.',c:'Emerging trend: AI & safety'},
+    {l:'Ignore it: fans should know better',e:{fans:.85,eth:-10,res:-8},fb:'Fans lost money and trust. Misinformation in one part of the ecosystem harmed your whole brand.',c:'Disruption risk'},
+    {l:'Fight back with AI fakes of your competitor',e:{eth:-25,res:-5},fb:'Spreading misinformation breaks professional ethics and platform rules.',c:'Ethical judgement'}],
+   bonus:{el:'communities',e:{res:5},txt:'Your fan community helped report the fakes quickly (+5 resilience).'}},
+  {id:'theft',ic:'alert',tag:'Operations',t:'Equipment theft',txt:'Your laptop and main camera are stolen from a parked car.',ch:[
+    {l:'Rent replacement kit and restore your files from cloud back-ups',e:{cash:-400,res:6},fb:'Cloud collaboration and back-ups kept production going. Only the hardware was lost.',c:'Cloud collaboration'},
+    {l:'Ask your community to help with a small crowdfunding drive',e:{cash:300,fans:1.05,eth:2},fb:'Crowdfunding raises money directly from your audience and community.',c:'Funding: crowdfunding'},
+    {l:'Pause production for two weeks',e:{reach:.75,gro:-6},fb:'With no creation, nothing flows down the chain, so consumption and revenue fall.',c:'Value chain: creation'}],
+   bonus:{el:'tools',e:{res:4},txt:'Your tools and software were cloud-based, so no files were lost (+4 resilience).'}},
+  {id:'grant',ic:'award',tag:'Funding',t:'Grant opportunity',txt:'A cultural agency opens a US$2,000 grant for Caribbean digital creators. Applications close in a week and need a proposal with a budget and an evaluation plan.',ch:[
+    {l:'Write a full proposal: objectives, plan of action, budget, benefits and evaluation',e:{cash:2000,gro:6,reach:.97},fb:'Grants are non-repayable funding from government and cultural agencies, but they need a strong project proposal.',c:'Funding: grants & proposal writing'},
+    {l:'Skip it: too much paperwork',e:{gro:-2},fb:'Grants need no repayment and cost no equity. Skipping them leaves free capital on the table.',c:'Funding: grants'},
+    {l:'Inflate your audience figures to look more impressive',e:{cash:2000,eth:-20,res:-6},fb:'Funders check evaluation data. A dishonest proposal risks demands for repayment and damage to your reputation.',c:'Professional ethics'}],
+   bonus:{el:'investors',e:{cash:200},txt:'Funders were on your map, so you had a budget ready and the panel approved an extra US$200.',ch:[0]}},
+  {id:'fibre',ic:'isp',tag:'Technological',t:'Fibre and 5G roll-out',txt:'A telecoms company rolls out fibre and 5G across the island.',ch:[
+    {l:'Launch higher-quality and live features to take advantage',e:{cash:-300,reach:1.25,gro:8},fb:'Infrastructure quality and device penetration determine what is technically possible. This is a Technological factor.',c:'Technological factor'},
+    {l:'Wait and see',e:{gro:-2},fb:'Technology advances quickly. Waiting lets competitors move first.',c:'Rate of technological advancement'}],
+   bonus:{el:'devices',e:{reach:1.05},txt:'You had mapped devices, so your content was already mobile-first (+5% reach).',ch:[0]}},
+  {id:'cut',ic:'platforms',tag:'Platform shock',t:'Platform takes a bigger cut',txt:'Your main platform raises its revenue share: it now keeps 50% of creator income instead of 30%.',ch:[
+    {l:'Launch direct paid memberships for your most loyal fans',e:{cash:200,res:10,gro:4},fb:'Paid memberships let creators earn directly, which reduces dependence on one platform’s terms.',c:'Creator income: paid memberships'},
+    {l:'Accept the new terms',e:{cash:-300,res:-4},fb:'Platforms can set terms because creators depend on them for reach. Mutual dependency is not always equal.',c:'Mutual dependency'},
+    {l:'Add merchandise and licensing to spread your income',e:{cash:100,res:8,gro:3},fb:'Licensing and merchandising are creator income models that spread your revenue.',c:'Licensing & merchandising'}]},
+  {id:'troll',ic:'communities',tag:'Social',t:'Online harassment',txt:'A wave of abusive comments targets one of your young presenters.',ch:[
+    {l:'Enforce community guidelines: moderate, block, report and support the presenter',e:{eth:12,res:6,fans:.99},fb:'Safety, meaning freedom from online harassment, is a right of the digital generation. Platforms and creators share responsibility.',c:'Rights: safety'},
+    {l:'Leave it: comments boost engagement',e:{eth:-15,fans:.93,gro:2},fb:'Harassment drives audiences and talent away. Engagement data is not worth harming people.',c:'Ethics & community'}],
+   bonus:{el:'communities',e:{fans:1.03},txt:'Your community moderators stepped in quickly (+3% fans).',ch:[0]}},
+  {id:'immig',ic:'consumers',tag:'Audience',t:'Reaching digital immigrants',txt:'A local business association wants your help reaching older customers who prefer radio and print.',ch:[
+    {l:'Make a simple guide, run a face-to-face workshop and add a radio tie-in',e:{cash:300,eth:6,reach:1.08,gro:4},fb:'Digital immigrants often rely on print or face-to-face communication and may need more training for new tools.',c:'Digital immigrants'},
+    {l:'Tell them to just download the app',e:{eth:-3},fb:'Assuming everyone is a digital native excludes audiences. Literacy is a right of the digital generation.',c:'Digital natives vs immigrants'}]}
+];
+
+/* Funding options */
+const FUNDS=[
+  {id:'savings',l:'Personal savings',type:'own',tl:'Own funds',amt:1500,give:'Nothing: you keep 100%',owe:'Nothing, but it’s your own money at risk',own:0,rep:0,res:-4,gro:0,eth:0,obl:'Personal financial risk'},
+  {id:'family',l:'Family & friends',type:'own',tl:'Informal loan',amt:3000,give:'Nothing formal',owe:'Informal repayment; relationships at risk',own:0,rep:60,repN:50,res:-3,gro:0,eth:0,obl:'Repay family about US$60 a month; strain on relationships if it fails'},
+  {id:'bank',l:'Bank loan',type:'debt',tl:'Debt financing',amt:10000,give:'Nothing: you keep 100%',owe:'Repay with 12% interest over 24 months',own:0,rate:.12,n:24,res:0,gro:8,eth:0,obl:'Fixed monthly repayments, whatever happens to sales'},
+  {id:'angel',l:'Angel investor',type:'equity',tl:'Equity financing',amt:10000,give:'20% of your company',owe:'No repayments; shares future profits',own:20,rep:0,res:2,gro:12,eth:0,obl:'Share profits and decisions; regular updates to the angel, who also mentors you'},
+  {id:'vc',l:'Venture capital',type:'equity',tl:'Equity financing',amt:50000,give:'35% of your company and a board seat',owe:'No repayments; expected to scale fast',own:35,rep:0,res:-5,gro:25,eth:0,obl:'Pressure for rapid growth and an exit; investor sits on your board',gate:true},
+  {id:'crowd',l:'Crowdfunding',type:'reward',tl:'Reward-based',amt:0,give:'Rewards to backers (about 25% of what you raise)',owe:'All-or-nothing: you must hit your target',own:0,rep:0,res:3,gro:4,eth:3,obl:'Deliver rewards on time and keep backers updated',crowd:true},
+  {id:'grant',l:'Cultural agency grant',type:'free',tl:'Grant (non-repayable)',amt:5000,give:'Nothing: no equity',owe:'No repayment; a proposal and progress reports',own:0,rep:0,res:4,gro:3,eth:2,obl:'Spend on the agreed purpose; submit proposal and evaluation reports',gate:true},
+  {id:'sponsor',l:'Brand sponsorship',type:'reward',tl:'Sponsorship',amt:4000,give:'Logo placement and promotion',owe:'Deliver promotional content for the brand',own:0,rep:0,res:2,gro:3,eth:-1,obl:'Promote the sponsor; brand must fit your audience'}
+];
+const FUND_NEED=10000;
+
+const DEQ=[
+  {q:'A bank loan that must be repaid with interest is an example of…',o:['Equity financing','Debt financing','A grant','Crowdfunding'],a:1,x:'Debt financing means borrowing money that must be repaid with interest, whatever happens to the business.'},
+  {q:'With equity financing, the business owner…',o:['Repays the money monthly with interest','Gives up a share of ownership in exchange for capital','Must deliver rewards to backers','Keeps 100% of the company'],a:1,x:'Equity investors (angels, VCs) buy a share of the company. There are no repayments, but you give up some ownership and control.'},
+  {q:'Which funding must be repaid even if the start-up fails?',o:['An angel investment','A cultural grant','A bank loan','Venture capital'],a:2,x:'Debt is a legal obligation. Equity investors share the risk: if the business fails, they lose their investment.'},
+  {q:'An angel investor usually provides…',o:['Large sums from a fund in exchange for a board seat','Early-stage capital, often with mentorship, in exchange for equity','Non-repayable money from government','Small pledges from many fans'],a:1,x:'Angels are individuals who invest their own money early. Venture capitalists invest larger sums from funds in high-growth firms.'},
+  {q:'If an investor pays US$10,000 for 20% of your company, what is the company valued at?',o:['US$20,000','US$12,000','US$50,000','US$200,000'],a:2,x:'Valuation = investment ÷ share = 10,000 ÷ 0.20 = US$50,000.'},
+  {q:'Why might a creator choose a loan instead of equity?',o:['To avoid any repayments','To keep full ownership and control of the business','Because loans never charge interest','Because banks give mentorship'],a:1,x:'Debt lets you keep 100% ownership, but repayments must be affordable from your revenue.'}
+];
+
+const PEST=[
+  {t:'A new data protection law is proposed for the island',a:'P',x:'Laws and regulation come from government: Political.'},
+  {t:'Government tax incentives for creative industries',a:'P',x:'Government policy that shapes the industry: Political.'},
+  {t:'Stronger copyright enforcement across CARICOM',a:'P',x:'Intellectual property law and its enforcement are policy: Political.'},
+  {t:'High data and equipment costs in small island markets',a:'E',x:'Cost is an economic barrier for creators and audiences.'},
+  {t:'A small domestic market limits advertising revenue',a:'E',x:'Market size and advertising spend are Economic factors.'},
+  {t:'Cruise and stay-over tourism spending rises',a:'E',x:'Visitor spending affects revenue and demand: Economic.'},
+  {t:'Strong diaspora communities in the Netherlands, US and UK',a:'S',x:'Where people live and the communities they form are Social factors.'},
+  {t:'Young audiences prefer short-form vertical video',a:'S',x:'Audience habits and attitudes are Social factors.'},
+  {t:'Digital literacy gaps among older residents (digital immigrants)',a:'S',x:'Literacy levels and attitudes towards media are Social factors.'},
+  {t:'Fibre and 5G roll-out in the capital',a:'T',x:'Infrastructure quality determines what is technically possible: Technological.'},
+  {t:'AI tools that generate video, voice and music',a:'T',x:'New tools and platforms are Technological factors.'},
+  {t:'A subsea cable cut slows the island’s internet',a:'T',x:'Connectivity infrastructure is a Technological factor.'}
+];
+const PEST_CATS={P:{l:'Political',c:'#ff9f6e'},E:{l:'Economic',c:'#ffc53d'},S:{l:'Social',c:'#7fdc8f'},T:{l:'Technological',c:'#63a4ff'}};
+
+/* Learn cards: based on the Module 2 notes */
+const LEARN_CATS={users:'Digital users',eco:'Ecosystem',chain:'Value chain',work:'Work models',chall:'Challenges & opportunities',fund:'Funding',income:'Creator income'};
+const LEARN=[
+  ['users','Digital native','Someone born into a world already shaped by digital technology, who has never known life without the internet, smartphones or social media.','Comfortable with constant connectivity; prefers interactive, visual, fast-paced content; multitasks across platforms; expects instant access; naturally collaborative online.'],
+  ['users','Digital immigrant','Someone who grew up before widespread digital technology and adopted digital tools later in life, often adapting existing habits to new platforms.','May prefer traditional media alongside digital; approaches technology more deliberately; often relies on print or face-to-face communication; may need more training for new tools.'],
+  ['users','Right: Access','The right to affordable, reliable internet and digital devices.','A creator who offers low-data versions supports access.'],
+  ['users','Right: Privacy','Protection of personal data and digital identity.','Consent prompts before collecting data.'],
+  ['users','Right: Literacy','Education in critical digital skills and media awareness.','Workshops that help older residents spot fake news.'],
+  ['users','Right: Safety','Freedom from online harassment, exploitation and misinformation.','Moderating abusive comments; warning fans about scam deepfakes.'],
+  ['eco','Digital media ecosystem','The interconnected network of people, platforms, technologies and institutions that create, distribute, consume and regulate digital content. It covers all the players, platforms, processes and relationships involved in the creation, distribution, consumption and monetisation of digital content.','It is not a single industry but a dynamic, interdependent network: changes in one part ripple across all others.']
+].concat(EL_ORDER.map(k=>['eco',ELEMENTS[k].l,ELEMENTS[k].def,''])).concat([
+  ['eco','Clients','Businesses and organisations that commission digital media work, from websites to campaigns to branded video content.','A hotel on Grand Anse, Grenada, hiring you for a promo video.'],
+  ['eco','Support services','Services that keep the ecosystem working, such as hosting, cloud storage, legal, accounting and technical support.',''],
+  ['eco','Emerging trends','AI-generated content; short-form and vertical video; creator economy growth; AR and VR; influencer marketing; automation.','Independent creators building businesses directly with audiences, bypassing traditional gatekeepers.'],
+  ['chain','Value chain','The sequence of activities through which a product or service is created and delivered to the end user. Key aspects: Creation → Packaging → Distribution → Consumption.','Each stage adds value and involves different stakeholders.'],
+  ['chain','Stakeholders in the value chain','Producer (creates or commissions content), Aggregator (bundles and curates content for specific audiences), Platform (hosts and distributes content at scale), Advertiser (funds the chain by paying for audience access), End user (consumes, shares and responds).',''],
+  ['chain','Impact of digital media on the value chain','Before digital: linear, top-down production; high barriers to entry; limited channels; passive audiences; slow feedback. After digital: anyone can create and distribute; low-cost global reach; multiple simultaneous channels; active, participatory audiences; real-time analytics.',''],
+  ['chain','Interdependencies','No player operates in isolation. Creators depend on platforms; platforms depend on advertisers; advertisers depend on audience data; audiences depend on infrastructure. This creates both resilience and vulnerability.','Mutual dependency · Data flows · Disruption risk'],
+  ['chain','Disruption risk','A shift in one element, such as a new algorithm, a regulation or a technology, can reshape the entire chain.','A platform algorithm change cutting a creator’s reach by 40%.'],
+  ['work','Remote work','Digital media professionals work from home or anywhere with internet access, using cloud tools to collaborate globally.',''],
+  ['work','Hybrid work','A blend of in-office and remote work, offering flexibility while keeping team cohesion.',''],
+  ['work','Freelancing & gig work','Project-based roles: freelancers and gig workers take on short-term contracts across multiple clients.',''],
+  ['work','Cloud collaboration','Teams use tools like Google Workspace, Slack and Notion to co-create across time zones in real time.',''],
+  ['work','Project-based production & outsourcing','Work is organised around projects with defined deliverables, timelines and budgets. Specialist tasks (animation, audio, SEO) are often outsourced to global talent networks.',''],
+  ['work','Creator economy','Independent creators build audiences and earn directly through platforms, memberships and brand deals.',''],
+  ['work','Globalisation & technological change','Digital media has removed geographic barriers: Caribbean content can reach global audiences instantly, and competition is just as global. New tools emerge constantly, so continuous learning is a core professional requirement.',''],
+  ['chall','PEST analysis','Policy/Political (laws, IP, platform governance), Economic (market size, ad spend, investment), Social (literacy, cultural attitudes, community access), Technological (infrastructure, device penetration, platforms).',''],
+  ['chall','Regional challenges','Connectivity (uneven access across island communities), cost (high data and equipment prices), market size (small domestic markets), payment access, training gaps and production infrastructure.',''],
+  ['chall','Regional & global opportunities','Cultural content, tourism, education, public service communication, marketing and entrepreneurship, plus wider target markets for local products and services.','The Caribbean’s music, festivals, cuisine and storytelling are a globally distinctive asset.'],
+  ['fund','Debt financing','Borrowing money (e.g. a bank loan) that must be repaid with interest. You keep full ownership, but repayments are fixed.',''],
+  ['fund','Equity financing','Raising capital by selling a share of ownership (e.g. to angels or venture capitalists). There are no repayments, but you give up part of the company and some control.',''],
+  ['fund','Other funding types','Grants, sponsorship, crowdfunding, donations, subscriptions, pre-sales, competitions and revenue-sharing models.','Each type carries different obligations, risks and benefits; choosing the right mix is a strategic decision.'],
+  ['fund','Sources of funding','Lending institutions; government and cultural agencies; private sector sponsors; crowdfunding platforms (Kickstarter, Patreon); angel investors; venture capitalists; accelerators and incubators; foundations, NGOs, brands and digital platforms.',''],
+  ['fund','Angel investor vs venture capitalist','Angels are individuals investing their own money early, often with mentorship. VCs invest larger sums from funds in high-growth firms, usually taking a board seat.',''],
+  ['fund','Crowdfunding','Raising small amounts from many people, often your own audience and community, through platforms like Kickstarter and Patreon.',''],
+  ['income','Advertising revenue','Earn from ads served on your content via YouTube, podcasts or display networks.',''],
+  ['income','Brand partnerships & affiliate marketing','Sponsored content and affiliate deals with brands aligned to your audience.',''],
+  ['income','Memberships, courses & digital products','Paid memberships, online courses and digital products sold directly to your community.',''],
+  ['income','Licensing & merchandising','License your content or intellectual property and sell branded merchandise.',''],
+  ['income','Platform monetisation','YouTube Partner Program, TikTok Creator Fund and gifts, Patreon and Substack, Spotify and podcast monetisation.','']
+]);
+
+/* Quick-fire quiz */
+const QUIZ=[
+  {q:'Which is the best definition of the digital media ecosystem?',o:['A single industry that makes films and music','The interconnected network of people, platforms, technologies and institutions that create, distribute, consume and regulate digital content','The software used to edit video','A list of social media apps'],a:1,x:'The ecosystem is a dynamic, interdependent network, not a single industry.'},
+  {q:'Someone who has never known life without the internet or smartphones is a…',o:['Digital immigrant','Digital native','Digital aggregator','Digital regulator'],a:1,x:'Digital natives were born into a world already shaped by digital technology.'},
+  {q:'Which practice is typical of a digital immigrant?',o:['Multitasking across several platforms','Expecting instant access to information','Relying on print or face-to-face communication','Preferring fast-paced vertical video'],a:2,x:'Digital immigrants adapt pre-digital habits and may prefer traditional media alongside digital.'},
+  {q:'Which value-chain stakeholder bundles and curates content for specific audiences?',o:['Aggregator','Advertiser','Regulator','End user'],a:0,x:'Aggregators (playlists, podcast directories, news apps) bundle and curate content.'},
+  {q:'Cloud services, hosting providers and telecoms companies are…',o:['Clients','Infrastructure providers','Content management systems','Advertisers'],a:1,x:'Infrastructure providers are the backbone of the ecosystem.'},
+  {q:'In the value chain, the advertiser…',o:['Hosts content at scale','Consumes and shares content','Funds the chain by paying for audience access','Sets rules for data'],a:2,x:'Advertisers pay for audience attention, which funds much of the ecosystem.'},
+  {q:'Put the key aspects of the value chain in order.',o:['Distribution → Creation → Consumption → Packaging','Creation → Packaging → Distribution → Consumption','Packaging → Creation → Consumption → Distribution','Consumption → Distribution → Packaging → Creation'],a:1,x:'Content is created, packaged, distributed and then consumed.'},
+  {q:'How has digital media changed the value chain?',o:['Higher barriers to entry','Fewer distribution channels','Anyone can create and distribute, with low-cost global reach','Audiences have become more passive'],a:2,x:'Digital lowered barriers, multiplied channels and made audiences active participants.'},
+  {q:'“Creators depend on platforms; platforms depend on advertisers; advertisers depend on audience data.” This describes…',o:['Globalisation','Interdependencies in the ecosystem','Equity financing','The gig economy'],a:1,x:'No player operates in isolation: that is interdependence.'},
+  {q:'Selling 20% of your start-up to an investor for capital is…',o:['Debt financing','Equity financing','A grant','Revenue-sharing'],a:1,x:'Equity means giving up a share of ownership in exchange for capital.'},
+  {q:'Which investor typically puts large sums from a fund into high-growth firms and takes a board seat?',o:['Angel investor','Crowdfunding backer','Venture capitalist','Credit union'],a:2,x:'VCs invest larger sums from funds; angels invest their own money earlier.'},
+  {q:'Raising small amounts from many fans through Kickstarter or Patreon is…',o:['Crowdfunding','Debt financing','Licensing','Outsourcing'],a:0,x:'Crowdfunding raises funds directly from your audience and community.'},
+  {q:'“Protection of personal data and digital identity” is the right to…',o:['Access','Literacy','Privacy','Safety'],a:2,x:'The four rights in the notes are Access, Privacy, Literacy and Safety.'},
+  {q:'Short-term, project-based contracts across multiple clients describe…',o:['Hybrid work','Freelancing and gig work','Cloud collaboration','Telecommuting only'],a:1,x:'Freelancers and gig workers take on short-term contracts across several clients.'},
+  {q:'“Small domestic markets constrain advertising revenue” is the regional challenge of…',o:['Connectivity','Market size','Training gaps','Cost'],a:1,x:'Market size limits the scale of regional digital media businesses.'},
+  {q:'Tools that measure audience behaviour and content performance are…',o:['Payment systems','Regulators','Analytics systems','Distributors'],a:2,x:'Analytics systems drive data-informed decisions.'}
+];
+
+/* ===== APP ===== */
+(function(){
+'use strict';
+const KEY='ecosystem-builder-v1';
+if(window.GameSave)GameSave.register([KEY,'ecosystem.save']);
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const fmt=n=>Math.round(n).toLocaleString('en-GB');
+const money=n=>(n<0?'−':'')+'US$'+fmt(Math.abs(n));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const E=id=>ELEMENTS[id];
+const reducedMQ=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+const coarse=window.matchMedia?matchMedia('(pointer: coarse)').matches:false;
+const STEPS=[{id:'venture',l:'Start-up'},{id:'map',l:'Ecosystem map'},{id:'chain',l:'Value chain'},{id:'events',l:'Event cards'},{id:'funding',l:'Funding'},{id:'pest',l:'PEST scan'},{id:'report',l:'Report'}];
+const EV_COUNT=5, BUDGET=5000;
+
+
+function fresh(){return{v:null,nodes:[],links:[],mapScore:null,mapChecks:0,order:null,orderChecked:false,budget:[1000,1000,1000,1000,1000],month:null,
+  st:{cash:BUDGET,reach:0,fans:0,res:50,eth:60,gro:50,own:100,rep:0},evDeck:[],evIdx:0,evDone:[],
+  fund:{sel:[],target:6000,done:false,snap:null,res:null},deq:{},pest:{assign:{},checked:false,score:null},
+  quizBest:null,log:[],step:'venture',maxStep:0,name:'',cls:'',reflect:''};}
+let S=fresh();
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')S=Object.assign(fresh(),o);}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const V=()=>VENTURES.find(v=>v.id===S.v);
+const has=id=>S.nodes.some(n=>n.id===id);
+function logSet(k,s,t){const i=S.log.findIndex(x=>x.k===k);const o={k,s,t};if(i>=0)S.log[i]=o;else S.log.push(o);}
+
+let liveT=0;
+function announce(msg){const el=$('#live');el.textContent='';clearTimeout(liveT);liveT=setTimeout(()=>{el.textContent=msg;},40);}
+
+/* ---------- Mode & stepper ---------- */
+let mode='play';
+function setMode(m){
+  mode=m;
+  $$('.modes button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
+  $('#playChrome').hidden=m!=='play';
+  $$('.screen').forEach(s=>s.classList.remove('on'));
+  if(m==='play'){go(S.step,true);}
+  else if(m==='learn'){$('#m-learn').classList.add('on');renderLearn();$('#h-learn').focus({preventScroll:true});}
+  else{$('#m-quiz').classList.add('on');renderQuizStart();$('#h-quiz').focus({preventScroll:true});}
+  document.body.classList.toggle('on-map',m==='play'&&S.step==='map');
+  ensureLoop();
+}
+$$('.modes button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+function stepIndex(id){return STEPS.findIndex(s=>s.id===id);}
+function renderStepper(){
+  $('#stepper').innerHTML=STEPS.map((s,i)=>{
+    const cur=S.step===s.id, dis=i>S.maxStep, done=i<S.maxStep&&!cur;
+    return '<li><button type="button" data-step="'+s.id+'" '+(cur?'aria-current="step"':'')+(dis?' disabled':'')+' class="'+(done?'done':'')+'"><span class="n">'+(done?'✓':(i+1))+'</span>'+esc(s.l)+'</button></li>';
+  }).join('');
+  const ol=$('#stepper'),cur=ol.querySelector('[aria-current="step"]'),wrap=ol.parentElement;
+  if(cur&&wrap.scrollWidth>wrap.clientWidth){const li=cur.parentElement;wrap.scrollLeft=Math.max(0,li.offsetLeft-wrap.clientWidth/2+li.offsetWidth/2);}
+}
+$('#stepper').addEventListener('click',e=>{const b=e.target.closest('button[data-step]');if(b&&!b.disabled)go(b.dataset.step);});
+function unlock(id){const i=stepIndex(id);if(i>S.maxStep)S.maxStep=i;}
+function go(id,noFocus){
+  S.step=id;save();
+  $$('.screen').forEach(s=>s.classList.remove('on'));
+  $('#s-'+id).classList.add('on');
+  renderStepper();renderHud();
+  ({venture:renderVentures,map:renderMap,chain:renderChain,events:renderEvents,funding:renderFunding,pest:renderPest,report:renderReport})[id]();
+  document.body.classList.toggle('on-map',id==='map'&&mode==='play');
+  if(!noFocus){const h=$('#h-'+id);if(h)h.focus({preventScroll:true});window.scrollTo({top:0,behavior:reducedMQ.matches?'auto':'smooth'});}
+  ensureLoop();
+}
+
+/* ---------- HUD ---------- */
+function revenueNow(){
+  const v=V();if(!v||!S.month)return 0;
+  const M=S.budget[4];const mf=Math.min(1.5,.5+M/1000)*(has('payment')?1:.5);
+  return Math.round(S.st.fans*v.arpu*mf+(has('advertisers')?S.st.reach/1000*v.ad:0));
+}
+let lastHud={};
+function renderHud(){
+  const v=V();$('#hud').hidden=!v;if(!v)return;
+  $('#hudIc').style.background=v.c+'22';$('#hudIc').style.color=v.c;$('#hudIc').innerHTML=ic(v.ic);
+  $('#hudName').textContent=v.name;$('#hudKind').textContent=v.kind;
+  const st=S.st;
+  const items=[['cash','Cash',money(st.cash)],['reach','Reach / month',S.month?fmt(st.reach):'–'],['fans','Fans',S.month?fmt(st.fans):'–'],
+    ['rev','Revenue / month',S.month?money(revenueNow()):'–'],['res','Resilience',Math.round(st.res),st.res],['eth','Ethics',Math.round(st.eth),st.eth]];
+  $('#stats').innerHTML=items.map(it=>'<div class="stat" data-k="'+it[0]+'"><small>'+it[1]+'</small><b>'+it[2]+'</b>'+(it[3]!=null?'<div class="bar"><i style="width:'+clamp(it[3],0,100)+'%;background:'+(it[0]==='eth'?'var(--data)':'var(--content)')+'"></i></div>':'')+'</div>').join('');
+  items.forEach(it=>{if(lastHud[it[0]]!=null&&lastHud[it[0]]!==it[2]&&!reducedMQ.matches){const el=$('.stat[data-k="'+it[0]+'"]');el&&el.classList.add('flash');}lastHud[it[0]]=it[2];});
+}
+
+/* ---------- Tooltip ---------- */
+const tip=$('#tip');
+function showTip(el,title,text){
+  tip.innerHTML='<b>'+esc(title)+'</b>'+esc(text);tip.classList.add('on');
+  const r=el.getBoundingClientRect(),tw=Math.min(290,innerWidth-24);tip.style.maxWidth=tw+'px';
+  const th=tip.offsetHeight;let x=clamp(r.left+r.width/2-tw/2,12,innerWidth-tw-12);let y=r.bottom+8;if(y+th>innerHeight-8)y=r.top-th-8;
+  tip.style.left=x+'px';tip.style.top=Math.max(8,y)+'px';
+}
+function hideTip(){tip.classList.remove('on');}
+
+/* ---------- Stage 1: Venture ---------- */
+function renderVentures(){
+  $('#ventures').innerHTML=VENTURES.map(v=>'<button type="button" class="vcard" data-v="'+v.id+'" aria-pressed="'+(S.v===v.id)+'">'+
+    '<div class="vic" style="background:'+v.c+'22;color:'+v.c+'">'+ic(v.ic)+'</div><span class="kind">'+esc(v.kind)+'</span><h3>'+esc(v.name)+'</h3><p>'+esc(v.blurb)+'</p>'+
+    '<p><b style="color:var(--text)">Income:</b> '+esc(v.model)+'</p><div class="req" aria-label="Key elements">'+v.req.map(r=>'<span class="tag">'+esc(E(r).s)+'</span>').join('')+'</div></button>').join('');
+  $('#toMap').disabled=!S.v;
+}
+$('#ventures').addEventListener('click',e=>{
+  const b=e.target.closest('.vcard');if(!b)return;const id=b.dataset.v;if(id===S.v)return;
+  if(S.v&&S.maxStep>1&&!confirm('Switch start-up? This clears your progress so far.'))return;
+  const keep={quizBest:S.quizBest,name:S.name,cls:S.cls};S=Object.assign(fresh(),keep);S.v=id;S.maxStep=1;
+  logSet('venture','Start-up','Chose '+V().name+' ('+V().kind.toLowerCase()+').');
+  save();renderVentures();renderHud();renderStepper();announce('Selected '+V().name+'. Continue to build the ecosystem.');
+});
+$('#toMap').addEventListener('click',()=>{unlock('map');go('map');});
+
+/* ---------- Stage 2: Map ---------- */
+const L_DESK={w:1000,h:620,nw:164,nh:44,fs:13,zones:{create:{x:8,y:8,w:236,h:424},host:{x:252,y:8,w:366,h:424},consume:{x:626,y:8,w:366,h:424},support:{x:8,y:440,w:984,h:172}}};
+const L_MOB={w:360,h:930,nw:108,nh:38,fs:11.5,zones:{create:{x:5,y:5,w:350,h:152},host:{x:5,y:163,w:350,h:236},consume:{x:5,y:405,w:350,h:190},support:{x:5,y:601,w:350,h:324}}};
+let L=L_DESK;
+let tapMode=coarse; let animOn=!reducedMQ.matches;
+let armed=null, source=null, pending=null, selLink=null, moving=null;
+const board=$('#board');
+
+function inner(z,LL){const nw=LL.nw,nh=LL.nh;return{x:z.x+8+nw/2,y:z.y+30+nh/2,w:Math.max(0,z.w-16-nw),h:Math.max(0,z.h-38-nh)};}
+function nodeXY(n,LL){LL=LL||L;const z=LL.zones[n.zone],i=inner(z,LL);return{x:i.x+n.u*i.w,y:i.y+n.v*i.h};}
+function zoneAt(p){
+  let best=null,bd=1e9;
+  for(const k of ZONE_ORDER){const z=L.zones[k];const dx=Math.max(z.x-p.x,0,p.x-(z.x+z.w)),dy=Math.max(z.y-p.y,0,p.y-(z.y+z.h));const d=dx*dx+dy*dy;if(d<bd){bd=d;best=k;}}
+  return best;
+}
+function uvFor(zone,p){const i=inner(L.zones[zone],L);return{u:i.w?clamp((p.x-i.x)/i.w,0,1):.5,v:i.h?clamp((p.y-i.y)/i.h,0,1):.5};}
+function autoSlot(zone){
+  const z=L.zones[zone],i=inner(z,L);const cols=Math.max(1,Math.floor((z.w-16)/(L.nw+10))),rows=Math.max(1,Math.floor((z.h-38)/(L.nh+12)));
+  const others=S.nodes.filter(n=>n.zone===zone).map(n=>nodeXY(n));
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const u=cols>1?c/(cols-1):.5,v=rows>1?r/(rows-1):.5;const p={x:i.x+u*i.w,y:i.y+v*i.h};
+    if(!others.some(o=>Math.abs(o.x-p.x)<L.nw*.9&&Math.abs(o.y-p.y)<L.nh*1.15))return{u,v};
+  }
+  return{u:Math.random(),v:Math.random()};
+}
+function svgPoint(e){const pt=board.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const m=board.getScreenCTM();return m?pt.matrixTransform(m.inverse()):{x:0,y:0};}
+
+function clipRect(c,tx,ty,LL){const dx=tx-c.x,dy=ty-c.y;const hw=LL.nw/2+3,hh=LL.nh/2+3;const s=Math.min(hw/Math.max(Math.abs(dx),1e-6),hh/Math.max(Math.abs(dy),1e-6));const k=Math.min(s,1);return{x:c.x+dx*k,y:c.y+dy*k};}
+function linkPath(l,idx,LL){
+  const A=S.nodes.find(n=>n.id===l.from),B=S.nodes.find(n=>n.id===l.to);if(!A||!B)return'';
+  const a=nodeXY(A,LL),b=nodeXY(B,LL);const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;const nx=-dy/len,ny=dx/len;
+  const same=S.links.filter((m,j)=>j<idx&&m.from===l.from&&m.to===l.to).length;
+  const off=Math.min(46,len*.14)+same*16;
+  const cx=(a.x+b.x)/2+nx*off,cy=(a.y+b.y)/2+ny*off;const p0=clipRect(a,cx,cy,LL),p1=clipRect(b,cx,cy,LL);
+  return 'M'+p0.x.toFixed(1)+' '+p0.y.toFixed(1)+' Q'+cx.toFixed(1)+' '+cy.toFixed(1)+' '+p1.x.toFixed(1)+' '+p1.y.toFixed(1);
+}
+const FONT='Segoe UI, system-ui, -apple-system, Roboto, Arial, sans-serif';
+function boardMarkup(LL,exp){
+  const parts=[];
+  parts.push('<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#1d3557"/></pattern>');
+  Object.keys(FLOWS).forEach(f=>parts.push('<marker id="ar-'+f+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="'+FLOWS[f].c+'"/></marker>'));
+  parts.push('</defs><rect width="'+LL.w+'" height="'+LL.h+'" fill="#0a1628"/><rect width="'+LL.w+'" height="'+LL.h+'" fill="url(#grid)"/>');
+  ZONE_ORDER.forEach(k=>{const z=LL.zones[k],Z=ZONES[k];
+    parts.push('<rect class="zone-hit" data-zone="'+k+'" x="'+z.x+'" y="'+z.y+'" width="'+z.w+'" height="'+z.h+'" rx="14" fill="'+Z.c+'" fill-opacity="'+(armed&&!exp&&E(armed).zone===k?.11:.045)+'" stroke="'+Z.c+'" stroke-opacity=".38" stroke-width="1.4" stroke-dasharray="6 6"'+
+      (exp?'':' role="button" tabindex="'+(armed||moving?0:-1)+'" aria-label="'+esc((armed?'Place '+E(armed).l+' in ':moving?'Move '+E(moving).l+' to ':'')+Z.l+' zone')+'"')+'/>');
+    parts.push('<text x="'+(z.x+12)+'" y="'+(z.y+20)+'" font-family="'+FONT+'" font-size="'+(LL===L_MOB?10.5:12)+'" font-weight="700" letter-spacing="1.2" fill="'+Z.c+'" pointer-events="none">'+esc(Z.l.toUpperCase())+'</text>');
+  });
+  S.links.forEach((l,i)=>{const d=linkPath(l,i,LL);if(!d)return;const F=FLOWS[l.flow];const sel=!exp&&selLink===i;
+    parts.push('<g class="link"><path class="lp" data-li="'+i+'" d="'+d+'" fill="none" stroke="'+F.c+'" stroke-width="'+(sel?4.4:2.6)+'" stroke-linecap="round"'+(F.dash?' stroke-dasharray="'+F.dash+'"':'')+' marker-end="url(#ar-'+l.flow+')" opacity="'+(sel?1:.88)+'"/>'+
+      (exp?'':'<path class="lhit" data-li="'+i+'" d="'+d+'" fill="none" stroke="transparent" stroke-width="16"/>')+'</g>');
+  });
+  if(!exp)parts.push('<g id="dots"></g>');
+  S.nodes.forEach(n=>{const p=nodeXY(n,LL),el=E(n.id),zc=ZONES[n.zone].c,hw=LL.nw/2,hh=LL.nh/2;const isSrc=!exp&&source===n.id,isMov=!exp&&moving===n.id;
+    const links=S.links.filter(l=>l.from===n.id||l.to===n.id).length;const r=hh-7;const icx=-hw+hh;
+    parts.push('<g class="node'+(isSrc?' src':'')+'" data-id="'+n.id+'" transform="translate('+p.x.toFixed(1)+' '+p.y.toFixed(1)+')"'+
+      (exp?'':' tabindex="0" role="button" aria-label="'+esc(el.l+', in '+ZONES[n.zone].l+' zone, '+links+' connection'+(links===1?'':'s')+'.'+(isSrc?' Connection starts here.':''))+'"')+'>'+
+      (isSrc||isMov?'<rect x="'+(-hw-5)+'" y="'+(-hh-5)+'" width="'+(LL.nw+10)+'" height="'+(LL.nh+10)+'" rx="15" fill="none" stroke="#ffe27a" stroke-width="2" stroke-dasharray="5 4"/>':'')+
+      '<rect class="nb" x="'+(-hw)+'" y="'+(-hh)+'" width="'+LL.nw+'" height="'+LL.nh+'" rx="11" fill="#16304f" stroke="'+(isSrc?'#ffe27a':zc)+'" stroke-width="'+(isSrc?3:1.6)+'"/>'+
+      '<circle cx="'+icx+'" cy="0" r="'+r+'" fill="'+zc+'"/>'+
+      '<g transform="translate('+(icx-r*.62)+' '+(-r*.62)+') scale('+(r*1.24/24).toFixed(3)+')"><path d="'+ICONS[n.id]+'" fill="none" stroke="#0b1626" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>'+
+      '<text x="'+(icx+r+7)+'" y="'+(LL.fs*.36).toFixed(1)+'" font-family="'+FONT+'" font-size="'+LL.fs+'" font-weight="650" fill="#eaf2fb" pointer-events="none">'+esc(LL===L_MOB?el.s:el.n)+'</text></g>');
+  });
+  return parts.join('');
+}
+let dotEls=[];
+function renderBoard(){
+  const want=($('#boardWrap').clientWidth||1000)<600?L_MOB:L_DESK;L=want;
+  const fa=document.activeElement;let fid=null,fz=null;
+  if(fa&&board.contains(fa)){if(fa.dataset.id)fid=fa.dataset.id;else if(fa.dataset.zone)fz=fa.dataset.zone;}
+  board.setAttribute('viewBox','0 0 '+L.w+' '+L.h);
+  board.classList.toggle('armed',!!armed||!!moving);
+  board.style.touchAction=tapMode?'pan-y':'none';
+  board.innerHTML=boardMarkup(L,false);
+  if(fid){const g=board.querySelector('.node[data-id="'+fid+'"]');g&&g.focus({preventScroll:true});}
+  else if(fz){const z=board.querySelector('.zone-hit[data-zone="'+fz+'"]');z&&z.focus({preventScroll:true});}
+  // dots
+  const dg=board.querySelector('#dots');dotEls=[];
+  $$('path.lp',board).forEach((p,i)=>{const l=S.links[+p.dataset.li];const len=p.getTotalLength?p.getTotalLength():0;if(!len)return;
+    for(let k=0;k<2;k++){const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r',L===L_MOB?3.2:4.2);c.setAttribute('fill',FLOWS[l.flow].c);c.setAttribute('pointer-events','none');dg.appendChild(c);dotEls.push({c,p,len,off:k/2+i*.13});}});
+  dg.style.display=animOn?'':'none';
+  $('#boardEmpty').textContent=S.nodes.length?'':(tapMode?'Open the Elements tray, tap an element, then tap the board to place it.':'Drag elements from the tray onto the board, or click one and then click a zone.');
+  ensureLoop();
+}
+let rafId=0,lastT=0,phase=0;
+function loopOK(){return animOn&&mode==='play'&&S.step==='map'&&!document.hidden&&dotEls.length;}
+function ensureLoop(){if(loopOK()&&!rafId){lastT=performance.now();rafId=requestAnimationFrame(tick);}}
+function tick(t){
+  if(!loopOK()){rafId=0;return;}
+  phase+=Math.min(60,t-lastT)/1000;lastT=t;const speed=L===L_MOB?36:70;
+  for(const d of dotEls){const pos=((phase*speed)+d.off*d.len)%d.len;const pt=d.p.getPointAtLength(pos);d.c.setAttribute('cx',pt.x.toFixed(1));d.c.setAttribute('cy',pt.y.toFixed(1));}
+  rafId=requestAnimationFrame(tick);
+}
+document.addEventListener('visibilitychange',ensureLoop);
+
+function renderChips(){
+  const v=V();const req=v?v.req:[];
+  $('#chips').innerHTML=EL_ORDER.map(id=>{const el=E(id),zc=ZONES[el.zone].c,placed=has(id);
+    return '<button type="button" class="chip'+(placed?' placed':'')+(armed===id?' armed':'')+'" data-el="'+id+'" aria-pressed="'+(armed===id)+'" aria-label="'+esc(el.l+(placed?' (on the map)':'')+(req.includes(id)&&!placed?' (key element)':''))+'">'+
+      '<span class="dot" style="background:'+zc+'">'+ic(id)+'</span>'+esc(el.l)+(req.includes(id)?'<span class="needmark" aria-hidden="true">KEY</span>':'')+'</button>';}).join('');
+  $('#trayCount').textContent='('+S.nodes.length+'/14 placed)';
+  $('#trayHelp').textContent=tapMode?'Tap an element, then tap the board where it belongs. KEY marks elements your start-up depends on.':'Drag an element onto the board, or select it and press Enter to drop it in its usual zone. KEY marks elements your start-up depends on.';
+}
+function renderInfo(){
+  const ib=$('#infobar');let h='';
+  if(pending){
+    const r=RULES[pending.from+'>'+pending.to]||{};const rv=RULES[pending.to+'>'+pending.from]||{};
+    const sugg=Object.keys(r)[0]||Object.keys(rv)[0]||'content';
+    h='<div class="def">Connect <b>'+esc(E(pending.from).l)+'</b> → <b>'+esc(E(pending.to).l)+'</b>. What flows along this link?</div>'+
+      Object.keys(FLOWS).map(f=>'<button type="button" class="flowbtn '+f+(f===sugg?' sugg':'')+'" data-flow="'+f+'">'+FLOWS[f].l+'</button>').join('')+
+      '<button type="button" class="btn sm ghost" data-act="cancel">Cancel</button>';
+    ib.innerHTML=h;const b=ib.querySelector('.flowbtn.sugg');b&&b.focus({preventScroll:true});return;
+  }
+  if(selLink!=null&&S.links[selLink]){const l=S.links[selLink];
+    h='<div class="def"><b>'+esc(E(l.from).l)+' → '+esc(E(l.to).l)+'</b> carries <b style="color:'+FLOWS[l.flow].c+'">'+FLOWS[l.flow].l.toLowerCase()+'</b>. Change it or remove it:</div>'+
+      Object.keys(FLOWS).filter(f=>f!==l.flow).map(f=>'<button type="button" class="flowbtn '+f+'" data-chg="'+f+'">'+FLOWS[f].l+'</button>').join('')+
+      '<button type="button" class="btn sm" data-act="rmlink">'+ic('trash')+' Remove link</button><button type="button" class="btn sm ghost" data-act="cancel">Done</button>';
+  }else if(moving){h='<div class="def">Moving <b>'+esc(E(moving).l)+'</b>: tap the spot on the board where it should go.</div><button type="button" class="btn sm ghost" data-act="cancel">Cancel</button>';}
+  else if(source){const el=E(source);
+    h='<div class="def"><b>'+esc(el.l)+':</b> '+esc(el.def)+'<br><span style="color:var(--focus)">Now '+(tapMode?'tap':'click or press Enter on')+' the element it flows to.</span></div>'+
+      (tapMode?'<button type="button" class="btn sm" data-act="move">'+ic('move')+' Move</button>':'')+
+      '<button type="button" class="btn sm" data-act="rmnode">'+ic('trash')+' Remove</button><button type="button" class="btn sm ghost" data-act="cancel">Cancel</button>';
+  }else if(armed){const el=E(armed);
+    h='<div class="def"><b>'+esc(el.l)+':</b> '+esc(el.def)+'<br><span style="color:var(--focus)">'+(tapMode?'Tap the board to place it.':'Click a zone on the board, or press Enter again to place it in '+ZONES[el.zone].l+'.')+'</span></div><button type="button" class="btn sm ghost" data-act="cancel">Cancel</button>';
+  }else{
+    h='<div class="def">'+(S.nodes.length<2?'Place at least the KEY elements, then connect them. ':'')+(tapMode?'Tap an element on the board, then tap another to draw a flow between them. Tap a line to change or remove it.':'Click an element, then click another to draw a flow from the first to the second. Drag elements to rearrange. Click a line to change or remove it.')+'</div>';
+  }
+  ib.innerHTML=h;
+}
+function renderLinks(){
+  $('#linkCount').textContent=S.links.length;
+  $('#linkList').innerHTML=S.links.length?S.links.map((l,i)=>'<li><span class="ln"><span class="fdot" style="background:'+FLOWS[l.flow].c+'"></span>'+esc(E(l.from).l)+' → '+esc(E(l.to).l)+' <span class="muted">('+FLOWS[l.flow].l.toLowerCase()+')</span></span>'+
+    '<label class="sr" for="lf'+i+'">Flow type</label><select id="lf'+i+'" data-li="'+i+'" class="search" style="width:auto;min-height:34px;padding:4px 8px">'+Object.keys(FLOWS).map(f=>'<option value="'+f+'"'+(f===l.flow?' selected':'')+'>'+FLOWS[f].l+'</option>').join('')+'</select>'+
+    '<button type="button" class="btn sm ghost" data-rm="'+i+'" aria-label="Remove link '+esc(E(l.from).l+' to '+E(l.to).l)+'">'+ic('trash')+'</button></li>').join(''):'<li class="muted">No connections yet.</li>';
+}
+function refreshMap(){renderBoard();renderChips();renderInfo();renderLinks();save();}
+function renderMap(){
+  const v=V();
+  $('#mapIntro').innerHTML='Build the ecosystem for <b>'+esc(v.name)+'</b>. Place the elements it depends on, then draw the flows of <b style="color:var(--content)">content</b>, <b style="color:var(--money)">money</b> and <b style="color:var(--data)">data</b> between them. When you are ready, press <b>Check my ecosystem</b>.';
+  $('#modeDrag').setAttribute('aria-pressed',String(!tapMode));$('#modeTap').setAttribute('aria-pressed',String(tapMode));
+  $('#btnAnim').setAttribute('aria-pressed',String(animOn));$('#btnAnim').textContent=animOn?'Animate flows: on':'Animate flows: off';
+  $('#toChain').disabled=S.mapScore==null;
+  refreshMap();
+  if(S.mapScore!=null&&!$('#mapFb').innerHTML)showMapFeedback(computeMap(),true);
+}
+function cancelAll(){armed=null;source=null;pending=null;selLink=null;moving=null;}
+function placeNode(id,zone,uv){
+  if(has(id))return;S.nodes.push({id,zone,u:uv.u,v:uv.v});armed=null;
+  refreshMap();announce('Placed '+E(id).l+' in the '+ZONES[zone].l+' zone.'+(zone!==E(id).zone?' It usually sits in '+ZONES[E(id).zone].l+'.':''));
+  const g=board.querySelector('.node[data-id="'+id+'"]');if(g&&!tapMode)g.focus({preventScroll:true});
+}
+function removeNode(id){S.nodes=S.nodes.filter(n=>n.id!==id);S.links=S.links.filter(l=>l.from!==id&&l.to!==id);cancelAll();refreshMap();announce('Removed '+E(id).l+' and its links.');}
+function activateNode(id){
+  hideTip();
+  if(moving)return;
+  if(selLink!=null)selLink=null;
+  if(!source){source=id;refreshMap();announce('Connecting from '+E(id).l+'. Choose the element it flows to. '+E(id).def);return;}
+  if(source===id){source=null;refreshMap();announce('Connection cancelled.');return;}
+  pending={from:source,to:id};source=null;refreshMap();announce('Choose what flows from '+E(pending.from).l+' to '+E(pending.to).l+': content, money or data.');
+}
+function addLink(flow){
+  const p=pending;pending=null;if(!p)return;
+  if(S.links.some(l=>l.from===p.from&&l.to===p.to&&l.flow===flow)){announce('That link already exists.');refreshMap();return;}
+  S.links.push({from:p.from,to:p.to,flow});refreshMap();
+  announce('Linked '+E(p.from).l+' to '+E(p.to).l+' with a '+flow+' flow.');
+  const g=board.querySelector('.node[data-id="'+p.to+'"]');g&&g.focus({preventScroll:true});
+}
+/* chips */
+let chipDrag=null,suppressClick=false;
+$('#chips').addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.chip');if(!b||tapMode||e.pointerType==='touch'||e.button!==0)return;const id=b.dataset.el;if(has(id))return;
+  chipDrag={id,x:e.clientX,y:e.clientY,ghost:null};
+});
+document.addEventListener('pointermove',e=>{
+  if(!chipDrag)return;
+  if(!chipDrag.ghost){if(Math.hypot(e.clientX-chipDrag.x,e.clientY-chipDrag.y)<6)return;
+    const src=$('.chip[data-el="'+chipDrag.id+'"]');const g=src.cloneNode(true);g.classList.add('drag-ghost');g.style.width=src.offsetWidth+'px';document.body.appendChild(g);chipDrag.ghost=g;hideTip();}
+  chipDrag.ghost.style.left=e.clientX+'px';chipDrag.ghost.style.top=e.clientY+'px';
+});
+document.addEventListener('pointerup',e=>{
+  if(!chipDrag)return;const d=chipDrag;chipDrag=null;
+  if(d.ghost){d.ghost.remove();suppressClick=true;setTimeout(()=>{suppressClick=false;},50);
+    const r=board.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){const p=svgPoint(e);const z=zoneAt(p);cancelAll();placeNode(d.id,z,uvFor(z,p));}
+  }
+});
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b||suppressClick)return;const id=b.dataset.el;
+  if(has(id)){cancelAll();source=id;refreshMap();const g=board.querySelector('.node[data-id="'+id+'"]');g&&g.focus({preventScroll:true});announce(E(id).l+' is already on the map. Choose another element to connect it to.');closeTray();return;}
+  if(armed===id){const z=E(id).zone;placeNode(id,z,autoSlot(z));return;}
+  cancelAll();armed=id;refreshMap();
+  const cb=$('.chip[data-el="'+id+'"]');cb&&cb.focus({preventScroll:true});
+  announce(E(id).l+' selected. '+(tapMode?'Tap the board to place it.':'Press Enter again to place it in '+ZONES[E(id).zone].l+', or Tab to a zone on the board and press Enter.'));
+  if(tapMode)closeTray();
+});
+$('#chips').addEventListener('pointerover',e=>{const b=e.target.closest('.chip');if(b&&e.pointerType!=='touch'&&!chipDrag)showTip(b,E(b.dataset.el).l,E(b.dataset.el).def);});
+$('#chips').addEventListener('pointerout',e=>{if(e.target.closest('.chip'))hideTip();});
+$('#chips').addEventListener('focusin',e=>{const b=e.target.closest('.chip');if(b&&!coarse)showTip(b,E(b.dataset.el).l,E(b.dataset.el).def);});
+$('#chips').addEventListener('focusout',hideTip);
+function closeTray(){$('#tray').classList.remove('open');$('#trayHandle').setAttribute('aria-expanded','false');}
+$('#trayHandle').addEventListener('click',()=>{const o=$('#tray').classList.toggle('open');$('#trayHandle').setAttribute('aria-expanded',String(o));});
+
+/* board pointer */
+let nodeDrag=null;
+board.addEventListener('pointerdown',e=>{
+  if(e.button!==undefined&&e.button!==0)return;
+  const g=e.target.closest('.node');
+  if(g&&!moving){nodeDrag={id:g.dataset.id,x:e.clientX,y:e.clientY,moved:false,touch:e.pointerType==='touch'};
+    if(!tapMode){try{board.setPointerCapture(e.pointerId);}catch(_){}}
+    e.preventDefault();return;}
+  nodeDrag={bg:true,x:e.clientX,y:e.clientY,target:e.target};
+});
+board.addEventListener('pointermove',e=>{
+  if(!nodeDrag||nodeDrag.bg||tapMode)return;
+  if(!nodeDrag.moved&&Math.hypot(e.clientX-nodeDrag.x,e.clientY-nodeDrag.y)<6)return;
+  nodeDrag.moved=true;hideTip();const p=svgPoint(e);const n=S.nodes.find(n=>n.id===nodeDrag.id);if(!n)return;
+  const z=zoneAt(p);const uv=uvFor(z,p);n.zone=z;n.u=uv.u;n.v=uv.v;renderBoard();
+});
+board.addEventListener('pointerup',e=>{
+  const d=nodeDrag;nodeDrag=null;if(!d)return;
+  if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>10&&(d.bg||tapMode)){return;} // scroll gesture
+  if(d.bg){
+    const lh=d.target.closest&&d.target.closest('.lhit');
+    if(lh&&!armed&&!moving){cancelAll();selLink=+lh.dataset.li;refreshMap();announce('Selected link. Change its flow or remove it.');return;}
+    const p=svgPoint(e);
+    if(armed){const z=zoneAt(p);const id=armed;placeNode(id,z,uvFor(z,p));return;}
+    if(moving){const n=S.nodes.find(n=>n.id===moving);const z=zoneAt(p);Object.assign(n,{zone:z},uvFor(z,p));const id=moving;moving=null;refreshMap();announce('Moved '+E(id).l+' to '+ZONES[z].l+'.');return;}
+    if(source||selLink!=null||pending){cancelAll();refreshMap();}
+    return;
+  }
+  if(d.moved){save();renderInfo();announce('Moved '+E(d.id).l+'.');return;}
+  activateNode(d.id);
+});
+board.addEventListener('pointercancel',()=>{nodeDrag=null;});
+board.addEventListener('pointerover',e=>{const g=e.target.closest('.node');if(g&&e.pointerType!=='touch'&&!nodeDrag)showTip(g,E(g.dataset.id).l,E(g.dataset.id).def);});
+board.addEventListener('pointerout',e=>{if(e.target.closest('.node'))hideTip();});
+board.addEventListener('focusin',e=>{const g=e.target.closest('.node');if(g&&!coarse)showTip(g,E(g.dataset.id).l,E(g.dataset.id).def);});
+board.addEventListener('focusout',hideTip);
+board.addEventListener('keydown',e=>{
+  const g=e.target.closest('.node'),z=e.target.closest('.zone-hit');
+  if(e.key==='Escape'){cancelAll();refreshMap();announce('Cancelled.');return;}
+  if(z&&(e.key==='Enter'||e.key===' ')){e.preventDefault();const zone=z.dataset.zone;
+    if(armed){placeNode(armed,zone,autoSlot(zone));}
+    else if(moving){const n=S.nodes.find(n=>n.id===moving);const uv=autoSlot(zone);Object.assign(n,{zone},uv);const id=moving;moving=null;refreshMap();const gg=board.querySelector('.node[data-id="'+id+'"]');gg&&gg.focus();announce('Moved '+E(id).l+' to '+ZONES[zone].l+'.');}
+    return;}
+  if(!g)return;const id=g.dataset.id;
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();activateNode(id);return;}
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();removeNode(id);const c=$('.chip[data-el="'+id+'"]');c&&c.focus();return;}
+  const mv={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(mv){e.preventDefault();const n=S.nodes.find(n=>n.id===id);const st=e.shiftKey?.25:.1;n.u=clamp(n.u+mv[0]*st,0,1);n.v=clamp(n.v+mv[1]*st,0,1);renderBoard();save();}
+});
+$('#infobar').addEventListener('click',e=>{
+  const f=e.target.closest('[data-flow]');if(f){addLink(f.dataset.flow);return;}
+  const c=e.target.closest('[data-chg]');if(c&&selLink!=null){S.links[selLink].flow=c.dataset.chg;refreshMap();announce('Changed to a '+c.dataset.chg+' flow.');return;}
+  const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
+  if(act==='cancel'){cancelAll();refreshMap();announce('Cancelled.');}
+  else if(act==='rmlink'&&selLink!=null){S.links.splice(selLink,1);cancelAll();refreshMap();announce('Link removed.');}
+  else if(act==='rmnode'&&source){removeNode(source);}
+  else if(act==='move'&&source){moving=source;source=null;refreshMap();announce('Tap where '+E(moving).l+' should go.');}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mode==='play'&&S.step==='map'&&(armed||source||pending||moving||selLink!=null)&&!board.contains(e.target)){cancelAll();refreshMap();announce('Cancelled.');}});
+$('#linkList').addEventListener('change',e=>{const s=e.target.closest('select[data-li]');if(s){S.links[+s.dataset.li].flow=s.value;refreshMap();announce('Flow changed to '+s.value+'.');}});
+$('#linkList').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(b){S.links.splice(+b.dataset.rm,1);cancelAll();refreshMap();announce('Link removed.');$('#linksBox summary').focus();}});
+$('#modeDrag').addEventListener('click',()=>{tapMode=false;renderMap();announce('Drag mode: drag elements from the tray onto the board.');});
+$('#modeTap').addEventListener('click',()=>{tapMode=true;renderMap();announce('Tap mode: tap an element, then tap the board.');});
+$('#btnAnim').addEventListener('click',()=>{animOn=!animOn;renderMap();announce(animOn?'Flow animation on.':'Flow animation off.');});
+$('#btnClear').addEventListener('click',()=>{if(!S.nodes.length||confirm('Clear every element and link from the board?')){S.nodes=[];S.links=[];cancelAll();$('#mapFb').innerHTML='';refreshMap();announce('Board cleared.');}});
+let rzT=0;window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(mode==='play'&&S.step==='map')renderBoard();},120);});
+
+/* evaluation */
+function evalLink(l){
+  const k=l.from+'>'+l.to,r=RULES[k],a=E(l.from).l,b=E(l.to).l,F=FLOWS[l.flow].l.toLowerCase();
+  if(r&&r[l.flow])return{ok:true,msg:a+' → '+b+' ('+F+'): '+r[l.flow]};
+  if(WRONG[k+'|'+l.flow])return{ok:false,msg:a+' → '+b+' ('+F+'): '+WRONG[k+'|'+l.flow]};
+  if(r){const fs=Object.keys(r);return{ok:false,msg:a+' → '+b+' ('+F+'): right pair, wrong flow. Between these two the usual flow is '+fs.map(f=>FLOWS[f].l.toLowerCase()).join(' or ')+'. '+r[fs[0]]};}
+  const rv=RULES[l.to+'>'+l.from];
+  if(rv&&rv[l.flow])return{ok:false,msg:a+' → '+b+' ('+F+'): this looks reversed. '+rv[l.flow]};
+  return{ok:false,msg:a+' → '+b+' ('+F+'): this is not a typical flow. Think about what actually moves between these two elements.'};
+}
+function findPath(flow,from,to){
+  const good=S.links.filter(l=>l.flow===flow&&evalLink(l).ok);
+  const starts=from.filter(has);const prev={};const q=starts.slice();starts.forEach(s=>prev[s]=null);
+  while(q.length){const c=q.shift();if(c===to&&!from.includes(to))return trace(c);if(c===to)return trace(c);
+    good.filter(l=>l.from===c).forEach(l=>{if(!(l.to in prev)){prev[l.to]=c;q.push(l.to);}});}
+  return null;
+  function trace(c){const p=[];while(c!=null){p.unshift(c);c=prev[c];}return p.length>1?p:null;}
+}
+const pathTxt=p=>p.map(id=>E(id).n).join(' → ');
+function computeMap(){
+  const v=V(),items=[];let score=0;const parts={};
+  const miss=v.req.filter(r=>!has(r));
+  parts.req=Math.round(35*(v.req.length-miss.length)/v.req.length);score+=parts.req;
+  if(!miss.length)items.push(['ok','All '+v.req.length+' key elements for '+v.name+' are on the map.']);
+  else miss.forEach(r=>items.push(['bad','Missing '+E(r).l+'. '+(v.why[r]||E(r).def.split('. ')[0]+'.')]));
+  const cp=findPath('content',['creators'],'consumers');
+  if(cp){parts.content=15;items.push(['ok','Content flows from creation to consumption: '+pathTxt(cp)+'.']);}
+  else{parts.content=0;items.push(['bad','No complete content flow from Creators to Consumers yet. Content should move along the value chain, e.g. Creators → Platforms → Consumers (or via Devices).']);}
+  score+=parts.content;
+  const mp=findPath('money',['advertisers','consumers','communities'],'creators');
+  if(mp){parts.money=15;items.push(['ok','Money reaches the creators: '+pathTxt(mp)+'.']);}
+  else{parts.money=0;items.push(['bad','No money flow back to the creators yet. Show how the venture earns, e.g. Advertisers → Platforms → Creators, or Consumers → Payment systems → Creators.']);}
+  score+=parts.money;
+  const dIn=S.links.find(l=>l.flow==='data'&&l.to==='analytics'&&evalLink(l).ok),dOut=S.links.find(l=>l.flow==='data'&&l.from==='analytics'&&evalLink(l).ok);
+  parts.data=(dIn?5:0)+(dOut?5:0);score+=parts.data;
+  if(dIn&&dOut)items.push(['ok','Data loop: '+E(dIn.from).n+' → Analytics → '+E(dOut.to).n+'. Analytics connects every layer.']);
+  else if(!has('analytics'))items.push(['bad','No data loop. Add Data & analytics and show data flowing in (e.g. from Consumers) and out (e.g. to Creators or Advertisers).']);
+  else items.push(['bad','Your data loop is incomplete: Analytics needs data flowing '+(dIn?'out to someone who uses it (Creators, Advertisers, Platforms).':'in from Consumers, Platforms or Devices.')]);
+  let good=0;const issues=[],strong=[];
+  S.links.forEach(l=>{const r=evalLink(l);if(r.ok){good++;strong.push(r.msg);}else issues.push(r.msg);});
+  parts.links=S.links.length?Math.round(10*good/S.links.length):0;score+=parts.links;
+  strong.slice(0,4).forEach(m=>items.push(['ok',m]));
+  issues.forEach(m=>items.push(['bad',m]));
+  if(!S.links.length)items.push(['bad','There are no connections yet. Select one element, then another, to draw a flow.']);
+  const inZone=S.nodes.filter(n=>n.zone===E(n.id).zone).length;
+  parts.zone=S.nodes.length?Math.round(5*inZone/S.nodes.length):0;score+=parts.zone;
+  S.nodes.filter(n=>n.zone!==E(n.id).zone).forEach(n=>items.push(['tip',E(n.id).l+' usually sits in '+ZONES[E(n.id).zone].l+', not '+ZONES[n.zone].l+'.']));
+  let kp=0;v.key.forEach(k=>{let ok=false;
+    if(k.test==='isp-out')ok=S.links.some(l=>l.from==='isp'&&evalLink(l).ok);
+    else if(k.test==='reg-out')ok=S.links.some(l=>l.from==='regulators'&&evalLink(l).ok);
+    else if(k.test==='direct')ok=S.links.some(l=>k.from.includes(l.from)&&l.to===k.to&&l.flow===k.flow);
+    else ok=!!findPath(k.flow,k.from,k.to);
+    if(ok)kp+=10/v.key.length;items.push([ok?'ok':'bad',(ok?'':'For '+v.name+': ')+(ok?k.ok:k.bad)]);});
+  parts.key=Math.round(kp);score+=parts.key;
+  S.nodes.forEach(n=>{if(!S.links.some(l=>l.from===n.id||l.to===n.id))items.push(['tip',E(n.id).l+' is not connected to anything. Every element in an ecosystem is interdependent: link it or remove it.']);});
+  return{score:clamp(Math.round(score),0,100),items,parts};
+}
+function ring(val,size,col,label){
+  const r=size/2-7,c=2*Math.PI*r,off=c*(1-clamp(val,0,100)/100);
+  return '<svg class="score-ring" viewBox="0 0 '+size+' '+size+'" role="img" aria-label="'+esc(label||'Score')+' '+Math.round(val)+' out of 100"><circle class="track" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="#22385a" stroke-width="7"/>'+
+    '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>'+
+    '<text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="'+FONT+'" font-weight="800" font-size="'+(size*.27)+'" fill="currentColor">'+Math.round(val)+'</text></svg>';
+}
+const scoreCol=s=>s>=75?'#52d98f':s>=50?'#ffc53d':'#ff6b6b';
+function showMapFeedback(res,quiet){
+  const s=res.score;const verdict=s>=85?'A healthy, well-connected ecosystem.':s>=65?'A working ecosystem with a few gaps.':s>=40?'Some key parts are in place, but flows are missing.':'Your ecosystem needs more elements and flows.';
+  const P=res.parts;
+  $('#mapFb').innerHTML='<div class="card"><div class="fb-head">'+ring(s,72,scoreCol(s),'Ecosystem map score')+'<div><h3>Ecosystem check: '+s+'/100</h3><p class="muted" style="margin:0">'+verdict+'</p>'+
+    '<p class="small muted" style="margin:4px 0 0">Key elements '+P.req+'/35 · Content flow '+P.content+'/15 · Money flow '+P.money+'/15 · Data loop '+P.data+'/10 · Link accuracy '+P.links+'/10 · Zones '+P.zone+'/5 · '+esc(V().name)+' check '+P.key+'/10</p></div></div>'+
+    '<ul class="fb-list">'+res.items.map(it=>'<li class="'+it[0]+'"><span class="mk" aria-hidden="true">'+(it[0]==='ok'?'✓':it[0]==='bad'?'!':'i')+'</span><span><span class="sr">'+(it[0]==='ok'?'Good: ':it[0]==='bad'?'Fix: ':'Tip: ')+'</span>'+esc(it[1])+'</span></li>').join('')+'</ul>'+
+    (s<60?'<p class="note warn">You can continue, but your map score feeds into your reach and your final Ecosystem health. Try fixing the "!" items and checking again.</p>':'')+'</div>';
+  if(!quiet){announce('Ecosystem check: '+s+' out of 100. '+verdict);}
+}
+$('#btnCheck').addEventListener('click',()=>{
+  const res=computeMap();S.mapScore=res.score;S.mapChecks++;
+  logSet('map','Ecosystem map','Mapped '+S.nodes.length+' elements and '+S.links.length+' flows; ecosystem check '+res.score+'/100 after '+S.mapChecks+' check'+(S.mapChecks>1?'s':'')+'.');
+  showMapFeedback(res);$('#toChain').disabled=false;save();
+  const fb=$('#mapFb');fb.focus({preventScroll:true});fb.scrollIntoView({behavior:reducedMQ.matches?'auto':'smooth',block:'start'});
+});
+$('#btnHint').addEventListener('click',()=>{
+  const v=V();let h='';
+  const miss=v.req.filter(r=>!has(r));
+  if(miss.length)h='Add '+E(miss[0]).l+': '+(v.why[miss[0]]||E(miss[0]).def);
+  else if(!findPath('content',['creators'],'consumers'))h='Draw content flowing from Creators to Platforms, then from Platforms to Consumers (or through Devices).';
+  else if(!findPath('money',['advertisers','consumers','communities'],'creators'))h='Show how money gets back to the creators, e.g. Advertisers → Platforms, then Platforms → Creators (money).';
+  else if(!S.links.some(l=>l.to==='analytics'&&l.flow==='data'))h='Connect Consumers → Data & analytics as a data flow.';
+  else if(!S.links.some(l=>l.from==='analytics'&&l.flow==='data'))h='Who uses the analytics? Draw a data flow from Data & analytics to Creators or Advertisers.';
+  else{const bad=S.links.find(l=>!evalLink(l).ok);h=bad?evalLink(bad).msg:v.key.map(k=>k.bad)[0]+' Then press Check my ecosystem.';}
+  $('#infobar').innerHTML='<div class="def"><b style="color:var(--focus)">Hint:</b> '+esc(h)+'</div><button type="button" class="btn sm ghost" data-act="cancel">OK</button>';
+  announce('Hint: '+h);
+});
+$('#toChain').addEventListener('click',()=>{unlock('chain');go('chain');});
+
+/* ---------- Stage 3: Value chain ---------- */
+function orderCorrect(){return S.order&&S.order.every((x,i)=>x===i);}
+function renderChain(){
+  const v=V();
+  if(!S.order){let o;do{o=shuffle([0,1,2,3,4]);}while(o.every((x,i)=>x===i));S.order=o;save();}
+  const ok=S.orderChecked&&orderCorrect();
+  $('#chainList').innerHTML=S.order.map((si,pos)=>{const right=S.orderChecked&&si===pos;const show=S.orderChecked&&(right||ok);
+    return '<li class="'+(S.orderChecked?(right?'right':'wrong'):'')+'"><span class="pos">'+(pos+1)+'</span><span class="act">'+(show?'<small>'+esc(STAGES[si].l)+'</small>':'')+esc(v.acts[si])+'</span>'+
+      '<span class="mv"><button type="button" data-up="'+pos+'" aria-label="Move up: '+esc(v.acts[si])+'"'+(pos===0?' disabled':'')+'>'+ic('up')+'</button><button type="button" data-dn="'+pos+'" aria-label="Move down: '+esc(v.acts[si])+'"'+(pos===4?' disabled':'')+'>'+ic('down')+'</button></span></li>';}).join('');
+  renderBudget();renderSim();
+  $('#toEvents').disabled=!S.month;
+  $('#btnRun').disabled=S.evDone.length>0;
+  if(S.evDone.length>0)$('#btnRun').title='Month one is locked once the events begin.';
+}
+$('#chainList').addEventListener('click',e=>{
+  const u=e.target.closest('[data-up]'),d=e.target.closest('[data-dn]');if(!u&&!d)return;
+  const i=+(u?u.dataset.up:d.dataset.dn),j=u?i-1:i+1;if(j<0||j>4)return;
+  [S.order[i],S.order[j]]=[S.order[j],S.order[i]];S.orderChecked=false;$('#orderFb').innerHTML='';save();renderChain();
+  const btn=$('#chainList').querySelector(u?'[data-up="'+j+'"]':'[data-dn="'+j+'"]')||$('#chainList').querySelector('[data-'+(u?'dn':'up')+'="'+j+'"]');btn&&btn.focus();
+  announce('Moved to position '+(j+1)+'.');
+});
+$('#btnOrder').addEventListener('click',()=>{
+  S.orderChecked=true;const n=S.order.filter((x,i)=>x===i).length;const ok=n===5;
+  $('#orderFb').innerHTML=ok?'<p class="note good"><b>Correct.</b> Creation → Production &amp; packaging → Distribution → Consumption → Monetisation. Each stage adds value and involves different stakeholders, from creators to platforms to end users.</p>'
+    :'<p class="note warn"><b>'+n+' of 5 in the right place.</b> Think about the value chain: content is created first, then packaged, distributed, consumed, and finally the value is captured as revenue.</p>';
+  if(ok)logSet('order','Value chain','Ordered the value chain correctly.');
+  save();renderChain();announce(ok?'Correct order.':n+' of 5 in the right place. Try again.');
+});
+function renderBudget(){
+  const cols=['#ff9f6e','#c39bff','#63a4ff','#7fdc8f','#ffc53d'];
+  $('#budget').innerHTML=STAGES.map((s,i)=>'<div class="bud"><label for="b'+i+'"><span><span class="fdot" style="background:'+cols[i]+'"></span>'+esc(s.l)+'</span><output id="bo'+i+'" for="b'+i+'">'+money(S.budget[i])+'</output></label>'+
+    '<input type="range" id="b'+i+'" data-b="'+i+'" min="0" max="3000" step="100" value="'+S.budget[i]+'"'+(S.evDone.length?' disabled':'')+' aria-describedby="bs'+i+'"><small id="bs'+i+'">'+esc(s.d)+' Buys: '+esc(s.buy)+'.</small></div>').join('');
+  updBudget(cols);
+}
+function updBudget(cols){
+  cols=cols||['#ff9f6e','#c39bff','#63a4ff','#7fdc8f','#ffc53d'];
+  const t=sum(S.budget);$('#remain').textContent=money(BUDGET-t);
+  $('#budgetBar').innerHTML=S.budget.map((b,i)=>'<i style="width:'+(b/BUDGET*100)+'%;background:'+cols[i]+'"></i>').join('');
+  S.budget.forEach((b,i)=>{const o=$('#bo'+i);if(o)o.textContent=money(b);});
+}
+$('#budget').addEventListener('input',e=>{
+  const r=e.target.closest('input[data-b]');if(!r)return;const i=+r.dataset.b;const others=sum(S.budget)-S.budget[i];
+  let v=+r.value;if(v+others>BUDGET){v=BUDGET-others;r.value=v;}S.budget[i]=v;updBudget();save();
+});
+function simulate(){
+  const v=V(),[C,P,D,Eg,M]=S.budget;
+  const q=Math.min(100,30+(C+P)/40);const F=.5+(S.mapScore||0)/200;const of=orderCorrect()?1:.8;
+  const reach=Math.round((v.base+D*4)*q/100*F*of);
+  const rate=Math.min(.15,v.eng+Eg/100*.001);const fans=Math.round(reach*rate);
+  const hasPay=has('payment'),hasAdv=has('advertisers');const mf=Math.min(1.5,.5+M/1000)*(hasPay?1:.5);
+  const fanRev=fans*v.arpu*mf,adRev=hasAdv?reach/1000*v.ad:0;const revenue=Math.round(fanRev+adRev);const spent=sum(S.budget);
+  return{C,P,D,Eg,M,q,F,of,reach,rate,fans,mf,fanRev,adRev,revenue,spent,hasPay,hasAdv,cash:BUDGET-spent+revenue,orderOk:orderCorrect()};
+}
+const WEEKS=[.16,.38,.65,1];
+function renderSim(anim){
+  const m=S.month;
+  $('#weeks').innerHTML=WEEKS.map((w,i)=>'<div class="wk"><span class="val" id="wv'+i+'">'+(m&&!anim?fmt(m.reach*w):'')+'</span><div class="col" id="wc'+i+'" style="height:'+(m&&!anim?w*82:0)+'%"></div><small>Week '+(i+1)+'</small></div>').join('');
+  const vals=m?[['Reach',fmt(m.reach)],['New fans',fmt(m.fans)],['Revenue',money(m.revenue)],['Cash at month end',money(m.cash)]]:[['Reach','–'],['New fans','–'],['Revenue','–'],['Cash at month end','–']];
+  $('#simstats').innerHTML=vals.map((x,i)=>'<div><small>'+x[0]+'</small><b id="ss'+i+'">'+(anim?'0':x[1])+'</b></div>').join('');
+  $('#calcBody').innerHTML=calcHTML(m||simulate());
+  if(m&&!anim){$('#simFb').innerHTML=simNote(m);}
+}
+function simNote(m){
+  const notes=[];
+  if(!m.orderOk)notes.push('Your value chain is out of order, so effort was wasted (reach ×0.8). Fix the order and run again.');
+  if(!m.hasPay)notes.push('There are no payment systems on your map, so fans struggled to pay (monetisation halved).');
+  if(!m.hasAdv)notes.push('There are no advertisers on your map, so you earned no ad revenue.');
+  if(m.q<60)notes.push('Low spending on creation and production kept quality down.');
+  if(m.D<500)notes.push('Little spent on distribution, so few people found your content.');
+  return notes.length?'<div class="note warn">'+notes.map(esc).join('<br>')+'</div>':'<div class="note good">A balanced chain: every stage got investment, and your ecosystem supported each step.</div>';
+}
+function calcHTML(m){
+  const v=V();
+  return '<p class="small muted">Simple, transparent formulas. Your numbers are shown in gold.</p>'+
+  '<div class="formula">Quality = 30 + (Creation + Production) ÷ 40, max 100 = 30 + (<b>'+fmt(m.C)+'</b> + <b>'+fmt(m.P)+'</b>) ÷ 40 = <b>'+Math.round(m.q)+'</b></div>'+
+  '<div class="formula">Ecosystem factor = 0.5 + map score ÷ 200 = 0.5 + <b>'+(S.mapScore||0)+'</b> ÷ 200 = <b>'+m.F.toFixed(2)+'</b></div>'+
+  '<div class="formula">Order factor = 1 if the value chain is in order, otherwise 0.8 = <b>'+m.of+'</b></div>'+
+  '<div class="formula">Reach = (Base audience '+fmt(v.base)+' + Distribution × 4) × Quality ÷ 100 × Ecosystem factor × Order factor = (<b>'+fmt(v.base)+'</b> + <b>'+fmt(m.D)+'</b> × 4) × <b>'+Math.round(m.q)+'</b>/100 × <b>'+m.F.toFixed(2)+'</b> × <b>'+m.of+'</b> = <b>'+fmt(m.reach)+'</b> people</div>'+
+  '<div class="formula">Engagement rate = '+(v.eng*100).toFixed(0)+'% + 0.1% for every US$100 on Consumption, max 15% = <b>'+(m.rate*100).toFixed(1)+'%</b></div>'+
+  '<div class="formula">Fans = Reach × Engagement rate = <b>'+fmt(m.reach)+'</b> × <b>'+(m.rate*100).toFixed(1)+'%</b> = <b>'+fmt(m.fans)+'</b></div>'+
+  '<div class="formula">Monetisation factor = 0.5 + Monetisation ÷ 1,000, max 1.5, halved with no payment systems = <b>'+m.mf.toFixed(2)+'</b></div>'+
+  '<div class="formula">Revenue = Fans × US$'+v.arpu+' per fan × Monetisation factor + (Reach ÷ 1,000 × US$'+v.ad+' ad rate if advertisers are on the map) = <b>'+money(m.fanRev)+'</b> + <b>'+money(m.adRev)+'</b> = <b>'+money(m.revenue)+'</b></div>'+
+  '<div class="formula">Cash = US$5,000 − spent <b>'+money(m.spent)+'</b> + revenue <b>'+money(m.revenue)+'</b> = <b>'+money(m.cash)+'</b></div>'+
+  '<p class="small muted">Interdependence in action: your map score, your payment systems and your advertisers all change the result, not just the money you spend.</p>';
+}
+function tween(el,to,fmtFn,dur){if(!el)return;const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/dur);el.textContent=fmtFn(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f);})(t0);}
+$('#btnRun').addEventListener('click',()=>{
+  if(S.evDone.length)return;
+  const m=simulate();S.month=m;
+  S.st=Object.assign(S.st,{cash:m.cash,reach:m.reach,fans:m.fans,res:Math.round(40+(S.mapScore||0)/5),eth:60,gro:50,own:100,rep:0});
+  logSet('month','Value chain','Budget: Creation '+money(m.C)+', Production '+money(m.P)+', Distribution '+money(m.D)+', Consumption '+money(m.Eg)+', Monetisation '+money(m.M)+'. Month one: reach '+fmt(m.reach)+', '+fmt(m.fans)+' fans, revenue '+money(m.revenue)+'.');
+  save();
+  const instant=reducedMQ.matches;renderSim(!instant);
+  if(!instant){
+    WEEKS.forEach((w,i)=>setTimeout(()=>{const c=$('#wc'+i);if(c)c.style.height=(w*82)+'%';const t=$('#wv'+i);if(t)t.textContent=fmt(m.reach*w);},150+i*450));
+    const ends=[[m.reach,fmt],[m.fans,fmt],[m.revenue,money],[m.cash,money]];
+    setTimeout(()=>ends.forEach((x,i)=>tween($('#ss'+i),x[0],x[1],1500)),200);
+    setTimeout(()=>{$('#simFb').innerHTML=simNote(m);renderHud();},2000);
+  }else{$('#simFb').innerHTML=simNote(m);renderHud();}
+  $('#toEvents').disabled=false;
+  announce('Month one: reach '+fmt(m.reach)+' people, '+fmt(m.fans)+' fans, revenue '+money(m.revenue)+'. Cash '+money(m.cash)+'.');
+});
+$('#toEvents').addEventListener('click',()=>{unlock('events');go('events');});
+
+/* ---------- Stage 4: Events ---------- */
+function effChips(e){
+  const out=[];
+  if(e.cash)out.push([e.cash>0,'Cash '+(e.cash>0?'+':'')+money(e.cash)]);
+  if(e.reach&&e.reach!==1)out.push([e.reach>1,'Reach '+(e.reach>1?'+':'−')+Math.round(Math.abs(e.reach-1)*100)+'%']);
+  if(e.fans&&e.fans!==1)out.push([e.fans>1,'Fans '+(e.fans>1?'+':'−')+Math.round(Math.abs(e.fans-1)*100)+'%']);
+  [['res','Resilience'],['eth','Ethics'],['gro','Growth']].forEach(k=>{if(e[k[0]])out.push([e[k[0]]>0,k[1]+' '+(e[k[0]]>0?'+':'−')+Math.abs(e[k[0]])]);});
+  return out.map(x=>'<span class="eff '+(x[0]?'up':'down')+'">'+esc(x[1])+'</span>').join('');
+}
+function applyE(e){const st=S.st;if(e.cash)st.cash+=e.cash;if(e.reach)st.reach=Math.round(st.reach*e.reach);if(e.fans)st.fans=Math.round(st.fans*e.fans);
+  ['res','eth','gro'].forEach(k=>{if(e[k])st[k]=clamp(st[k]+e[k],0,100);});}
+function renderEvents(){
+  if(!S.evDeck.length){S.evDeck=shuffle(EVENTS.map(x=>x.id)).slice(0,EV_COUNT);save();}
+  const v=V();const done=S.evDone.length;
+  $('#pips').innerHTML=S.evDeck.map((x,i)=>'<i class="'+(i<done?'done':i===done?'cur':'')+'"></i>').join('');
+  $('#evCount').textContent=done>=EV_COUNT?'All '+EV_COUNT+' events played':'Event '+(done+1)+' of '+EV_COUNT;
+  $('#toFunding').disabled=done<EV_COUNT;
+  if(done>=EV_COUNT){
+    $('#eventArea').innerHTML='<div class="card" style="max-width:760px;margin:0 auto"><h3>Month survived</h3><p>Here is what happened to '+esc(v.name)+':</p><ol class="declog">'+
+      S.evDone.map(d=>{const ev=EVENTS.find(x=>x.id===d.id);return '<li><b>'+esc(ev.t)+':</b> '+esc(ev.ch[d.c].l)+' <span>('+esc(ev.ch[d.c].c)+')</span></li>';}).join('')+'</ol><p class="note">Every event started in one element (a platform, an ISP, a regulator, a payment system) and rippled through the rest. That is interdependence.</p></div>';
+    return;
+  }
+  const ev=EVENTS.find(x=>x.id===S.evDeck[done]);
+  $('#eventArea').innerHTML='<article class="event-card" aria-labelledby="evT"><div class="ev-head"><div class="ev-icon">'+ic(ev.ic)+'</div><div><span class="tag">'+esc(ev.tag)+'</span><h3 id="evT">'+esc(ev.t)+'</h3></div></div>'+
+    '<div class="ev-body"><p>'+esc(ev.txt.replace('{name}',v.name))+'</p><p class="small muted">How do you respond?</p><div class="choices" role="group" aria-label="Responses">'+
+    ev.ch.map((c,i)=>'<button type="button" class="choice" data-c="'+i+'"><span class="k">'+'ABC'[i]+'</span><span>'+esc(c.l)+'</span></button>').join('')+'</div><div id="evFb" aria-live="polite"></div></div></article>';
+}
+$('#eventArea').addEventListener('click',e=>{
+  const b=e.target.closest('.choice');if(b&&!b.disabled){chooseEvent(+b.dataset.c);return;}
+  if(e.target.closest('#btnNextEv')){renderEvents();renderHud();const f=$('.choice');if(f)f.focus();else $('#toFunding').focus();}
+});
+function chooseEvent(ci){
+  const ev=EVENTS.find(x=>x.id===S.evDeck[S.evDone.length]);const ch=ev.ch[ci];
+  applyE(ch.e);let bonusTxt='';
+  if(ev.bonus&&has(ev.bonus.el)&&(!ev.bonus.ch||ev.bonus.ch.includes(ci))){applyE(ev.bonus.e);bonusTxt=ev.bonus.txt;}
+  S.evDone.push({id:ev.id,c:ci});
+  logSet('ev-'+ev.id,'Event','<b>'+ev.t+':</b> '+ch.l+' ('+ch.c+').');
+  save();
+  $$('.choice').forEach(x=>{x.disabled=true;if(+x.dataset.c===ci)x.classList.add('picked');});
+  const last=S.evDone.length>=EV_COUNT;
+  $('#evFb').innerHTML='<div class="note '+(sum(Object.entries(ch.e).map(([k,v])=>k==='cash'?Math.sign(v):(k==='reach'||k==='fans')?Math.sign(v-1):Math.sign(v)))>=0?'good':'warn')+'" style="margin-top:14px"><span class="concept">'+ic('bulb')+' Concept: '+esc(ch.c)+'</span><p style="margin:6px 0">'+esc(ch.fb)+'</p><div class="effects">'+effChips(ch.e)+'</div>'+
+    (bonusTxt?'<p class="small" style="margin:4px 0 0"><b style="color:var(--content)">Your map helped:</b> '+esc(bonusTxt)+'</p>':'')+'</div>'+
+    '<div class="row" style="justify-content:flex-end"><button type="button" class="btn primary" id="btnNextEv">'+(last?'See the month summary':'Next event →')+'</button></div>';
+  renderHud();$('#btnNextEv').focus({preventScroll:true});
+  announce('Concept: '+ch.c+'. '+ch.fb+(bonusTxt?' '+bonusTxt:''));
+}
+$('#toFunding').addEventListener('click',()=>{unlock('funding');go('funding');});
+
+/* ---------- Stage 5: Funding ---------- */
+const loanPay=(P,rate,n)=>{const r=rate/12;return P*r/(1-Math.pow(1+r,-n));};
+function fundInfo(f){
+  const st=S.st,v=V();const o={amt:f.amt,ok:true,why:'',rep:f.rep||0};
+  if(f.id==='bank')o.rep=loanPay(f.amt,f.rate,f.n);
+  if(f.id==='vc'){o.ok=st.fans>=v.fanTarget*.8||st.gro>=65;o.why=o.ok?'Your traction is strong enough to interest VCs.':'VCs want fast-growing firms. With '+fmt(st.fans)+' fans and growth of '+Math.round(st.gro)+', they are likely to pass (they look for about '+fmt(v.fanTarget*.8)+' fans or growth of 65+).';}
+  if(f.id==='grant'){o.ok=st.eth>=55;o.why=o.ok?'Your ethics record ('+Math.round(st.eth)+') meets the agency’s standards.':'The agency checks your record: ethics '+Math.round(st.eth)+' is below its 55 threshold.';}
+  if(f.id==='crowd'){const exp=st.fans*10;o.amt=S.fund.target;o.ok=exp>=S.fund.target;o.exp=exp;o.why='Your '+fmt(st.fans)+' fans: about 1 in 4 pledge around US$40, so expect roughly '+money(exp)+'. All-or-nothing: below target, you get nothing.';o.net=Math.round(S.fund.target*.75);}
+  return o;
+}
+function renderFunding(){
+  const v=V();
+  $('#fundIntro').innerHTML='To grow, '+esc(v.name)+' needs <b>'+money(FUND_NEED)+'</b> to '+esc(v.expand)+'. Choose <b>up to two</b> sources. Each type carries different obligations, risks and benefits; choosing the right mix is a strategic decision.';
+  const done=S.fund.done;
+  $('#fundGrid').innerHTML=FUNDS.map(f=>{const o=fundInfo(f);const sel=S.fund.sel.includes(f.id);
+    return '<div class="fcard'+(o.ok?'':' blocked')+'" aria-pressed="'+sel+'"><span class="ftype '+f.type+'">'+esc(f.tl)+'</span><h3>'+esc(f.l)+'</h3>'+
+      (f.crowd?'<label class="small">Target <select id="crowdT" class="search" style="width:auto;min-height:34px;padding:3px 8px"'+(done?' disabled':'')+'>'+[3000,6000,9000].map(t=>'<option value="'+t+'"'+(t===S.fund.target?' selected':'')+'>'+money(t)+'</option>').join('')+'</select></label>':'<div class="amt">'+money(o.amt)+'</div>')+
+      '<dl><dt>You give</dt><dd>'+esc(f.give)+'</dd><dt>You owe</dt><dd>'+esc(f.owe)+(f.id==='bank'?' ('+money(o.rep)+'/month)':'')+'</dd></dl>'+
+      (o.why?'<p class="small" style="margin:0;color:'+(o.ok?'var(--good)':'var(--warn)')+'">'+esc(o.why)+'</p>':'')+
+      '<button type="button" class="btn sm fsel'+(sel?' primary':'')+'" data-f="'+f.id+'" aria-pressed="'+sel+'"'+(done?' disabled':'')+'>'+(sel?'Selected':'Choose')+'<span class="sr"> '+esc(f.l)+'</span></button></div>';}).join('');
+  renderTradeoff();renderDeq();
+  $('#btnFund').disabled=done||!S.fund.sel.length;
+  $('#btnFund').textContent=done?'Funding confirmed':'Confirm funding';
+  if(done&&S.fund.res)$('#fundFb').innerHTML=S.fund.res;
+  updToPest();
+}
+function mixSummary(){
+  let raised=0,kept=100,rep=0;const obl=[],rej=[];
+  S.fund.sel.forEach(id=>{const f=FUNDS.find(x=>x.id===id),o=fundInfo(f);
+    if(!o.ok&&(f.gate||f.crowd)){rej.push([f,o]);return;}
+    raised+=f.crowd?o.net:o.amt;kept*=1-f.own/100;rep+=o.rep;obl.push(f.l+': '+f.obl);});
+  return{raised,kept,rep,obl,rej};
+}
+function renderTradeoff(){
+  const m=mixSummary();const kept=Math.round(m.kept);
+  const r=52,c=2*Math.PI*r;
+  $('#tradeoff').innerHTML='<svg viewBox="0 0 140 140" width="140" height="140" role="img" aria-label="Ownership kept: '+kept+'%"><circle cx="70" cy="70" r="'+r+'" fill="none" stroke="#b48dff" stroke-width="18" opacity=".5"/>'+
+    '<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="#2ee6c5" stroke-width="18" stroke-dasharray="'+(c*kept/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 70 70)"/><text x="70" y="66" text-anchor="middle" font-family="'+FONT+'" font-weight="800" font-size="24" fill="#eaf2fb">'+kept+'%</text><text x="70" y="86" text-anchor="middle" font-family="'+FONT+'" font-size="11" fill="#a5b8d1">you own</text></svg>'+
+    '<div><div class="kv"><div><small>Raised</small><b style="color:'+(m.raised>=FUND_NEED?'var(--good)':'var(--warn)')+'">'+money(m.raised)+'</b><small>of '+money(FUND_NEED)+'</small></div><div><small>Equity given</small><b>'+(100-kept)+'%</b></div><div><small>Repayments</small><b>'+(m.rep?money(m.rep)+'/mo':'None')+'</b></div></div>'+
+    (m.obl.length?'<p class="small" style="margin:8px 0 0"><b>Obligations:</b> '+m.obl.map(esc).join(' · ')+'</p>':'<p class="small muted" style="margin:8px 0 0">Choose a source to see its trade-offs.</p>')+
+    (m.rej.length?'<p class="small" style="margin:6px 0 0;color:var(--warn)">Likely to fall through: '+m.rej.map(x=>esc(x[0].l)).join(', ')+'.</p>':'')+'</div>';
+  $('#compare').innerHTML='<thead><tr><th>Source</th><th>Type</th><th>You give up</th><th>You owe</th><th>Main risk</th></tr></thead><tbody>'+FUNDS.map(f=>'<tr><td><b>'+esc(f.l)+'</b></td><td>'+esc(f.tl)+'</td><td>'+esc(f.give)+'</td><td>'+esc(f.owe)+'</td><td>'+esc(f.obl)+'</td></tr>').join('')+'</tbody>';
+}
+$('#fundGrid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-f]');if(!b||S.fund.done)return;const id=b.dataset.f;const sel=S.fund.sel;
+  if(sel.includes(id))S.fund.sel=sel.filter(x=>x!==id);
+  else{if(sel.length>=2){announce('You can combine up to two sources. Remove one first.');return;}sel.push(id);}
+  save();renderFunding();const nb=$('[data-f="'+id+'"]');nb&&nb.focus();
+  const m=mixSummary();announce((S.fund.sel.includes(id)?'Chose ':'Removed ')+FUNDS.find(f=>f.id===id).l+'. Raised '+money(m.raised)+', ownership kept '+Math.round(m.kept)+'%.');
+});
+$('#fundGrid').addEventListener('change',e=>{if(e.target.id==='crowdT'){S.fund.target=+e.target.value;save();renderFunding();$('#crowdT').focus();}});
+$('#btnFund').addEventListener('click',()=>{
+  if(S.fund.done||!S.fund.sel.length)return;
+  const st=S.st;const m=mixSummary();const lines=[];
+  S.fund.snap=JSON.parse(JSON.stringify(st));
+  S.fund.sel.forEach(id=>{const f=FUNDS.find(x=>x.id===id),o=fundInfo(f);
+    if(!o.ok&&(f.gate||f.crowd)){lines.push('<li class="bad"><span class="mk">!</span><span><b>'+esc(f.l)+' fell through.</b> '+esc(o.why)+(f.crowd?' Crowdfunding depends on the size of your community.':'')+'</span></li>');if(f.crowd){st.res=clamp(st.res-3,0,100);}return;}
+    const got=f.crowd?o.net:o.amt;st.cash+=got;st.res=clamp(st.res+f.res,0,100);st.gro=clamp(st.gro+f.gro,0,100);st.eth=clamp(st.eth+f.eth,0,100);
+    if(f.crowd){st.fans=Math.round(st.fans*1.1);}
+    lines.push('<li class="ok"><span class="mk">✓</span><span><b>'+esc(f.l)+':</b> +'+money(got)+'. '+esc(f.type==='debt'?'Debt: you keep 100% ownership but must repay '+money(o.rep)+' a month for '+f.n+' months ('+money(o.rep*f.n)+' in total, '+money(o.rep*f.n-f.amt)+' of it interest).':f.type==='equity'?'Equity: no repayments, but you gave up '+f.own+'% of the company. '+(f.id==='angel'?'The angel also mentors you.':'The VC takes a board seat and expects rapid growth.'):f.crowd?'Reward-based: you hit your target, but about 25% goes on rewards, and fans grew 10% as backers joined.':f.type==='free'?'Non-repayable, but you must spend it on the agreed purpose and report on it.':f.id==='sponsor'?'Sponsorship: you owe the brand promotional content.':'Own funds: no obligations to others, but the risk is personal.')+'</span></li>');
+  });
+  st.own=Math.round(m.kept);st.rep=Math.round(m.rep);
+  const rev=revenueNow()||1;const burden=m.rep/rev;let bur='';
+  if(m.rep>0){if(burden>.5){st.res=clamp(st.res-12,0,100);bur='Repayments of '+money(m.rep)+' a month are more than half your monthly revenue ('+money(rev)+'): a heavy debt burden (resilience −12).';}
+    else if(burden>.25){st.res=clamp(st.res-6,0,100);bur='Repayments take '+Math.round(burden*100)+'% of your monthly revenue (resilience −6).';}
+    else{st.res=clamp(st.res-2,0,100);bur='Repayments are affordable at '+Math.round(burden*100)+'% of monthly revenue.';}}
+  const accepted=S.fund.sel.length-m.rej.length;
+  if(accepted>=2){st.res=clamp(st.res+5,0,100);}
+  const reached=m.raised>=FUND_NEED;
+  const html='<div class="card" style="margin-top:12px;background:var(--bg2)"><h3>Funding result: '+money(m.raised)+' raised</h3><ul class="fb-list" style="margin-top:8px">'+lines.join('')+'</ul>'+
+    (bur?'<p class="note '+(burden>.25?'warn':'good')+'">'+esc(bur)+'</p>':'')+(accepted>=2?'<p class="note good">Mixing two sources spreads your risk (resilience +5).</p>':'')+
+    '<p class="note '+(reached?'good':'warn')+'">'+(reached?'You reached the '+money(FUND_NEED)+' you needed to '+esc(V().expand)+'.':'You are short of the '+money(FUND_NEED)+' target, so the expansion will be smaller (growth −5).')+' You now own <b>'+Math.round(m.kept)+'%</b> of '+esc(V().name)+'.</p></div>';
+  if(!reached)st.gro=clamp(st.gro-5,0,100);else st.gro=clamp(st.gro+5,0,100);
+  S.fund.done=true;S.fund.res=html;
+  logSet('fund','Funding','Chose '+S.fund.sel.map(id=>FUNDS.find(f=>f.id===id).l).join(' + ')+': raised '+money(m.raised)+', kept '+Math.round(m.kept)+'% ownership'+(m.rep?', repayments '+money(m.rep)+'/month':'')+(m.rej.length?' ('+m.rej.map(x=>x[0].l).join(', ')+' fell through)':'')+'.');
+  save();renderFunding();renderHud();
+  announce('Funding confirmed. Raised '+money(m.raised)+'. You own '+Math.round(m.kept)+'%.');
+});
+function renderDeq(){
+  $('#deq').innerHTML=DEQ.map((q,i)=>{const a=S.deq[i];const answered=a!=null;
+    return '<fieldset><legend>'+(i+1)+'. '+esc(q.q)+'</legend><div class="opts">'+q.o.map((o,j)=>'<button type="button" class="opt'+(answered&&j===q.a?' right':'')+(answered&&j===a&&a!==q.a?' wrong':'')+'" data-q="'+i+'" data-o="'+j+'"'+(answered?' disabled':'')+'>'+esc(o)+(answered&&j===q.a?' <span class="sr">(correct answer)</span>':'')+'</button>').join('')+'</div>'+
+      (answered?'<p class="explain"><b style="color:'+(a===q.a?'var(--good)':'var(--bad)')+'">'+(a===q.a?'Correct.':'Not quite.')+'</b> '+esc(q.x)+'</p>':'')+'</fieldset>';}).join('');
+}
+$('#deq').addEventListener('click',e=>{
+  const b=e.target.closest('.opt');if(!b||b.disabled)return;const i=+b.dataset.q,j=+b.dataset.o;S.deq[i]=j;save();renderDeq();
+  const fs=$$('#deq fieldset')[i];const ex=fs.querySelector('.explain');announce((j===DEQ[i].a?'Correct. ':'Not quite. ')+DEQ[i].x);
+  const nxt=$$('#deq fieldset')[i+1];if(nxt){const o=nxt.querySelector('.opt:not([disabled])');o&&o.focus({preventScroll:true});}else{ex&&ex.focus&&fs.focus;}
+  updToPest();
+});
+function deqScore(){return DEQ.filter((q,i)=>S.deq[i]===q.a).length;}
+function updToPest(){const all=DEQ.every((q,i)=>S.deq[i]!=null);$('#toPest').disabled=!(S.fund.done&&all);
+  if(all&&!S.log.some(x=>x.k==='deq')){logSet('deq','Funding','Debt vs equity check: '+deqScore()+'/'+DEQ.length+'.');save();}}
+$('#toPest').addEventListener('click',()=>{unlock('pest');go('pest');});
+
+/* ---------- Stage 6: PEST ---------- */
+function pfac(i){const f=PEST[i],a=S.pest.assign[i],ck=S.pest.checked&&a;const right=ck&&a===f.a;
+  return '<div class="pfac'+(ck?(right?' right':' wrong'):'')+'" data-i="'+i+'"><span>'+esc(f.t)+'</span><div class="pb" role="group" aria-label="Classify: '+esc(f.t)+'">'+
+    Object.keys(PEST_CATS).map(k=>'<button type="button" data-pi="'+i+'" data-k="'+k+'" aria-pressed="'+(a===k)+'" aria-label="'+PEST_CATS[k].l+'" title="'+PEST_CATS[k].l+'" style="'+(a===k?'background:'+PEST_CATS[k].c+';color:#0b1626':'')+'">'+k+'</button>').join('')+'</div>'+
+    (ck?'<p class="why"><b style="color:'+(right?'var(--good)':'var(--bad)')+'">'+(right?'Correct.':'Not quite.')+'</b> '+(right?esc(f.x):'Have another look and try again.')+'</p>':'')+'</div>';}
+function renderPest(){
+  const pool=PEST.map((f,i)=>i).filter(i=>!S.pest.assign[i]);
+  $('#pestPool').innerHTML=pool.length?pool.map(pfac).join(''):'<p class="muted">All factors sorted. Check your scan below.</p>';
+  $('#poolCount').textContent='('+pool.length+' left)';
+  $('#pestCols').innerHTML=Object.keys(PEST_CATS).map(k=>'<div class="pcol" aria-label="'+PEST_CATS[k].l+' column"><h3><span class="L" style="background:'+PEST_CATS[k].c+'">'+k+'</span>'+PEST_CATS[k].l+'</h3><div class="stack">'+PEST.map((f,i)=>i).filter(i=>S.pest.assign[i]===k).map(pfac).join('')+'</div></div>').join('');
+  $('#btnPest').disabled=pool.length>0;
+  $('#pestScore').textContent=S.pest.score!=null?'Score: '+S.pest.score+'/12':'';
+  $('#toReport').disabled=!S.pest.checked;
+}
+$('#s-pest').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pi]');if(!b)return;const i=+b.dataset.pi,k=b.dataset.k;S.pest.assign[i]=k;
+  if(S.pest.checked){/* re-sorting after a check */}
+  save();renderPest();announce(PEST[i].t+': '+PEST_CATS[k].l+'.');
+  const again=$('[data-pi="'+i+'"][data-k="'+k+'"]');
+  const nextPool=$('#pestPool [data-pi]');(nextPool||again)&&(nextPool||again).focus({preventScroll:true});
+});
+$('#btnPest').addEventListener('click',()=>{
+  S.pest.checked=true;const sc=PEST.filter((f,i)=>S.pest.assign[i]===f.a).length;S.pest.score=sc;
+  logSet('pest','PEST scan','Classified '+sc+'/12 Caribbean factors correctly.');save();renderPest();
+  announce('PEST scan: '+sc+' out of 12 correct.'+(sc<12?' Fix the cards marked not quite and check again.':' Excellent.'));
+});
+$('#toReport').addEventListener('click',()=>{unlock('report');go('report');});
+
+/* ---------- Stage 7: Report ---------- */
+function scores(){
+  const v=V(),st=S.st;const map=S.mapScore||0;
+  let chain=0;if(S.month){chain=(S.month.orderOk?50:20);const spent=sum(S.budget)||1;chain+=10*S.budget.filter(b=>b/BUDGET>=.1&&b/BUDGET<=.4).length;}
+  const health=Math.round(.65*map+.35*chain);const res=Math.round(st.res),eth=Math.round(st.eth);
+  const growth=Math.round(.5*st.gro+.5*Math.min(100,st.fans/v.fanTarget*100));
+  const overall=Math.round((health+res+eth+growth)/4);
+  const title=overall>=85?'Ecosystem Architect':overall>=70?'Savvy Producer':overall>=55?'Rising Creator':'Learning the Ropes';
+  return{health,res,eth,growth,overall,title,chain};
+}
+function mapSVG(){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+L_DESK.w+' '+L_DESK.h+'" width="'+L_DESK.w+'" height="'+L_DESK.h+'">'+boardMarkup(L_DESK,true)+'</svg>';}
+function renderReport(){
+  const v=V(),st=S.st,sc=scores();
+  $('#h-report').textContent='Ecosystem report: '+v.name;
+  $('#repSub').textContent=v.kind+' · '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  $('#stuName').value=S.name||'';$('#stuClass').value=S.cls||'';$('#reflectBox').value=S.reflect||'';$('#reflectPrint').textContent=S.reflect||'';
+  const g=[['Ecosystem health',sc.health,'Map and value chain'],['Resilience',sc.res,'Ability to absorb shocks'],['Ethics',sc.eth,'Trust and responsibility'],['Growth',sc.growth,'Fans and momentum'],[sc.title,sc.overall,'Overall']];
+  $('#gauges').innerHTML=g.map((x,i)=>'<div class="gauge'+(i===4?' overall':'')+'">'+ring(x[1],84,i===4?'#ff7a59':scoreCol(x[1]),x[0])+'<b>'+esc(x[0])+'</b><small>'+esc(x[2])+'</small></div>').join('');
+  $('#repMap').src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(mapSVG());
+  $('#repMapCap').textContent='Ecosystem map: '+S.nodes.length+' elements, '+S.links.length+' flows (content solid teal, money dashed gold, data dotted violet). Map check: '+(S.mapScore==null?'not checked':S.mapScore+'/100')+'.';
+  const funds=S.fund.done?S.fund.sel.map(id=>FUNDS.find(f=>f.id===id).l).join(' + '):'Not chosen';
+  const rows=[['Monthly reach',fmt(st.reach)+' people'],['Fans',fmt(st.fans)+' (target '+fmt(v.fanTarget)+')'],['Projected monthly revenue',money(revenueNow())],['Cash',money(st.cash)],['Funding',funds],['Ownership kept',st.own+'%'],['Loan repayments',st.rep?money(st.rep)+' a month':'None'],['Income model',v.model]];
+  $('#repStats').innerHTML=rows.map(r=>'<tr><th scope="row">'+esc(r[0])+'</th><td>'+esc(r[1])+'</td></tr>').join('');
+  $('#repLog').innerHTML=S.log.map(x=>'<li><span>'+esc(x.s)+':</span> '+(x.k.startsWith('ev-')?x.t.replace(/<(?!\/?b>)[^>]*>/g,''):esc(x.t))+'</li>').join('');
+  const know=[['Ecosystem map check',S.mapScore==null?'Not checked':S.mapScore+'/100 ('+S.mapChecks+' check'+(S.mapChecks===1?'':'s')+')'],['Value chain order',S.orderChecked&&orderCorrect()?'Correct':'Not yet correct'],['Debt vs equity check',deqScore()+'/'+DEQ.length],['PEST scan',S.pest.score==null?'Not checked':S.pest.score+'/12'],['Quick-fire quiz (best)',S.quizBest==null?'Not attempted (try it from the top menu)':S.quizBest+'/'+QUIZ.length]];
+  $('#repKnow').innerHTML=know.map(r=>'<tr><th scope="row">'+esc(r[0])+'</th><td>'+esc(r[1])+'</td></tr>').join('');
+  logSet('report','Report','Reached the report: overall '+sc.overall+' ('+sc.title+').');save();
+}
+$('#stuName').addEventListener('input',e=>{S.name=e.target.value;save();});
+$('#stuClass').addEventListener('input',e=>{S.cls=e.target.value;save();});
+$('#reflectBox').addEventListener('input',e=>{S.reflect=e.target.value;$('#reflectPrint').textContent=e.target.value;save();});
+$('#btnPrint').addEventListener('click',()=>{$('#reflectPrint').textContent=$('#reflectBox').value||' ';window.print();});
+$('#btnAgain').addEventListener('click',()=>{if(!confirm('Start a new game? Your current run will be cleared.'))return;const keep={quizBest:S.quizBest,name:S.name,cls:S.cls};S=Object.assign(fresh(),keep);cancelAll();$('#mapFb').innerHTML='';$('#orderFb').innerHTML='';$('#simFb').innerHTML='';$('#fundFb').innerHTML='';lastHud={};save();go('venture');});
+
+/* ---------- Learn ---------- */
+let lcat='all';
+function renderLearn(){
+  $('#lfilters').innerHTML=[['all','All']].concat(Object.entries(LEARN_CATS)).map(c=>'<button type="button" data-c="'+c[0]+'" aria-pressed="'+(lcat===c[0])+'">'+esc(c[1])+'</button>').join('');
+  const q=($('#lsearch').value||'').toLowerCase().trim();
+  const list=LEARN.filter(c=>(lcat==='all'||c[0]===lcat)&&(!q||(c[1]+' '+c[2]+' '+c[3]).toLowerCase().includes(q)));
+  $('#lcards').innerHTML=list.map(c=>'<article class="lcard"><span class="cat">'+esc(LEARN_CATS[c[0]])+'</span><h3>'+esc(c[1])+'</h3><p>'+esc(c[2])+'</p>'+(c[3]?'<p class="eg">'+esc(c[3])+'</p>':'')+'</article>').join('')||'<p class="muted">No cards match.</p>';
+  $('#lcount').textContent=list.length+' card'+(list.length===1?'':'s');
+}
+$('#lfilters').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){lcat=b.dataset.c;renderLearn();$('#lfilters [data-c="'+lcat+'"]').focus();}});
+$('#lsearch').addEventListener('input',renderLearn);
+
+/* ---------- Quick-fire quiz ---------- */
+let Q=null,qTimer=0;const QSEC=20;
+function renderQuizStart(){
+  clearInterval(qTimer);
+  if(Q&&Q.i<Q.items.length&&!Q.over){renderQ();return;}
+  $('#quizArea').innerHTML='<div class="qcard"><h3>Ready?</h3><p>'+QUIZ.length+' questions. You get instant feedback on each one.'+(S.quizBest!=null?' Your best so far: <b>'+S.quizBest+'/'+QUIZ.length+'</b>.':'')+'</p>'+
+    '<label class="toggle"><input type="checkbox" id="qTime"'+(Q&&Q.timed===false?'':' checked')+'> '+QSEC+'-second timer per question (untick for more time)</label><div class="row" style="margin-top:14px"><button class="btn primary" id="qStart">'+ic('play')+' Start the quiz</button></div></div>';
+}
+function renderQ(){
+  const it=Q.items[Q.i];
+  $('#quizArea').innerHTML='<div class="qcard"><div class="qmeta"><span>Question '+(Q.i+1)+' of '+Q.items.length+'</span><span>Score: '+Q.score+'</span></div>'+(Q.timed?'<div class="timer" aria-hidden="true"><i id="qbar"></i></div>':'')+
+    '<h3 id="qq" tabindex="-1">'+esc(it.q)+'</h3><div class="opts" role="group" aria-labelledby="qq">'+it.o.map((o,j)=>'<button type="button" class="opt" data-qo="'+j+'">'+esc(o)+'</button>').join('')+'</div><div id="qfb" aria-live="polite"></div></div>';
+  $('#qq').focus({preventScroll:true});
+  if(Q.timed){Q.left=QSEC;clearInterval(qTimer);const bar=$('#qbar');qTimer=setInterval(()=>{Q.left-=.1;if(bar)bar.style.width=Math.max(0,Q.left/QSEC*100)+'%';if(Q.left<=0){clearInterval(qTimer);answerQ(-1);}},100);}
+}
+function answerQ(j){
+  clearInterval(qTimer);const it=Q.items[Q.i];const ok=j===it.a;if(ok)Q.score++;Q.log.push({q:it.q,ok,ans:it.o[it.a],x:it.x});
+  $$('#quizArea .opt').forEach((b,k)=>{b.disabled=true;if(k===it.a)b.classList.add('right');if(k===j&&!ok)b.classList.add('wrong');});
+  const last=Q.i===Q.items.length-1;
+  $('#qfb').innerHTML='<p class="explain"><b style="color:'+(ok?'var(--good)':'var(--bad)')+'">'+(ok?'Correct.':j<0?'Time’s up.':'Not quite.')+'</b> '+esc(it.x)+'</p><div class="row" style="justify-content:flex-end"><button class="btn primary" id="qNext">'+(last?'See my score':'Next →')+'</button></div>';
+  announce((ok?'Correct. ':j<0?'Time is up. ':'Not quite. ')+(ok?'':'The answer is '+it.o[it.a]+'. ')+it.x);
+  $('#qNext').focus({preventScroll:true});
+}
+function endQ(){
+  Q.over=true;if(S.quizBest==null||Q.score>S.quizBest){S.quizBest=Q.score;save();}
+  const pct=Math.round(Q.score/Q.items.length*100);
+  $('#quizArea').innerHTML='<div class="qcard"><div class="fb-head">'+ring(pct,72,scoreCol(pct),'Quiz score')+'<div><h3 id="qq" tabindex="-1">You scored '+Q.score+' out of '+Q.items.length+'</h3><p class="muted" style="margin:0">'+(pct>=80?'Excellent command of the Module 2 vocabulary.':pct>=60?'Good. Review the ones you missed in Learn mode.':'Keep going: Learn mode has every definition.')+' Best: '+S.quizBest+'/'+Q.items.length+'.</p></div></div>'+
+    '<ul class="review">'+Q.log.map(l=>'<li class="'+(l.ok?'ok':'no')+'"><b>'+(l.ok?'✓ ':'✗ ')+'</b>'+esc(l.q)+(l.ok?'':'<br><span class="muted">Answer: '+esc(l.ans)+'</span>')+'</li>').join('')+'</ul>'+
+    '<div class="row" style="margin-top:12px"><button class="btn primary" id="qAgain">'+ic('reset')+' Try again</button><button class="btn" id="qLearn">'+ic('book')+' Open Learn mode</button></div></div>';
+  $('#qq').focus({preventScroll:true});announce('Quiz finished: '+Q.score+' out of '+Q.items.length+'.');
+}
+$('#quizArea').addEventListener('click',e=>{
+  if(e.target.closest('#qStart')||e.target.closest('#qAgain')){const t=$('#qTime');Q={items:shuffle(QUIZ),i:0,score:0,log:[],timed:t?t.checked:(Q?Q.timed:true)};renderQ();return;}
+  if(e.target.closest('#qLearn')){setMode('learn');return;}
+  const o=e.target.closest('[data-qo]');if(o&&!o.disabled){answerQ(+o.dataset.qo);return;}
+  if(e.target.closest('#qNext')){if(Q.i<Q.items.length-1){Q.i++;renderQ();}else endQ();}
+});
+
+/* ---------- Boot ---------- */
+if(S.v&&!V())S=fresh();
+if(!S.v){S.step='venture';S.maxStep=0;}
+if(stepIndex(S.step)>S.maxStep)S.step=STEPS[S.maxStep].id;
+/* ---------- saved progress (GameSave): the start-up run was already kept; now the mode you were in and an untimed quiz
+   in progress also come back (a timed quiz restarts, your best score stays) ---------- */
+let gsMode=null;
+if(window.GameSave){
+  let touched=false,gsT=0;
+  GameSave.persist({key:'ecosystem.save',
+    get:()=>touched?{v:1,mode,quiz:Q&&Q.items&&Q.items.length?{order:Q.items.map(it=>QUIZ.indexOf(it)),i:Q.i,score:Q.score,log:Q.log,timed:Q.timed!==false,over:!!Q.over}:(Q?{timed:Q.timed!==false,over:true}:null)}:undefined,
+    set:d=>{
+      if(!d||d.v!==1)throw 0;
+      const q=d.quiz;
+      if(q&&(q.timed||q.over||!Array.isArray(q.order)))Q={items:[],i:0,score:0,log:[],timed:q.timed!==false,over:true};
+      else if(q&&q.order.length===QUIZ.length&&q.order.every(i=>QUIZ[i])){
+        Q={items:q.order.map(i=>QUIZ[i]),i:Math.max(0,Math.min(QUIZ.length-1,q.i|0)),score:Math.max(0,q.score|0),log:Array.isArray(q.log)?q.log.slice(0,QUIZ.length):[],timed:false,over:false};
+        if(Q.log.length>Q.i){if(Q.i<Q.items.length-1)Q.i++;else Q.over=true}
+      }
+      if(['play','learn','quiz'].includes(d.mode))gsMode=d.mode;
+      touched=true;
+    }});
+  ['click','change','input','pointerup','keyup'].forEach(t=>document.addEventListener(t,()=>{touched=true;clearTimeout(gsT);gsT=setTimeout(()=>GameSave.save(),500)},true));
+}
+setMode(gsMode||'play');
+window.__eco={get state(){return S;},computeMap,simulate,scores};
+})();
+
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>

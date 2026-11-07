@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shortcut Sprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+ --bg:#f4efe4;--bg2:#ebe3d2;--panel:#fffdf8;--panel2:#f6f0e3;--ink:#1d1a14;--muted:#6a6152;--line:#ddd2bd;
+ --gold:#b98a1f;--gold2:#e2b54a;--gold-ink:#1f1606;--good:#1d7a4e;--bad:#b8323b;--focus:#1f5fd0;
+ --deck1:#1b1c21;--deck2:#0e0f12;--cap1:#2c2e35;--cap2:#1d1f24;--legend:#d8dbe4;--glow:rgba(243,201,105,.55);
+ --c-gen:#9a7417;--c-word:#2b579a;--c-excel:#1d6f42;--c-ppt:#b7472a;--c-access:#a4373a;
+ --font-d:"Sora",system-ui,sans-serif;--font-b:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--font-m:"JetBrains Mono",ui-monospace,Consolas,monospace;
+ --kh:34px;--kg:5px;
+ color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0d0f14;--bg2:#141821;--panel:#161a23;--panel2:#1c212c;--ink:#ece8de;--muted:#a49c8b;--line:#2b313d;
+ --gold:#f0c35c;--gold2:#f7d98b;--gold-ink:#1f1606;--good:#4fd093;--bad:#ff7d86;--focus:#7fb0ff;
+ --c-gen:#e8bd55;--c-word:#6d9ef0;--c-excel:#4fc485;--c-ppt:#ff8a62;--c-access:#ec7a7f;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0d0f14;--bg2:#141821;--panel:#161a23;--panel2:#1c212c;--ink:#ece8de;--muted:#a49c8b;--line:#2b313d;
+ --gold:#f0c35c;--gold2:#f7d98b;--gold-ink:#1f1606;--good:#4fd093;--bad:#ff7d86;--focus:#7fb0ff;
+ --c-gen:#e8bd55;--c-word:#6d9ef0;--c-excel:#4fc485;--c-ppt:#ff8a62;--c-access:#ec7a7f;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.45;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-d);margin:0;line-height:1.15}
+p{margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 16px 18px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;text-align:left;min-width:0}
+.brand svg{flex:none}
+.brand h1{font-size:clamp(20px,3vw,26px);letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:12.5px;font-family:var(--font-b);font-weight:500}
+.top .sp{flex:1}
+.ibtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.ibtn[aria-pressed="true"]{color:var(--muted)}
+.ibtn svg{width:16px;height:16px}
+
+.bar{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
+.tabs{display:grid;grid-template-columns:repeat(4,auto);gap:4px;margin:0;background:var(--panel2);border:1px solid var(--line);padding:4px;border-radius:12px}
+.tab{border:0;background:transparent;border-radius:9px;padding:6px 12px;font-weight:700;font-family:var(--font-d);font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted)}
+.tab[aria-current="page"]{background:var(--deck1);color:var(--gold2);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.tab svg{width:16px;height:16px;flex:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1;min-width:0}
+.chips .lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+.chip{border:1.5px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px 4px 8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:3px;background:var(--c);display:inline-block}
+.chip[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.chip[aria-pressed="false"]{opacity:.6}
+.chip[aria-pressed="false"] i{background:transparent;border:1.5px solid var(--c)}
+.chips .count{font-size:12.5px;color:var(--muted);margin-left:auto}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.view{animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* home */
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:stretch}
+.hero .intro h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.hero .intro p{color:var(--muted);margin-bottom:10px;max-width:52ch}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12.5px;color:var(--muted)}
+.stat b{display:block;font-family:var(--font-d);font-size:18px;color:var(--ink)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mcard{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
+.mcard:hover{transform:translateY(-2px);border-color:var(--gold)}
+.mcard h3{font-size:17px;display:flex;align-items:center;gap:8px}
+.mcard h3 svg{width:20px;height:20px;color:var(--gold)}
+.mcard p{font-size:13px;color:var(--muted)}
+.mcard .best{font-size:12px;font-weight:700;margin-top:auto;display:flex;gap:8px;align-items:center}
+.stars{color:var(--gold);letter-spacing:1px;font-size:14px}
+.stars .off{color:var(--line)}
+.tip{margin-top:12px;font-size:13px;color:var(--muted);border-left:3px solid var(--gold);padding:4px 0 4px 10px}
+.kbhome{margin-top:12px}
+
+/* keyboard */
+.deck{background:linear-gradient(180deg,var(--deck1),var(--deck2));border-radius:16px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06);position:relative}
+.deck .brandline{position:absolute;top:2px;right:16px;font:600 9px var(--font-m);letter-spacing:.2em;color:#6d6550;text-transform:uppercase}
+.kb{display:flex;gap:14px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.kb-main{flex:15 15 0;display:flex;flex-direction:column;gap:var(--kg);min-width:0}
+.kb-row{display:flex;gap:var(--kg)}
+.kb-row.fnrow{margin-bottom:3px}
+.kb-nav{flex:3 3 0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(6,var(--kh));gap:var(--kg);grid-template-areas:"prt scr pau" "ins hom pgu" "del end pgd" ". . ." ". up ." "lft dn rgt";min-width:0}
+.kb-nav .key{height:auto}
+.gap{flex-grow:var(--w);flex-basis:0}
+.key{flex-grow:var(--w);flex-basis:0;min-width:0;height:var(--kh);border:1px solid #050506;border-radius:7px;background:linear-gradient(180deg,var(--cap1),var(--cap2));box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 2px 0 #050506,0 3px 6px rgba(0,0,0,.35);color:var(--legend);font:600 12px var(--font-m);padding:3px 5px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-shadow:0 0 6px rgba(255,236,190,.35);position:relative;transition:background .12s,box-shadow .12s,transform .06s,color .12s;overflow:hidden;line-height:1}
+.key .t{font-size:.82em;opacity:.7}
+.key .m{font-size:1em}
+.key.letter{justify-content:center;align-items:center;font-size:14px}
+.key.wide{justify-content:flex-end;font-size:11px}
+.key.fnk{font-size:10.5px;justify-content:center;align-items:center}
+.key.arrow{justify-content:center;align-items:center;font-size:14px}
+.key.bump::after{content:"";position:absolute;bottom:5px;left:50%;width:9px;height:2px;margin-left:-4.5px;border-radius:2px;background:rgba(255,255,255,.28)}
+.key:hover{background:linear-gradient(180deg,#34373f,#23252b)}
+.key.down{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 #050506}
+.key.lit{background:linear-gradient(180deg,#f7d685,#d39d2c);color:var(--gold-ink);text-shadow:none;border-color:#6b4c0b;box-shadow:0 0 0 1px #f7d685,0 0 16px var(--glow),0 2px 0 #5a3f08}
+.key.lit .t{opacity:.85}
+.key.latched{box-shadow:inset 0 0 0 2px #f0c35c,0 0 12px var(--glow),0 2px 0 #050506;color:#ffe3a0}
+.key.good{background:linear-gradient(180deg,#7fe0b0,#2f9e68);color:#06210f;text-shadow:none}
+.key.bad{background:linear-gradient(180deg,#ff9aa1,#c6414a);color:#2a0507;text-shadow:none}
+.key.pulse{animation:pulse .5s ease}
+@keyframes pulse{0%{transform:translateY(0)}35%{transform:translateY(3px)}100%{transform:translateY(0)}}
+.kbbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;min-height:34px}
+.combo{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.cap{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 9px;border-radius:7px;background:linear-gradient(180deg,#34363e,#1c1e23);color:#f3e2b4;border:1px solid #050506;box-shadow:0 2px 0 #050506;font:700 13px var(--font-m);white-space:nowrap}
+.combo .plus{color:var(--muted);font-weight:700}
+.combo.sm .cap{height:24px;min-width:24px;font-size:11.5px;padding:0 6px}
+.latchinfo{font-size:12.5px;color:var(--muted)}
+.kbtools{margin-left:auto;display:flex;gap:6px}
+.kbwrap.zoom .deck{overflow-x:auto}
+.kbwrap.zoom .kb{min-width:680px}
+
+/* app badge */
+.app{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c);border:1.5px solid color-mix(in srgb,var(--c) 50%,transparent);border-radius:999px;padding:1px 8px}
+.ch2{display:inline-flex;font-size:11px;font-weight:700;color:var(--gold-ink);background:var(--gold2);border-radius:999px;padding:1px 8px}
+.warn{font-size:12.5px;border:1px dashed var(--gold);border-radius:10px;padding:5px 9px;color:var(--ink);background:color-mix(in srgb,var(--gold) 10%,transparent)}
+
+/* learn */
+.learn{display:grid;grid-template-columns:270px 1fr;gap:12px;margin-bottom:12px}
+.list{max-height:280px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.list h4{font:700 11px var(--font-b);text-transform:uppercase;letter-spacing:.08em;color:var(--c);margin:8px 6px 4px;position:sticky;top:-4px;background:var(--panel);padding:2px 0}
+.li{width:100%;display:flex;align-items:center;gap:8px;border:0;background:transparent;border-radius:8px;padding:5px 6px;text-align:left;font-size:13px}
+.li:hover{background:var(--panel2)}
+.li[aria-current="true"]{background:color-mix(in srgb,var(--gold) 18%,transparent)}
+.li .combo{flex:none}
+.li .lt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none;opacity:0}
+.li.seen .dot{opacity:1}
+.stage{display:grid;grid-template-columns:1fr 1.05fr;gap:12px}
+.info{display:flex;flex-direction:column;gap:8px;min-width:0}
+.info .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.info .bigcombo .cap{height:40px;min-width:40px;font-size:16px;padding:0 12px}
+.info .act{font-size:16px;font-weight:600}
+.info .note{font-size:13px;color:var(--muted)}
+.info .also{font-size:12.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.info .also button{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:2px 9px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 13px;font-weight:700;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.btn.pri{background:linear-gradient(180deg,#f3cf74,#d6a136);color:var(--gold-ink);border-color:#a8791a}
+.btn:disabled{opacity:.5;cursor:default}
+.btn svg{width:15px;height:15px}
+
+/* scene (mini app preview) */
+.scn{position:relative;height:212px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#f3f3f3;color:#222;font:12px/1.4 "Segoe UI",var(--font-b);display:flex;flex-direction:column;--ac:#2b579a}
+.scn *{transition:all .35s ease}
+.scn .tb{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--ac);color:#fff;font-size:11.5px;flex:none}
+.scn .ico{display:inline-flex;width:16px;height:16px;border-radius:3px;background:#fff;color:var(--ac);font:800 10px var(--font-b);align-items:center;justify-content:center}
+.scn .tb .st{margin-left:auto;font-size:10.5px;opacity:.9}
+.scn .rb{display:flex;gap:10px;padding:3px 8px;background:#fff;border-bottom:1px solid #ddd;font-size:10.5px;color:#555;flex:none}
+.scn .rb .on{color:var(--ac);font-weight:700;border-bottom:2px solid var(--ac)}
+.scn .bd{flex:1;display:flex;min-height:0;position:relative}
+.scn .sbar{display:flex;gap:12px;padding:2px 8px;background:#e9e9e9;border-top:1px solid #d5d5d5;font-size:10px;color:#555;flex:none}
+.scn .sbar .on{background:var(--ac);color:#fff;border-radius:3px;padding:0 5px}
+.sc-word{--ac:#2b579a}.sc-excel{--ac:#1d6f42}.sc-ppt{--ac:#b7472a}.sc-access{--ac:#a4373a}.sc-win{--ac:#1f3b63}
+.navp{width:0;overflow:hidden;background:#fafafa;border-right:1px solid #ddd;font-size:10.5px;padding:6px 0;flex:none;white-space:nowrap}
+.navp.open{width:110px;padding:6px}
+.navp .box{border:1px solid #bbb;background:#fff;padding:2px 4px;margin:4px 0;border-radius:2px}
+.pgw{flex:1;overflow:hidden;padding:8px 10px;background:#e3e3e3}
+.pg{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);padding:10px 14px;min-height:100%;font-family:Calibri,"Carlito","IBM Plex Sans",sans-serif;font-size:12.5px;line-height:1.3}
+.pg h4{margin:0 0 4px;font-size:14px;color:#1f3864}
+.pg p{margin:0 0 5px}
+.sel{background:#c6dbff;border-radius:1px}
+.hl,.hl *{background:#c6dbff}
+.yel{background:#ffe55c}
+.cr{display:inline-block;width:1.5px;height:1.05em;background:#111;vertical-align:-2px;margin:0 .5px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ins{background:#d6f5df;animation:insA .6s ease}
+@keyframes insA{from{background:#8de0a6}}
+.gone{display:inline-block;max-width:0;overflow:hidden;vertical-align:bottom;opacity:0}
+.x{display:inline-block;overflow:hidden;vertical-align:bottom;max-width:1em;background:#ffd0d0}
+.squig{text-decoration:underline wavy #e02b2b}
+.pbrk{border-top:1.5px dashed #8aa;color:#678;text-align:center;font-size:9.5px;margin:6px 0;padding-top:1px}
+.lnk{color:#0563c1!important;text-decoration:underline;background:none!important}
+table.wt{border-collapse:collapse;width:100%;font-size:11.5px;margin-top:4px}
+table.wt td{border:1px solid #9aa;padding:2px 5px}
+table.wt td.ac{outline:2px solid #2b579a;background:#e8f0ff}
+.cols{column-count:2;column-gap:14px;column-rule:1px solid #ddd}
+.cbrk{break-after:column;font-size:9.5px;color:#678;border-top:1.5px dashed #8aa;text-align:center}
+.dlg{position:absolute;left:50%;top:50%;transform:translate(-50%,-44%) scale(.96);opacity:0;pointer-events:none;width:min(240px,86%);background:#fff;border:1px solid #999;box-shadow:0 8px 24px rgba(0,0,0,.35);border-radius:6px;font-size:11px;z-index:5}
+.dlg.on{opacity:1;transform:translate(-50%,-50%)}
+.dlg .dh{display:flex;justify-content:space-between;padding:4px 8px;background:#f0f0f0;border-bottom:1px solid #ddd;font-weight:700;border-radius:6px 6px 0 0}
+.dlg .dd{padding:8px}
+.dlg .fld{display:flex;gap:6px;align-items:center;margin:3px 0}
+.dlg .fld span{width:72px;color:#555}
+.dlg .fld b{flex:1;border:1px solid #aaa;padding:1px 4px;font-weight:500;border-radius:2px;min-height:17px}
+.dlg .dbtn{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
+.dlg .dbtn i{font-style:normal;border:1px solid #888;padding:1px 8px;border-radius:3px;background:#f6f6f6}
+.dlg .dbtn i.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.dlg .tabsx{display:flex;gap:8px;border-bottom:1px solid #ddd;margin-bottom:6px;color:#666}
+.dlg .tabsx .on{color:#000;font-weight:700;border-bottom:2px solid var(--ac)}
+.pill{position:absolute;right:8px;bottom:24px;background:#1b1c21;color:#f7d98b;font:600 11px var(--font-b);padding:3px 9px;border-radius:999px;opacity:0;transform:translateY(6px);z-index:6;max-width:80%}
+.pill.on{opacity:1;transform:none}
+/* excel */
+.fbar{display:flex;gap:6px;align-items:center;padding:2px 6px;background:#fff;border-bottom:1px solid #ccc;font-size:11px;flex:none}
+.fbar .nb{width:38px;border:1px solid #bbb;padding:0 3px;text-align:center}
+.fbar .fx{color:#777;font-style:italic}
+.fbar .fv{flex:1;border:1px solid #bbb;padding:0 4px;min-height:17px;font-family:var(--font-m);font-size:10.5px}
+.grid{flex:1;overflow:hidden;background:#fff;position:relative}
+.grid table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:11px}
+.grid th{background:#efefef;color:#555;font-weight:500;border:1px solid #d4d4d4;height:17px;font-size:10px;padding:0}
+.grid th:first-child{width:24px}
+.grid td{border:1px solid #e1e1e1;height:19px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid td.n{text-align:right}
+.grid td.hd{font-weight:700}
+.grid td.ac{outline:2px solid #1d6f42;outline-offset:-2px}
+.grid td.rs{background:#dcefe3}
+.grid td.ants{outline:2px dashed #1d6f42;outline-offset:-2px;animation:ants .5s linear infinite}
+@keyframes ants{50%{outline-color:#9fd3b2}}
+.grid td.ref1{outline:2px solid #2b6fd6;outline-offset:-2px}
+.grid td.ref2{outline:2px solid #c0392b;outline-offset:-2px}
+.grid td.ml{white-space:normal;line-height:1.1;height:34px}
+.grid td.fl{animation:insA .6s ease}
+.grid.formulas td{font-family:var(--font-m);font-size:9.5px}
+.sheets{display:flex;gap:2px;padding:2px 6px;background:#e9e9e9;border-top:1px solid #ccc;font-size:10px;flex:none}
+.sheets span{padding:0 8px;background:#f7f7f7;border:1px solid #ccc}
+.sheets .on{background:#fff;color:#1d6f42;font-weight:700;border-bottom:2px solid #1d6f42}
+.chartsheet{position:absolute;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
+.chartsheet.on{opacity:1}
+/* ppt */
+.thumbs{width:74px;background:#e8e8e8;border-right:1px solid #ccc;padding:5px;display:flex;flex-direction:column;gap:5px;overflow:hidden;flex:none}
+.th{display:flex;gap:3px;font-size:9px;color:#666;align-items:flex-start}
+.th div{flex:1;aspect-ratio:16/9;background:#fff;border:1.5px solid #ccc;font-size:5.5px;padding:2px;overflow:hidden;color:#b7472a;font-weight:700}
+.th.ac div{border-color:#b7472a;box-shadow:0 0 0 1px #b7472a}
+.th.newth{animation:insA .7s}
+.slidev{flex:1;display:flex;align-items:center;justify-content:center;background:#d8d8d8;padding:8px}
+.slide{width:100%;max-width:290px;aspect-ratio:16/9;background:linear-gradient(135deg,#fff,#fdf1ea);box-shadow:0 1px 4px rgba(0,0,0,.25);padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.slide h5{margin:0 0 4px;font-size:15px;color:#b7472a;font-family:var(--font-d)}
+.slide ul{margin:0;padding-left:14px;font-size:10px;color:#333}
+.show{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:4}
+.show.on{opacity:1}
+.show .slide{max-width:none;width:92%;transform:scale(1)}
+.show.black .slide,.show.white .slide{opacity:0}
+.show.white{background:#fff}
+.show .cap2{position:absolute;bottom:4px;right:8px;color:#888;font-size:9px}
+/* access */
+.ds{flex:1;background:#fff;overflow:hidden}
+.ds table{border-collapse:collapse;width:100%;font-size:10.5px;table-layout:fixed}
+.ds th{background:#f1e4e4;border:1px solid #d3b8b8;font-weight:600;padding:2px 3px;text-align:left;white-space:nowrap;overflow:hidden}
+.ds td{border:1px solid #e3d6d6;padding:2px 3px;height:20px;white-space:nowrap;overflow:hidden}
+.ds th:first-child,.ds td:first-child{width:16px;background:#f1e4e4;text-align:center;padding:0}
+.ds td.af{outline:2px solid #a4373a;outline-offset:-2px;background:#fff5f5}
+.ds td.fs{background:#a4373a;color:#fff}
+.ds .navstrip{writing-mode:vertical-rl;font-size:9.5px;background:#f6eeee;border-right:1px solid #ddd;padding:4px 2px;color:#a4373a;flex:none}
+.anav{width:92px;background:#f8f2f2;border-right:1px solid #ddd;font-size:10px;padding:5px;flex:none;overflow:hidden;white-space:nowrap}
+.anav.closed{width:16px;padding:5px 2px;color:transparent}
+.anav b{display:block;color:#a4373a;margin-bottom:3px}
+.anav div{padding:1px 3px}
+.anav .on{background:#f1d6d6}
+/* windows */
+.dsk{flex:1;position:relative;background:linear-gradient(135deg,#123d6b 0%,#1e6aa8 55%,#5cb3d9 100%);overflow:hidden}
+.dsk .icons{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:8px;color:#fff;font-size:9px;text-align:center}
+.dsk .icons span{display:block;width:42px}
+.dsk .icons i{display:block;width:22px;height:20px;margin:0 auto 2px;border-radius:3px;background:rgba(255,255,255,.85)}
+.win{position:absolute;left:62px;top:10px;right:14px;bottom:12px;background:#fff;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;transform-origin:50% 100%}
+.win .wt{display:flex;justify-content:space-between;align-items:center;padding:3px 8px;background:#f3f3f3;border-bottom:1px solid #ddd;font-size:10.5px;font-weight:600}
+.win .wt em{font-style:normal;letter-spacing:6px;color:#666}
+.win .files{padding:6px 8px;display:flex;flex-direction:column;gap:2px;font-size:11px}
+.win .file{display:flex;gap:6px;align-items:center;padding:2px 4px;border-radius:3px}
+.win .file i{width:12px;height:14px;border-radius:2px;background:var(--fc,#888);display:inline-block}
+.win .file.sel2{background:#cce4ff}
+.win .file .nm{border:1px solid transparent;padding:0 2px}
+.win .file .nm.edit{border-color:#0067c0;background:#fff}
+.win.min{transform:translateY(120%) scale(.2);opacity:0}
+.win.closing{transform:scale(.85);opacity:0}
+.win.back{left:84px;top:22px;right:4px;bottom:4px;filter:brightness(.9)}
+.win.opening{animation:winin .4s ease}
+@keyframes winin{from{transform:scale(.6);opacity:0}}
+.tbar{height:22px;background:rgba(20,26,38,.9);display:flex;align-items:center;gap:6px;padding:0 8px;color:#fff;font-size:9.5px;flex:none}
+.tbar .start{width:13px;height:13px;display:grid;grid-template-columns:1fr 1fr;gap:1px}
+.tbar .start i{background:#5cc0ff}
+.tbar .clk{margin-left:auto}
+.switcher{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;pointer-events:none;z-index:4}
+.switcher.on{opacity:1}
+.switcher div{width:70px;height:52px;background:#fff;border-radius:4px;font-size:9px;padding:3px;border:2px solid transparent;color:#333}
+.switcher div.on{border-color:#ffd25e;box-shadow:0 0 10px #ffd25e}
+.lock{position:absolute;inset:0;background:linear-gradient(160deg,#0d2b4d,#2a6f9e);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:7;font-family:var(--font-d)}
+.lock.on{opacity:1}
+.lock b{font-size:38px;font-weight:600}
+.helpp{position:absolute;top:0;bottom:0;right:0;width:0;background:#fff;border-left:1px solid #ccc;overflow:hidden;font-size:10.5px;z-index:3;white-space:nowrap}
+.helpp.on{width:130px;padding:8px}
+.spin{display:inline-block;width:10px;height:10px;border:2px solid #0067c0;border-right-color:transparent;border-radius:50%;animation:sp .6s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* sprint */
+.hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.hud .h{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px 10px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:baseline}
+.hud .h b{font-family:var(--font-d);font-size:17px;color:var(--ink)}
+.hud .lives{color:var(--bad);font-size:16px;letter-spacing:2px}
+.hud .lives .lost{color:var(--line)}
+.hud .mult b{color:var(--gold)}
+.hud .sp{flex:1}
+.tbarw{height:8px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;margin-bottom:10px}
+.tbarw i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px}
+.tbarw i.low{background:linear-gradient(90deg,var(--bad),#ff9a6b)}
+.arena{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;position:relative}
+.taskc{display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:0}
+.taskc .q{font-family:var(--font-d);font-size:clamp(19px,2.6vw,26px);font-weight:700;line-height:1.2}
+.fb{min-height:44px;font-weight:600;font-size:14px}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.overlay{position:absolute;inset:0;background:color-mix(in srgb,var(--panel) 94%,transparent);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;z-index:8;border:1px solid var(--line)}
+.overlay h2{font-size:24px}
+.overlay p{color:var(--muted);max-width:56ch;font-size:14px}
+.overlay ul{text-align:left;color:var(--muted);font-size:13.5px;margin:0;padding-left:18px;max-width:60ch}
+.count3{font-family:var(--font-d);font-size:72px;font-weight:800;color:var(--gold)}
+.pop{position:absolute;font-family:var(--font-d);font-weight:800;color:var(--gold);font-size:22px;pointer-events:none;animation:popA .9s ease forwards;z-index:9}
+@keyframes popA{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-40px)}}
+
+/* match */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative}
+.mcol{display:flex;flex-direction:column;gap:8px}
+.mcol h4{font:700 12px var(--font-b);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0}
+.tile{min-height:54px;border:1.5px solid var(--line);background:var(--panel);border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px;text-align:left;font-weight:600;font-size:14px;touch-action:none;transition:transform .15s,border-color .15s,opacity .3s,background .2s}
+.tile:hover{border-color:var(--gold)}
+.tile.selx{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,var(--panel));box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 30%,transparent)}
+.tile.ok{background:color-mix(in srgb,var(--good) 18%,var(--panel));border-color:var(--good);opacity:.5;pointer-events:none}
+.tile.no{animation:shake .35s;border-color:var(--bad)}
+.tile.over{border-color:var(--gold);transform:scale(1.02)}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.tile .app{font-size:10px;padding:0 6px}
+.ghost{position:fixed;pointer-events:none;z-index:50;opacity:.92;transform:translate(-50%,-50%) rotate(-2deg);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+
+/* quiz */
+.qcard{display:flex;flex-direction:column;gap:12px}
+.qcard .qtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.qcard .qq{font-family:var(--font-d);font-size:clamp(18px,2.4vw,23px);font-weight:700}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{border:1.5px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 12px;text-align:left;font-weight:600;display:flex;gap:10px;align-items:center}
+.opt kbd{font:700 12px var(--font-m);border:1px solid var(--line);border-radius:5px;padding:0 6px;color:var(--muted)}
+.opt:hover:not(:disabled){border-color:var(--gold)}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 16%,var(--panel))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--panel))}
+.opt:disabled{cursor:default}
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
+.cmp th,.cmp td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.cmp th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.cmp tr.hit td{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.verdict{font-weight:700}
+.verdict.good{color:var(--good)}.verdict.bad{color:var(--bad)}
+
+/* results dialog */
+.modal{position:fixed;inset:0;background:rgba(8,9,12,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:calc(100vh - 32px);overflow:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.mbox h2{font-size:24px;margin-bottom:4px}
+.mbox .bigstars{font-size:34px;letter-spacing:6px;color:var(--gold)}
+.mbox .bigstars .off{color:var(--line)}
+.mbox .score{font-family:var(--font-d);font-size:40px;font-weight:800}
+.mbox .rstats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}
+.mbox .review{text-align:left;font-size:13px;margin:8px 0;border-top:1px solid var(--line);padding-top:8px}
+.mbox .review div{display:flex;gap:8px;align-items:center;padding:3px 0}
+.mbox .row{justify-content:center;margin-top:10px}
+.newbest{display:inline-block;background:var(--gold2);color:var(--gold-ink);font-weight:800;border-radius:999px;padding:1px 10px;font-size:12px}
+
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1b1c21;color:#f7d98b;padding:8px 14px;border-radius:12px;font-size:13.5px;z-index:70;max-width:min(92vw,520px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+footer{margin-top:16px;text-align:center;font-size:12.5px;color:var(--muted)}
+footer b{color:var(--ink)}
+
+@media (max-width:860px){
+ .learn{grid-template-columns:1fr}
+ .list{max-height:170px}
+ .stage{grid-template-columns:1fr}
+ .hero{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+ :root{--kh:32px;--kg:3px}
+ .deck{padding:6px;border-radius:12px}
+ .deck .brandline{display:none}
+ .kb{flex-direction:column;gap:5px}
+ .kb-nav{grid-template-columns:repeat(10,1fr);grid-template-rows:var(--kh);grid-template-areas:"ins hom pgu del end pgd lft up dn rgt"}
+ .kb-nav .k-prt,.kb-nav .k-scr,.kb-nav .k-pau{display:none}
+ .key{font-size:9.5px;padding:2px 3px;border-radius:5px}
+ .key.letter{font-size:12px}
+ .key.wide{font-size:8.5px}
+ .key.fnk{font-size:8.5px}
+ .key .t{display:none}
+ .key.sym{justify-content:center;align-items:center}
+ .arena{grid-template-columns:1fr}
+ .taskc{min-height:0}
+ .scn{height:190px}
+ .tabs{grid-template-columns:repeat(4,1fr);flex:1 1 100%}
+ .tab{font-size:12.5px;padding:7px 2px;flex-direction:column;gap:2px}
+ .modes{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+ .opts{grid-template-columns:1fr}
+ .tile{font-size:13px;min-height:50px;padding:6px 8px}
+ .brand small{font-size:11.5px}
+ #muteTxt{display:none}
+ .arena .scn{height:165px}
+ .tile{flex-wrap:wrap}
+ .hud .h{padding:2px 7px}
+ .hud .h b{font-size:15px}
+}
+@media (min-width:721px){.zoombtn{display:none!important}}
+@media (prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+ .cr{animation:none}
+}
+</style>
+<!-- gamesave:start --><script id="gamesave-kit">
+/* GameSave: every game remembers its progress on this device, and can start over. Developed by Kester Small
+   API (window.GameSave):
+     GameSave.id                      this game's id (from <html data-game="…">, else the page name)
+     GameSave.register(['key', 'prefix*', /regex/])   storage keys that belong to this game (also caught automatically when set with localStorage.setItem)
+     GameSave.persist({ key, get, set, every })       save get() under key (on every save(), every `every` ms, and when the page is hidden); on load call set(saved) once
+     GameSave.save()                  save now (call at checkpoints: level done, answer checked, item placed …)
+     GameSave.onReset(fn)             run fn before the page reloads after a reset
+     GameSave.startOver()             ask "Start over?" and, if confirmed, clear this game's saved progress and reload
+     GameSave.reset({reload})         clear without asking
+   Inside the course the player bar shows "↺ Start over"; on its own page a small "↺ Start over" button appears unless
+   <html data-gs-own> says the game already has its own visible reset (which should call GameSave.startOver()). */
+(function () {
+  if (window.GameSave) return;
+  var LS = null; try { LS = window.localStorage; LS.getItem('gs:probe'); } catch (e) { LS = null; }
+  var html = document.documentElement;
+  var page = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+  var id = html.getAttribute('data-game') || page;
+  if (!id || /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(id)) id = (document.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'game';
+  var REG = 'gs:keys:' + id;
+  var SKIP = /^(gs:|ws\.|course\.|nocopy|simsave)/;
+  var keys = []; try { keys = JSON.parse((LS && LS.getItem(REG)) || '[]') || []; } catch (e) { keys = []; }
+  var patterns = [], hooks = [], persisters = [], rawSet = null;
+  function track(k) {
+    k = String(k); if (!LS || SKIP.test(k) || keys.indexOf(k) >= 0) return;
+    keys.push(k); try { (rawSet || LS.setItem).call(LS, REG, JSON.stringify(keys)); } catch (e) { }
+  }
+  if (LS) {
+    try {
+      var proto = Object.getPrototypeOf(LS); rawSet = proto.setItem;
+      proto.setItem = function (k, v) { var r = rawSet.apply(this, arguments); if (this === LS) track(k); return r; };
+    } catch (e) { rawSet = null; }
+  }
+  function matches(k) {
+    if (keys.indexOf(k) >= 0) return true;
+    return patterns.some(function (p) { return p instanceof RegExp ? p.test(k) : (p.slice(-1) === '*' ? k.indexOf(p.slice(0, -1)) === 0 : k === p); });
+  }
+  function owned() { var out = []; if (!LS) return out; for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && !SKIP.test(k) && matches(k)) out.push(k); } return out; }
+  var resetting = false;
+  function reset(opt) {
+    opt = opt || {}; resetting = true;
+    hooks.forEach(function (fn) { try { fn(); } catch (e) { } });
+    owned().forEach(function (k) { try { LS.removeItem(k); } catch (e) { } });
+    persisters.forEach(function (p) { try { LS.removeItem(p.key); } catch (e) { } });
+    try { LS.removeItem(REG); } catch (e) { }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'gs:reset-done', id: id }, '*'); } catch (e) { }
+    if (opt.reload !== false) setTimeout(function () { location.reload(); }, 60);
+  }
+  function css() {
+    if (document.getElementById('gs-css')) return;
+    var st = document.createElement('style'); st.id = 'gs-css';
+    st.textContent = '.gs-modal{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(3,8,24,.62);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}' +
+      '.gs-box{max-width:420px;width:100%;background:#0F1E4A;color:#F1F4FF;border:2px solid #F5C542;border-radius:16px;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}' +
+      '.gs-box h2{margin:0 0 8px;font-size:1.2rem;color:#FFE38A}.gs-box p{margin:0 0 14px}' +
+      '.gs-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}' +
+      '.gs-row button{font:700 14px system-ui,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;border:2px solid #F5C542}' +
+      '.gs-keep{background:transparent;color:#F1F4FF}.gs-go{background:#F5C542;color:#0A1433}' +
+      '.gs-row button:focus-visible{outline:3px solid #fff;outline-offset:2px}' +
+      '.gs-pill{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483500;font:700 12px/1 system-ui,sans-serif;color:#fff;background:rgba(10,20,51,.85);border:1px solid rgba(245,197,66,.7);border-radius:99px;padding:7px 11px;cursor:pointer;opacity:.6}' +
+      '.gs-pill:hover,.gs-pill:focus-visible{opacity:1;background:#F5C542;color:#0A1433}' +
+      '.gs-toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483550;background:#0F1E4A;color:#F1F4FF;border:1px solid #F5C542;border-radius:99px;padding:8px 16px;font:700 13px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:opacity .4s}' +
+      '@media print{.gs-pill,.gs-toast,.gs-modal{display:none!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function toast(msg) {
+    if (!document.body) return; css();
+    var t = document.createElement('div'); t.className = 'gs-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; }, 2600); setTimeout(function () { t.remove(); }, 3100);
+  }
+  function startOver() {
+    if (!document.body) return reset();
+    if (document.querySelector('.gs-modal')) return;
+    css();
+    var prev = document.activeElement;
+    var m = document.createElement('div'); m.className = 'gs-modal';
+    m.innerHTML = '<div class="gs-box" role="alertdialog" aria-modal="true" aria-labelledby="gs-t" aria-describedby="gs-d"><h2 id="gs-t">Start this game again?</h2>' +
+      '<p id="gs-d">Your saved progress in this game on this device will be cleared and the game will start from the beginning. Work you have already submitted and your course progress are not affected.</p>' +
+      '<div class="gs-row"><button type="button" class="gs-keep">Keep my progress</button><button type="button" class="gs-go">↺ Start over</button></div></div>';
+    document.body.appendChild(m);
+    var keep = m.querySelector('.gs-keep'), go = m.querySelector('.gs-go');
+    function close() { m.remove(); document.removeEventListener('keydown', onKey, true); try { prev && prev.focus && prev.focus(); } catch (e) { } }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === keep ? go : keep).focus(); } }
+    keep.addEventListener('click', close); go.addEventListener('click', function () { close(); reset(); });
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey, true); keep.focus();
+  }
+  function saveAll() {
+    if (resetting || !LS) return;
+    persisters.forEach(function (p) { try { var v = p.get(); if (v !== undefined) (rawSet || LS.setItem).call(LS, p.key, JSON.stringify({ v: v, at: Date.now() })); } catch (e) { } });
+  }
+  function persist(o) {
+    if (!o || typeof o.get !== 'function') return false;
+    var p = { key: o.key || ('gsave.' + id), get: o.get }; persisters.push(p); track(p.key);
+    var restored = false;
+    if (LS && typeof o.set === 'function') {
+      try { var raw = LS.getItem(p.key); if (raw) { var d = JSON.parse(raw); if (d && 'v' in d) { o.set(d.v); restored = true; } } } catch (e) { }
+    }
+    if (o.every) setInterval(saveAll, Math.max(2000, +o.every || 0));
+    if (restored && o.welcome !== false) setTimeout(function () { toast('Welcome back! Your progress was restored.'); }, 400);
+    return restored;
+  }
+  window.addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveAll(); });
+  window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'gs:reset') { if (d.ask === false) reset(); else startOver(); } });
+  function pill() {
+    if (window.parent !== window || html.hasAttribute('data-gs-own') || html.hasAttribute('data-gs-none') || !document.body || document.querySelector('.gs-pill')) return;
+    css(); var b = document.createElement('button'); b.type = 'button'; b.className = 'gs-pill'; b.textContent = '↺ Start over'; b.title = 'Clear your saved progress in this game and start again';
+    b.addEventListener('click', startOver); document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pill); else pill();
+  window.GameSave = {
+    id: id,
+    register: function (list) { (Array.isArray(list) ? list : [list]).forEach(function (k) { if (k instanceof RegExp || (typeof k === 'string' && k.slice(-1) === '*')) patterns.push(k); else if (k) track(k); }); },
+    persist: persist, save: saveAll, onReset: function (fn) { if (typeof fn === 'function') hooks.push(fn); },
+    startOver: startOver, reset: reset, keys: owned, toast: toast
+  };
+})();
+
+</script><!-- gamesave:end -->
+<script id="nocopy-kit">
+/* Copy protection for course text: the lesson text, keys and stimuli cannot be selected, copied, cut or dragged out.
+   Students can still type, select and copy inside their own answer boxes and editors (inputs, text areas and editable areas),
+   and drag-and-drop activities keep working. Developed by Kester Small. */
+(function () {
+  'use strict';
+  if (window.__nocopy) return; window.__nocopy = true;
+  const OK = 'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],.allow-copy';
+  const editable = n => { try { if (n && n.nodeType === 3) n = n.parentElement; return !!(n && n.closest && n.closest(OK)); } catch (e) { return false; } };
+  const css = document.createElement('style'); css.id = 'nocopy-css';
+  css.textContent = 'html,body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'input,textarea,select,[contenteditable="true"],[contenteditable=""],[contenteditable="plaintext-only"],[contenteditable="true"] *,.allow-copy,.allow-copy *{-webkit-user-select:text;-moz-user-select:text;user-select:text;-webkit-touch-callout:default}' +
+    'img,svg,canvas{-webkit-user-drag:none;user-drag:none}';
+  (document.head || document.documentElement).appendChild(css);
+  const selInEditable = () => { const s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return true; return editable(s.anchorNode) && editable(s.focusNode); };
+  ['copy', 'cut'].forEach(t => document.addEventListener(t, e => { if (!(editable(e.target) && selInEditable())) e.preventDefault(); }, true));
+  document.addEventListener('selectstart', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('contextmenu', e => { if (!editable(e.target)) e.preventDefault(); }, true);
+  document.addEventListener('dragstart', e => { const t = e.target; if (editable(t)) return; if (t && t.nodeType === 1 && t.closest && t.closest('[draggable="true"]')) return; e.preventDefault(); }, true);
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey)) return; const k = (e.key || '').toLowerCase();
+    if ((k === 'c' || k === 'x' || k === 'a') && !editable(e.target)) e.preventDefault();
+    if (k === 'u') e.preventDefault();
+  }, true);
+})();
+
+</script>
+</head>
+<body>
+<div class="wrap">
+ <header class="top">
+  <button class="brand" id="homeBtn" aria-label="Shortcut Sprint home">
+   <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="5" width="36" height="30" rx="8" fill="#1b1c21"/><rect x="5" y="7" width="30" height="24" rx="6" fill="#2c2e35"/><path d="M22 10l-9 11h6l-2 9 9-12h-6z" fill="#f0c35c"/></svg>
+   <span><h1>Shortcut Sprint</h1><small>Keyboard shortcuts · CSEC Information Technology · Sections 4 and 5</small></span>
+  </button>
+  <span class="sp"></span>
+  <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Mute sounds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="muteWave" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg><span id="muteTxt">Sound on</span></button>
+ </header>
+
+ <div class="bar">
+ <nav class="tabs" aria-label="Game modes">
+  <button class="tab" data-view="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h7a3 3 0 013 3v11a2 2 0 00-2-2H4zM20 5h-5a3 3 0 00-3 3"/><path d="M20 5v12h-6"/></svg>Learn</button>
+  <button class="tab" data-view="sprint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Sprint</button>
+  <button class="tab" data-view="match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/><path d="M10 7h4a3 3 0 013 3v4"/></svg>Match-up</button>
+  <button class="tab" data-view="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.2-1.5 2.5M12 17h.01"/></svg>Which app?</button>
+ </nav>
+
+ <div class="chips" role="group" aria-label="Filter shortcuts by app" id="chips"></div>
+ </div>
+
+ <main id="main">
+  <!-- HOME -->
+  <section class="view" id="v-home" aria-labelledby="homeH">
+   <div class="hero">
+    <div class="panel intro">
+     <h2 id="homeH">Faster fingers, smarter work</h2>
+     <p>Shortcut keys combine a modifier key — such as Ctrl or Alt — with another key to perform a command instantly. Learn them, sprint against the clock, match them up, then spot how the same keys do different jobs in Word, Excel, PowerPoint and Access.</p>
+     <div class="stats" id="homeStats"></div>
+     <p class="tip">Play with a real keyboard or tap the on-screen keys. On-screen <b>Ctrl</b>, <b>Shift</b>, <b>Alt</b> and <b>Win</b> stay held down (latched) until you tap the next key. Shortcuts marked with a gold chip come from your Section 4 and 5 notes (word processing and spreadsheets).</p>
+    </div>
+    <div class="modes" id="modeCards"></div>
+   </div>
+  </section>
+
+  <!-- LEARN -->
+  <section class="view" id="v-learn" hidden aria-labelledby="learnH">
+   <h2 class="sr" id="learnH">Learn mode</h2>
+   <div class="learn">
+    <div class="list" id="llist" aria-label="Shortcut list"></div>
+    <div class="panel stage">
+     <div class="info" id="linfo"></div>
+     <div class="scn" id="lscene" aria-hidden="true"></div>
+    </div>
+   </div>
+  </section>
+
+  <!-- SPRINT -->
+  <section class="view" id="v-sprint" hidden aria-labelledby="sprintH">
+   <h2 class="sr" id="sprintH">Sprint mode</h2>
+   <div class="hud" id="shud"></div>
+   <div class="tbarw" aria-hidden="true"><i id="stimer"></i></div>
+   <div class="arena" id="sarena">
+    <div class="panel taskc">
+     <div class="row" id="stmeta"></div>
+     <div class="q" id="stask" aria-live="polite">Ready?</div>
+     <div id="swarn"></div>
+     <div class="fb" id="sfb" aria-live="assertive"></div>
+    </div>
+    <div class="scn" id="sscene" aria-hidden="true"></div>
+    <div class="overlay" id="sover"></div>
+   </div>
+  </section>
+
+  <!-- MATCH -->
+  <section class="view" id="v-match" hidden aria-labelledby="matchH">
+   <h2 class="sr" id="matchH">Match-up mode</h2>
+   <div class="hud" id="mhud"></div>
+   <div class="tbarw" aria-hidden="true"><i id="mtimer"></i></div>
+   <div class="panel" style="position:relative;min-height:330px">
+    <p class="latchinfo" style="margin-bottom:8px">Tap a shortcut, then tap its action — or drag one onto the other.</p>
+    <div class="mgrid" id="mgrid"></div>
+    <div class="overlay" id="mover"></div>
+   </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="view" id="v-quiz" hidden aria-labelledby="quizH">
+   <h2 class="sr" id="quizH">Which app? quiz</h2>
+   <div class="hud" id="qhud"></div>
+   <div class="tbarw" aria-hidden="true"><i id="qtimer"></i></div>
+   <div class="panel" style="position:relative;min-height:330px">
+    <div class="qcard" id="qcard"></div>
+    <div class="overlay" id="qover"></div>
+   </div>
+  </section>
+
+  <!-- shared keyboard -->
+  <div class="kbwrap" id="kbwrap">
+   <div class="kbbar">
+    <div class="combo" id="kbcombo" aria-live="polite"></div>
+    <span class="latchinfo" id="latchinfo"></span>
+    <div class="kbtools">
+     <button class="ibtn zoombtn" id="zoomBtn" aria-pressed="false">Bigger keys</button>
+    </div>
+   </div>
+   <div class="deck"><span class="brandline">CSEC · IT</span><div class="kb" id="kb" role="group" aria-label="On-screen keyboard"></div></div>
+  </div>
+ </main>
+ <div class="sr" id="live" aria-live="polite"></div>
+ <footer><b>Kester Small</b></footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- storage ---------- */
+var KEY='shortcutSprint.v1';
+var store={best:{},stars:{},seen:{},mute:false};
+try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&typeof o==='object'){for(var k in o)store[k]=o[k];}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+
+var reduced=false;try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function live(t){var l=$('#live');l.textContent='';setTimeout(function(){l.textContent=t;},30);}
+
+/* ---------- audio ---------- */
+var AC=null;
+function ac(){if(store.mute)return null;try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();}if(AC.state==='suspended')AC.resume();}catch(e){return null;}return AC;}
+function tone(f,d,type,vol,when){var c=ac();if(!c)return;var t=c.currentTime+(when||0);var o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.12,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+0.02);}
+var noiseBuf=null;
+function click(){var c=ac();if(!c)return;try{if(!noiseBuf){noiseBuf=c.createBuffer(1,Math.floor(c.sampleRate*0.04),c.sampleRate);var d=noiseBuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);}var s=c.createBufferSource();s.buffer=noiseBuf;var f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=2600+Math.random()*900;f.Q.value=1.2;var g=c.createGain();g.gain.value=0.35;s.connect(f);f.connect(g);g.connect(c.destination);s.start();tone(140,0.05,'sine',0.06);}catch(e){}}
+function sGood(){tone(660,0.12,'sine',0.12);tone(990,0.18,'sine',0.1,0.08);}
+function sBad(){tone(190,0.22,'square',0.05);tone(150,0.25,'square',0.04,0.08);}
+function sLevel(){[523,659,784,1046].forEach(function(f,i){tone(f,0.16,'triangle',0.09,i*0.08);});}
+
+/* ---------- key labels ---------- */
+var LAB={Escape:'Esc',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Backslash:'\\',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/',Space:'Space',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',CapsLock:'Caps Lock',PageUp:'Page Up',PageDown:'Page Down',PrintScreen:'PrtSc',ContextMenu:'Menu'};
+var SHIFTED={Period:'>',Comma:'<',Semicolon:':',Equal:'+',Backquote:'~',Slash:'?',Quote:'"',Minus:'_'};
+var NAMES={Escape:'Escape',Backquote:'grave accent',Minus:'minus',Equal:'equals',BracketLeft:'left bracket',BracketRight:'right bracket',Backslash:'backslash',Semicolon:'semicolon',Quote:'apostrophe',Comma:'comma',Period:'full stop',Slash:'slash',Space:'Space bar',ArrowUp:'Up arrow',ArrowDown:'Down arrow',ArrowLeft:'Left arrow',ArrowRight:'Right arrow',CapsLock:'Caps Lock',PageUp:'Page Up',PageDown:'Page Down',PrintScreen:'Print Screen',ScrollLock:'Scroll Lock',ContextMenu:'Menu key',Insert:'Insert',Delete:'Delete',Home:'Home',End:'End',Pause:'Pause',Backspace:'Backspace',Enter:'Enter',Tab:'Tab'};
+function codeLabel(code,shift){if(shift&&SHIFTED[code])return SHIFTED[code];if(LAB[code])return LAB[code];if(/^Key[A-Z]$/.test(code))return code.slice(3);if(/^Digit\d$/.test(code))return code.slice(5);return code;}
+var MODS=['Ctrl','Shift','Alt','Win'];
+function parse(k){var p=k.split('+');var code=p.pop();var m={Ctrl:false,Shift:false,Alt:false,Win:false};p.forEach(function(x){m[x]=true;});return {mods:m,code:code};}
+function comboParts(c){var out=[];MODS.forEach(function(m){if(c.mods[m])out.push(m);});out.push(codeLabel(c.code,c.mods.Shift));return out;}
+function comboText(c){return comboParts(c).join(' + ');}
+function comboHTML(c,cls){return '<span class="combo '+(cls||'')+'">'+comboParts(c).map(function(p){return '<span class="cap">'+esc(p)+'</span>';}).join('<span class="plus" aria-hidden="true">+</span>')+'</span>';}
+function comboAria(c){var out=[];MODS.forEach(function(m){if(c.mods[m])out.push(m==='Ctrl'?'Control':m==='Win'?'Windows key':m);});var lab=c.mods.Shift&&SHIFTED[c.code]?({'>':'greater-than','<':'less-than',':':'colon','+':'plus','~':'tilde'}[SHIFTED[c.code]]||SHIFTED[c.code]):(NAMES[c.code]||codeLabel(c.code));out.push(lab);return out.join(' plus ');}
+function same(a,b){if(a.code!==b.code)return false;for(var i=0;i<4;i++){if(!!a.mods[MODS[i]]!==!!b.mods[MODS[i]])return false;}return true;}
+
+/* ---------- apps ---------- */
+var APPS={gen:{n:'General / Windows',s:'General'},word:{n:'Word',s:'Word'},excel:{n:'Excel',s:'Excel'},ppt:{n:'PowerPoint',s:'PowerPoint'},access:{n:'Access',s:'Access'}};
+var APPORDER=['gen','word','excel','ppt','access'];
+function appBadge(a,short){return '<span class="app" style="--c:var(--c-'+a+')">'+esc(short?APPS[a].s:APPS[a].n)+'</span>';}
+
+/* ---------- scenes ---------- */
+var PARA='Our class will visit the <span class="sel">Pitch Lake</span> on <span class="fri">Friday</span>. Please bring water, a hat and your notebook.';
+var CR='<i class="cr"></i>';
+var BUILD={
+ word:function(){return '<div class="tb"><span class="ico">W</span><span class="fn">Trip Letter.docx</span><span class="st"></span></div><div class="rb"><span>File</span><span class="on">Home</span><span>Insert</span><span>Layout</span><span>Review</span></div><div class="bd"><aside class="navp"><b>Navigation</b><div class="box srch">Search document</div><div class="res"></div></aside><div class="pgw"><div class="pg"><h4 class="hd">Field Trip Notice</h4><p class="pa">'+PARA+'</p><p class="pb">Thank you, IT Department</p></div></div><div class="helpp"></div></div><div class="sbar"><span class="pgn">Page 1 of 1</span><span class="mode">Insert</span><span class="caps">Caps Lock</span><span class="wc">24 words</span></div>';},
+ excel:function(){var cols=['A','B','C','D','E'];var data={A1:'Item',B1:'Qty',C1:'Price',D1:'Total',E1:'Updated',A2:'Pens',B2:'4',C2:'1.50',D2:'6.00',A3:'Rulers',B3:'2',C3:'2.00',D3:'4.00',A4:'Folders',B4:'5',C4:'3.25',D4:'16.25',A5:'Glue',B5:'3',C5:'1.75',D5:'5.25',A6:'Total'};var h='<div class="tb"><span class="ico">X</span><span class="fn">Tuck Shop Sales.xlsx</span><span class="st"></span></div><div class="fbar"><span class="nb">A1</span><span class="fx">fx</span><span class="fv"></span></div><div class="grid"><table><tr><th></th>'+cols.map(function(c){return '<th data-col="'+c+'">'+c+'</th>';}).join('')+'</tr>';for(var r=1;r<=6;r++){h+='<tr><th>'+r+'</th>';cols.forEach(function(c){var v=data[c+r]||'';var num=/^[\d.]+$/.test(v);h+='<td data-ref="'+c+r+'" class="'+(r===1?'hd':'')+(num?' n':'')+'">'+v+'</td>';});h+='</tr>';}h+='</table><div class="chartsheet"></div></div><div class="sheets"><span class="on">Sales</span><span>Sheet2</span><span class="cs" hidden>Chart1</span><em class="mode" style="margin-left:auto;font-style:normal;color:#555">Ready</em></div>';return h;},
+ ppt:function(){return '<div class="tb"><span class="ico">P</span><span class="fn">Science Fair.pptx</span><span class="st"></span></div><div class="bd"><div class="thumbs"><div class="th" data-n="1">1<div>Science Fair 2026</div></div><div class="th" data-n="2">2<div>Our Question</div></div><div class="th ac" data-n="3">3<div>Results</div></div></div><div class="slidev"><div class="slide main"><h5>Results</h5><ul><li>Plants grew 4 cm in sunlight</li><li>Shade plants grew 1 cm</li></ul></div></div><div class="show"><div class="slide"><h5>Science Fair 2026</h5><ul><li>Form 3 · Coralstone College</li></ul></div><span class="cap2">Slide Show</span></div></div><div class="sbar"><span class="sn">Slide 3 of 3</span><span>Normal view</span></div>';},
+ access:function(){return '<div class="tb"><span class="ico">A</span><span class="fn">School Trips.accdb</span><span class="st"></span></div><div class="bd"><aside class="anav"><b>All Access Objects</b><div>Tables</div><div class="on">&nbsp;Students</div><div>&nbsp;Trips</div><div>Forms</div><div>&nbsp;Trip Form</div></aside><div class="ds"><table><tr><th></th><th>ID</th><th>First Name</th><th>Surname</th><th>Trip Date</th><th>Depart</th></tr><tr><td></td><td>1</td><td>Aaliyah</td><td>Richardson</td><td>14/11/2026</td><td>08:30</td></tr><tr><td></td><td>2</td><td>Jaden</td><td>Brooks</td><td>14/11/2026</td><td>08:30</td></tr><tr class="cur"><td class="rsel">✎</td><td>3</td><td data-f="1">Maya</td><td data-f="2">Hodge</td><td data-f="3"></td><td data-f="4"></td></tr><tr><td>*</td><td>(New)</td><td></td><td></td><td></td><td></td></tr></table></div></div><div class="sbar"><span class="mode">Datasheet View</span><span>Record 3 of 3</span></div>';},
+ win:function(){return '<div class="bd"><div class="dsk"><div class="icons"><span><i></i>This PC</span><span><i style="background:#9ad0ff"></i>Recycle Bin</span></div><div class="win w2 back"><div class="wt"><span>Trip Letter.docx – Word</span><em>–▢✕</em></div><div class="files" style="color:#666">Field Trip Notice…</div></div><div class="win w1"><div class="wt"><span class="wn">Documents – File Explorer</span><em>–▢✕</em></div><div class="files"><div class="file" style="--fc:#2b579a"><i></i><span class="nm">Trip Letter.docx</span></div><div class="file sel2 f2" style="--fc:#1d6f42"><i></i><span class="nm">Tuck Shop Sales.xlsx</span></div><div class="file" style="--fc:#b7472a"><i></i><span class="nm">Science Fair.pptx</span></div><div class="file" style="--fc:#a4373a"><i></i><span class="nm">School Trips.accdb</span></div></div></div><div class="switcher"><div>File Explorer</div><div>Word</div><div>Excel</div></div><div class="helpp"></div><div class="lock"><b class="lt">8:15</b><span class="ld">Monday</span><small style="margin-top:8px;opacity:.8">Locked — press any key to sign in</small></div></div></div><div class="tbar"><span class="start"><i></i><i></i><i></i><i></i></span><span>Explorer</span><span>Word</span><span class="clk">8:15</span></div>';}
+};
+var COMMON='<div class="dlg"><div class="dh"><span class="dt"></span><span aria-hidden="true">✕</span></div><div class="dd"></div></div><div class="pill"></div>';
+function Scene(el){this.el=el;this.timers=[];}
+Scene.prototype.load=function(type){this.clear();this.type=type;this.el.className='scn sc-'+type;this.el.innerHTML=BUILD[type]()+COMMON;var t=nowTime();$$('.clk,.lt',this.el).forEach(function(x){x.textContent=t;});var ld=$('.ld',this.el);if(ld)ld.textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});};
+Scene.prototype.clear=function(){this.timers.forEach(clearTimeout);this.timers=[];};
+Scene.prototype.$=function(s){return this.el.querySelector(s);};
+Scene.prototype.$$=function(s){return $$(s,this.el);};
+Scene.prototype.T=function(ms,fn){this.timers.push(setTimeout(fn,reduced?Math.min(ms,ms*0.4):ms));};
+Scene.prototype.dlg=function(title,html){var d=this.$('.dlg');d.querySelector('.dt').textContent=title;d.querySelector('.dd').innerHTML=html;d.classList.add('on');};
+Scene.prototype.undlg=function(){this.$('.dlg').classList.remove('on');};
+Scene.prototype.pill=function(t){var p=this.$('.pill');p.textContent=t;p.classList.add('on');};
+Scene.prototype.cell=function(r){return this.$('td[data-ref="'+r+'"]');};
+Scene.prototype.active=function(r){this.$$('td.ac').forEach(function(x){x.classList.remove('ac');});var c=this.cell(r);if(c)c.classList.add('ac');var nb=this.$('.nb');if(nb)nb.textContent=r;var fv=this.$('.fv');if(fv&&c)fv.textContent=c.dataset.f||c.textContent;};
+Scene.prototype.setc=function(r,v,f){var c=this.cell(r);if(!c)return;c.textContent=v;if(f)c.dataset.f=f;c.classList.remove('fl');void c.offsetWidth;c.classList.add('fl');if(/^[\d.:\/]+$/.test(v))c.classList.add('n');};
+Scene.prototype.range=function(refs,cls){var self=this;refs.forEach(function(r){var c=self.cell(r);if(c)c.classList.add(cls||'rs');});};
+Scene.prototype.typeInto=function(el,text,ms,after){var self=this;text.split('').forEach(function(ch,i){self.T(ms*(i+1),function(){el.textContent+=ch;click();});});if(after)this.T(ms*(text.length+1),after);};
+function nowTime(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function today(){var d=new Date();return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();}
+function fld(l,v){return '<div class="fld"><span>'+l+'</span><b>'+v+'</b></div>';}
+function btns(a,b){return '<div class="dbtn"><i class="p">'+a+'</i><i>'+(b||'Cancel')+'</i></div>';}
+function wpara(S,html){S.$('.pa').innerHTML=html;}
+function cycleCase(S,steps){var sel=S.$('.sel');steps.forEach(function(st,i){S.T(i*800,function(){sel.textContent=st[0];S.pill(st[1]);});});}
+function moveTh(S,n){S.$$('.th').forEach(function(t){t.classList.toggle('ac',t.dataset.n==String(n));});}
+
+/* ---------- shortcut data ---------- */
+var E=[
+/* ===== GENERAL / WINDOWS ===== */
+{id:'copy',app:'gen',k:'Ctrl+KeyC',ch:1,sc:'word',a:'Copies the selected text or object.',s:'Copy',t:'Copy the selected text',n:'Works in Windows and every Office app. The original stays where it is.',f:function(S){S.$('.sel').classList.add('yel');S.pill('Copied “Pitch Lake” to the Clipboard');}},
+{id:'cut',app:'gen',k:'Ctrl+KeyX',ch:1,sc:'word',a:'Cuts (removes and copies) the selected text or object.',s:'Cut',t:'Cut the selected text',f:function(S){var s=S.$('.sel');s.style.maxWidth=s.offsetWidth+'px';s.style.display='inline-block';s.style.verticalAlign='bottom';s.style.overflow='hidden';S.T(30,function(){s.classList.add('gone');});S.pill('Cut to the Clipboard');}},
+{id:'paste',app:'gen',k:'Ctrl+KeyV',ch:1,sc:'word',a:'Pastes previously copied or cut content at the cursor position.',s:'Paste',t:'Paste the copied text at the cursor',p:function(S){wpara(S,'Our class will visit the '+CR+'on <span class="fri">Friday</span>. Please bring water, a hat and your notebook.');S.pill('Clipboard: “Pitch Lake ”');},f:function(S){var c=S.$('.cr');var sp=document.createElement('span');sp.className='ins';sp.textContent='Pitch Lake ';c.parentNode.insertBefore(sp,c);S.pill('Pasted');}},
+{id:'undo',app:'gen',k:'Ctrl+KeyZ',ch:1,sc:'word',a:'Undoes the most recent action.',s:'Undo',t:'Undo your last action',p:function(S){S.$('.sel').style.fontWeight='700';S.pill('Oops — you just made this bold');},f:function(S){S.$('.sel').style.fontWeight='400';S.pill('Undo Bold');}},
+{id:'redo',app:'gen',k:'Ctrl+KeyY',ch:1,sc:'word',a:'Redoes an action that was undone.',s:'Redo',t:'Redo the action you just undid',n:'In Office, if there is nothing to redo, Ctrl + Y repeats your last action instead.',p:function(S){S.pill('You just undid Bold');},f:function(S){S.$('.sel').style.fontWeight='700';S.pill('Redo Bold');}},
+{id:'selall',app:'gen',k:'Ctrl+KeyA',sc:'word',a:'Selects everything — the whole document, all the files in a folder, or (in Excel) the current data region.',s:'Select all',t:'Select the whole document',n:'In Excel, press Ctrl + A once for the data region and again for the whole worksheet.',f:function(S){S.$('.pg').classList.add('hl');S.pill('Everything selected');}},
+{id:'save',app:'gen',k:'Ctrl+KeyS',ch:1,sc:'word',a:'Saves the current document.',s:'Save',t:'Save your document',n:'The first time you save a new file, Ctrl + S opens Save As so you can name it.',p:function(S){S.$('.st').textContent='Not saved •';},f:function(S){S.$('.st').innerHTML='<span class="spin"></span> Saving…';S.T(700,function(){S.$('.st').textContent='Saved ✓';S.pill('Saved to Documents');});}},
+{id:'print',app:'gen',k:'Ctrl+KeyP',ch:1,sc:'word',a:'Opens the print dialog box.',s:'Print',t:'Print the document',n:'In Office 2010 and later (including Microsoft 365), Ctrl + P opens the Print screen in Backstage view rather than a small dialog box.',f:function(S){S.dlg('Print',fld('Printer','Lab Printer 2')+fld('Copies','1')+fld('Pages','All pages')+btns('Print'));}},
+{id:'find',app:'gen',k:'Ctrl+KeyF',sc:'word',a:'Finds a word or phrase in the document.',s:'Find',t:'Find the word “Pond” in this letter',n:'In Word, Ctrl + F opens the search box in the Navigation pane. In Excel and PowerPoint it opens the Find dialog box.',f:function(S){S.$('.navp').classList.add('open');S.T(350,function(){S.$('.srch').textContent='Pond';S.$('.res').innerHTML='<div style="margin-top:4px">1 result</div>';var s=S.$('.sel');s.innerHTML='Salt <span class="yel">Pond</span>';s.classList.remove('sel');});}},
+{id:'replace',app:'gen',k:'Ctrl+KeyH',sc:'word',a:'Opens Find and Replace so you can swap one word for another.',s:'Find and Replace',t:'Replace “Friday” with “Thursday”',n:'Opens the Replace tab in Word and Excel, and the Replace dialog box in PowerPoint. (In web browsers Ctrl + H opens History.)',f:function(S){S.dlg('Find and Replace','<div class="tabsx"><span>Find</span><span class="on">Replace</span><span>Go To</span></div>'+fld('Find what','Friday')+fld('Replace with','Thursday')+btns('Replace All'));S.T(900,function(){S.undlg();var f=S.$('.fri');f.textContent='Thursday';f.classList.add('ins');S.pill('1 replacement made');});}},
+{id:'open',app:'gen',k:'Ctrl+KeyO',sc:'word',a:'Opens an existing file.',s:'Open a file',t:'Open an existing file',n:'In Microsoft 365, Ctrl + O shows the Open screen in Backstage view; Ctrl + F12 jumps straight to the Open dialog box.',f:function(S){S.dlg('Open','<div style="line-height:1.7">📄 Trip Letter.docx<br>📄 Class List.docx<br>📄 Minutes – PTA.docx</div>'+btns('Open'));}},
+{id:'new',app:'gen',k:'Ctrl+KeyN',r:'browser',sc:'word',a:'Creates a new blank document, workbook or presentation.',s:'New blank file',t:'Start a new blank document',n:'Web browsers use Ctrl + N for a new window, so in this game tap it on the on-screen keyboard.',f:function(S){S.$('.fn').textContent='Document2';S.$('.pg').innerHTML='<div style="height:120px"><i class="cr"></i></div>';S.pill('New blank document');}},
+{id:'alttab',app:'gen',k:'Alt+Tab',ch:1,r:'os',sc:'win',a:'Switches between open windows or applications.',s:'Switch windows',t:'Switch to another open window',n:'Hold Alt and keep tapping Tab to move through the windows; let go to choose one.',f:function(S){var sw=S.$('.switcher');sw.classList.add('on');var d=$$('div',sw);d[0].classList.add('on');S.T(500,function(){d[0].classList.remove('on');d[1].classList.add('on');click();});S.T(1200,function(){sw.classList.remove('on');S.$('.w1').classList.add('back');S.$('.w2').classList.remove('back');S.$('.w2').style.zIndex=2;S.pill('Switched to Word');});}},
+{id:'altf4',app:'gen',k:'Alt+F4',ch:1,r:'os',sc:'win',a:'Closes the current window or application.',s:'Close window or app',t:'Close the File Explorer window',n:'On many laptops you hold Fn as well to reach F4. Office asks you to save first if there are unsaved changes.',f:function(S){S.$('.w1').classList.add('closing');S.pill('Window closed');}},
+{id:'wind',app:'gen',k:'Win+KeyD',r:'os',sc:'win',a:'Shows the desktop by minimising every window (press again to bring them back).',s:'Show the desktop',t:'Show the desktop',f:function(S){S.$('.w1').classList.add('min');S.T(120,function(){S.$('.w2').classList.add('min');});S.pill('Desktop');}},
+{id:'winl',app:'gen',k:'Win+KeyL',r:'os',sc:'win',a:'Locks the computer so nobody can use it while you are away.',s:'Lock the computer',t:'Lock the computer before you leave your desk',f:function(S){S.$('.lock').classList.add('on');}},
+{id:'wine',app:'gen',k:'Win+KeyE',r:'os',sc:'win',a:'Opens File Explorer.',s:'Open File Explorer',t:'Open File Explorer',p:function(S){S.$('.w1').style.display='none';},f:function(S){var w=S.$('.w1');w.style.display='';w.classList.add('opening');S.pill('File Explorer');}},
+{id:'f1',app:'gen',k:'F1',ch:1,sc:'win',a:'Opens the Help menu in most applications.',s:'Help',t:'Open Help',n:'Web browsers may also open their own Help page for F1.',f:function(S){var h=S.$('.helpp');h.innerHTML='<b>Help</b><div class="box" style="border:1px solid #bbb;margin:4px 0;padding:2px">Search help…</div>• Get started<br>• Shortcuts<br>• Contact support';h.classList.add('on');}},
+{id:'f2',app:'gen',k:'F2',ch:1,sc:'win',a:'Renames a selected file or folder in most operating systems.',s:'Rename file or folder',t:'Rename the selected file',n:'In Excel, F2 does something different: it edits the active cell.',f:function(S){var nm=S.$('.f2 .nm');nm.classList.add('edit');nm.innerHTML='<span class="hl">Tuck Shop Sales</span>.xlsx';S.T(700,function(){nm.textContent='.xlsx';var sp=document.createElement('span');nm.insertBefore(sp,nm.firstChild);S.typeInto(sp,'Term 1 Sales',70,function(){nm.classList.remove('edit');});});}},
+{id:'f5gen',app:'gen',k:'F5',ch:1,sc:'win',a:'Refreshes the current window or starts a slideshow in presentation software.',s:'Refresh / start slideshow',t:'Refresh the File Explorer window',n:'In PowerPoint F5 starts the slide show; in Word and Excel it opens Go To.',f:function(S){var fs=S.$('.files');fs.style.opacity='.3';S.$('.wn').innerHTML='<span class="spin"></span> Documents – File Explorer';S.T(700,function(){fs.style.opacity='1';S.$('.wn').textContent='Documents – File Explorer';var d=document.createElement('div');d.className='file ins';d.style.setProperty('--fc','#2b579a');d.innerHTML='<i></i><span class="nm">Permission Slip.docx</span>';fs.appendChild(d);});}},
+{id:'f12',app:'gen',k:'F12',ch:1,r:'browser',sc:'word',a:"Opens the 'Save As' dialog box in many word processing applications.",s:'Save As',t:'Save a copy with a new name (Save As)',n:'Works in Word, Excel and PowerPoint. Browsers use F12 for developer tools, so tap it on screen here.',f:function(S){S.dlg('Save As',fld('File name','Trip Letter v2')+fld('Save as type','Word Document')+btns('Save'));}},
+{id:'del',app:'gen',k:'Delete',ch:1,sc:'word',a:'Deletes the character immediately to the right of the cursor.',s:'Delete character to the right',t:'Remove the extra “k” to the right of the cursor',n:'In File Explorer, Delete sends the selected file to the Recycle Bin.',p:function(S){wpara(S,'Our class will visit the Pitch La'+CR+'<span class="x">k</span>ke on Friday. Please bring water, a hat and your notebook.');},f:function(S){var x=S.$('.x');x.style.maxWidth='0';x.style.opacity='0';S.pill('Deleted to the right');}},
+{id:'shdel',app:'gen',k:'Shift+Delete',sc:'win',a:'Permanently deletes the selected file without sending it to the Recycle Bin.',s:'Delete file permanently',t:'Permanently delete the selected file (skip the Recycle Bin)',n:'Windows asks you to confirm. Be careful — the file cannot be restored from the Recycle Bin.',f:function(S){S.dlg('Delete File','Are you sure you want to permanently delete this file?'+btns('Yes','No'));S.T(1000,function(){S.undlg();var f=S.$('.f2');f.style.opacity='0';f.style.transform='translateX(30px)';});}},
+{id:'tab',app:'gen',k:'Tab',ch:1,sc:'word',a:'Moves the cursor forward to the next pre-set tab stop, commonly used to indent paragraphs or align columns of text.',s:'Next tab stop',t:'Indent the first line of the paragraph to the next tab stop',p:function(S){wpara(S,CR+'Our class will visit the Pitch Lake on Friday. Please bring water, a hat and your notebook.');},f:function(S){var c=S.$('.cr');var sp=document.createElement('span');sp.style.display='inline-block';sp.style.width='0';c.parentNode.insertBefore(sp,c);S.T(20,function(){sp.style.width='36px';});S.pill('Moved to the next tab stop');}},
+{id:'esc',app:'gen',k:'Escape',ch:1,sc:'word',a:'Cancels the current action or closes an open menu, dialog box, or full-screen view.',s:'Cancel / close menu',t:'Close this dialog box without making changes',p:function(S){S.dlg('Font',fld('Font','Calibri')+fld('Size','11')+btns('OK'));},f:function(S){S.undlg();S.pill('Cancelled');}},
+{id:'ins',app:'gen',k:'Insert',ch:1,sc:'word',a:'Toggles between Insert mode (new text pushes existing text forward) and Overtype mode (new text replaces existing text).',s:'Insert ↔ Overtype',t:'Switch to Overtype mode',n:'In recent versions of Word you must first tick “Use the Insert key to control overtype mode” in File › Options › Advanced.',p:function(S){wpara(S,'Our class will visit the Pitch Lake on '+CR+'<span class="ov">Friday</span>. Please bring water, a hat and your notebook.');},f:function(S){var m=S.$('.mode');m.textContent='Overtype';m.classList.add('on');var ov=S.$('.ov');var w='Monday';w.split('').forEach(function(ch,i){S.T(450+i*160,function(){ov.textContent=w.slice(0,i+1)+'Friday'.slice(i+1);click();});});}},
+{id:'caps',app:'gen',k:'CapsLock',ch:1,sc:'word',a:'Locks the keyboard so that letters are typed in uppercase without holding Shift.',s:'Type in capitals',t:'Turn on capitals so you can type the heading in uppercase',n:'Press Caps Lock again to turn it off. Many keyboards have a light that shows when it is on.',p:function(S){S.$('.hd').innerHTML='Field Trip '+CR;},f:function(S){var c=S.$('.caps');c.classList.add('on');var sp=document.createElement('span');var cr=S.$('.cr');cr.parentNode.insertBefore(sp,cr);S.typeInto(sp,'NOTICE',140);}},
+{id:'bksp',app:'gen',k:'Backspace',ch:1,sc:'word',a:'Deletes the character immediately to the left of the cursor.',s:'Delete character to the left',t:'Remove the extra “e” to the left of the cursor',p:function(S){wpara(S,'Our class will visit the Pitch Lake<span class="x">e</span>'+CR+' on Friday. Please bring water, a hat and your notebook.');},f:function(S){var x=S.$('.x');x.style.maxWidth='0';x.style.opacity='0';S.pill('Deleted to the left');}},
+{id:'enter',app:'gen',k:'Enter',ch:1,sc:'word',a:'Moves the cursor to a new line or paragraph, or confirms a selected command.',s:'New line or paragraph',t:'Start a new paragraph at the cursor',p:function(S){wpara(S,'Our class will visit the Pitch Lake on Friday.'+CR+' Please bring water, a hat and your notebook.');},f:function(S){wpara(S,'Our class will visit the Pitch Lake on Friday.');var p=document.createElement('p');p.className='ins';p.innerHTML=CR+'Please bring water, a hat and your notebook.';S.$('.pa').after(p);S.pill('New paragraph');}},
+/* ===== WORD ===== */
+{id:'bold',app:'word',k:'Ctrl+KeyB',ch:1,sc:'word',a:'Applies bold formatting to selected text.',s:'Bold',t:'Make the selected text bold',n:'Your notes group Ctrl + B / I / U together. They work the same way in Excel and PowerPoint.',f:function(S){S.$('.sel').style.fontWeight='700';S.pill('Bold');}},
+{id:'ital',app:'word',k:'Ctrl+KeyI',ch:1,sc:'word',a:'Applies italic formatting to selected text.',s:'Italic',t:'Make the selected text italic',f:function(S){S.$('.sel').style.fontStyle='italic';S.pill('Italic');}},
+{id:'undl',app:'word',k:'Ctrl+KeyU',ch:1,sc:'word',a:'Applies underline formatting to selected text.',s:'Underline',t:'Underline the selected text',f:function(S){S.$('.sel').style.textDecoration='underline';S.pill('Underline');}},
+{id:'alL',app:'word',k:'Ctrl+KeyL',sc:'word',a:'Aligns the paragraph to the left margin.',s:'Align left',t:'Align the paragraph to the left',p:function(S){S.$('.pg').style.textAlign='center';},f:function(S){S.$('.pg').style.textAlign='left';S.pill('Align Left');}},
+{id:'alE',app:'word',k:'Ctrl+KeyE',sc:'word',a:'Centres the paragraph between the margins.',s:'Centre',t:'Centre the text',n:'In Excel, Ctrl + E is Flash Fill (Excel 2013 and later) instead.',f:function(S){S.$('.pg').style.textAlign='center';S.pill('Centre');}},
+{id:'alR',app:'word',k:'Ctrl+KeyR',sc:'word',a:'Aligns the paragraph to the right margin.',s:'Align right',t:'Align the text to the right',n:'In Excel, Ctrl + R is Fill Right instead.',f:function(S){S.$('.pg').style.textAlign='right';S.pill('Align Right');}},
+{id:'alJ',app:'word',k:'Ctrl+KeyJ',sc:'word',a:'Justifies the paragraph so it lines up with both the left and right margins.',s:'Justify',t:'Justify the paragraph',f:function(S){S.$('.pg').style.textAlign='justify';S.pill('Justify');}},
+{id:'ls1',app:'word',k:'Ctrl+Digit1',r:'browser',sc:'word',a:'Sets single line spacing.',s:'Single line spacing',t:'Change to single line spacing',n:'Use the 1 on the top row, not the number pad. In Excel, Ctrl + 1 opens Format Cells instead. Browsers use Ctrl + 1 to switch tabs, so tap it on screen.',p:function(S){S.$('.pg').style.lineHeight='2';},f:function(S){S.$('.pg').style.lineHeight='1.05';S.pill('Line spacing 1.0');}},
+{id:'ls2',app:'word',k:'Ctrl+Digit2',r:'browser',sc:'word',a:'Sets double line spacing.',s:'Double line spacing',t:'Change to double line spacing',n:'Browsers use Ctrl + 2 to switch tabs, so tap it on screen.',f:function(S){S.$('.pg').style.lineHeight='2';S.pill('Line spacing 2.0');}},
+{id:'ls5',app:'word',k:'Ctrl+Digit5',r:'browser',sc:'word',a:'Sets 1.5 line spacing.',s:'1.5 line spacing',t:'Change to 1.5 line spacing',n:'Browsers use Ctrl + 5 to switch tabs, so tap it on screen.',f:function(S){S.$('.pg').style.lineHeight='1.6';S.pill('Line spacing 1.5');}},
+{id:'pgbrk',app:'word',k:'Ctrl+Enter',sc:'word',a:'Inserts a page break so the text after the cursor starts on a new page.',s:'Page break',t:'Insert a page break before the sign-off',p:function(S){S.$('.pb').insertAdjacentHTML('afterbegin',CR);},f:function(S){var d=document.createElement('div');d.className='pbrk ins';d.textContent='Page Break';S.$('.pb').before(d);S.$('.pb').style.marginTop='60px';S.$('.pgn').textContent='Page 2 of 2';}},
+{id:'fup',app:'word',k:'Ctrl+Shift+Period',sc:'word',a:'Increases the font size of the selected text to the next size in the list.',s:'Bigger font',t:'Make the selected text bigger',n:'Ctrl + ] grows the text 1 point at a time. Ctrl + Shift + > also works in PowerPoint and Outlook.',f:function(S){S.$('.sel').style.fontSize='1.45em';S.pill('Font size 11 → 12 → 14');}},
+{id:'fdn',app:'word',k:'Ctrl+Shift+Comma',sc:'word',a:'Decreases the font size of the selected text to the previous size in the list.',s:'Smaller font',t:'Make the selected text smaller',n:'Ctrl + [ shrinks the text 1 point at a time.',f:function(S){S.$('.sel').style.fontSize='.75em';S.pill('Font size 11 → 10 → 9');}},
+{id:'link',app:'word',k:'Ctrl+KeyK',sc:'word',a:'Inserts a hyperlink.',s:'Insert hyperlink',t:'Turn the selected text into a hyperlink',n:'Ctrl + K inserts a hyperlink in Excel and PowerPoint too.',f:function(S){S.dlg('Insert Hyperlink',fld('Text','Pitch Lake')+fld('Address','pitchlake-trip.html')+btns('OK'));S.T(900,function(){S.undlg();var s=S.$('.sel');s.classList.remove('sel');s.classList.add('lnk');});}},
+{id:'f7',app:'word',k:'F7',ch:1,sc:'word',a:'Starts a spelling and grammar check in most word processors.',s:'Spelling & grammar',t:'Check the spelling and grammar',n:'In Microsoft 365, F7 opens the Editor pane. F7 checks spelling in Excel and PowerPoint as well.',p:function(S){wpara(S,'Our class will visit the Pitch Lake on Friday. You will <span class="sq squig">recieve</span> a map.');},f:function(S){var n=S.$('.navp');n.classList.add('open');n.querySelector('b').textContent='Editor';S.$('.srch').textContent='Spelling';S.$('.res').innerHTML='recieve → <b style="display:inline;color:#1d7a4e">receive</b>';S.T(900,function(){var q=S.$('.sq');q.textContent='receive';q.classList.remove('squig');q.classList.add('ins');});}},
+{id:'case',app:'word',k:'Shift+F3',sc:'word',a:'Changes the case of the selected text, cycling between UPPERCASE, lowercase and Capitalise Each Word.',s:'Change case',t:'Change the case of the selected text',n:'Keep pressing Shift + F3 to cycle through the options. On some laptops you also hold Fn.',p:function(S){S.$('.sel').textContent='pitch lake';},f:function(S){cycleCase(S,[['PITCH LAKE','UPPERCASE'],['Pitch Lake','Capitalise Each Word']]);}},
+{id:'chome',app:'word',k:'Ctrl+Home',sc:'word',a:'Moves the cursor to the start of the document.',s:'Go to start of document',t:'Jump to the very start of the document',p:function(S){S.$('.pb').insertAdjacentHTML('beforeend',CR);},f:function(S){var c=S.$('.cr');c.remove();S.$('.hd').insertAdjacentHTML('afterbegin',CR);S.pill('Start of document');}},
+{id:'cend',app:'word',k:'Ctrl+End',sc:'word',a:'Moves the cursor to the end of the document.',s:'Go to end of document',t:'Jump to the very end of the document',p:function(S){S.$('.hd').insertAdjacentHTML('afterbegin',CR);},f:function(S){var c=S.$('.cr');c.remove();S.$('.pb').insertAdjacentHTML('beforeend',CR);S.pill('End of document');}},
+{id:'colbrk',app:'word',k:'Ctrl+Shift+Enter',sc:'word',a:'Inserts a column break so the text after the cursor moves to the top of the next column.',s:'Column break',t:'Insert a column break before the sign-off',n:'Only useful when the page is set out in columns. Inside a table, Ctrl + Shift + Enter splits the table instead.',p:function(S){S.$('.pg').classList.add('cols');S.$('.pb').insertAdjacentHTML('afterbegin',CR);},f:function(S){var d=document.createElement('div');d.className='cbrk';d.textContent='Column Break';S.$('.pb').before(d);S.pill('Column break');}},
+{id:'ttab',app:'word',k:'Tab',sc:'word',tbl:1,a:'Moves to the next cell in a table (in the last cell it adds a new row).',s:'Next table cell',t:'In this table, move to the next cell',n:'Outside a table, Tab moves to the next tab stop. To type a real tab inside a cell, press Ctrl + Tab.',p:function(S){S.$('.pa').innerHTML='<table class="wt"><tr><td>Name</td><td>Form</td><td>Paid</td></tr><tr><td class="ac">Maya</td><td>3B</td><td>Yes</td></tr></table>';},f:function(S){var c=S.$$('table.wt td');c[3].classList.remove('ac');c[4].classList.add('ac');S.pill('Next cell');}},
+{id:'tstab',app:'word',k:'Shift+Tab',sc:'word',a:'Moves to the previous cell in a table.',s:'Previous table cell',t:'In this table, move back to the previous cell',p:function(S){S.$('.pa').innerHTML='<table class="wt"><tr><td>Name</td><td>Form</td><td>Paid</td></tr><tr><td>Maya</td><td class="ac">3B</td><td>Yes</td></tr></table>';},f:function(S){var c=S.$$('table.wt td');c[4].classList.remove('ac');c[3].classList.add('ac');S.pill('Previous cell');}},
+{id:'wfont',app:'word',k:'Ctrl+KeyD',sc:'word',a:'Opens the Font dialog box.',s:'Font dialog box',t:'Open the Font dialog box',n:'Same keys, different job: in Excel Ctrl + D fills down; in PowerPoint it duplicates.',f:function(S){S.dlg('Font','<div class="tabsx"><span class="on">Font</span><span>Advanced</span></div>'+fld('Font','Calibri')+fld('Style','Regular')+fld('Size','11')+btns('OK'));}},
+{id:'wind2',app:'word',k:'Ctrl+KeyM',sc:'word',a:'Indents the paragraph from the left margin.',s:'Indent paragraph',t:'Indent the whole paragraph from the left',n:'Ctrl + Shift + M removes the indent. In PowerPoint, Ctrl + M inserts a new slide instead.',f:function(S){S.$('.pa').style.paddingLeft='36px';S.pill('Indent');}},
+{id:'wf5',app:'word',k:'F5',sc:'word',a:'Opens the Go To tab of the Find and Replace dialog box.',s:'Go To (Word)',t:'Open Go To so you can jump to page 3',n:'Ctrl + G does the same thing.',f:function(S){S.dlg('Find and Replace','<div class="tabsx"><span>Find</span><span>Replace</span><span class="on">Go To</span></div>'+fld('Go to what','Page')+fld('Page number','3')+btns('Go To','Close'));}},
+/* ===== EXCEL ===== */
+{id:'xdate',app:'excel',k:'Ctrl+Semicolon',sc:'excel',a:'Enters the current date into the active cell.',s:"Insert today's date",t:"Enter today's date in the active cell",n:'The date is typed in as a fixed value — it will not update tomorrow. The format follows your Windows region settings.',p:function(S){S.active('E2');},f:function(S){S.setc('E2',today());S.active('E2');}},
+{id:'xtime',app:'excel',k:'Ctrl+Shift+Semicolon',sc:'excel',a:'Enters the current time into the active cell.',s:'Insert current time',t:'Enter the current time in the active cell',n:'Written as Ctrl + Shift + : — the colon shares the semicolon key, so you hold Shift.',p:function(S){S.active('E2');},f:function(S){S.setc('E2',nowTime());S.active('E2');}},
+{id:'xsum',app:'excel',k:'Alt+Equal',sc:'excel',a:'Inserts an AutoSum (=SUM) formula that adds up the numbers above or to the left.',s:'AutoSum',t:'Total the Qty column with AutoSum',n:'Press Enter afterwards to accept the formula.',p:function(S){S.active('B6');},f:function(S){S.range(['B2','B3','B4','B5'],'ants');S.$('.fv').textContent='=SUM(B2:B5)';S.cell('B6').textContent='=SUM(B2:B5)';S.T(1000,function(){S.$$('.ants').forEach(function(c){c.classList.remove('ants');});S.setc('B6','14','=SUM(B2:B5)');});}},
+{id:'xf2',app:'excel',k:'F2',sc:'excel',a:'Edits the active cell, putting the cursor at the end of its contents.',s:'Edit active cell',t:'Edit the formula in the active cell',n:'In Windows File Explorer, F2 renames a file instead.',p:function(S){S.cell('D2').dataset.f='=B2*C2';S.active('D2');},f:function(S){var c=S.cell('D2');c.innerHTML='=B2*C2'+CR;S.range(['B2'],'ref1');S.range(['C2'],'ref2');S.$('.mode').textContent='Edit';}},
+{id:'xf4',app:'excel',k:'F4',sc:'excel',a:'While editing a formula, cycles the cell reference through absolute and relative versions ($C$2 → C$2 → $C2 → C2).',s:'Absolute reference ($)',t:'Make the C2 reference in this formula absolute',n:'When you are not editing a formula, F4 repeats your last action. On some laptops press Fn + F4.',p:function(S){var c=S.cell('D2');c.innerHTML='=B2*C2'+CR;S.active('D2');S.$('.fv').textContent='=B2*C2';S.$('.mode').textContent='Edit';},f:function(S){var c=S.cell('D2');['$C$2','C$2','$C2','$C$2'].forEach(function(r,i){S.T(i*650,function(){c.innerHTML='=B2*'+r+CR;S.$('.fv').textContent='=B2*'+r;});});}},
+{id:'xfmt',app:'excel',k:'Ctrl+Digit1',r:'browser',sc:'excel',a:'Opens the Format Cells dialog box.',s:'Format Cells',t:'Open the Format Cells dialog box',n:'Use the 1 on the top row. In Word, Ctrl + 1 sets single line spacing instead. Browsers use Ctrl + 1 to switch tabs, so tap it on screen.',p:function(S){S.active('C2');},f:function(S){S.dlg('Format Cells','<div class="tabsx"><span class="on">Number</span><span>Alignment</span><span>Font</span><span>Border</span></div>'+fld('Category','Currency')+fld('Decimal places','2')+btns('OK'));}},
+{id:'xfd',app:'excel',k:'Ctrl+KeyD',sc:'excel',a:'Fills down — copies the top cell of the selection into the cells below.',s:'Fill down',t:'Fill the Total formula down to the rows below',n:'Formulas adjust as they are copied (relative references). In Word Ctrl + D opens the Font dialog box.',p:function(S){['D3','D4','D5'].forEach(function(r){S.cell(r).textContent='';});S.range(['D2','D3','D4','D5']);S.active('D2');S.$('.fv').textContent='=B2*C2';},f:function(S){[['D3','4.00'],['D4','16.25'],['D5','5.25']].forEach(function(x,i){S.T(i*220,function(){S.setc(x[0],x[1]);});});}},
+{id:'xfr',app:'excel',k:'Ctrl+KeyR',sc:'excel',a:'Fills right — copies the left-most cell of the selection into the cells to the right.',s:'Fill right',t:'Fill the total across to the right',n:'In Word, Ctrl + R aligns text to the right instead.',p:function(S){S.cell('B6').textContent='14';S.cell('B6').classList.add('n');S.range(['B6','C6','D6']);S.active('B6');S.$('.fv').textContent='=SUM(B2:B5)';},f:function(S){S.T(0,function(){S.setc('C6','8.50');});S.T(220,function(){S.setc('D6','31.50');});}},
+{id:'xcarr',app:'excel',k:'Ctrl+ArrowDown',sc:'excel',a:'Ctrl + an arrow key jumps to the edge of the current block of data in that direction.',s:'Jump to edge of data',t:'Jump to the last filled cell at the bottom of column A',n:'Works with all four arrows: Ctrl + → jumps to the right-hand edge, and so on.',p:function(S){S.active('A1');},f:function(S){['A2','A3','A4','A5','A6'].forEach(function(r,i){S.T(i*70,function(){S.active(r);});});}},
+{id:'xcol',app:'excel',k:'Ctrl+Space',sc:'excel',a:'Selects the entire column of the active cell.',s:'Select column',t:'Select the whole column',p:function(S){S.active('C3');},f:function(S){S.range(['C1','C2','C3','C4','C5','C6']);S.$('th[data-col="C"]').style.background='#bfe3cc';}},
+{id:'xrow',app:'excel',k:'Shift+Space',sc:'excel',a:'Selects the entire row of the active cell.',s:'Select row',t:'Select the whole row',p:function(S){S.active('C3');},f:function(S){S.range(['A3','B3','C3','D3','E3']);}},
+{id:'xae',app:'excel',k:'Alt+Enter',sc:'excel',a:'Starts a new line inside the same cell.',s:'New line in a cell',t:'Start a new line inside this cell',n:'Pressing Enter on its own would leave the cell instead.',p:function(S){var c=S.cell('A3');c.innerHTML='Rulers'+CR;S.active('A3');S.$('.mode').textContent='Edit';},f:function(S){var c=S.cell('A3');c.classList.add('ml');c.innerHTML='Rulers<br>'+CR;S.T(300,function(){var sp=document.createElement('span');c.insertBefore(sp,c.querySelector('.cr'));S.typeInto(sp,'(30 cm)',80);});}},
+{id:'xform',app:'excel',k:'Ctrl+Backquote',sc:'excel',a:'Shows or hides the formulas in the cells instead of their results.',s:'Show formulas',t:'Show the formulas instead of the results',n:'The ` (grave accent) key is to the left of 1. Press it again to go back.',f:function(S){S.$('.grid').classList.add('formulas');[['D2','=B2*C2'],['D3','=B3*C3'],['D4','=B4*C4'],['D5','=B5*C5']].forEach(function(x){S.cell(x[0]).textContent=x[1];S.cell(x[0]).classList.remove('n');});S.pill('Formulas shown');}},
+{id:'xf11',app:'excel',k:'F11',r:'browser',sc:'excel',a:'Creates a chart of the selected data on a new chart sheet.',s:'Chart on a new sheet',t:'Make a chart of the selected data on its own sheet',n:'Alt + F1 puts the chart on the same sheet instead. Browsers use F11 for full screen, so tap it on screen.',p:function(S){S.range(['A2','A3','A4','A5','B2','B3','B4','B5']);},f:function(S){var cs=S.$('.chartsheet');cs.innerHTML='<svg viewBox="0 0 200 110" width="80%" height="80%" aria-hidden="true"><line x1="20" y1="95" x2="190" y2="95" stroke="#999"/><rect x="35" y="47" width="25" height="48" fill="#1d6f42"/><rect x="75" y="71" width="25" height="24" fill="#1d6f42"/><rect x="115" y="35" width="25" height="60" fill="#1d6f42"/><rect x="155" y="59" width="25" height="36" fill="#1d6f42"/><text x="100" y="18" font-size="10" text-anchor="middle" fill="#333">Qty</text></svg>';cs.classList.add('on');var t=S.$('.cs');t.hidden=false;S.$('.sheets .on').classList.remove('on');t.classList.add('on');}},
+/* ===== POWERPOINT ===== */
+{id:'pf5',app:'ppt',k:'F5',sc:'ppt',a:'Starts the slide show from the first slide.',s:'Slide show from start',t:'Start the slide show from the beginning',n:'Your Section 4 notes describe F5 as starting a slideshow in presentation software.',f:function(S){S.$('.show').classList.add('on');S.$('.sn').textContent='Slide 1 of 3';}},
+{id:'psf5',app:'ppt',k:'Shift+F5',sc:'ppt',a:'Starts the slide show from the current slide.',s:'Slide show from current slide',t:'Start the slide show from the slide you are on',f:function(S){var sh=S.$('.show');sh.querySelector('.slide').innerHTML=S.$('.slide.main').innerHTML;sh.classList.add('on');}},
+{id:'pnew',app:'ppt',k:'Ctrl+KeyM',sc:'ppt',a:'Inserts a new slide after the current one.',s:'New slide',t:'Add a new slide',n:'In Word, Ctrl + M indents a paragraph instead.',f:function(S){var th=document.createElement('div');th.className='th newth';th.dataset.n='4';th.innerHTML='4<div style="color:#999">Click to add title</div>';S.$('.thumbs').appendChild(th);moveTh(S,4);S.$('.slide.main').innerHTML='<h5 style="color:#bbb">Click to add title</h5><ul style="color:#bbb"><li>Click to add text</li></ul>';S.$('.sn').textContent='Slide 4 of 4';}},
+{id:'pdup',app:'ppt',k:'Ctrl+KeyD',sc:'ppt',a:'Duplicates the selected slide (or the selected object on a slide).',s:'Duplicate slide',t:'Duplicate the current slide',n:'In Word Ctrl + D opens the Font dialog box; in Excel it fills down.',f:function(S){var th=document.createElement('div');th.className='th newth';th.dataset.n='4';th.innerHTML='4<div>Results</div>';S.$('.thumbs').appendChild(th);moveTh(S,4);S.$('.sn').textContent='Slide 4 of 4';S.pill('Slide duplicated');}},
+{id:'pb',app:'ppt',k:'KeyB',sc:'ppt',a:'During a slide show, turns the screen black (press again to return).',s:'Black screen',t:'During the show, blank the screen to black',n:'The full stop (.) key does the same.',p:function(S){S.$('.show').classList.add('on');},f:function(S){S.$('.show').classList.add('black');S.pill('Black screen');}},
+{id:'pw',app:'ppt',k:'KeyW',sc:'ppt',a:'During a slide show, turns the screen white (press again to return).',s:'White screen',t:'During the show, blank the screen to white',n:'The comma (,) key does the same.',p:function(S){S.$('.show').classList.add('on');},f:function(S){S.$('.show').classList.add('white');S.pill('White screen');}},
+{id:'pesc',app:'ppt',k:'Escape',sc:'ppt',a:'Ends the slide show and returns to the normal view.',s:'End slide show',t:'End the slide show',p:function(S){S.$('.show').classList.add('on');},f:function(S){S.$('.show').classList.remove('on');S.pill('Back to Normal view');}},
+/* ===== ACCESS ===== */
+{id:'af11',app:'access',k:'F11',r:'browser',sc:'access',a:'Shows or hides the Navigation Pane.',s:'Show/hide Navigation Pane',t:'Hide the Navigation Pane to give the table more room',n:'Browsers use F11 for full screen, so tap it on screen.',f:function(S){S.$('.anav').classList.add('closed');S.pill('Navigation Pane hidden');}},
+{id:'adate',app:'access',k:'Ctrl+Semicolon',sc:'access',a:'Inserts the current date into the field.',s:"Insert today's date (Access)",t:"Enter today's date in the Trip Date field",n:'The same keys insert the date in Excel.',p:function(S){S.$('[data-f="3"]').classList.add('af');},f:function(S){var c=S.$('[data-f="3"]');c.textContent=today();c.classList.add('ins');}},
+{id:'atime',app:'access',k:'Ctrl+Shift+Semicolon',sc:'access',a:'Inserts the current time into the field.',s:'Insert current time (Access)',t:'Enter the current time in the Depart field',p:function(S){S.$('[data-f="4"]').classList.add('af');},f:function(S){var c=S.$('[data-f="4"]');c.textContent=nowTime();c.classList.add('ins');}},
+{id:'atab',app:'access',k:'Tab',sc:'access',a:'Moves to the next field.',s:'Next field',t:'Move to the next field in this record',n:'Enter also moves to the next field in a datasheet.',p:function(S){S.$('[data-f="1"]').classList.add('af');},f:function(S){S.$('[data-f="1"]').classList.remove('af');S.$('[data-f="2"]').classList.add('af');}},
+{id:'astab',app:'access',k:'Shift+Tab',sc:'access',a:'Moves to the previous field.',s:'Previous field',t:'Move back to the previous field',p:function(S){S.$('[data-f="2"]').classList.add('af');},f:function(S){S.$('[data-f="2"]').classList.remove('af');S.$('[data-f="1"]').classList.add('af');}},
+{id:'af2',app:'access',k:'F2',sc:'access',a:'Switches between Edit mode (a cursor in the field) and Navigation mode (the whole field selected).',s:'Edit ↔ Navigation mode',t:'Switch to Edit mode in this field',p:function(S){var c=S.$('[data-f="2"]');c.classList.add('fs');},f:function(S){var c=S.$('[data-f="2"]');c.classList.remove('fs');c.classList.add('af');c.innerHTML='Hodge'+CR;S.pill('Edit mode');}},
+{id:'asave',app:'access',k:'Shift+Enter',sc:'access',a:'Saves the changes to the current record.',s:'Save record',t:'Save the changes to this record',n:'Access also saves a record automatically when you move to another record.',f:function(S){S.$('.rsel').textContent='';S.pill('Record saved');}}
+];
+E.forEach(function(e){e.c=parse(e.k);});
+var BYID={};E.forEach(function(e){BYID[e.id]=e;});
+
+/* ---------- compare sets (Which app?) ---------- */
+var CMP=[
+ {k:'Ctrl+KeyD',rows:[['word','Opens the Font dialog box'],['excel','Fills down (copies the top cell into the cells below)'],['ppt','Duplicates the selected slide or object']]},
+ {k:'Ctrl+KeyR',rows:[['word','Aligns text to the right'],['excel','Fills right (copies the left cell into the cells to the right)'],['ppt','Aligns text to the right']]},
+ {k:'Ctrl+KeyE',rows:[['word','Centres the text'],['excel','Flash Fill (Excel 2013 and later)'],['ppt','Centres the text']]},
+ {k:'Ctrl+Digit1',rows:[['word','Sets single line spacing'],['excel','Opens the Format Cells dialog box']]},
+ {k:'F2',rows:[['gen','Renames the selected file or folder'],['excel','Edits the active cell'],['access','Switches between Edit mode and Navigation mode']]},
+ {k:'F5',rows:[['gen','Refreshes the current window'],['word','Opens Go To (Find and Replace)'],['excel','Opens the Go To dialog box'],['ppt','Starts the slide show from the first slide']]},
+ {k:'F11',rows:[['excel','Creates a chart on a new chart sheet'],['access','Shows or hides the Navigation Pane'],['gen','Switches to full-screen view (browsers and File Explorer)']]},
+ {k:'Ctrl+KeyM',rows:[['word','Indents the paragraph from the left'],['ppt','Inserts a new slide']]},
+ {k:'Tab',rows:[['word','Moves to the next cell in a table'],['excel','Moves one cell to the right'],['ppt','Demotes a bullet point one level (at the start of the bullet)'],['access','Moves to the next field']]},
+ {k:'Ctrl+KeyF',rows:[['word','Opens the search box in the Navigation pane'],['excel','Opens Find and Replace on the Find tab'],['ppt','Opens the Find dialog box']]},
+ {k:'Shift+F5',rows:[['ppt','Starts the slide show from the current slide'],['word','Returns to your last editing position']]},
+ {k:'F4',rows:[['excel','Toggles absolute/relative cell references while editing a formula'],['word','Repeats your last action']]},
+ {k:'Escape',rows:[['gen','Cancels the current action or closes a menu or dialog box'],['ppt','Ends the slide show']]},
+ {k:'Ctrl+Semicolon',rows:[['excel','Enters the current date'],['access','Enters the current date']],same:'Enters the current date'},
+ {k:'Ctrl+KeyK',rows:[['word','Inserts a hyperlink'],['excel','Inserts a hyperlink'],['ppt','Inserts a hyperlink']],same:'Inserts a hyperlink'},
+ {k:'Ctrl+KeyB',rows:[['word','Makes the selection bold'],['excel','Makes the selection bold'],['ppt','Makes the selection bold']],same:'Makes the selection bold'},
+ {k:'F7',rows:[['word','Spelling and grammar check (Editor)'],['excel','Spelling check'],['ppt','Spelling check']],same:'Checks spelling'}
+];
+CMP.forEach(function(s){s.c=parse(s.k);});
+
+/* ---------- state ---------- */
+var st={view:'home',filter:{gen:true,word:true,excel:true,ppt:true,access:true},latch:{Ctrl:false,Shift:false,Alt:false,Win:false},learnIdx:0};
+try{var fsaved=store.filter;if(fsaved&&typeof fsaved==='object'){APPORDER.forEach(function(a){if(typeof fsaved[a]==='boolean')st.filter[a]=fsaved[a];});}}catch(e){}
+function pool(){return E.filter(function(e){return st.filter[e.app];});}
+
+/* ---------- chips ---------- */
+function renderChips(){var h='<span class="lbl" id="chipLbl">Apps</span>';APPORDER.forEach(function(a){h+='<button class="chip" style="--c:var(--c-'+a+')" data-app="'+a+'" aria-pressed="'+st.filter[a]+'"><i aria-hidden="true"></i>'+APPS[a].s+'</button>';});h+='<span class="count" id="chipCount"></span>';$('#chips').innerHTML=h;updCount();}
+function updCount(){$('#chipCount').textContent=pool().length+' shortcuts';}
+$('#chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;var a=b.dataset.app;var on=APPORDER.filter(function(x){return st.filter[x];});if(st.filter[a]&&on.length===1){toast('Keep at least one app switched on.');return;}st.filter[a]=!st.filter[a];b.setAttribute('aria-pressed',st.filter[a]);store.filter=st.filter;save();updCount();click();onFilterChange();});
+function onFilterChange(){if(st.view==='learn'){st.learnIdx=0;renderLearnList();showLearn(pool()[0]);}if(st.view==='home')renderHome();if(st.view==='sprint'&&!SP.running)sprintIntro();if(st.view==='match'&&!M.running)matchIntro();if(st.view==='quiz'&&!Q.running)quizIntro();}
+
+/* ---------- toast ---------- */
+var toastT;function toast(t){var el=$('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);}el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true;},2600);}
+
+/* ---------- keyboard ---------- */
+function K(code,l,s,w,cls){return {c:code,l:l,s:s,w:w||1,cls:cls||''};}
+function G(w){return {gap:true,w:w};}
+var KROWS=[
+ [K('Escape','Esc',null,1,'fnk'),G(1),K('F1','F1',null,1,'fnk'),K('F2','F2',null,1,'fnk'),K('F3','F3',null,1,'fnk'),K('F4','F4',null,1,'fnk'),G(.5),K('F5','F5',null,1,'fnk'),K('F6','F6',null,1,'fnk'),K('F7','F7',null,1,'fnk'),K('F8','F8',null,1,'fnk'),G(.5),K('F9','F9',null,1,'fnk'),K('F10','F10',null,1,'fnk'),K('F11','F11',null,1,'fnk'),K('F12','F12',null,1,'fnk')],
+ [K('Backquote','`','~',1,'sym'),K('Digit1','1','!',1,'sym'),K('Digit2','2','@',1,'sym'),K('Digit3','3','#',1,'sym'),K('Digit4','4','$',1,'sym'),K('Digit5','5','%',1,'sym'),K('Digit6','6','^',1,'sym'),K('Digit7','7','&',1,'sym'),K('Digit8','8','*',1,'sym'),K('Digit9','9','(',1,'sym'),K('Digit0','0',')',1,'sym'),K('Minus','-','_',1,'sym'),K('Equal','=','+',1,'sym'),K('Backspace','Backspace',null,2,'wide')],
+ [K('Tab','Tab',null,1.5,'wide')].concat('QWERTYUIOP'.split('').map(function(c){return K('Key'+c,c,null,1,'letter');})).concat([K('BracketLeft','[','{',1,'sym'),K('BracketRight',']','}',1,'sym'),K('Backslash','\\','|',1.5,'sym')]),
+ [K('CapsLock','Caps Lock',null,1.75,'wide')].concat('ASDFGHJKL'.split('').map(function(c){return K('Key'+c,c,null,1,'letter'+(c==='F'||c==='J'?' bump':''));})).concat([K('Semicolon',';',':',1,'sym'),K('Quote',"'",'"',1,'sym'),K('Enter','Enter',null,2.25,'wide')]),
+ [K('ShiftLeft','Shift',null,2.25,'wide')].concat('ZXCVBNM'.split('').map(function(c){return K('Key'+c,c,null,1,'letter');})).concat([K('Comma',',','<',1,'sym'),K('Period','.','>',1,'sym'),K('Slash','/','?',1,'sym'),K('ShiftRight','Shift',null,2.75,'wide')]),
+ [K('ControlLeft','Ctrl',null,1.5,'wide'),K('Fn','Fn',null,1,'wide'),K('MetaLeft','⊞ Win',null,1.25,'wide'),K('AltLeft','Alt',null,1.25,'wide'),K('Space','',null,6.5,'wide'),K('AltRight','Alt',null,1.25,'wide'),K('ContextMenu','Menu',null,1,'wide'),K('ControlRight','Ctrl',null,1.25,'wide')]
+];
+var KNAV=[['PrintScreen','PrtSc','prt'],['ScrollLock','ScrLk','scr'],['Pause','Pause','pau'],['Insert','Ins','ins'],['Home','Home','hom'],['PageUp','PgUp','pgu'],['Delete','Del','del'],['End','End','end'],['PageDown','PgDn','pgd'],['ArrowUp','↑','up'],['ArrowLeft','←','lft'],['ArrowDown','↓','dn'],['ArrowRight','→','rgt']];
+var KNAME={ControlLeft:'Control',ControlRight:'Right Control',ShiftLeft:'Shift',ShiftRight:'Right Shift',AltLeft:'Alt',AltRight:'Right Alt',MetaLeft:'Windows key',Fn:'Fn (function) key',Space:'Space bar'};
+function keyAria(k){if(KNAME[k.c])return KNAME[k.c];if(NAMES[k.c])return NAMES[k.c];if(/^Key/.test(k.c))return 'Letter '+k.c.slice(3);if(/^Digit/.test(k.c))return k.c.slice(5);return k.c;}
+function keyHTML(k){var cls='key '+k.cls;var inner;if(k.s)inner='<span class="t" aria-hidden="true">'+esc(k.s)+'</span><span class="m">'+esc(k.l)+'</span>';else inner='<span class="m">'+esc(k.l)+'</span>';var mod=modOf(k.c);return '<button type="button" class="'+cls+'" style="--w:'+k.w+'" data-code="'+k.c+'" aria-label="'+esc(keyAria(k))+'"'+(mod?' aria-pressed="false"':'')+'>'+inner+'</button>';}
+function buildKB(){var h='<div class="kb-main">';KROWS.forEach(function(r,i){h+='<div class="kb-row'+(i===0?' fnrow':'')+'">';r.forEach(function(k){h+=k.gap?'<span class="gap" style="--w:'+k.w+'"></span>':keyHTML(k);});h+='</div>';});h+='</div><div class="kb-nav">';KNAV.forEach(function(n){var cls=n[1].length===1?'arrow':'fnk';h+=keyHTML(K(n[0],n[1],null,1,cls+' k-'+n[2])).replace('<button','<button style="grid-area:'+n[2]+'"').replace(/style="--w:1"/,'');});h+='</div>';$('#kb').innerHTML=h;
+ // fix duplicated style attr
+ $$('#kb .kb-nav .key').forEach(function(b){var a=b.className.match(/k-(\w+)/);if(a)b.style.gridArea=a[1];});}
+function modOf(code){if(/^Control/.test(code))return 'Ctrl';if(/^Shift/.test(code))return 'Shift';if(/^Alt/.test(code))return 'Alt';if(/^Meta/.test(code))return 'Win';return null;}
+var MODKEY={Ctrl:'ControlLeft',Shift:'ShiftLeft',Alt:'AltLeft',Win:'MetaLeft'};
+function keyEls(code){return $$('#kb [data-code="'+code+'"]');}
+function clearLit(){$$('#kb .lit,#kb .good,#kb .bad').forEach(function(k){k.classList.remove('lit','good','bad');});}
+var litTimers=[];
+function lightCombo(c,cls,stagger){litTimers.forEach(clearTimeout);litTimers=[];clearLit();var seq=[];MODS.forEach(function(m){if(c.mods[m])seq.push(MODKEY[m]);});seq.push(c.code);seq.forEach(function(code,i){var fn=function(){keyEls(code).forEach(function(k){k.classList.add(cls||'lit');if(!reduced){k.classList.remove('pulse');void k.offsetWidth;k.classList.add('pulse');}});};if(stagger&&!reduced)litTimers.push(setTimeout(fn,i*200));else fn();});}
+function setLatch(m,on){st.latch[m]=on;$$('#kb [data-code]').forEach(function(k){if(modOf(k.dataset.code)===m){k.classList.toggle('latched',on);k.setAttribute('aria-pressed',on);}});var held=MODS.filter(function(x){return st.latch[x];});$('#latchinfo').textContent=held.length?'Held: '+held.join(' + ')+' — now tap the next key':'';}
+function clearLatch(){MODS.forEach(function(m){if(st.latch[m])setLatch(m,false);});}
+$('#kb').addEventListener('click',function(e){var b=e.target.closest('[data-code]');if(!b)return;ac();click();var code=b.dataset.code;if(code==='Fn'){toast('Fn is handled inside the keyboard itself, so programs never see it. On many laptops you hold Fn to use F1–F12.');return;}var m=modOf(code);if(m){setLatch(m,!st.latch[m]);return;}var c={mods:{Ctrl:st.latch.Ctrl,Shift:st.latch.Shift,Alt:st.latch.Alt,Win:st.latch.Win},code:code};clearLatch();b.classList.add('down');setTimeout(function(){b.classList.remove('down');},120);handleCombo(c,'tap');});
+$('#zoomBtn').addEventListener('click',function(){var z=$('#kbwrap').classList.toggle('zoom');this.setAttribute('aria-pressed',z);this.textContent=z?'Fit keyboard':'Bigger keys';});
+function showCombo(c,label){$('#kbcombo').innerHTML=c?comboHTML(c)+(label?'<span class="latchinfo">'+esc(label)+'</span>':''):'';}
+
+/* ---------- real keyboard ---------- */
+var NUMMAP={NumpadEnter:'Enter'};
+function fromEvent(e){var code=NUMMAP[e.code]||e.code;return {mods:{Ctrl:e.ctrlKey,Shift:e.shiftKey,Alt:e.altKey,Win:e.metaKey},code:code};}
+function isModKey(e){return /^(Control|Shift|Alt|Meta|OS)/.test(e.code)||['Control','Shift','Alt','Meta','OS','AltGraph'].indexOf(e.key)>=0;}
+function guard(e){if(e.ctrlKey&&['Equal','Minus','Digit0','NumpadAdd','NumpadSubtract','Numpad0'].indexOf(e.code)>=0&&!e.altKey&&!e.shiftKey)return false;return e.ctrlKey||e.altKey||e.metaKey||/^F([1-9]|1[0-2])$/.test(e.code);}
+var LEARNKEYS=['Insert','CapsLock','Backspace','Delete','Escape','Home','End'];
+document.addEventListener('keydown',function(e){
+ ac();
+ keyEls(NUMMAP[e.code]||e.code).forEach(function(k){k.classList.add('down');});
+ if(!e.repeat)click();
+ if(st.view==='sprint'&&SP.running){e.preventDefault();e.stopPropagation();if(isModKey(e)||e.repeat)return;if(e.code==='Pause'){togglePause();return;}if(SP.paused)return;handleCombo(fromEvent(e),'real');return;}
+ if(guard(e))e.preventDefault();
+ if(isModKey(e)||e.repeat)return;
+ if(st.view==='learn'&&!$('.modal')&&(e.ctrlKey||e.altKey||e.metaKey||/^F([1-9]|1[0-2])$/.test(e.code)||LEARNKEYS.indexOf(e.code)>=0||(e.shiftKey&&['Delete','Tab','Enter','Space'].indexOf(e.code)>=0))){if(e.target&&e.target.closest&&e.target.closest('button')&&['Escape','Home','End'].indexOf(e.code)>=0&&!e.ctrlKey){/* allow */}e.preventDefault();handleCombo(fromEvent(e),'real');}
+},true);
+document.addEventListener('keyup',function(e){keyEls(NUMMAP[e.code]||e.code).forEach(function(k){k.classList.remove('down');});if(e.key==='Alt'||e.key==='Meta'||e.key==='F10')e.preventDefault();},true);
+window.addEventListener('blur',function(){$$('#kb .down').forEach(function(k){k.classList.remove('down');});if(SP.running&&!SP.paused&&SP.state==='await')togglePause(true);});
+
+function handleCombo(c,src){if(st.view==='learn')learnFind(c,src);else if(st.view==='sprint')sprintInput(c,src);else{showCombo(c);lightCombo(c,'lit');}}
+
+/* ---------- views ---------- */
+function setView(v){if(SP.running&&v!=='sprint')endSprint(true);if(M.running&&v!=='match')endMatch(true);if(Q.running&&v!=='quiz')endQuiz(true);st.view=v;$$('.view').forEach(function(s){s.hidden=s.id!=='v-'+v;});$$('.tab').forEach(function(t){if(t.dataset.view===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});clearLatch();clearLit();showCombo(null);
+ var kbw=$('#kbwrap');if(v==='learn'){$('#v-learn').appendChild(kbw);kbw.hidden=false;}else if(v==='sprint'){$('#v-sprint').appendChild(kbw);kbw.hidden=false;}else if(v==='home'){$('#v-home').appendChild(kbw);kbw.hidden=false;kbw.classList.add('kbhome');}else{kbw.hidden=true;}
+ if(v!=='home')kbw.classList.remove('kbhome');
+ if(v==='home')renderHome();if(v==='learn'){renderLearnList();showLearn(pool()[st.learnIdx]||pool()[0],true);}if(v==='sprint')sprintIntro();if(v==='match')matchIntro();if(v==='quiz')quizIntro();}
+$$('.tab').forEach(function(t){t.addEventListener('click',function(){ac();setView(t.dataset.view);});});
+$('#homeBtn').addEventListener('click',function(){setView('home');});
+$('#muteBtn').addEventListener('click',function(){store.mute=!store.mute;save();updMute();if(!store.mute)click();});
+function updMute(){var b=$('#muteBtn');b.setAttribute('aria-pressed',store.mute);b.setAttribute('aria-label',store.mute?'Unmute sounds':'Mute sounds');$('#muteTxt').textContent=store.mute?'Sound off':'Sound on';$('#muteWave').style.display=store.mute?'none':'';}
+
+/* ---------- home ---------- */
+function starsHTML(n){var h='<span class="stars" aria-label="'+n+' of 3 stars">';for(var i=0;i<3;i++)h+=i<n?'★':'<span class="off">★</span>';return h+'</span>';}
+var MODEINFO=[
+ ['learn','Learn','See every shortcut light up on a backlit keyboard, with a mini Word, Excel, PowerPoint, Access or Windows preview.','<path d="M4 5h7a3 3 0 013 3v11a2 2 0 00-2-2H4zM20 5h-5a3 3 0 00-3 3"/><path d="M20 5v12h-6"/>'],
+ ['sprint','Sprint','A task appears — press the real keys or tap them on screen before time runs out. Build streaks for a multiplier.','<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'],
+ ['match','Match-up','Pair each shortcut with its action against the clock. Tap or drag.','<rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/><path d="M10 7h4a3 3 0 013 3v4"/>'],
+ ['quiz','Which app?','Same keys, different meaning. Compare and contrast Ctrl + D, F5, F11 and more across the apps.','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.2-1.5 2.5M12 17h.01"/>']];
+function renderHome(){var seen=Object.keys(store.seen||{}).filter(function(id){return BYID[id];}).length;var ch=E.filter(function(e){return e.ch;}).length;$('#homeStats').innerHTML='<div class="stat"><b>'+E.length+'</b>shortcuts &amp; keys</div><div class="stat"><b>'+ch+'</b>from Sections 4–5</div><div class="stat"><b>'+seen+'/'+E.length+'</b>explored in Learn</div>';
+ $('#modeCards').innerHTML=MODEINFO.map(function(m){var b=store.best[m[0]],s=store.stars[m[0]]||0;return '<button class="mcard" data-go="'+m[0]+'"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">'+m[3]+'</svg>'+m[1]+'</h3><p>'+m[2]+'</p><span class="best">'+(m[0]==='learn'?'<span>'+seen+' explored</span>':starsHTML(s)+'<span>'+(b!=null?'Best '+b:'Not played yet')+'</span>')+'</span></button>';}).join('');}
+$('#modeCards').addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(b)setView(b.dataset.go);});
+
+/* ---------- learn ---------- */
+var LS=new Scene($('#lscene'));
+function renderLearnList(){var p=pool();var h='';APPORDER.forEach(function(a){if(!st.filter[a])return;var items=p.filter(function(e){return e.app===a;});if(!items.length)return;h+='<h4 style="--c:var(--c-'+a+')">'+APPS[a].n+'</h4>';items.forEach(function(e){h+='<button class="li'+(store.seen[e.id]?' seen':'')+'" data-id="'+e.id+'" aria-label="'+esc(comboAria(e.c)+': '+e.s+' ('+APPS[e.app].n+')')+'">'+comboHTML(e.c,'sm')+'<span class="lt">'+esc(e.s)+'</span><span class="dot" aria-hidden="true"></span></button>';});});$('#llist').innerHTML=h;}
+$('#llist').addEventListener('click',function(e){var b=e.target.closest('.li');if(b){click();showLearn(BYID[b.dataset.id]);}});
+function showLearn(e,noScroll){if(!e)return;var p=pool();st.learnIdx=Math.max(0,p.indexOf(e));st.learnCur=e;
+ $$('#llist .li').forEach(function(b){if(b.dataset.id===e.id){b.setAttribute('aria-current','true');b.classList.add('seen');if(!noScroll){try{b.scrollIntoView({block:'nearest'});}catch(x){}}}else b.removeAttribute('aria-current');});
+ store.seen[e.id]=1;save();
+ var others=E.filter(function(x){return x!==e&&same(x.c,e.c);});
+ var h='<div class="meta">'+appBadge(e.app)+(e.ch?'<span class="ch2">S4–S5</span>':'')+'<span class="latchinfo">'+(p.indexOf(e)+1)+' of '+p.length+'</span></div>';
+ h+='<div class="bigcombo">'+comboHTML(e.c)+'</div><p class="act">'+esc(e.a)+'</p>';
+ if(e.n)h+='<p class="note">'+esc(e.n)+'</p>';
+ if(e.r)h+='<p class="warn">'+(e.r==='os'?'Windows itself uses this combo, so in this game tap it on the on-screen keyboard.':'Your browser reserves this combo, so in this game tap it on the on-screen keyboard.')+'</p>';
+ if(others.length)h+='<div class="also"><span>Same keys elsewhere:</span>'+others.map(function(o){return '<button data-id="'+o.id+'">'+esc(APPS[o.app].s+': '+o.s)+'</button>';}).join('')+'</div>';
+ h+='<div class="row" style="margin-top:auto"><button class="btn" id="lprev" aria-label="Previous shortcut">‹ Prev</button><button class="btn pri" id="lplay"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>Show me</button><button class="btn" id="lnext" aria-label="Next shortcut">Next ›</button></div><p class="latchinfo">Try it: press the keys on your keyboard or tap them below to look up any shortcut.</p>';
+ $('#linfo').innerHTML=h;
+ $('#lprev').onclick=function(){var p=pool();showLearn(p[(st.learnIdx-1+p.length)%p.length]);};
+ $('#lnext').onclick=function(){var p=pool();showLearn(p[(st.learnIdx+1)%p.length]);};
+ $('#lplay').onclick=function(){playLearn(e);};
+ $$('#linfo .also button').forEach(function(b){b.onclick=function(){var o=BYID[b.dataset.id];if(!st.filter[o.app]){st.filter[o.app]=true;store.filter=st.filter;save();renderChips();renderLearnList();}showLearn(o);};});
+ playLearn(e);live(comboAria(e.c)+'. '+e.a);}
+function playLearn(e){LS.load(e.sc);if(e.p)e.p(LS);showCombo(e.c);lightCombo(e.c,'lit',true);LS.T(900,function(){e.f(LS);});}
+function learnFind(c){var p=pool();var hits=E.filter(function(e){return same(e.c,c);});if(!hits.length){showCombo(c,'— not one of the shortcuts in this game');lightCombo(c,'lit');live(comboText(c)+' is not in this game');return;}var inPool=hits.filter(function(h){return p.indexOf(h)>=0;});var cur=st.learnCur;var pick;if(cur&&hits.indexOf(cur)>=0){var list=inPool.length?inPool:hits;pick=list[(list.indexOf(cur)+1)%list.length];}else pick=inPool[0]||hits[0];if(!st.filter[pick.app]){st.filter[pick.app]=true;store.filter=st.filter;save();renderChips();renderLearnList();}showLearn(pick);}
+
+/* ---------- sprint ---------- */
+var SS=new Scene($('#sscene'));
+var LEVELS=[12,10,8.5,7,6,5];
+var SP={running:false};
+function hudSprint(){var l='';for(var i=0;i<3;i++)l+=i<SP.lives?'♥':'<span class="lost">♥</span>';var mult=multOf(SP.streak||0);$('#shud').innerHTML='<span class="h"><span class="lives" aria-label="'+(SP.lives||0)+' lives left">'+l+'</span></span><span class="h">Score <b>'+(SP.score||0)+'</b></span><span class="h mult">Streak <b>'+(SP.streak||0)+'</b> ×'+mult+'</span><span class="h">Level <b>'+(SP.level||1)+'</b></span><span class="h">Task <b>'+(SP.n||0)+'</b>/'+SP_MAX+'</span><span class="sp"></span>'+(SP.running?'<button class="btn" id="spause">'+(SP.paused?'Resume':'Pause')+'</button>':'');var pb=$('#spause');if(pb)pb.onclick=function(){togglePause();};}
+var SP_MAX=25;
+function multOf(s){return s>=10?4:s>=6?3:s>=3?2:1;}
+function sprintIntro(){SP.running=false;SP.lives=3;SP.score=0;SP.streak=0;SP.level=1;SP.n=0;hudSprint();$('#stimer').style.width='100%';$('#stask').textContent='Ready?';$('#stmeta').innerHTML='';$('#swarn').innerHTML='';$('#sfb').textContent='';SS.load('word');var p=pool();var b=store.best.sprint;
+ overlay('#sover','<h2>Sprint</h2><p>A task appears — perform it by pressing the real keys, or tap the on-screen keys in order (Ctrl, Shift, Alt and Win stay held until the next key).</p><ul><li>3 lives · '+SP_MAX+' tasks · the timer gets faster every level</li><li>Streak of 3 = ×2, 6 = ×3, 10 = ×4 points</li><li>Combos your browser or Windows keeps for itself (such as Ctrl + N or Alt + Tab) are marked — tap those on screen.</li><li>Pause key or the Pause button stops the clock.</li></ul><p><b>'+p.length+'</b> shortcuts in play'+(b!=null?' · Best score <b>'+b+'</b>':'')+'</p><button class="btn pri" id="sgo">Start sprint</button>');$('#sgo').onclick=startSprint;}
+function overlay(sel,html){var o=$(sel);o.innerHTML=html;o.hidden=false;var f=o.querySelector('button');if(f)setTimeout(function(){try{f.focus();}catch(e){}},30);}
+function startSprint(){ac();var p=pool();SP={running:true,paused:false,lives:3,score:0,streak:0,bestStreak:0,level:1,n:0,correct:0,missed:[],last:null,pool:p,state:'count'};hudSprint();var o=$('#sover');var n=3;o.innerHTML='<div class="count3" aria-live="assertive">3</div>';(function tick(){if(!SP.running)return;if(n===0){o.hidden=true;nextTask();return;}o.querySelector('.count3').textContent=n;tone(520,0.08,'sine',0.08);n--;setTimeout(tick,reduced?250:650);})();}
+function nextTask(){if(!SP.running)return;if(SP.lives<=0||SP.n>=SP_MAX){endSprint();return;}var p=SP.pool;var cand=p.filter(function(e){return e!==SP.last&&!(SP.last&&same(e.c,SP.last.c));});if(!cand.length)cand=p;var e=cand[Math.floor(Math.random()*cand.length)];SP.last=e;SP.task=e;SP.n++;SP.state='await';SP.limit=LEVELS[Math.min(SP.level-1,LEVELS.length-1)]*1000;SP.start=performance.now();SP.elapsed=0;
+ $('#stmeta').innerHTML=appBadge(e.app)+(e.ch?'<span class="ch2">S4–S5</span>':'');$('#stask').textContent=e.t;$('#swarn').innerHTML=e.r?'<p class="warn">'+(e.r==='os'?'Windows uses this combo itself — tap it on the on-screen keyboard.':'Your browser keeps this combo for itself — tap it on the on-screen keyboard.')+'</p>':'';$('#sfb').textContent='';$('#sfb').className='fb';clearLit();showCombo(null);clearLatch();SS.load(e.sc);if(e.p)e.p(SS);hudSprint();live(e.t);cancelAnimationFrame(SP.raf);SP.raf=requestAnimationFrame(sprintTick);}
+function sprintTick(){if(!SP.running)return;if(SP.state==='await'&&!SP.paused){var el=SP.elapsed+(performance.now()-SP.start);var f=Math.max(0,1-el/SP.limit);var bar=$('#stimer');bar.style.width=(f*100)+'%';bar.classList.toggle('low',f<0.3);if(f<=0){miss(null);}}SP.raf=requestAnimationFrame(sprintTick);}
+function togglePause(force){if(!SP.running||SP.state==='count')return;if(force===true&&SP.paused)return;SP.paused=!SP.paused;if(SP.paused){SP.elapsed+=performance.now()-SP.start;overlay('#sover','<h2>Paused</h2><p>Take a breath. Your streak is safe.</p><button class="btn pri" id="sres">Resume</button>');$('#sres').onclick=function(){togglePause();};}else{SP.start=performance.now();$('#sover').hidden=true;}hudSprint();}
+function sprintInput(c,src){if(!SP.running||SP.paused||SP.state!=='await')return;var e=SP.task;showCombo(c);var ok=same(c,e.c)||E.some(function(x){return x.id!==e.id&&x.t===e.t&&same(x.c,c);});if(ok){SP.state='between';var el=SP.elapsed+(performance.now()-SP.start);var frac=Math.max(0,1-el/SP.limit);SP.streak++;SP.bestStreak=Math.max(SP.bestStreak,SP.streak);var mult=multOf(SP.streak);var pts=Math.round((100+frac*100)*mult);SP.score+=pts;SP.correct++;var lv=Math.min(LEVELS.length,1+Math.floor(SP.correct/4));var up=lv>SP.level;SP.level=lv;lightCombo(e.c,'good');sGood();if(up)setTimeout(sLevel,200);$('#sfb').className='fb good';$('#sfb').textContent='Correct! +'+pts+(mult>1?' (×'+mult+' streak)':'')+(up?' · Level '+lv+'!':'');pop('+'+pts);hudSprint();e.f(SS);setTimeout(nextTask,reduced?900:1300);}else{miss(c);}}
+function miss(c){var e=SP.task;SP.state='between';SP.lives--;SP.streak=0;SP.missed.push(e);sBad();if(c){keyEls(c.code).forEach(function(k){k.classList.add('bad');});}setTimeout(function(){lightCombo(e.c,'lit',true);showCombo(e.c,'← the answer');},c?350:0);$('#sfb').className='fb bad';$('#sfb').innerHTML=(c?'You pressed '+esc(comboText(c))+'. ':'Time’s up! ')+'The answer is <b>'+esc(comboText(e.c))+'</b>.';live((c?'Not quite. ':'Time is up. ')+'The answer is '+comboAria(e.c));hudSprint();setTimeout(nextTask,reduced?1600:2300);}
+function pop(t){var a=$('#sarena');var p=document.createElement('div');p.className='pop';p.textContent=t;p.style.left='40%';p.style.top='40%';a.appendChild(p);setTimeout(function(){p.remove();},950);}
+function endSprint(silent){cancelAnimationFrame(SP.raf);var was=SP.running;SP.running=false;if(silent||!was){return;}var stars=SP.correct>=20?3:SP.correct>=13?2:SP.correct>=6?1:0;results('sprint','Sprint complete',SP.score,stars,[['Correct',SP.correct+'/'+SP.n],['Best streak',SP.bestStreak],['Level',SP.level]],SP.missed,sprintIntro);}
+
+/* ---------- results ---------- */
+function results(mode,title,score,stars,stats,missed,again){var nb=store.best[mode]==null||score>store.best[mode];if(nb)store.best[mode]=score;if(!store.stars[mode]||stars>store.stars[mode])store.stars[mode]=stars;save();
+ var uniq=[];(missed||[]).forEach(function(m){if(uniq.indexOf(m)<0)uniq.push(m);});
+ var h='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="resH"><div class="mbox"><h2 id="resH">'+esc(title)+'</h2><div class="bigstars" aria-label="'+stars+' of 3 stars">'+[0,1,2].map(function(i){return i<stars?'★':'<span class="off">★</span>';}).join('')+'</div><div class="score">'+score+'</div>'+(nb&&score>0?'<span class="newbest">New best!</span>':'<span class="latchinfo">Best: '+store.best[mode]+'</span>')+'<div class="rstats">'+stats.map(function(s){return '<span class="stat"><b>'+esc(String(s[1]))+'</b>'+esc(s[0])+'</span>';}).join('')+'</div>';
+ if(uniq.length)h+='<div class="review"><b>Review these</b>'+uniq.slice(0,8).map(function(e){return '<div>'+comboHTML(e.c,'sm')+'<span>'+esc(e.s)+' <span class="latchinfo">('+APPS[e.app].s+')</span></span></div>';}).join('')+'</div>';
+ h+='<div class="row"><button class="btn pri" id="ragain">Play again</button><button class="btn" id="rlearn">Learn mode</button><button class="btn" id="rclose">Close</button></div></div></div>';
+ var d=document.createElement('div');d.innerHTML=h;var m=d.firstChild;document.body.appendChild(m);var prev=document.activeElement;
+ function close(){m.remove();}
+ $('#ragain',m).onclick=function(){close();again();};$('#rlearn',m).onclick=function(){close();setView('learn');};$('#rclose',m).onclick=function(){close();again();};
+ m.addEventListener('keydown',function(ev){if(ev.key==='Escape'){close();again();}if(ev.key==='Tab'){var f=$$('button',m);var i=f.indexOf(document.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();f[f.length-1].focus();}else if(!ev.shiftKey&&i===f.length-1){ev.preventDefault();f[0].focus();}}});
+ setTimeout(function(){$('#ragain',m).focus();},30);if(stars>=2)sLevel();live(title+'. Score '+score+'. '+stars+' stars.');}
+
+/* ---------- match-up ---------- */
+var M={running:false};var M_TIME=90,M_ROUNDS=3,M_PAIRS=5;
+function hudMatch(){$('#mhud').innerHTML='<span class="h">Time <b>'+Math.ceil(M.left||M_TIME)+'</b>s</span><span class="h">Round <b>'+(M.round||1)+'</b>/'+M_ROUNDS+'</span><span class="h">Matched <b>'+(M.matched||0)+'</b></span><span class="h">Score <b>'+(M.score||0)+'</b></span><span class="h">Mistakes <b>'+(M.mist||0)+'</b></span>';}
+function matchIntro(){M.running=false;M.left=M_TIME;M.round=1;M.matched=0;M.score=0;M.mist=0;hudMatch();$('#mtimer').style.width='100%';$('#mgrid').innerHTML='';var b=store.best.match;overlay('#mover','<h2>Match-up</h2><p>Pair each shortcut with what it does. '+M_ROUNDS+' rounds of '+M_PAIRS+' pairs in '+M_TIME+' seconds. A wrong pair costs 3 seconds.</p><p>Tap a tile, then its partner — or drag one tile onto the other. Keyboard: Tab to a tile and press Enter.</p>'+(b!=null?'<p>Best score <b>'+b+'</b></p>':'')+'<button class="btn pri" id="mgo">Start match-up</button>');$('#mgo').onclick=startMatch;}
+function startMatch(){ac();M={running:true,left:M_TIME,round:1,matched:0,score:0,mist:0,missed:[],sel:null,used:{}};$('#mover').hidden=true;dealMatch();M.last=performance.now();cancelAnimationFrame(M.raf);M.raf=requestAnimationFrame(matchTick);}
+function dealMatch(){var p=shuffle(pool());var pick=[];var combos=[],acts=[];p.forEach(function(e){if(pick.length>=M_PAIRS)return;if(M.used[e.id]&&p.length>M_PAIRS*M_ROUNDS)return;var ck=e.k;if(combos.indexOf(ck)>=0||acts.indexOf(e.s)>=0)return;combos.push(ck);acts.push(e.s);pick.push(e);});pick.forEach(function(e){M.used[e.id]=1;});M.pairs=pick;M.left_n=pick.length;var L=shuffle(pick),R=shuffle(pick);
+ var h='<div class="mcol"><h4>Shortcut</h4>'+L.map(function(e){return '<button class="tile" data-side="k" data-id="'+e.id+'" aria-label="Shortcut '+esc(comboAria(e.c))+'">'+comboHTML(e.c,'sm')+'</button>';}).join('')+'</div><div class="mcol"><h4>Action</h4>'+R.map(function(e){return '<button class="tile" data-side="a" data-id="'+e.id+'" aria-label="Action: '+esc(e.s)+' in '+esc(APPS[e.app].n)+'"><span>'+esc(e.s)+'</span> '+appBadge(e.app,true)+'</button>';}).join('')+'</div>';$('#mgrid').innerHTML=h;hudMatch();}
+function matchTick(t){if(!M.running)return;var now=performance.now();M.left-=(now-M.last)/1000;M.last=now;if(M.left<=0){M.left=0;hudMatch();endMatch();return;}var b=$('#mtimer');b.style.width=(M.left/M_TIME*100)+'%';b.classList.toggle('low',M.left<15);if(Math.ceil(M.left)!==M.shown){M.shown=Math.ceil(M.left);hudMatch();}M.raf=requestAnimationFrame(matchTick);}
+function tryPair(a,b){if(!a||!b||a===b)return;if(a.dataset.side===b.dataset.side){selectTile(b);return;}var ea=BYID[a.dataset.id],eb=BYID[b.dataset.id];var ok=a.dataset.id===b.dataset.id||same(ea.c,eb.c)&&ea.s===eb.s;$$('.tile.selx').forEach(function(t){t.classList.remove('selx');});M.sel=null;if(ok){[a,b].forEach(function(t){t.classList.add('ok');t.setAttribute('aria-disabled','true');});var kt=a.dataset.side==='k'?a:b;var other=$('#mgrid .tile[data-side="a"][data-id="'+kt.dataset.id+'"]');M.matched++;M.score+=100;M.left_n--;sGood();var e=BYID[kt.dataset.id];showCombo(e.c);live('Match: '+comboAria(e.c)+' — '+e.s);hudMatch();if(M.left_n<=0){if(M.round>=M_ROUNDS){endMatch(false,true);}else{M.round++;setTimeout(function(){if(M.running)dealMatch();},500);}}}else{[a,b].forEach(function(t){t.classList.remove('no');void t.offsetWidth;t.classList.add('no');});M.mist++;M.left=Math.max(0,M.left-3);var km=a.dataset.side==='k'?a:b;M.missed.push(BYID[km.dataset.id]);sBad();live('Not a match. Minus 3 seconds.');hudMatch();}}
+function selectTile(t){if(t.classList.contains('ok'))return;if(M.sel===t){t.classList.remove('selx');M.sel=null;return;}if(M.sel&&M.sel.dataset.side!==t.dataset.side){tryPair(M.sel,t);return;}$$('.tile.selx').forEach(function(x){x.classList.remove('selx');});t.classList.add('selx');M.sel=t;click();}
+(function(){var g=$('#mgrid');var drag=null;
+ g.addEventListener('click',function(e){var t=e.target.closest('.tile');if(!t||!M.running)return;if(drag&&drag.moved)return;selectTile(t);});
+ g.addEventListener('pointerdown',function(e){var t=e.target.closest('.tile');if(!t||!M.running||t.classList.contains('ok'))return;drag={t:t,x:e.clientX,y:e.clientY,moved:false,id:e.pointerId};});
+ window.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>8){drag.moved=true;var gh=drag.t.cloneNode(true);gh.classList.add('ghost');gh.style.width=drag.t.offsetWidth+'px';document.body.appendChild(gh);drag.g=gh;drag.t.classList.add('selx');}if(drag.moved){drag.g.style.left=e.clientX+'px';drag.g.style.top=e.clientY+'px';var over=document.elementFromPoint(e.clientX,e.clientY);$$('.tile.over').forEach(function(x){x.classList.remove('over');});var ot=over&&over.closest&&over.closest('#mgrid .tile');if(ot&&ot!==drag.t)ot.classList.add('over');e.preventDefault();}},{passive:false});
+ window.addEventListener('pointerup',function(e){if(!drag)return;var d=drag;if(d.moved){if(d.g)d.g.remove();$$('.tile.over').forEach(function(x){x.classList.remove('over');});var over=document.elementFromPoint(e.clientX,e.clientY);var ot=over&&over.closest&&over.closest('#mgrid .tile');d.t.classList.remove('selx');if(ot&&ot!==d.t&&!ot.classList.contains('ok')&&ot.dataset.side!==d.t.dataset.side){M.sel=null;tryPair(d.t,ot);}setTimeout(function(){drag=null;},0);}else drag=null;});
+ window.addEventListener('pointercancel',function(){if(drag&&drag.g)drag.g.remove();drag=null;});
+})();
+function endMatch(silent,finished){cancelAnimationFrame(M.raf);var was=M.running;M.running=false;if(silent||!was)return;var bonus=finished?Math.round(M.left)*10:0;M.score+=bonus;var stars=finished?(M.mist<=2?3:2):(M.round>=2?1:0);results('match',finished?'All matched!':'Time’s up!',M.score,stars,[['Pairs',M.matched],['Mistakes',M.mist],['Time bonus',bonus]],M.missed,matchIntro);}
+
+/* ---------- which app quiz ---------- */
+var Q={running:false};var Q_N=10,Q_T=20;
+var APPN={gen:'Windows',word:'Word',excel:'Excel',ppt:'PowerPoint',access:'Access'};
+function hudQuiz(){$('#qhud').innerHTML='<span class="h">Question <b>'+(Q.i||0)+'</b>/'+Q_N+'</span><span class="h">Correct <b>'+(Q.correct||0)+'</b></span><span class="h">Score <b>'+(Q.score||0)+'</b></span>';}
+function quizIntro(){Q.running=false;Q.i=0;Q.correct=0;Q.score=0;hudQuiz();$('#qtimer').style.width='100%';$('#qcard').innerHTML='';var b=store.best.quiz;overlay('#qover','<h2>Which app?</h2><p>The same keys can mean different things in Word, Excel, PowerPoint, Access and Windows — and sometimes exactly the same thing. '+Q_N+' questions, '+Q_T+' seconds each. After each answer, compare the keys across every app.</p><p>Answer with a tap or the number keys 1–4.</p>'+(b!=null?'<p>Best score <b>'+b+'</b></p>':'')+'<button class="btn pri" id="qgo">Start quiz</button>');$('#qgo').onclick=startQuiz;}
+function qsets(){var s=CMP.filter(function(c){return c.rows.some(function(r){return st.filter[r[0]];});});return s.length?s:CMP;}
+function makeQ(set){var r=Math.random();var allMeanings=[];CMP.forEach(function(c){c.rows.forEach(function(x){if(allMeanings.indexOf(x[1])<0)allMeanings.push(x[1]);});});
+ if(set.same&&r<0.6){var apps=set.rows.map(function(x){return APPN[x[0]];});var ok='Yes — it '+set.same.charAt(0).toLowerCase()+set.same.slice(1)+' in all of them';return {set:set,q:'Does '+comboText(set.c)+' do the same job in '+apps.join(', ').replace(/, ([^,]*)$/,' and $1')+'?',opts:shuffle([ok,'No — each app gives it a different job','No — it only works in '+apps[0],'No — it does nothing in '+apps[apps.length-1]]),ans:ok,hit:null};}
+ var uniqRows=set.rows.filter(function(x){return set.rows.filter(function(y){return y[1]===x[1];}).length===1;});
+ if(!set.same&&uniqRows.length&&r<0.5){var row=uniqRows[Math.floor(Math.random()*uniqRows.length)];var appOpts=['Word','Excel','PowerPoint','Access','Windows'];var others=shuffle(appOpts.filter(function(a){return a!==APPN[row[0]];})).slice(0,3);return {set:set,q:'Which app uses '+comboText(set.c)+' for this job: “'+row[1]+'”?',opts:shuffle(others.concat([APPN[row[0]]])),ans:APPN[row[0]],hit:row[0]};}
+ var row2=set.rows[Math.floor(Math.random()*set.rows.length)];var wrong=set.rows.filter(function(x){return x[1]!==row2[1];}).map(function(x){return x[1];});var extra=shuffle(allMeanings.filter(function(m){return m!==row2[1]&&wrong.indexOf(m)<0;}));var opts=[row2[1]];wrong.forEach(function(w){if(opts.length<4&&opts.indexOf(w)<0)opts.push(w);});while(opts.length<4)opts.push(extra.shift());return {set:set,q:'In '+APPN[row2[0]]+', what does '+comboText(set.c)+' do?',opts:shuffle(opts),ans:row2[1],hit:row2[0]};}
+function startQuiz(){ac();var sets=shuffle(qsets());var qs=[];for(var i=0;i<Q_N;i++)qs.push(makeQ(sets[i%sets.length]));Q={running:true,i:0,correct:0,score:0,qs:qs,missed:[]};$('#qover').hidden=true;nextQ();}
+function nextQ(){if(!Q.running)return;if(Q.i>=Q_N){endQuiz();return;}var q=Q.qs[Q.i];Q.i++;Q.cur=q;Q.answered=false;Q.t0=performance.now();hudQuiz();
+ var h='<div class="qtop">'+comboHTML(q.set.c)+'<span class="latchinfo">Compare and contrast</span></div><p class="qq" id="qq">'+esc(q.q)+'</p><div class="opts" role="group" aria-labelledby="qq">'+q.opts.map(function(o,i){return '<button class="opt" data-o="'+esc(o)+'"><kbd aria-hidden="true">'+(i+1)+'</kbd><span>'+esc(o)+'</span></button>';}).join('')+'</div><div id="qafter"></div>';$('#qcard').innerHTML=h;$$('#qcard .opt').forEach(function(b){b.onclick=function(){answerQ(b.dataset.o);};});try{$('#qcard .opt').focus();}catch(e){}live(q.q);cancelAnimationFrame(Q.raf);Q.raf=requestAnimationFrame(quizTick);}
+function quizTick(){if(!Q.running)return;if(!Q.answered){var f=Math.max(0,1-(performance.now()-Q.t0)/(Q_T*1000));var b=$('#qtimer');b.style.width=(f*100)+'%';b.classList.toggle('low',f<0.3);if(f<=0){answerQ(null);}}Q.raf=requestAnimationFrame(quizTick);}
+function answerQ(o){if(Q.answered)return;Q.answered=true;var q=Q.cur;var ok=o===q.ans;var left=Math.max(0,Q_T-(performance.now()-Q.t0)/1000);if(ok){Q.correct++;var pts=100+Math.round(left*5);Q.score+=pts;sGood();}else{sBad();var ent=E.filter(function(e){return same(e.c,q.set.c);})[0];if(ent)Q.missed.push(ent);}
+ $$('#qcard .opt').forEach(function(b){b.disabled=true;if(b.dataset.o===q.ans)b.classList.add('right');else if(b.dataset.o===o)b.classList.add('wrong');});
+ var rows=q.set.rows.map(function(r){return '<tr'+(r[0]===q.hit?' class="hit"':'')+'><td>'+appBadge(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';}).join('');
+ var verdict=ok?'<span class="verdict good">Correct! +'+(100+Math.round(left*5))+'</span>':'<span class="verdict bad">'+(o==null?'Time’s up.':'Not quite.')+' The answer is: '+esc(q.ans)+'</span>';
+ var note=q.set.same?'Same keys, same job — handy to know once and use everywhere.':'Same keys, different jobs — always check which app you are in.';
+ $('#qafter').innerHTML='<p style="margin:6px 0">'+verdict+'</p><table class="cmp"><caption class="sr">'+esc(comboText(q.set.c))+' in each app</caption><tr><th scope="col">App</th><th scope="col">'+esc(comboText(q.set.c))+' does…</th></tr>'+rows+'</table><p class="latchinfo" style="margin:6px 0">'+note+'</p><button class="btn pri" id="qnext">'+(Q.i>=Q_N?'See results':'Next question')+'</button>';
+ $('#qnext').onclick=nextQ;setTimeout(function(){try{$('#qnext').focus();}catch(e){}},30);hudQuiz();live((ok?'Correct. ':'Not quite. The answer is '+q.ans+'. ')+note);}
+document.addEventListener('keydown',function(e){if(st.view!=='quiz'||!Q.running||Q.answered||e.ctrlKey||e.altKey||e.metaKey)return;var n=parseInt(e.key,10);if(n>=1&&n<=4){var b=$$('#qcard .opt')[n-1];if(b){e.preventDefault();answerQ(b.dataset.o);}}});
+function endQuiz(silent){cancelAnimationFrame(Q.raf);var was=Q.running;Q.running=false;if(silent||!was)return;var stars=Q.correct>=9?3:Q.correct>=7?2:Q.correct>=5?1:0;results('quiz','Quiz complete',Q.score,stars,[['Correct',Q.correct+'/'+Q_N]],Q.missed,quizIntro);}
+
+/* ---------- init ---------- */
+buildKB();renderChips();updMute();
+document.addEventListener('visibilitychange',function(){if(document.hidden&&SP.running&&!SP.paused&&SP.state==='await')togglePause(true);});
+/* ---------- saved progress (GameSave): best scores, stars, shortcuts seen, the app filter and sound are kept in shortcutSprint.v1;
+   shortcutSprint.play brings back the screen you were on and the shortcut you were studying. Timed rounds start again. ---------- */
+var gsBack=null;
+if(window.GameSave){
+ GameSave.register([KEY,'shortcutSprint.play']);
+ GameSave.persist({key:'shortcutSprint.play',welcome:false,get:function(){return{v:1,view:st.view,learn:st.learnCur&&st.learnCur.id||null};},
+  set:function(d){if(d&&d.v===1&&['home','learn','sprint','match','quiz'].indexOf(d.view)>=0)gsBack=d;}});
+ document.addEventListener('click',function(){setTimeout(function(){GameSave.save();},60);});
+}
+try{if(gsBack&&gsBack.learn&&BYID[gsBack.learn]){var gsE=BYID[gsBack.learn];if(!st.filter[gsE.app]){st.filter[gsE.app]=true;store.filter=st.filter;renderChips();}var gsI=pool().indexOf(gsE);if(gsI>=0)st.learnIdx=gsI;}}catch(e){}
+setView(gsBack?gsBack.view:'home');
+if(st.view==='home'){showCombo(parse('Ctrl+KeyS'),'Try any shortcut — the keys light up');
+lightCombo(parse('Ctrl+KeyS'),'lit');}
+if(window.GameSave&&GameSave.toast&&(gsBack&&gsBack.view!=='home'||Object.keys(store.seen||{}).length||Object.keys(store.best||{}).length))setTimeout(function(){GameSave.toast('Welcome back! Your progress was restored.');},400);
+window.__SS={E:E,CMP:CMP,st:st,SP:function(){return SP;},M:function(){return M;},Q:function(){return Q;}};
+})();
+</script>
+<script data-noview>(function(){function ok(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],select')}
+document.addEventListener('contextmenu',function(e){if(!ok(e.target))e.preventDefault()},true);
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+if(e.key==='F12'||(c&&k==='u')||(c&&e.shiftKey&&(k==='i'||k==='j'||k==='c'))||(e.metaKey&&e.altKey&&(k==='u'||k==='i'||k==='j'||k==='c'))||(c&&k==='s')){e.preventDefault()}},true);
+document.addEventListener('dragstart',function(e){if(e.target&&e.target.tagName==='IMG')e.preventDefault()},true);})();</script></body>
+</html>
