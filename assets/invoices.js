@@ -23,8 +23,10 @@
       inv.total = IC.calc(inv).total; d.rows.unshift(inv); W(d); mailed(C.contactEmail || "you", "Invoice to check: " + inv.number); return { id: inv.id, number: inv.number }; },
     async mine() { const m = await who(); return { rows: D().rows.filter(r => r.user_id === m.user.id && r.status !== "void").map(r => r.status === "draft" ? { id: r.id, number: r.number, status: "draft", plan: r.plan, created_at: r.created_at } : r) }; },
     async proof(b) { const m = await who(), d = D(), inv = d.rows.find(r => r.id === b.id && r.user_id === m.user.id); if (!inv) throw new Error("That invoice wasn't found."); if (!["sent", "proof"].includes(inv.status)) throw new Error("This invoice isn't ready for payment yet.");
-      inv.status = "proof"; inv.proof_url = b.file; inv.proof_note = b.note || ""; inv.proof_at = new Date().toISOString(); W(d); mailed(C.contactEmail || "you", "Proof of payment: " + inv.number); return { ok: true }; },
+      inv.status = "proof"; inv.proof_url = b.file; inv.proof_note = b.note || ""; inv.proof_method = b.method || ""; inv.proof_ref = b.ref || ""; inv.proof_at = new Date().toISOString(); W(d); mailed(C.contactEmail || "you", "Proof of payment: " + inv.number); return { ok: true }; },
     async list(b) { return { rows: D().rows.filter(r => !b.status || r.status === b.status) }; },
+    async pending() { const rows = D().rows.filter(r => r.status === "proof"); return { count: rows.length, rows }; },
+    async pdf() { throw new Error("PDF invoices work on the live site. In demo mode, use your browser's Print and choose Save as PDF."); },
     async get(b) { return D().rows.find(r => r.id === b.id) || null; },
     async new(b) { const d = D(), inv = Object.assign({ id: uid(), number: num(d.rows, "EA", "number"), items: [{ desc: "Exam Ace Tutorials", qty: 1, unit: 0 }], discount: 0, tax_pct: 0, currency: "USD", courses: [], edition: "student", billing: "month", pay_info: PAY_INFO, due_date: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10), status: "draft", created_at: new Date().toISOString() }, b); delete inv.action; inv.total = IC.calc(inv).total; d.rows.unshift(inv); W(d); return inv; },
     async save(b) { const d = D(), inv = d.rows.find(r => r.id === b.id); if (!inv) throw new Error("Not found."); if (inv.status === "paid") throw new Error("A paid invoice can't be changed."); Object.assign(inv, b); delete inv.action; if (!inv.total_manual) inv.total = IC.calc(inv).auto; W(d); return inv; },
@@ -57,9 +59,35 @@
 dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-height:calc(100vh - 40px);overflow:auto}
 .ivst{font-size:.75rem;font-weight:800;border-radius:999px;padding:2px 9px;border:1px solid currentColor;white-space:nowrap}.ivst.draft{color:var(--muted)}.ivst.sent{color:var(--gold)}.ivst.proof{color:#63B3ED}.ivst.paid{color:var(--ok)}.ivst.void{color:var(--bad)}`;
   function css() { if (document.getElementById("iv-css")) return; const s = document.createElement("style"); s.id = "iv-css"; s.textContent = CSS; document.head.appendChild(s); }
-  const ST = { draft: "Needs your check", sent: "Sent · waiting for payment", proof: "Proof uploaded · confirm it", paid: "Paid", void: "Cancelled" };
-  const STU = { draft: "Being prepared", sent: "Ready to pay", proof: "Proof sent · being checked", paid: "Paid", void: "Cancelled" };
+  const ST = { draft: "Needs your check", sent: "Sent · waiting for payment", proof: "Pending approval", paid: "Paid", void: "Cancelled" };
+  const STU = { draft: "Being prepared", sent: "Ready to pay", proof: "Pending approval", paid: "Paid", void: "Cancelled" };
   const site = { name: C.siteName || "Exam Ace Tutorials", tagline: C.tagline || "E-learning Ecosystem", email: C.contactEmail || "" };
+  const METHODS = ["MoneyGram", "Western Union", "Wire transfer", "Bank deposit", "Cash", "Other"];
+  async function downloadPdf(id, btn) {
+    const old = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = "Preparing PDF…"; }
+    try { const r = await call("pdf", { id }); const bin = atob(r.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([u8], { type: "application/pdf" })), a = document.createElement("a"); a.href = url; a.download = r.filename || "invoice.pdf"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } finally { if (btn) { btn.disabled = false; btn.textContent = old; } }
+  }
+  /* the "pending approval" notification at the top of the admin page */
+  function pendingBar(onOpen) {
+    if (!document.getElementById("iv-bar-css")) { const s = document.createElement("style"); s.id = "iv-bar-css"; s.textContent = `.iv-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;background:linear-gradient(90deg,#F5C542,#FFD766);color:#0A1433;padding:10px 16px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25)}.iv-bar button{background:#0B1A46;color:#FFD766;border:0;border-radius:999px;padding:7px 16px;font:inherit;font-weight:800;cursor:pointer}.iv-bell{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#C0392B;color:#fff;font-size:.78rem;font-weight:800;margin-left:8px;vertical-align:middle}`; document.head.appendChild(s); }
+    let bar = document.getElementById("iv-bar");
+    if (!bar) { bar = document.createElement("div"); bar.id = "iv-bar"; bar.className = "iv-bar"; bar.setAttribute("role", "status"); bar.hidden = true; const top = document.querySelector("header.top"); (top && top.parentNode ? top.parentNode.insertBefore(bar, top.nextSibling) : document.body.prepend(bar)); }
+    let last = -1;
+    async function check() {
+      let r; try { r = await call("pending"); } catch (e) { return; }
+      const n = r.count || 0; bar.hidden = !n;
+      if (n) { const names = (r.rows || []).slice(0, 3).map(x => esc(x.bill_name || x.number)).join(", ") + (n > 3 ? " and " + (n - 3) + " more" : "");
+        bar.innerHTML = `<span>🔔 ${n} payment${n > 1 ? "s" : ""} pending approval: ${names}</span><button type="button">Review now</button>`; bar.querySelector("button").onclick = onOpen; }
+      const h = document.getElementById("ivh"); if (h) { const b = h.querySelector(".iv-bell"); if (n) { (b || h.appendChild(Object.assign(document.createElement("span"), { className: "iv-bell" }))).textContent = n; } else if (b) b.remove(); }
+      if (last >= 0 && n > last) { try { document.title = "(" + n + ") Pending approval · " + document.title.replace(/^\(\d+\) Pending approval · /, ""); } catch (e) { } }
+      if (!n) document.title = document.title.replace(/^\(\d+\) Pending approval · /, "");
+      last = n;
+    }
+    check(); setInterval(check, 60000); document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+    return { check };
+  }
   function readFile(f) { return new Promise((ok, bad) => { if (!f) return bad(new Error("Choose a file.")); if (f.size > 8 * 1024 * 1024) return bad(new Error("That file is over 8 MB.")); if (/^image\//.test(f.type) && window.Identity) return Identity.shrink(f, 1600).then(ok, bad); const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => bad(new Error("That file couldn't be read.")); r.readAsDataURL(f); }); }
 
   /* ---------- the signature pad ---------- */
@@ -83,21 +111,23 @@ dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-heigh
   /* ---------- the admin's invoices (admin.html) ---------- */
   function adminSection(host, opt = {}) {
     css(); const toast = opt.toast || (m => alert(m));
-    host.innerHTML = `<div class="tools"><h2 id="ivh" style="margin-right:auto">Invoices and receipts</h2><select id="iv-f" aria-label="Show"><option value="">All invoices</option><option value="draft">Needs your check</option><option value="sent">Sent · waiting for payment</option><option value="proof">Proof uploaded</option><option value="paid">Paid</option></select><button class="btn go sm" type="button" id="iv-new">+ New invoice</button></div>
-      <p class="hint">When someone registers, their invoice is made here automatically and you're emailed. Check the amounts (worked out for you, all editable), sign, tick that you've checked it, then send. When they upload proof of payment, confirm it and their signed receipt is emailed.</p>
+    host.innerHTML = `<div class="tools"><h2 id="ivh" style="margin-right:auto">Invoices and receipts</h2><select id="iv-f" aria-label="Show"><option value="">All invoices</option><option value="draft">Needs your check</option><option value="sent">Sent · waiting for payment</option><option value="proof">Pending approval</option><option value="paid">Paid</option></select><button class="btn go sm" type="button" id="iv-new">+ New invoice</button></div>
+      <p class="hint">When someone registers, their invoice is made here automatically and you're emailed. Check the amounts (worked out for you, all editable), sign, tick that you've checked it, then send. When they upload proof of payment you're emailed at examacetutorials@gmail.com and it shows here as <b>Pending approval</b>. Approve it and the invoice marked PAID is emailed to them as a PDF, added to their dashboard, and their course opens.</p>
       <div class="tbl"><table><thead><tr><th>Invoice</th><th>Student</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody id="iv-body"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody></table></div>
       <dialog class="modal" id="iv-dlg" aria-labelledby="iv-t"><div class="box"><div class="inner"><button class="x" type="button" data-ivx aria-label="Close">×</button><div id="iv-ed"></div></div></div></dialog>`;
     const $ = s => host.querySelector(s);
-    async function load() {
+    let load = async function () {
       try { const r = await call("list", { status: $("#iv-f").value });
-        $("#iv-body").innerHTML = r.rows.length ? r.rows.map(x => `<tr><td><b>${esc(x.number)}</b><div class="hint">${esc(new Date(x.created_at).toLocaleDateString())}</div></td><td>${esc(x.bill_name || "—")}<div class="hint">${esc(x.bill_email || "")}</div></td><td>${IC.money(x.total, x.currency)}</td><td><span class="ivst ${x.status}">${esc(ST[x.status] || x.status)}</span></td><td><button class="btn ${x.status === "draft" || x.status === "proof" ? "go" : "ghost"} sm" type="button" data-ivo="${esc(x.id)}">${x.status === "draft" ? "Check and sign" : x.status === "proof" ? "Check proof" : "Open"}</button></td></tr>`).join("") : '<tr><td colspan="5" class="muted">No invoices here yet.</td></tr>';
+        $("#iv-body").innerHTML = r.rows.length ? r.rows.map(x => `<tr><td><b>${esc(x.number)}</b><div class="hint">${esc(new Date(x.created_at).toLocaleDateString())}</div></td><td>${esc(x.bill_name || "—")}<div class="hint">${esc(x.bill_email || "")}</div></td><td>${IC.money(x.total, x.currency)}</td><td><span class="ivst ${x.status}">${esc(ST[x.status] || x.status)}</span></td><td><button class="btn ${x.status === "draft" || x.status === "proof" ? "go" : "ghost"} sm" type="button" data-ivo="${esc(x.id)}">${x.status === "draft" ? "Check and sign" : x.status === "proof" ? "Review payment" : "Open"}</button></td></tr>`).join("") : '<tr><td colspan="5" class="muted">No invoices here yet.</td></tr>';
       } catch (e) { $("#iv-body").innerHTML = `<tr><td colspan="5" class="muted">${esc(e.message)}</td></tr>`; }
-    }
+    };
     host.addEventListener("click", async e => {
       const o = e.target.closest("[data-ivo]"); if (o) { try { edit(await call("get", { id: o.dataset.ivo })); } catch (x) { toast(x.message); } }
       if (e.target.closest("[data-ivx]")) { $("#iv-dlg").close(); load(); }
     });
-    $("#iv-f").onchange = load;
+    $("#iv-f").onchange = () => load();
+    const bar = pendingBar(() => { $("#iv-f").value = "proof"; load(); host.scrollIntoView({ behavior: "smooth" }); });
+    const reload = load; load = async () => { await reload(); bar.check(); };
     $("#iv-new").onclick = async () => { try { edit(await call("new", { bill_name: "", bill_email: "" })); } catch (x) { toast(x.message); } };
 
     function edit(inv) {
@@ -105,8 +135,8 @@ dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-heigh
       const courseBoxes = (C.courses || []).map(c => `<label><input type="checkbox" value="${esc(c.slug)}" ${(inv.courses || []).includes(c.slug) || (inv.courses || []).includes("all") ? "checked" : ""} ${paid ? "disabled" : ""}> ${esc(c.level + " " + c.title)}</label>`).join("") + `<label><input type="checkbox" value="all" ${(inv.courses || []).includes("all") ? "checked" : ""} ${paid ? "disabled" : ""}> Every course</label>`;
       ed.innerHTML = `<div class="ivx">
         <div class="head"><div><p class="eyebrow">${esc(ST[inv.status] || inv.status)}</p><h2 id="iv-t">Invoice ${esc(inv.number)}</h2></div>${P ? `<span class="chip">${esc(P.name)} · ${inv.billing === "year" ? "exam-year pass" : "monthly"}</span>` : ""}</div>
-        ${inv.status === "proof" ? `<div class="panel" style="padding:12px;display:grid;gap:8px"><h3>Proof of payment</h3>${inv.proof_url ? (/^data:application\/pdf|\.pdf/i.test(inv.proof_url) ? `<a class="btn ghost sm" href="${esc(inv.proof_url)}" target="_blank" rel="noopener">Open the PDF</a>` : `<img src="${esc(inv.proof_url)}" alt="Proof of payment" style="max-width:100%;max-height:360px;border-radius:10px;background:#fff">`) : '<p class="hint">The file couldn\'t be opened.</p>'}${inv.proof_note ? `<p class="hint">Their note: ${esc(inv.proof_note)}</p>` : ""}
-          <div class="row"><label style="max-width:220px">Amount received<input id="iv-paid" class="num" type="number" step="0.01" min="0" value="${IC.calc(inv).total}"></label><button class="btn go" type="button" id="iv-confirm">✓ Confirm payment and email the receipt</button><button class="btn ghost" type="button" id="iv-rej">Proof not accepted</button></div></div>` : ""}
+        ${inv.status === "proof" ? `<div class="panel" style="padding:12px;display:grid;gap:8px"><h3>Proof of payment</h3>${inv.proof_url ? (/^data:application\/pdf|\.pdf/i.test(inv.proof_url) ? `<a class="btn ghost sm" href="${esc(inv.proof_url)}" target="_blank" rel="noopener">Open the PDF</a>` : `<img src="${esc(inv.proof_url)}" alt="Proof of payment" style="max-width:100%;max-height:360px;border-radius:10px;background:#fff">`) : '<p class="hint">The file couldn\'t be opened.</p>'}<p class="hint">Paid by <b>${esc(inv.proof_method || "—")}</b> · MTCN / reference <b class="selectable">${esc(inv.proof_ref || "—")}</b>${inv.proof_at ? " · uploaded " + esc(new Date(inv.proof_at).toLocaleString()) : ""}</p>${inv.proof_note ? `<p class="hint">Their note: ${esc(inv.proof_note)}</p>` : ""}<p class="hint">Check the amount and MTCN / reference against your MoneyGram, Western Union or bank record before approving.</p>
+          <div class="row"><label style="max-width:220px">Amount received<input id="iv-paid" class="num" type="number" step="0.01" min="0" value="${IC.calc(inv).total}"></label><button class="btn go" type="button" id="iv-confirm">✓ Approve: email the PAID invoice and open the course</button><button class="btn ghost" type="button" id="iv-rej">Reject proof</button></div></div>` : ""}
         <div class="g2"><label>Bill to<input id="iv-n" value="${esc(inv.bill_name || "")}" ${paid ? "disabled" : ""}></label><label>Email<input id="iv-e" type="email" value="${esc(inv.bill_email || "")}" ${paid ? "disabled" : ""}></label><label>Due date<input id="iv-due" type="date" value="${esc(inv.due_date || "")}" ${paid ? "disabled" : ""}></label></div>
         <div><h3>Items</h3><table class="it"><thead><tr><th>Description</th><th style="width:80px">Qty</th><th style="width:120px">Unit price</th><th style="width:120px" class="num">Amount</th><th style="width:40px"></th></tr></thead><tbody id="iv-items"></tbody></table>${paid ? "" : '<button class="btn ghost sm" type="button" id="iv-add">+ Add a line</button>'}</div>
         <div class="sum"><span>Subtotal <span class="auto">auto</span></span><b class="num" id="iv-sub"></b>
@@ -120,7 +150,7 @@ dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-heigh
           <div class="row" style="margin-top:6px">${paid ? "" : `<button class="btn ghost sm" type="button" id="iv-sclear">Clear</button><input id="iv-sname" placeholder="Or type your name" value="${esc(inv.signed_by || "Kester Small")}" style="max-width:220px"><button class="btn ghost sm" type="button" id="iv-stype">Use typed name</button>${saved ? '<button class="btn ghost sm" type="button" id="iv-ssaved">Use my saved signature</button>' : ""}<label class="row" style="gap:6px"><input type="checkbox" id="iv-skeep" style="width:auto" checked> Save it for next time</label>`}</div></div>
         <label class="row" style="gap:8px;font-weight:700"><input type="checkbox" id="iv-chk" style="width:auto" ${inv.checked ? "checked" : ""} ${paid ? "disabled" : ""}> I've checked this amount and it's correct</label>
         <div class="msg bad" id="iv-err" hidden></div>
-        <div class="row">${paid ? "" : `<button class="btn ghost" type="button" id="iv-save">Save</button><button class="btn go" type="button" id="iv-send">${inv.status === "draft" ? "Sign and send to the student" : "Send again"}</button>`}<button class="btn ghost" type="button" id="iv-view">👁 Preview / print</button>${paid ? '<button class="btn ghost" type="button" id="iv-rec">🧾 Receipt</button>' : ""}${!paid && inv.status !== "void" ? '<button class="btn ghost" type="button" id="iv-void">Cancel invoice</button>' : ""}</div>
+        <div class="row">${paid ? "" : `<button class="btn ghost" type="button" id="iv-save">Save</button><button class="btn go" type="button" id="iv-send">${inv.status === "draft" ? "Sign and send to the student" : "Send again"}</button>`}<button class="btn ghost" type="button" id="iv-view">👁 Preview / print</button>${inv.status !== "draft" ? '<button class="btn ghost" type="button" id="iv-pdf">⬇ Download PDF</button>' : ""}${paid ? '<button class="btn ghost" type="button" id="iv-rec">🧾 Receipt</button>' : ""}${!paid && inv.status !== "void" ? '<button class="btn ghost" type="button" id="iv-void">Cancel invoice</button>' : ""}</div>
         <div id="iv-prev"></div></div>`;
       const q = s => ed.querySelector(s);
       let list = (inv.items || []).map(i => Object.assign({}, i)), manual = !!inv.total_manual;
@@ -150,9 +180,10 @@ dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-heigh
         q("#iv-send").onclick = async () => { try { if (pad.empty) throw new Error("Sign the invoice first: draw your signature or use your typed name."); if (!q("#iv-chk").checked) throw new Error("Tick “I've checked this amount” first."); await save(); const r = await call("send", { id: inv.id }); Object.assign(inv, r); toast("Invoice " + inv.number + " emailed to " + inv.bill_email + "."); $("#iv-dlg").close(); load(); } catch (x) { err(x.message); } };
         if (q("#iv-void")) q("#iv-void").onclick = async () => { const b = q("#iv-void"); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Choose again to cancel it"; return; } try { await call("void", { id: inv.id }); $("#iv-dlg").close(); load(); } catch (x) { err(x.message); } };
       }
-      if (q("#iv-confirm")) q("#iv-confirm").onclick = async () => { try { await save(); const r = await call("confirm", { id: inv.id, paid_amount: q("#iv-paid").value }); Object.assign(inv, r); toast("Payment confirmed. Receipt " + r.receipt_no + " emailed and the courses are open."); edit(inv); load(); } catch (x) { err(x.message); } };
+      if (q("#iv-confirm")) q("#iv-confirm").onclick = async () => { try { await save(); const r = await call("confirm", { id: inv.id, paid_amount: q("#iv-paid").value }); Object.assign(inv, r); toast("Approved. The PAID invoice (receipt " + r.receipt_no + ") was emailed and the courses are open."); edit(inv); load(); } catch (x) { err(x.message); } };
       if (q("#iv-rej")) q("#iv-rej").onclick = async () => { const note = prompt("What should the student be told?", "The proof you sent couldn't be matched to a payment. Please check it and upload it again."); if (note === null) return; try { await call("reject_proof", { id: inv.id, note }); toast("The student has been emailed."); $("#iv-dlg").close(); load(); } catch (x) { err(x.message); } };
       q("#iv-view").onclick = () => { const b = body(); q("#iv-prev").innerHTML = `<div style="margin-top:10px">${IC.doc(Object.assign({}, inv, b, { signature: b.signature || inv.signature }), "invoice", site)}</div><div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" onclick="window.print()">🖨 Print or save as PDF</button></div>`; q("#iv-prev").scrollIntoView({ behavior: "smooth" }); };
+      if (q("#iv-pdf")) q("#iv-pdf").onclick = async e => { try { await downloadPdf(inv.id, e.currentTarget); } catch (x) { err(x.message); } };
       if (q("#iv-rec")) q("#iv-rec").onclick = () => { q("#iv-prev").innerHTML = `<div style="margin-top:10px">${IC.doc(inv, "receipt", site)}</div><div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" onclick="window.print()">🖨 Print or save as PDF</button></div>`; };
       if (!$("#iv-dlg").open) $("#iv-dlg").showModal();
       requestAnimationFrame(() => { pad.refit(); if (inv.signature) pad.load(inv.signature); });
@@ -166,16 +197,23 @@ dialog.modal#iv-dlg{width:min(960px,calc(100vw - 24px))}#iv-dlg .inner{max-heigh
     css(); const toast = opt.toast || (m => alert(m));
     async function load() {
       let r; try { r = await call("mine"); } catch (e) { host.innerHTML = `<p class="hint">${esc(e.message)}</p>`; return; }
-      host.innerHTML = r.rows.length ? `<ul class="log">${r.rows.map(x => `<li><span><b>${esc(x.number)}</b>${x.status !== "draft" ? " · " + IC.money(x.total, x.currency) : ""}<br><span class="hint">${esc(STU[x.status] || x.status)}</span></span><span>${x.status === "draft" ? "" : `<button class="btn ${x.status === "sent" ? "go" : "ghost"} sm" type="button" data-ivs="${esc(x.id)}">${x.status === "sent" ? "Pay" : x.status === "paid" ? "Receipt" : "View"}</button>`}</span></li>`).join("")}</ul><div id="iv-one"></div>` : '<p class="hint">No invoices yet.</p>';
+      host.innerHTML = r.rows.length ? `<ul class="log">${r.rows.map(x => `<li><span><b>${esc(x.number)}</b>${x.status !== "draft" ? " · " + IC.money(x.total, x.currency) : ""}<br><span class="hint">${esc(STU[x.status] || x.status)}</span></span><span class="row" style="gap:6px">${x.status === "draft" ? "" : `<button class="btn ${x.status === "sent" ? "go" : "ghost"} sm" type="button" data-ivs="${esc(x.id)}">${x.status === "sent" ? "Pay / upload proof" : "View"}</button><button class="btn ghost sm" type="button" data-ivp="${esc(x.id)}" title="Download the invoice as a PDF">⬇ PDF</button>`}</span></li>`).join("")}</ul><div id="iv-one"></div>` : '<p class="hint">No invoices yet.</p>';
       host.querySelectorAll("[data-ivs]").forEach(b => b.onclick = () => show(r.rows.find(x => x.id === b.dataset.ivs)));
+      host.querySelectorAll("[data-ivp]").forEach(b => b.onclick = async () => { try { await downloadPdf(b.dataset.ivp, b); } catch (x) { toast(x.message); } });
     }
     function show(inv) {
       const box = host.querySelector("#iv-one"), paid = inv.status === "paid";
       box.innerHTML = `<div style="margin-top:12px;overflow:auto">${IC.doc(inv, paid ? "receipt" : "invoice", site)}</div>
-        ${inv.status === "sent" ? `<div class="ivx" style="margin-top:10px"><h3>Upload your proof of payment</h3><p class="hint">A photo or PDF of your bank transfer, deposit slip or receipt.</p><input type="file" id="iv-pf" accept="image/*,application/pdf"><input id="iv-pn" placeholder="Note (optional), e.g. paid at the bank on Monday"><button class="btn go sm" type="button" id="iv-pgo">Send my proof of payment</button></div>` : ""}
-        ${inv.status === "proof" ? '<p class="hint" style="margin-top:8px">Your proof of payment has been sent. You\'ll get your receipt by email once it\'s confirmed.</p>' : ""}
-        <div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" onclick="window.print()">🖨 Print or save as PDF</button></div>`;
-      const go = box.querySelector("#iv-pgo"); if (go) go.onclick = async () => { go.disabled = true; try { const f = await readFile(box.querySelector("#iv-pf").files[0]); await call("proof", { id: inv.id, file: f, note: box.querySelector("#iv-pn").value }); toast("Sent. You'll get your receipt by email once your payment is confirmed."); load(); } catch (x) { toast(x.message); go.disabled = false; } };
+        ${inv.status === "sent" ? `<div class="ivx" style="margin-top:10px"><h3>Upload your proof of payment</h3><p class="hint">A photo or PDF of your MoneyGram or Western Union receipt, wire confirmation or deposit slip.</p>
+          <label>How did you pay?<select id="iv-pm">${METHODS.map(x => `<option>${x}</option>`).join("")}</select></label>
+          <label>MTCN / transfer reference number<input id="iv-pr" placeholder="e.g. the 10-digit MTCN on your receipt" autocomplete="off"></label>
+          <label>Receipt (photo or PDF)<input type="file" id="iv-pf" accept="image/*,application/pdf"></label>
+          <input id="iv-pn" placeholder="Note (optional), e.g. sent from my mother's name"><button class="btn go sm" type="button" id="iv-pgo">Send my proof of payment</button></div>` : ""}
+        ${inv.status === "proof" ? '<p class="hint" style="margin-top:8px"><b>Pending approval.</b> Your proof of payment has been sent. Your invoice marked PAID will be emailed to you and appear here once it\'s approved.</p>' : ""}
+        <div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" id="iv-dl">⬇ Download PDF</button></div>`;
+      box.querySelector("#iv-dl").onclick = async e => { try { await downloadPdf(inv.id, e.currentTarget); } catch (x) { toast(x.message); } };
+      const go = box.querySelector("#iv-pgo"); if (go) go.onclick = async () => { go.disabled = true; try { const f = await readFile(box.querySelector("#iv-pf").files[0]); const ref = box.querySelector("#iv-pr").value.trim(), method = box.querySelector("#iv-pm").value; if (!ref && /MoneyGram|Western Union|Wire/.test(method)) throw new Error("Type the MTCN / transfer reference number from your receipt.");
+          await call("proof", { id: inv.id, file: f, note: box.querySelector("#iv-pn").value, method, ref }); toast("Sent. Your payment is pending approval: you'll get your PAID invoice by email once it's approved."); load(); } catch (x) { toast(x.message); go.disabled = false; } };
       box.scrollIntoView({ behavior: "smooth" });
     }
     load(); return { load };

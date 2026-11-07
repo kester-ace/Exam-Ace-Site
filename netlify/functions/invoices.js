@@ -2,17 +2,24 @@
 // Someone registers → a draft invoice is made from their plan and you're emailed to check it.
 // You check the amounts (worked out automatically, all editable), sign, tick "I've checked this amount" and send it.
 // They upload proof of payment → you're emailed → you confirm → a signed receipt is emailed and their courses open.
-// Netlify environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAIL, PAY_INFO (optional: your bank details), plus the email settings.
+// Every invoice email carries the invoice as a PDF (netlify/lib/invoice-pdf.js): awaiting payment when sent, PAID when confirmed.
+// Proof of payment goes to PAYMENTS_EMAIL (default examacetutorials@gmail.com) with the file attached and a link to it.
+// Netlify environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAIL, PAYMENTS_EMAIL, PAY_INFO (optional), the payment details listed in invoice-pdf.js, plus the email settings.
 // Supabase: run supabase/invoices.sql once.
 const { json, whoIs, sb } = require("../lib/user");
 const { sendMail, sendAdmin, esc, SITE } = require("../lib/mail");
 const Inv = require("../../assets/invoice-core.js");
+const { invoicePdf, pdfName } = require("../lib/invoice-pdf");
+const PAY_ALERTS = process.env.PAYMENTS_EMAIL || "examacetutorials@gmail.com";
+const METHODS = ["MoneyGram", "Western Union", "Wire transfer", "Bank deposit", "Cash", "Other"];
+const pdfAtt = async inv => ({ filename: pdfName(inv), content: await invoicePdf(inv), contentType: "application/pdf" });
+const withPdf = async (inv, more) => { const a = (more || []).slice(); try { a.push(await pdfAtt(inv)); } catch (e) { console.error("PDF", e); } return a.length ? a : undefined; };
 const URL_ = process.env.SUPABASE_URL;
 const one = r => (Array.isArray(r) && r[0]) || null;
 const ret = { Prefer: "return=representation" };
 const PLANS = { single: ["Single Subject", 12, 1, false, false], plus: ["Subject Plus", 18, 1, true, false], two: ["Two Subjects", 28, 2, true, false], all: ["All Access", 45, 6, true, false], teacher1: ["Teacher, one subject", 25, 1, true, true], teacherA: ["Teacher, all subjects", 60, 6, true, true] };
 const YEAR_MONTHS = 8;
-const PAY_INFO = process.env.PAY_INFO || "Pay by bank transfer or at the office. Use your invoice number as the reference.";
+const PAY_INFO = process.env.PAY_INFO || "Pay by MoneyGram or Western Union, or by wire transfer in US dollars. The full details are on the invoice PDF. Use your invoice number as the reference.";
 const ADMIN_URL = (SITE || "") + "/admin.html#invoices", DASH = (SITE || "") + "/dashboard.html#invoices";
 
 async function nextNumber(prefix) {
@@ -83,12 +90,34 @@ exports.handler = async (event) => {
       if (f.length > 9 * 1024 * 1024) return json(413, { error: "That file is too large. Try a smaller photo." });
       const path = `${inv.id}/proof-${Date.now()}.${m[1] === "application/pdf" ? "pdf" : m[1].split("/")[1].replace("jpeg", "jpg")}`;
       await sb(`/storage/v1/object/payment-proofs/${path}`, { method: "POST", raw: true, headers: { "Content-Type": m[1], "x-upsert": "true" }, body: Buffer.from(f.split(",")[1], "base64") });
-      await sb(`/rest/v1/invoices?id=eq.${inv.id}`, { method: "PATCH", body: JSON.stringify({ status: "proof", proof_path: path, proof_note: String(b.note || "").slice(0, 500), proof_at: new Date().toISOString() }) });
-      try { await sendAdmin({ subject: `Proof of payment: ${inv.number} · ${inv.bill_name}`, eyebrow: "Payment", title: "Proof of payment to confirm", intro: `${esc(inv.bill_name)} uploaded proof of payment for invoice <b>${esc(inv.number)}</b>.`, rows: [["Amount due", Inv.money(totalOf(inv), inv.currency)], ["Their note", esc(b.note || "—")]], button: { text: "Check the proof", href: ADMIN_URL } }); } catch (e) { }
-      return json(200, { ok: true });
+      const method = METHODS.includes(b.method) ? b.method : "Other", ref = String(b.ref || "").trim().slice(0, 80);
+      const upd = one(await sb(`/rest/v1/invoices?id=eq.${inv.id}`, { method: "PATCH", headers: ret, body: JSON.stringify({ status: "proof", proof_path: path, proof_note: String(b.note || "").slice(0, 500), proof_method: method, proof_ref: ref || null, proof_at: new Date().toISOString() }) })) || inv;
+      /* the name and email they signed up with */
+      const name = me.full_name || inv.bill_name || "A student", email = me.contact_email || user.email || inv.bill_email || "";
+      let link = ""; try { const r = await sb(`/storage/v1/object/sign/payment-proofs/${path}`, { method: "POST", body: JSON.stringify({ expiresIn: 7 * 86400 }) }); link = URL_ + "/storage/v1" + (r.signedURL || r.signedUrl); } catch (e) { }
+      const ext = path.split(".").pop(), file = { filename: `Proof-of-payment-${inv.number}-${String(name).replace(/[^A-Za-z0-9]+/g, "-")}.${ext}`, content: Buffer.from(f.split(",")[1], "base64"), contentType: m[1] };
+      try { await sendMail({ to: PAY_ALERTS, replyTo: email || undefined, subject: `Proof of payment: ${name} · ${inv.number} · ${Inv.money(totalOf(inv), inv.currency)}`, eyebrow: "Pending approval", title: "Proof of payment to approve",
+        intro: `<b>${esc(name)}</b> uploaded proof of payment for invoice <b>${esc(inv.number)}</b>. The file is attached to this email.`,
+        rows: [["Student", esc(name) + (email ? "<br>" + esc(email) : "")], ["Invoice", esc(inv.number)], ["Amount due", Inv.money(totalOf(inv), inv.currency)], ["Paid by", esc(method)], ["MTCN / reference", esc(ref || "—")], ["Their note", esc(b.note || "—")],
+          ["Uploaded file", link ? `<a href="${esc(link)}" style="color:#FFD766">Open the proof of payment</a><br><span style="color:#AEB9DD;font-size:12px">Link works for 7 days. The file is also attached.</span>` : "Attached to this email"]],
+        button: { text: "Approve or reject on the dashboard", href: ADMIN_URL }, footer: "You're receiving this because you manage payments for Exam Ace Tutorials.", attachments: [file] }); } catch (e) { console.error("proof mail", e); }
+      try { await sendMail({ to: email || inv.bill_email, subject: `We received your proof of payment · ${inv.number}`, eyebrow: "Pending approval", title: "Proof of payment received",
+        intro: `Hi ${esc(String(name).split(" ")[0])}, thank you. We've received your proof of payment for invoice <b>${esc(inv.number)}</b> and it's now pending approval. Your course opens as soon as the payment is verified, and your invoice marked <b>PAID</b> will be emailed to you and added to your dashboard.`,
+        rows: [["Invoice", esc(inv.number)], ["Amount", Inv.money(totalOf(inv), inv.currency)], ["Paid by", esc(method)], ["MTCN / reference", esc(ref || "—")]],
+        button: { text: "Open my dashboard", href: DASH }, footer: "You're receiving this because you uploaded a payment to Exam Ace Tutorials." }); } catch (e) { }
+      return json(200, { ok: true, status: upd.status });
+    }
+
+    /* the invoice as a PDF: for the student it belongs to (once it's been sent) or for you */
+    if (b.action === "pdf") {
+      const inv = await get(b.id); if (!inv || (!admin && (inv.user_id !== user.id || inv.status === "draft" || inv.status === "void"))) return json(404, { error: "That invoice wasn't found." });
+      return json(200, { filename: pdfName(inv), data: (await invoicePdf(inv)).toString("base64") });
     }
 
     if (!admin) return json(403, { error: "Only the administrator manages invoices." });
+
+    /* how many proofs are waiting for you (the dashboard notification) */
+    if (b.action === "pending") { const rows = await sb(`/rest/v1/invoices?status=eq.proof&select=id,number,bill_name,total,currency,proof_at,proof_method&order=proof_at.asc`); return json(200, { count: rows.length, rows }); }
 
     if (b.action === "list") { const st = ["draft", "sent", "proof", "paid", "void"].includes(b.status) ? `&status=eq.${b.status}` : ""; return json(200, { rows: await sb(`/rest/v1/invoices?select=id,number,bill_name,bill_email,plan,status,total,currency,created_at,sent_at,paid_at,receipt_no${st}&order=created_at.desc&limit=300`) }); }
     if (b.action === "get") { const inv = await get(b.id); if (!inv) return json(404, { error: "Not found." }); let proof = null;
@@ -106,9 +135,10 @@ exports.handler = async (event) => {
       if (!inv.checked) return json(400, { error: "Tick “I've checked this amount” first." }); if (!inv.signature) return json(400, { error: "Sign the invoice first." });
       if (!inv.bill_email) return json(400, { error: "Add the student's email address." });
       const total = totalOf(inv), first = String(inv.bill_name || "").split(" ")[0] || "there";
-      await sendMail({ to: inv.bill_email, subject: `Your invoice ${inv.number} from Exam Ace Tutorials`, eyebrow: "Invoice", title: `Invoice ${inv.number}`, attachments: sig(inv),
+      const asSent = Object.assign({}, inv, { status: inv.status === "proof" ? "proof" : "sent", sent_at: inv.sent_at || new Date().toISOString(), total });
+      await sendMail({ to: inv.bill_email, subject: `Your invoice ${inv.number} from Exam Ace Tutorials`, eyebrow: "Invoice", title: `Invoice ${inv.number}`, attachments: await withPdf(asSent, sig(inv)),
         intro: `Hi ${esc(first)}, here is your invoice. ${table(inv)}<b style="font-size:18px;color:#FFD766">Total due: ${Inv.money(total, inv.currency)}</b>${sigHtml(inv)}`,
-        rows: [["Due by", esc(inv.due_date || "—")], ["How to pay", esc(inv.pay_info || "").replace(/\n/g, "<br>")], ["After paying", "Sign in and upload your proof of payment from your dashboard. Your courses open when it's confirmed."]],
+        rows: [["Due by", esc(inv.due_date || "—")], ["How to pay", esc(inv.pay_info || "").replace(/\n/g, "<br>")], ["Your invoice", "Attached as a PDF, and in <b>My invoices</b> on your dashboard."], ["After paying", "Sign in and upload your proof of payment from your dashboard. Your courses open when it's confirmed."]],
         button: { text: "Open my dashboard", href: DASH }, footer: "You're receiving this because you registered with Exam Ace Tutorials." });
       return json(200, one(await sb(`/rest/v1/invoices?id=eq.${inv.id}`, { method: "PATCH", headers: ret, body: JSON.stringify({ status: inv.status === "proof" ? "proof" : "sent", sent_at: new Date().toISOString(), total }) }))); }
     if (b.action === "reject_proof") {
@@ -127,9 +157,9 @@ exports.handler = async (event) => {
       if (inv.user_id) { const yEnd = () => { const y = now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear(); return new Date(Date.UTC(y, 6, 1)).toISOString(); };
         const exp = inv.billing === "year" ? yEnd() : new Date(now.getTime() + 31 * 86400000).toISOString();
         await sb("/rest/v1/entitlements?on_conflict=user_id,course_slug,edition", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify(courses.map(s => ({ user_id: inv.user_id, course_slug: s, edition: inv.edition || "student", source: "manual", books: !!inv.books, expires_at: exp }))) }); }
-      try { await sendMail({ to: inv.bill_email, subject: `Your receipt ${receipt} from Exam Ace Tutorials`, eyebrow: "Receipt", title: "Payment received. Thank you!", attachments: sig(out),
+      try { await sendMail({ to: inv.bill_email, subject: `Paid: invoice ${inv.number} from Exam Ace Tutorials`, eyebrow: "Payment confirmed", title: "Payment received. Thank you!", attachments: await withPdf(out, sig(out)),
         intro: `Hi ${esc(String(inv.bill_name || "").split(" ")[0] || "there")}, we've confirmed your payment and your course${courses.length > 1 || courses[0] === "all" ? "s are" : " is"} open now. ${table(inv)}<b style="font-size:18px;color:#FFD766">Amount paid: ${Inv.money(paid, inv.currency)}</b>${sigHtml(out)}`,
-        rows: [["Receipt", esc(receipt)], ["For invoice", esc(inv.number)], ["Paid on", now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })]],
+        rows: [["Receipt", esc(receipt)], ["For invoice", esc(inv.number)], ["Paid on", now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })], ["Your invoice", "Attached as a PDF marked <b>PAID</b>, and in <b>My invoices</b> on your dashboard."]],
         button: { text: "Open my courses", href: DASH }, footer: "You're receiving this because you paid Exam Ace Tutorials." }); } catch (e) { }
       return json(200, out); }
     return json(400, { error: "Unknown request." });

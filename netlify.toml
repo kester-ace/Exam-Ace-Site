@@ -4,6 +4,10 @@
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
 
+# The PDF invoices need pdfkit's built-in font files
+[functions."invoices"]
+  included_files = ["node_modules/pdfkit/js/data/**"]
+
 # Morning summary email: every day at 11:00 UTC = 7:00 a.m. in Sint Maarten
 [functions."daily-summary"]
   schedule = "0 11 * * *"

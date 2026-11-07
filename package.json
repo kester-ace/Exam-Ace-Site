@@ -1,8 +1,9 @@
 {
   "name": "kester-small-ecourses",
   "private": true,
-  "description": "E-course site: pages, sign-in, course gate, Payhip payments and admin email alerts.",
+  "description": "E-course site: pages, sign-in, course gate, Payhip payments and admin email alerts, PDF invoices.",
   "dependencies": {
-    "nodemailer": "6.9.14"
+    "nodemailer": "^6.9.14",
+    "pdfkit": "0.15.0"
   }
 }
