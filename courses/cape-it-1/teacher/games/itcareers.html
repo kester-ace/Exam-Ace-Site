@@ -4064,7 +4064,7 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
   mergeCfg(window.EA_ARENA_CONFIG);
 
   var HEARTBEAT = 4000, STALE = 13000, INVITE_TTL = 120000, COUNTDOWN = 5,
-      QN = 8, QTIME = 20, MAX_PLAYERS = 6, CAP_PER_MIN = 6, CAP_PENDING = 5, RECV_CAP = 3;
+      QN = 20, QTIME = 40, PAUSE = 2000, MATCH_CAP = 15 * 60000, MAX_PLAYERS = 6, CAP_PER_MIN = 6, CAP_PENDING = 5, RECV_CAP = 3;
 
   var SUBJECTS = {
     itu1: 'CAPE IT Unit 1', csecit: 'CSEC IT', edpm: 'CSEC EDPM',
@@ -4166,6 +4166,107 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
       ['Restating someone else\'s ideas in your own words is…', ['Paraphrasing', 'Plagiarising', 'Quoting', 'Annotating'], 0]
     ]
   };
+
+
+  var MORE = {
+    itu1: [
+      ['Which characteristic of information means it contains everything needed to make a decision?', ['Completeness', 'Accuracy', 'Timeliness', 'Cost-effectiveness'], 0],
+      ['A source that summarises or analyses primary sources is…', ['A secondary source', 'A primary source', 'A raw data source', 'An original source'], 0],
+      ['Which is an example of qualitative data?', ['A customer\'s opinion of a service', 'The number of customers served', 'The temperature at noon', 'The price of an item'], 0],
+      ['Which programming construct repeats a set of steps?', ['Iteration (loop)', 'Selection', 'Sequence', 'Declaration'], 0],
+      ['An IF…THEN…ELSE statement is an example of…', ['Selection', 'Iteration', 'Sequence', 'Assignment'], 0],
+      ['The SDLC stage that checks whether a proposed system is practical and affordable is the…', ['Feasibility study', 'Implementation', 'Maintenance', 'Testing'], 0],
+      ['Running the old and new systems together for a period is called…', ['Parallel conversion', 'Direct conversion', 'Phased conversion', 'Pilot conversion'], 0],
+      ['Which interface requires users to type commands at a prompt?', ['Command line interface', 'Graphical user interface', 'Menu-driven interface', 'Touch interface'], 0],
+      ['GUI stands for…', ['Graphical User Interface', 'General Utility Interface', 'Graphical Unified Input', 'Global User Index'], 0],
+      ['Gaining access to a computer system without permission is commonly called…', ['Hacking', 'Backing up', 'Encrypting', 'Formatting'], 0],
+      ['Scrambling data so that only authorised users can read it is…', ['Encryption', 'Compression', 'Validation', 'Verification'], 0],
+      ['Checking that entered data is reasonable and follows set rules, e.g. a range check, is…', ['Validation', 'Verification', 'Encryption', 'Archiving'], 0],
+      ['Which storage device has no moving parts?', ['Solid-state drive', 'Hard disk drive', 'DVD drive', 'Tape drive'], 0],
+      ['A system with a knowledge base and inference engine that gives specialist advice is…', ['An expert system', 'A transaction processing system', 'A management information system', 'An office automation system'], 0]
+    ],
+    csecit: [
+      ['Which device converts digital signals to analogue for telephone lines?', ['Modem', 'Router', 'Switch', 'Monitor'], 0],
+      ['What is the binary equivalent of decimal 7?', ['111', '101', '110', '1000'], 0],
+      ['Which storage medium is read using a laser?', ['DVD', 'Hard disk', 'Flash drive', 'Magnetic tape'], 0],
+      ['Software whose source code is freely available to use and change is…', ['Open-source software', 'Proprietary software', 'Pirated software', 'Firmware'], 0],
+      ['Which network topology connects every device to one central switch?', ['Star', 'Bus', 'Ring', 'Mesh'], 0],
+      ['In a spreadsheet, B3 is an example of a…', ['Cell reference', 'Range', 'Function', 'Label'], 0],
+      ['Which spreadsheet function finds the largest value in a range?', ['MAX', 'MIN', 'COUNT', 'AVERAGE'], 0],
+      ['The database object used to find records that meet set criteria is a…', ['Query', 'Form', 'Report', 'Table'], 0],
+      ['In a program flowchart, the start and stop symbol is an…', ['Oval', 'Diamond', 'Parallelogram', 'Rectangle'], 0],
+      ['An error that breaks the rules of the programming language is a…', ['Syntax error', 'Logic error', 'Run-time error', 'Rounding error'], 0],
+      ['Which HTML tag inserts an image on a web page?', ['<img>', '<pic>', '<src>', '<image>'], 0],
+      ['Presenting someone else\'s work as your own is…', ['Plagiarism', 'Encryption', 'Phishing', 'Spoofing'], 0],
+      ['A program that attaches itself to files and spreads to cause damage is a…', ['Virus', 'Firewall', 'Compiler', 'Driver'], 0],
+      ['A spreadsheet is best suited for…', ['Calculations on numerical data', 'Designing logos', 'Sending email', 'Editing video'], 0]
+    ],
+    edpm: [
+      ['"cc" at the end of a letter or memo shows that…', ['A copy is sent to another person', 'The letter is confidential', 'Something is enclosed', 'The letter was cancelled'], 0],
+      ['Which salutation goes with the complimentary close "Yours faithfully"?', ['Dear Sir or Madam', 'Dear Ms Lake', 'Hello Ms Lake', 'Best regards'], 0],
+      ['A notice of meeting is sent…', ['Before the meeting', 'During the meeting', 'After the minutes are signed', 'With the invoice'], 0],
+      ['Which document goes with goods to list what was delivered?', ['Delivery note', 'Invoice', 'Credit note', 'Statement of account'], 0],
+      ['A document sent to correct an overcharge on an invoice is a…', ['Credit note', 'Debit note', 'Receipt', 'Quotation'], 0],
+      ['Which file format keeps a document\'s layout the same on any computer?', ['PDF', 'TXT', 'CSV', 'RTF'], 0],
+      ['Combining two or more table cells into one is called…', ['Merging cells', 'Splitting cells', 'Sorting', 'Shading'], 0],
+      ['The space between newspaper-style columns is the…', ['Gutter', 'Margin', 'Header', 'Indent'], 0],
+      ['The proofreading instruction "u.c." means…', ['Change to capital letters', 'Change to small letters', 'Underline the word', 'Use italics'], 0],
+      ['Good posture at a workstation includes…', ['Feet flat on the floor and back supported', 'Screen well above eye level', 'Wrists bent upwards while typing', 'Sitting on the edge of the chair'], 0],
+      ['Which document summarises a job applicant\'s education, skills and experience?', ['Résumé', 'Itinerary', 'Agenda', 'Memorandum'], 0],
+      ['The letter sent with a résumé when applying for a job is an…', ['Application letter', 'Circular', 'Invoice', 'Itinerary'], 0],
+      ['Which page setting controls the white space around the edges of a page?', ['Margins', 'Orientation', 'Columns', 'Borders'], 0],
+      ['Information arranged in rows and columns using tab stops or a table is called…', ['Tabulation', 'Pagination', 'Justification', 'Hyphenation'], 0]
+    ],
+    dm1: [
+      ['Which lossy format is commonly used for photographs?', ['JPEG', 'PNG', 'SVG', 'TIFF'], 0],
+      ['SVG is an example of a…', ['Vector format', 'Raster format', 'Audio format', 'Video format'], 0],
+      ['The amount of colour information stored for each pixel is the…', ['Colour (bit) depth', 'Resolution', 'Frame rate', 'Sample rate'], 0],
+      ['Colours next to each other on the colour wheel are…', ['Analogous', 'Complementary', 'Triadic', 'Neutral'], 0],
+      ['Hue, saturation and value are used to describe…', ['Colour', 'Typography', 'Layout', 'Sound'], 0],
+      ['The design principle of grouping related items close together is…', ['Proximity', 'Contrast', 'Repetition', 'Balance'], 0],
+      ['Empty space left around elements in a design is…', ['White (negative) space', 'Bleed', 'Kerning', 'A gradient'], 0],
+      ['Adjusting the space between a particular pair of letters is…', ['Kerning', 'Leading', 'Tracking', 'Alignment'], 0],
+      ['The vertical space between lines of text is called…', ['Leading', 'Kerning', 'Tracking', 'Padding'], 0],
+      ['Which legal protection is usually used for a company\'s logo and brand name?', ['Trademark', 'Patent', 'Copyright only', 'Licence fee'], 0],
+      ['A licence that lets others reuse work under stated conditions, such as giving credit, is…', ['Creative Commons', 'A patent', 'A trademark', 'Piracy'], 0],
+      ['Extra image area beyond the trim line on a printed design is the…', ['Bleed', 'Gutter', 'Margin', 'Header'], 0],
+      ['Which HTML tag creates the most important (largest) heading?', ['<h1>', '<h6>', '<head>', '<title>'], 0],
+      ['Which CSS property changes the colour of text?', ['color', 'font-color', 'text-colour', 'background'], 0]
+    ],
+    dm2: [
+      ['A shot where the subject\'s face fills most of the frame is a…', ['Close-up', 'Long shot', 'Wide shot', 'Establishing shot'], 0],
+      ['A shot at the start of a scene that shows the location is an…', ['Establishing shot', 'Close-up', 'Cutaway', 'Insert shot'], 0],
+      ['Pointing the camera up or down from a fixed position is a…', ['Tilt', 'Pan', 'Track', 'Zoom'], 0],
+      ['Moving the whole camera towards or away from the subject on wheels is a…', ['Dolly shot', 'Pan', 'Tilt', 'Zoom'], 0],
+      ['The rule that keeps the camera on one side of the line between two characters is the…', ['180-degree rule', 'Rule of thirds', 'Golden ratio', 'Rule of odds'], 0],
+      ['Three-point lighting uses a key light, a fill light and a…', ['Back light', 'Flash', 'Strobe light', 'Floodlight'], 0],
+      ['Background music the characters cannot hear is…', ['Non-diegetic sound', 'Diegetic sound', 'Ambient sound', 'Dialogue'], 0],
+      ['The number of audio samples taken per second is the…', ['Sample rate', 'Bit rate', 'Frame rate', 'Resolution'], 0],
+      ['A gradual change from a shot to black is a…', ['Fade out', 'Jump cut', 'Cutaway', 'Wipe'], 0],
+      ['The animation principle where objects flatten on impact and lengthen when moving fast is…', ['Squash and stretch', 'Anticipation', 'Staging', 'Follow through'], 0],
+      ['A small preparatory movement before the main action in animation is…', ['Anticipation', 'Squash and stretch', 'Exaggeration', 'Timing'], 0],
+      ['Processing the edited timeline into a final playable video file is…', ['Rendering', 'Storyboarding', 'Logging', 'Scripting'], 0],
+      ['An interactive model of an app used to test navigation before coding is a…', ['Prototype', 'Style guide', 'Sitemap', 'Mood board'], 0],
+      ['Which codec is widely used for compressed HD video on the web?', ['H.264', 'WAV', 'BMP', 'TXT'], 0]
+    ],
+    comm: [
+      ['In communication, the channel is…', ['The medium through which a message is sent', 'The person who sends the message', 'The receiver\'s response', 'Anything that interferes'], 0],
+      ['Loud traffic outside a classroom is an example of…', ['Physical noise', 'Psychological noise', 'Semantic noise', 'Feedback'], 0],
+      ['Misunderstanding caused by unfamiliar words or jargon is…', ['Semantic noise', 'Physical noise', 'Physiological noise', 'Feedback'], 0],
+      ['An appeal to logic and evidence is…', ['Logos', 'Pathos', 'Ethos', 'Mythos'], 0],
+      ['Communicating with oneself, such as thinking through a problem, is…', ['Intrapersonal communication', 'Interpersonal communication', 'Group communication', 'Mass communication'], 0],
+      ['Communication through newspapers, radio and television to a large audience is…', ['Mass communication', 'Intrapersonal communication', 'Interpersonal communication', 'Small-group communication'], 0],
+      ['A situation where two varieties of a language are used for different social functions is…', ['Diglossia', 'Code-switching', 'Jargon', 'Slang'], 0],
+      ['Reasoning from a general rule to a specific conclusion is…', ['Deductive reasoning', 'Inductive reasoning', 'Bias', 'Hearsay'], 0],
+      ['In an expository essay, the thesis statement usually appears in the…', ['Introduction', 'Conclusion', 'Bibliography', 'Title'], 0],
+      ['The organising strategy that explains why something happened and what resulted is…', ['Cause and effect', 'Chronological order', 'Spatial order', 'Classification'], 0],
+      ['A writer\'s attitude towards the subject is the…', ['Tone', 'Theme', 'Plot', 'Setting'], 0],
+      ['A comparison using "like" or "as" is a…', ['Simile', 'Metaphor', 'Personification', 'Hyperbole'], 0],
+      ['Giving human qualities to non-human things is…', ['Personification', 'Simile', 'Alliteration', 'Onomatopoeia'], 0],
+      ['Which source is likely to be the most reliable for a research paper?', ['A peer-reviewed journal article', 'An anonymous blog post', 'A social media comment', 'An advertisement'], 0]
+    ]
+  };
+  for (var mk in MORE) BANK[mk] = BANK[mk].concat(MORE[mk]);
 
   var AVATARS = ['🦁', '🐯', '🦊', '🐼', '🐨', '🐸', '🐙', '🦈', '🐬', '🦅', '🦉', '🐢', '🦋', '🐝', '🚀', '⚡', '🔥', '🌟', '🎧', '🎮', '🏝️', '🌴', '⚽', '🏏'];
   var FLAGS = [['🇸🇽', 'Sint Maarten'], ['🇲🇫', 'Saint-Martin'], ['🇦🇮', 'Anguilla'], ['🇦🇬', 'Antigua & Barbuda'], ['🇦🇼', 'Aruba'], ['🇧🇸', 'Bahamas'], ['🇧🇧', 'Barbados'], ['🇧🇿', 'Belize'], ['🇧🇶', 'Bonaire, Saba & Statia'], ['🇻🇬', 'British Virgin Islands'], ['🇰🇾', 'Cayman Islands'], ['🇨🇼', 'Curaçao'], ['🇩🇲', 'Dominica'], ['🇬🇩', 'Grenada'], ['🇬🇾', 'Guyana'], ['🇯🇲', 'Jamaica'], ['🇲🇸', 'Montserrat'], ['🇰🇳', 'St Kitts & Nevis'], ['🇱🇨', 'St Lucia'], ['🇻🇨', 'St Vincent & the Grenadines'], ['🇹🇹', 'Trinidad & Tobago'], ['🇹🇨', 'Turks & Caicos'], ['🇻🇮', 'US Virgin Islands']];
@@ -4444,6 +4545,8 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
   function nextQ() {
     var m = S.match; if (!m) return;
     if (m.i >= m.qs.length) { m.phase = 'done'; prog(true); beat(); checkMatchEnd(); render(); return; }
+    if (!m.t0) m.t0 = now();
+    if (now() - m.t0 > MATCH_CAP) { m.i = m.qs.length; m.phase = 'done'; prog(true); beat(); checkMatchEnd(); render(); return; }
     m.phase = 'q'; m.picked = null; m.qStart = now(); render();
   }
   function pick(i) {
@@ -4451,7 +4554,7 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
     m.picked = i; var q = m.qs[m.i], el = (now() - m.qStart) / 1000;
     var right = i === q.ans; if (right) m.score += 100 + Math.max(0, Math.round(50 * (1 - el / QTIME)));
     m.lastRight = right; m.phase = 'fb'; m.i++; prog(false); render();
-    setTimeout(function () { if (S.match === m) nextQ(); }, 1300);
+    setTimeout(function () { if (S.match === m) nextQ(); }, PAUSE);
   }
   function prog(done, left) {
     var m = S.match; var me = m.players[S.me.id]; me.score = m.score; me.q = m.i; me.done = done; me.left = left;
@@ -4478,7 +4581,7 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
     if (S.incoming && t > S.incoming.deadline) { S.incoming = null; toast('A challenge expired.'); }
     if (S.pendingJoin && t > S.pendingJoin.until) { S.pendingJoin = null; toast('Couldn\'t join that match. Try again.'); }
     var m = S.match;
-    if (m && m.phase === 'q' && t - m.qStart > QTIME * 1000) { m.picked = -1; m.lastRight = false; m.phase = 'fb'; m.i++; prog(false); setTimeout(function () { if (S.match === m) nextQ(); }, 1300); }
+    if (m && m.phase === 'q' && t - m.qStart > QTIME * 1000) { m.picked = -1; m.lastRight = false; m.phase = 'fb'; m.i++; prog(false); setTimeout(function () { if (S.match === m) nextQ(); }, PAUSE); }
     if (h || S.incoming || (m && m.phase === 'q') || S.pendingJoin || dirty) render();
   }, 1000);
   setInterval(beat, HEARTBEAT);
@@ -4584,7 +4687,7 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
   }
   function viewMatch() {
     var m = S.match, out = '<div class="row" style="margin-bottom:6px"><div class="grow"><div class="nm">🎯 ' + esc(subjName(m.subject)) + '</div><div class="sub">Private match · ' + Object.keys(m.players).length + ' player' + (Object.keys(m.players).length === 1 ? '' : 's') + '</div></div><button class="btn2" data-act="leavematch">' + (m.phase === 'done' ? 'Back to arena' : 'Leave') + '</button></div>';
-    if (m.phase === 'countdown') out += '<div class="cd">' + m.cd + '</div><div class="sub" style="text-align:center">Match starts in ' + m.cd + '… ' + QN + ' questions, ' + QTIME + 's each.</div>';
+    if (m.phase === 'countdown') out += '<div class="cd">' + m.cd + '</div><div class="sub" style="text-align:center">Match starts in ' + m.cd + '… ' + QN + ' questions, ' + QTIME + 's each · 15 minutes max.</div>';
     else if (m.phase === 'q' || m.phase === 'fb') {
       var qi = m.phase === 'q' ? m.i : m.i - 1, q = m.qs[qi], left = m.phase === 'q' ? Math.max(0, QTIME - (now() - m.qStart) / 1000) : 0;
       out += '<div class="row sub" style="margin-top:10px"><span>Question ' + (qi + 1) + ' of ' + m.qs.length + '</span><span style="margin-left:auto">⏱ ' + Math.ceil(left) + 's · ' + m.score + ' pts</span></div><div class="bar"><b style="width:' + (left / QTIME * 100) + '%"></b></div>';
@@ -4666,6 +4769,81 @@ Walk up to a door (or click it) to step inside that job for a shift.`,missions:[
   setInterval(function () { if (host.parentNode == null || !host.isConnected) mount(); }, 3000);
 
   window.EALiveArena = { open: function () { S.open = true; join(); render(); }, config: mergeCfg, _state: S };
+})();
+
+</script>
+<script id="ea-hud">
+/* Exam Ace · movable, minimisable clue panel · Kester Small */
+(function () {
+  if (window.__eaHud) return; window.__eaHud = true;
+  var KEY = 'ea-hud-' + (document.title || location.pathname).replace(/\W+/g, '-').slice(0, 60);
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+  var css = document.createElement('style');
+  css.textContent =
+    '#hud.ea-tamed{box-sizing:border-box!important;width:min(330px,calc(100vw - 24px))!important;max-width:min(330px,calc(100vw - 24px))!important;max-height:min(58vh,calc(100vh - 24px))!important;overflow:auto!important;padding-top:0!important;font-size:.92em}' +
+    '#hud.ea-tamed #hud-title{font-size:.95rem!important}#hud.ea-tamed #hud-body{font-size:.8rem!important;line-height:1.4!important}' +
+    '#hud .ea-hud-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:6px;margin:0 -14px 6px;padding:5px 6px 5px 10px;background:rgba(10,26,68,.97);border-bottom:1px solid rgba(245,197,66,.45);border-radius:14px 14px 0 0;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}' +
+    '#hud .ea-hud-bar:active{cursor:grabbing}' +
+    '#hud .ea-hud-grip{color:#F5C542;font-size:14px;line-height:1;letter-spacing:-2px}' +
+    '#hud .ea-hud-lbl{flex:1;min-width:0;font:700 11px/1.2 "Segoe UI",system-ui,sans-serif;color:#F5C542;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#hud .ea-hud-btn{all:unset;box-sizing:border-box;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(255,255,255,.12);font:700 14px/1 "Segoe UI",system-ui,sans-serif}' +
+    '#hud .ea-hud-btn:hover{background:rgba(245,197,66,.35)}' +
+    '#hud .ea-hud-new{display:none;width:8px;height:8px;border-radius:50%;background:#F5C542;box-shadow:0 0 0 3px rgba(245,197,66,.3)}' +
+    '#hud.ea-min{width:auto!important;max-width:min(260px,calc(100vw - 24px))!important;padding-bottom:0!important;overflow:hidden!important}' +
+    '#hud.ea-min>:not(.ea-hud-bar){display:none!important}#hud.ea-min .ea-hud-bar{margin-bottom:0;border-bottom:0;border-radius:14px}' +
+    '#hud.ea-min.ea-has-new .ea-hud-new{display:block}' +
+    '@media (max-width:640px){#hud.ea-tamed{width:auto!important;max-width:none!important;max-height:40vh!important}#hud.ea-tamed.ea-moved{width:calc(100vw - 16px)!important}#hud.ea-min{width:auto!important}}';
+  document.head.appendChild(css);
+
+  function tame(hud) {
+    if (hud.__eaT) return; hud.__eaT = true;
+    hud.classList.add('ea-tamed');
+    var bar = document.createElement('div'); bar.className = 'ea-hud-bar'; bar.title = 'Drag to move';
+    bar.innerHTML = '<span class="ea-hud-grip">⋮⋮</span><span class="ea-hud-lbl">Clues &amp; instructions</span><span class="ea-hud-new"></span>' +
+      '<button type="button" class="ea-hud-btn" data-a="reset" title="Put back" aria-label="Reset position">↺</button>' +
+      '<button type="button" class="ea-hud-btn" data-a="min" title="Minimise" aria-label="Minimise clues">–</button>';
+    function ensureBar() { if (bar.parentNode !== hud || hud.firstChild !== bar) hud.insertBefore(bar, hud.firstChild); }
+    ensureBar();
+    var st = load();
+    function setMin(v) { hud.classList.toggle('ea-min', v); hud.classList.remove('ea-has-new'); bar.querySelector('[data-a=min]').textContent = v ? '+' : '–'; bar.querySelector('[data-a=min]').title = v ? 'Show clues' : 'Minimise'; st.min = v; save(st); }
+    function place(x, y) {
+      var r = hud.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+      x = Math.max(4, Math.min(x, W - Math.min(r.width, W) - 4)); y = Math.max(4, Math.min(y, H - 40));
+      var pr = hud.offsetParent ? hud.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+      hud.style.setProperty('left', (x - pr.left) + 'px', 'important'); hud.style.setProperty('top', (y - pr.top) + 'px', 'important');
+      hud.style.setProperty('right', 'auto', 'important'); hud.style.setProperty('bottom', 'auto', 'important');
+      hud.classList.add('ea-moved'); st.x = x; st.y = y; save(st);
+    }
+    function reset() { ['left', 'top', 'right', 'bottom'].forEach(function (p) { hud.style.removeProperty(p); }); hud.classList.remove('ea-moved'); delete st.x; delete st.y; save(st); }
+    if (st.min) setMin(true);
+    if (typeof st.x === 'number') setTimeout(function () { place(st.x, st.y); }, 50);
+
+    var drag = null;
+    bar.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      if (e.target.closest('.ea-hud-btn')) return;
+      var r = hud.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, id: e.pointerId };
+      try { bar.setPointerCapture(e.pointerId); } catch (er) {} e.preventDefault();
+    });
+    bar.addEventListener('pointermove', function (e) { if (drag && e.pointerId === drag.id) { e.stopPropagation(); place(e.clientX - drag.dx, e.clientY - drag.dy); } });
+    function end(e) { if (drag) { drag = null; try { bar.releasePointerCapture(e.pointerId); } catch (er) {} } }
+    bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
+    ['mousedown', 'touchstart', 'click', 'dblclick', 'wheel'].forEach(function (ev) { bar.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: ev !== 'wheel' && ev !== 'mousedown' ? true : false }); });
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('.ea-hud-btn'); if (!b) return; e.preventDefault();
+      if (b.getAttribute('data-a') === 'min') setMin(!hud.classList.contains('ea-min')); else reset();
+    });
+    window.addEventListener('resize', function () { if (typeof st.x === 'number') place(st.x, st.y); });
+    new MutationObserver(function (list) {
+      var real = list.some(function (m) { return !bar.contains(m.target) && m.target !== bar && !(m.addedNodes.length === 1 && m.addedNodes[0] === bar); });
+      if (hud.firstChild !== bar) ensureBar();
+      if (real && hud.classList.contains('ea-min')) hud.classList.add('ea-has-new');
+    }).observe(hud, { childList: true, subtree: true, characterData: true });
+  }
+  function find() { var h = document.getElementById('hud'); if (h && h.tagName === 'SECTION') tame(h); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', find); else find();
+  setTimeout(find, 1500);
 })();
 
 </script>

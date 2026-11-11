@@ -204,7 +204,7 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
   mergeCfg(window.EA_ARENA_CONFIG);
 
   var HEARTBEAT = 4000, STALE = 13000, INVITE_TTL = 120000, COUNTDOWN = 5,
-      QN = 8, QTIME = 20, MAX_PLAYERS = 6, CAP_PER_MIN = 6, CAP_PENDING = 5, RECV_CAP = 3;
+      QN = 20, QTIME = 40, PAUSE = 2000, MATCH_CAP = 15 * 60000, MAX_PLAYERS = 6, CAP_PER_MIN = 6, CAP_PENDING = 5, RECV_CAP = 3;
 
   var SUBJECTS = {
     itu1: 'CAPE IT Unit 1', csecit: 'CSEC IT', edpm: 'CSEC EDPM',
@@ -306,6 +306,107 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
       ['Restating someone else\'s ideas in your own words is…', ['Paraphrasing', 'Plagiarising', 'Quoting', 'Annotating'], 0]
     ]
   };
+
+
+  var MORE = {
+    itu1: [
+      ['Which characteristic of information means it contains everything needed to make a decision?', ['Completeness', 'Accuracy', 'Timeliness', 'Cost-effectiveness'], 0],
+      ['A source that summarises or analyses primary sources is…', ['A secondary source', 'A primary source', 'A raw data source', 'An original source'], 0],
+      ['Which is an example of qualitative data?', ['A customer\'s opinion of a service', 'The number of customers served', 'The temperature at noon', 'The price of an item'], 0],
+      ['Which programming construct repeats a set of steps?', ['Iteration (loop)', 'Selection', 'Sequence', 'Declaration'], 0],
+      ['An IF…THEN…ELSE statement is an example of…', ['Selection', 'Iteration', 'Sequence', 'Assignment'], 0],
+      ['The SDLC stage that checks whether a proposed system is practical and affordable is the…', ['Feasibility study', 'Implementation', 'Maintenance', 'Testing'], 0],
+      ['Running the old and new systems together for a period is called…', ['Parallel conversion', 'Direct conversion', 'Phased conversion', 'Pilot conversion'], 0],
+      ['Which interface requires users to type commands at a prompt?', ['Command line interface', 'Graphical user interface', 'Menu-driven interface', 'Touch interface'], 0],
+      ['GUI stands for…', ['Graphical User Interface', 'General Utility Interface', 'Graphical Unified Input', 'Global User Index'], 0],
+      ['Gaining access to a computer system without permission is commonly called…', ['Hacking', 'Backing up', 'Encrypting', 'Formatting'], 0],
+      ['Scrambling data so that only authorised users can read it is…', ['Encryption', 'Compression', 'Validation', 'Verification'], 0],
+      ['Checking that entered data is reasonable and follows set rules, e.g. a range check, is…', ['Validation', 'Verification', 'Encryption', 'Archiving'], 0],
+      ['Which storage device has no moving parts?', ['Solid-state drive', 'Hard disk drive', 'DVD drive', 'Tape drive'], 0],
+      ['A system with a knowledge base and inference engine that gives specialist advice is…', ['An expert system', 'A transaction processing system', 'A management information system', 'An office automation system'], 0]
+    ],
+    csecit: [
+      ['Which device converts digital signals to analogue for telephone lines?', ['Modem', 'Router', 'Switch', 'Monitor'], 0],
+      ['What is the binary equivalent of decimal 7?', ['111', '101', '110', '1000'], 0],
+      ['Which storage medium is read using a laser?', ['DVD', 'Hard disk', 'Flash drive', 'Magnetic tape'], 0],
+      ['Software whose source code is freely available to use and change is…', ['Open-source software', 'Proprietary software', 'Pirated software', 'Firmware'], 0],
+      ['Which network topology connects every device to one central switch?', ['Star', 'Bus', 'Ring', 'Mesh'], 0],
+      ['In a spreadsheet, B3 is an example of a…', ['Cell reference', 'Range', 'Function', 'Label'], 0],
+      ['Which spreadsheet function finds the largest value in a range?', ['MAX', 'MIN', 'COUNT', 'AVERAGE'], 0],
+      ['The database object used to find records that meet set criteria is a…', ['Query', 'Form', 'Report', 'Table'], 0],
+      ['In a program flowchart, the start and stop symbol is an…', ['Oval', 'Diamond', 'Parallelogram', 'Rectangle'], 0],
+      ['An error that breaks the rules of the programming language is a…', ['Syntax error', 'Logic error', 'Run-time error', 'Rounding error'], 0],
+      ['Which HTML tag inserts an image on a web page?', ['<img>', '<pic>', '<src>', '<image>'], 0],
+      ['Presenting someone else\'s work as your own is…', ['Plagiarism', 'Encryption', 'Phishing', 'Spoofing'], 0],
+      ['A program that attaches itself to files and spreads to cause damage is a…', ['Virus', 'Firewall', 'Compiler', 'Driver'], 0],
+      ['A spreadsheet is best suited for…', ['Calculations on numerical data', 'Designing logos', 'Sending email', 'Editing video'], 0]
+    ],
+    edpm: [
+      ['"cc" at the end of a letter or memo shows that…', ['A copy is sent to another person', 'The letter is confidential', 'Something is enclosed', 'The letter was cancelled'], 0],
+      ['Which salutation goes with the complimentary close "Yours faithfully"?', ['Dear Sir or Madam', 'Dear Ms Lake', 'Hello Ms Lake', 'Best regards'], 0],
+      ['A notice of meeting is sent…', ['Before the meeting', 'During the meeting', 'After the minutes are signed', 'With the invoice'], 0],
+      ['Which document goes with goods to list what was delivered?', ['Delivery note', 'Invoice', 'Credit note', 'Statement of account'], 0],
+      ['A document sent to correct an overcharge on an invoice is a…', ['Credit note', 'Debit note', 'Receipt', 'Quotation'], 0],
+      ['Which file format keeps a document\'s layout the same on any computer?', ['PDF', 'TXT', 'CSV', 'RTF'], 0],
+      ['Combining two or more table cells into one is called…', ['Merging cells', 'Splitting cells', 'Sorting', 'Shading'], 0],
+      ['The space between newspaper-style columns is the…', ['Gutter', 'Margin', 'Header', 'Indent'], 0],
+      ['The proofreading instruction "u.c." means…', ['Change to capital letters', 'Change to small letters', 'Underline the word', 'Use italics'], 0],
+      ['Good posture at a workstation includes…', ['Feet flat on the floor and back supported', 'Screen well above eye level', 'Wrists bent upwards while typing', 'Sitting on the edge of the chair'], 0],
+      ['Which document summarises a job applicant\'s education, skills and experience?', ['Résumé', 'Itinerary', 'Agenda', 'Memorandum'], 0],
+      ['The letter sent with a résumé when applying for a job is an…', ['Application letter', 'Circular', 'Invoice', 'Itinerary'], 0],
+      ['Which page setting controls the white space around the edges of a page?', ['Margins', 'Orientation', 'Columns', 'Borders'], 0],
+      ['Information arranged in rows and columns using tab stops or a table is called…', ['Tabulation', 'Pagination', 'Justification', 'Hyphenation'], 0]
+    ],
+    dm1: [
+      ['Which lossy format is commonly used for photographs?', ['JPEG', 'PNG', 'SVG', 'TIFF'], 0],
+      ['SVG is an example of a…', ['Vector format', 'Raster format', 'Audio format', 'Video format'], 0],
+      ['The amount of colour information stored for each pixel is the…', ['Colour (bit) depth', 'Resolution', 'Frame rate', 'Sample rate'], 0],
+      ['Colours next to each other on the colour wheel are…', ['Analogous', 'Complementary', 'Triadic', 'Neutral'], 0],
+      ['Hue, saturation and value are used to describe…', ['Colour', 'Typography', 'Layout', 'Sound'], 0],
+      ['The design principle of grouping related items close together is…', ['Proximity', 'Contrast', 'Repetition', 'Balance'], 0],
+      ['Empty space left around elements in a design is…', ['White (negative) space', 'Bleed', 'Kerning', 'A gradient'], 0],
+      ['Adjusting the space between a particular pair of letters is…', ['Kerning', 'Leading', 'Tracking', 'Alignment'], 0],
+      ['The vertical space between lines of text is called…', ['Leading', 'Kerning', 'Tracking', 'Padding'], 0],
+      ['Which legal protection is usually used for a company\'s logo and brand name?', ['Trademark', 'Patent', 'Copyright only', 'Licence fee'], 0],
+      ['A licence that lets others reuse work under stated conditions, such as giving credit, is…', ['Creative Commons', 'A patent', 'A trademark', 'Piracy'], 0],
+      ['Extra image area beyond the trim line on a printed design is the…', ['Bleed', 'Gutter', 'Margin', 'Header'], 0],
+      ['Which HTML tag creates the most important (largest) heading?', ['<h1>', '<h6>', '<head>', '<title>'], 0],
+      ['Which CSS property changes the colour of text?', ['color', 'font-color', 'text-colour', 'background'], 0]
+    ],
+    dm2: [
+      ['A shot where the subject\'s face fills most of the frame is a…', ['Close-up', 'Long shot', 'Wide shot', 'Establishing shot'], 0],
+      ['A shot at the start of a scene that shows the location is an…', ['Establishing shot', 'Close-up', 'Cutaway', 'Insert shot'], 0],
+      ['Pointing the camera up or down from a fixed position is a…', ['Tilt', 'Pan', 'Track', 'Zoom'], 0],
+      ['Moving the whole camera towards or away from the subject on wheels is a…', ['Dolly shot', 'Pan', 'Tilt', 'Zoom'], 0],
+      ['The rule that keeps the camera on one side of the line between two characters is the…', ['180-degree rule', 'Rule of thirds', 'Golden ratio', 'Rule of odds'], 0],
+      ['Three-point lighting uses a key light, a fill light and a…', ['Back light', 'Flash', 'Strobe light', 'Floodlight'], 0],
+      ['Background music the characters cannot hear is…', ['Non-diegetic sound', 'Diegetic sound', 'Ambient sound', 'Dialogue'], 0],
+      ['The number of audio samples taken per second is the…', ['Sample rate', 'Bit rate', 'Frame rate', 'Resolution'], 0],
+      ['A gradual change from a shot to black is a…', ['Fade out', 'Jump cut', 'Cutaway', 'Wipe'], 0],
+      ['The animation principle where objects flatten on impact and lengthen when moving fast is…', ['Squash and stretch', 'Anticipation', 'Staging', 'Follow through'], 0],
+      ['A small preparatory movement before the main action in animation is…', ['Anticipation', 'Squash and stretch', 'Exaggeration', 'Timing'], 0],
+      ['Processing the edited timeline into a final playable video file is…', ['Rendering', 'Storyboarding', 'Logging', 'Scripting'], 0],
+      ['An interactive model of an app used to test navigation before coding is a…', ['Prototype', 'Style guide', 'Sitemap', 'Mood board'], 0],
+      ['Which codec is widely used for compressed HD video on the web?', ['H.264', 'WAV', 'BMP', 'TXT'], 0]
+    ],
+    comm: [
+      ['In communication, the channel is…', ['The medium through which a message is sent', 'The person who sends the message', 'The receiver\'s response', 'Anything that interferes'], 0],
+      ['Loud traffic outside a classroom is an example of…', ['Physical noise', 'Psychological noise', 'Semantic noise', 'Feedback'], 0],
+      ['Misunderstanding caused by unfamiliar words or jargon is…', ['Semantic noise', 'Physical noise', 'Physiological noise', 'Feedback'], 0],
+      ['An appeal to logic and evidence is…', ['Logos', 'Pathos', 'Ethos', 'Mythos'], 0],
+      ['Communicating with oneself, such as thinking through a problem, is…', ['Intrapersonal communication', 'Interpersonal communication', 'Group communication', 'Mass communication'], 0],
+      ['Communication through newspapers, radio and television to a large audience is…', ['Mass communication', 'Intrapersonal communication', 'Interpersonal communication', 'Small-group communication'], 0],
+      ['A situation where two varieties of a language are used for different social functions is…', ['Diglossia', 'Code-switching', 'Jargon', 'Slang'], 0],
+      ['Reasoning from a general rule to a specific conclusion is…', ['Deductive reasoning', 'Inductive reasoning', 'Bias', 'Hearsay'], 0],
+      ['In an expository essay, the thesis statement usually appears in the…', ['Introduction', 'Conclusion', 'Bibliography', 'Title'], 0],
+      ['The organising strategy that explains why something happened and what resulted is…', ['Cause and effect', 'Chronological order', 'Spatial order', 'Classification'], 0],
+      ['A writer\'s attitude towards the subject is the…', ['Tone', 'Theme', 'Plot', 'Setting'], 0],
+      ['A comparison using "like" or "as" is a…', ['Simile', 'Metaphor', 'Personification', 'Hyperbole'], 0],
+      ['Giving human qualities to non-human things is…', ['Personification', 'Simile', 'Alliteration', 'Onomatopoeia'], 0],
+      ['Which source is likely to be the most reliable for a research paper?', ['A peer-reviewed journal article', 'An anonymous blog post', 'A social media comment', 'An advertisement'], 0]
+    ]
+  };
+  for (var mk in MORE) BANK[mk] = BANK[mk].concat(MORE[mk]);
 
   var AVATARS = ['🦁', '🐯', '🦊', '🐼', '🐨', '🐸', '🐙', '🦈', '🐬', '🦅', '🦉', '🐢', '🦋', '🐝', '🚀', '⚡', '🔥', '🌟', '🎧', '🎮', '🏝️', '🌴', '⚽', '🏏'];
   var FLAGS = [['🇸🇽', 'Sint Maarten'], ['🇲🇫', 'Saint-Martin'], ['🇦🇮', 'Anguilla'], ['🇦🇬', 'Antigua & Barbuda'], ['🇦🇼', 'Aruba'], ['🇧🇸', 'Bahamas'], ['🇧🇧', 'Barbados'], ['🇧🇿', 'Belize'], ['🇧🇶', 'Bonaire, Saba & Statia'], ['🇻🇬', 'British Virgin Islands'], ['🇰🇾', 'Cayman Islands'], ['🇨🇼', 'Curaçao'], ['🇩🇲', 'Dominica'], ['🇬🇩', 'Grenada'], ['🇬🇾', 'Guyana'], ['🇯🇲', 'Jamaica'], ['🇲🇸', 'Montserrat'], ['🇰🇳', 'St Kitts & Nevis'], ['🇱🇨', 'St Lucia'], ['🇻🇨', 'St Vincent & the Grenadines'], ['🇹🇹', 'Trinidad & Tobago'], ['🇹🇨', 'Turks & Caicos'], ['🇻🇮', 'US Virgin Islands']];
@@ -584,6 +685,8 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
   function nextQ() {
     var m = S.match; if (!m) return;
     if (m.i >= m.qs.length) { m.phase = 'done'; prog(true); beat(); checkMatchEnd(); render(); return; }
+    if (!m.t0) m.t0 = now();
+    if (now() - m.t0 > MATCH_CAP) { m.i = m.qs.length; m.phase = 'done'; prog(true); beat(); checkMatchEnd(); render(); return; }
     m.phase = 'q'; m.picked = null; m.qStart = now(); render();
   }
   function pick(i) {
@@ -591,7 +694,7 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
     m.picked = i; var q = m.qs[m.i], el = (now() - m.qStart) / 1000;
     var right = i === q.ans; if (right) m.score += 100 + Math.max(0, Math.round(50 * (1 - el / QTIME)));
     m.lastRight = right; m.phase = 'fb'; m.i++; prog(false); render();
-    setTimeout(function () { if (S.match === m) nextQ(); }, 1300);
+    setTimeout(function () { if (S.match === m) nextQ(); }, PAUSE);
   }
   function prog(done, left) {
     var m = S.match; var me = m.players[S.me.id]; me.score = m.score; me.q = m.i; me.done = done; me.left = left;
@@ -618,7 +721,7 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
     if (S.incoming && t > S.incoming.deadline) { S.incoming = null; toast('A challenge expired.'); }
     if (S.pendingJoin && t > S.pendingJoin.until) { S.pendingJoin = null; toast('Couldn\'t join that match. Try again.'); }
     var m = S.match;
-    if (m && m.phase === 'q' && t - m.qStart > QTIME * 1000) { m.picked = -1; m.lastRight = false; m.phase = 'fb'; m.i++; prog(false); setTimeout(function () { if (S.match === m) nextQ(); }, 1300); }
+    if (m && m.phase === 'q' && t - m.qStart > QTIME * 1000) { m.picked = -1; m.lastRight = false; m.phase = 'fb'; m.i++; prog(false); setTimeout(function () { if (S.match === m) nextQ(); }, PAUSE); }
     if (h || S.incoming || (m && m.phase === 'q') || S.pendingJoin || dirty) render();
   }, 1000);
   setInterval(beat, HEARTBEAT);
@@ -724,7 +827,7 @@ input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;vertical-al
   }
   function viewMatch() {
     var m = S.match, out = '<div class="row" style="margin-bottom:6px"><div class="grow"><div class="nm">🎯 ' + esc(subjName(m.subject)) + '</div><div class="sub">Private match · ' + Object.keys(m.players).length + ' player' + (Object.keys(m.players).length === 1 ? '' : 's') + '</div></div><button class="btn2" data-act="leavematch">' + (m.phase === 'done' ? 'Back to arena' : 'Leave') + '</button></div>';
-    if (m.phase === 'countdown') out += '<div class="cd">' + m.cd + '</div><div class="sub" style="text-align:center">Match starts in ' + m.cd + '… ' + QN + ' questions, ' + QTIME + 's each.</div>';
+    if (m.phase === 'countdown') out += '<div class="cd">' + m.cd + '</div><div class="sub" style="text-align:center">Match starts in ' + m.cd + '… ' + QN + ' questions, ' + QTIME + 's each · 15 minutes max.</div>';
     else if (m.phase === 'q' || m.phase === 'fb') {
       var qi = m.phase === 'q' ? m.i : m.i - 1, q = m.qs[qi], left = m.phase === 'q' ? Math.max(0, QTIME - (now() - m.qStart) / 1000) : 0;
       out += '<div class="row sub" style="margin-top:10px"><span>Question ' + (qi + 1) + ' of ' + m.qs.length + '</span><span style="margin-left:auto">⏱ ' + Math.ceil(left) + 's · ' + m.score + ' pts</span></div><div class="bar"><b style="width:' + (left / QTIME * 100) + '%"></b></div>';
